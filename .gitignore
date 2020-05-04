@@ -1,0 +1,6 @@
+target/
+.scalafmt.conf
+.idea
+.metals/
+project/metals.sbt
+.bloop/
