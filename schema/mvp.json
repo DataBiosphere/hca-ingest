@@ -66,13 +66,13 @@
       }
     },
     {
-      "name": "specimen_from_json",
+      "name": "specimen_from_organism",
       "columns": [
-        { "name": "specimen_from_json_id", "datatype": "string" },
+        { "name": "specimen_from_organism_id", "datatype": "string" },
         { "name": "version", "datatype": "timestamp" },
         { "name": "content", "datatype": "string" }
       ],
-      "primaryKey": ["specimen_from_json_id"],
+      "primaryKey": ["specimen_from_organism_id"],
       "partitionMode": "date",
       "datePartitionOptions": {
         "column": "version"
@@ -296,6 +296,58 @@
         { "name": "content", "datatype": "string" }
       ],
       "primaryKey": ["ipsc_induction_protocol_id"],
+      "partitionMode": "date",
+      "datePartitionOptions": {
+        "column": "version"
+      }
+    },
+    {
+      "name": "imaging_preparation_protocol",
+      "columns": [
+        { "name": "imaging_preparation_protocol_id", "datatype": "string" },
+        { "name": "version", "datatype": "timestamp" },
+        { "name": "content", "datatype": "string" }
+      ],
+      "primaryKey": ["imaging_preparation_protocol_id"],
+      "partitionMode": "date",
+      "datePartitionOptions": {
+        "column": "version"
+      }
+    },
+    {
+      "name": "imaging_protocol",
+      "columns": [
+        { "name": "imaging_protocol_id", "datatype": "string" },
+        { "name": "version", "datatype": "timestamp" },
+        { "name": "content", "datatype": "string" }
+      ],
+      "primaryKey": ["imaging_protocol_id"],
+      "partitionMode": "date",
+      "datePartitionOptions": {
+        "column": "version"
+      }
+    },
+    {
+      "name": "library_preparation_protocol",
+      "columns": [
+        { "name": "library_preparation_protocol_id", "datatype": "string" },
+        { "name": "version", "datatype": "timestamp" },
+        { "name": "content", "datatype": "string" }
+      ],
+      "primaryKey": ["library_preparation_protocol_id"],
+      "partitionMode": "date",
+      "datePartitionOptions": {
+        "column": "version"
+      }
+    },
+    {
+      "name": "sequencing_protocol",
+      "columns": [
+        { "name": "sequencing_protocol_id", "datatype": "string" },
+        { "name": "version", "datatype": "timestamp" },
+        { "name": "content", "datatype": "string" }
+      ],
+      "primaryKey": ["sequencing_protocol_id"],
       "partitionMode": "date",
       "datePartitionOptions": {
         "column": "version"
