@@ -1,0 +1,13 @@
+{
+  "name": "organoid",
+  "columns": [
+    { "name": "organoid_id", "datatype": "string" },
+    { "name": "version", "datatype": "timestamp" },
+    { "name": "content", "datatype": "string" }
+  ],
+  "primaryKey": ["organoid_id"],
+  "partitionMode": "date",
+  "datePartitionOptions": {
+    "column": "version"
+  }
+}

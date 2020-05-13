@@ -1,0 +1,13 @@
+{
+  "name": "imaged_specimen",
+  "columns": [
+    { "name": "imaged_specimen_id", "datatype": "string" },
+    { "name": "version", "datatype": "timestamp" },
+    { "name": "content", "datatype": "string" }
+  ],
+  "primaryKey": ["imaged_specimen_id"],
+  "partitionMode": "date",
+  "datePartitionOptions": {
+    "column": "version"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "process",
+  "columns": [
+    { "name": "process_id", "datatype": "string" },
+    { "name": "version", "datatype": "timestamp" },
+    { "name": "content", "datatype": "string" }
+  ],
+  "primaryKey": ["process_id"],
+  "partitionMode": "date",
+  "datePartitionOptions": {
+    "column": "version"
+  }
+}

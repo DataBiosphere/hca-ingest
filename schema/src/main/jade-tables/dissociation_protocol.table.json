@@ -1,0 +1,13 @@
+{
+  "name": "dissociation_protocol",
+  "columns": [
+    { "name": "dissociation_protocol_id", "datatype": "string" },
+    { "name": "version", "datatype": "timestamp" },
+    { "name": "content", "datatype": "string" }
+  ],
+  "primaryKey": ["dissociation_protocol_id"],
+  "partitionMode": "date",
+  "datePartitionOptions": {
+    "column": "version"
+  }
+}

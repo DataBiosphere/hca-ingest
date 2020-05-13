@@ -1,0 +1,13 @@
+{
+  "name": "cell_suspension",
+  "columns": [
+    { "name": "cell_suspension_id", "datatype": "string" },
+    { "name": "version", "datatype": "timestamp" },
+    { "name": "content", "datatype": "string" }
+  ],
+  "primaryKey": ["cell_suspension_id"],
+  "partitionMode": "date",
+  "datePartitionOptions": {
+    "column": "version"
+  }
+}

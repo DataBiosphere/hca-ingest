@@ -1,0 +1,13 @@
+{
+  "name": "aggregate_generation_protocol",
+  "columns": [
+    { "name": "aggregate_generation_protocol_id", "datatype": "string" },
+    { "name": "version", "datatype": "timestamp" },
+    { "name": "content", "datatype": "string" }
+  ],
+  "primaryKey": ["aggregate_generation_protocol_id"],
+  "partitionMode": "date",
+  "datePartitionOptions": {
+    "column": "version"
+  }
+}

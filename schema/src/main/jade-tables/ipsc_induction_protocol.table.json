@@ -1,0 +1,13 @@
+{
+  "name": "ipsc_induction_protocol",
+  "columns": [
+    { "name": "ipsc_induction_protocol_id", "datatype": "string" },
+    { "name": "version", "datatype": "timestamp" },
+    { "name": "content", "datatype": "string" }
+  ],
+  "primaryKey": ["ipsc_induction_protocol_id"],
+  "partitionMode": "date",
+  "datePartitionOptions": {
+    "column": "version"
+  }
+}

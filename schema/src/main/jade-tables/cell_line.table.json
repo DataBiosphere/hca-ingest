@@ -1,0 +1,13 @@
+{
+  "name": "cell_line",
+  "columns": [
+    { "name": "cell_line_id", "datatype": "string" },
+    { "name": "version", "datatype": "timestamp" },
+    { "name": "content", "datatype": "string" }
+  ],
+  "primaryKey": ["cell_line_id"],
+  "partitionMode": "date",
+  "datePartitionOptions": {
+    "column": "version"
+  }
+}

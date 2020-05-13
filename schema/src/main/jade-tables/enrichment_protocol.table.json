@@ -1,0 +1,13 @@
+{
+  "name": "enrichment_protocol",
+  "columns": [
+    { "name": "enrichment_protocol_id", "datatype": "string" },
+    { "name": "version", "datatype": "timestamp" },
+    { "name": "content", "datatype": "string" }
+  ],
+  "primaryKey": ["enrichment_protocol_id"],
+  "partitionMode": "date",
+  "datePartitionOptions": {
+    "column": "version"
+  }
+}

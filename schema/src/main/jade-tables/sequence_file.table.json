@@ -1,0 +1,16 @@
+{
+  "name": "sequence_file",
+  "columns": [
+    { "name": "sequence_file_id", "datatype": "string" },
+    { "name": "version", "datatype": "timestamp" },
+    { "name": "content", "datatype": "string" },
+    { "name": "file_id", "datatype": "fileref" },
+    { "name": "source_file_id", "datatype": "string" },
+    { "name": "source_file_version", "datatype": "timestamp" }
+  ],
+  "primaryKey": ["sequence_file_id"],
+  "partitionMode": "date",
+  "datePartitionOptions": {
+    "column": "version"
+  }
+}
