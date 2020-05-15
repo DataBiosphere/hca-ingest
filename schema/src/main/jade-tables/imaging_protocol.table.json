@@ -1,11 +1,10 @@
 {
   "name": "imaging_protocol",
   "columns": [
-    { "name": "imaging_protocol_id", "datatype": "string" },
-    { "name": "version", "datatype": "timestamp" },
-    { "name": "content", "datatype": "string" }
+    { "name": "imaging_protocol_id", "datatype": "string", "type": "primary_key" },
+    { "name": "version", "datatype": "timestamp", "type": "primary_key" },
+    { "name": "content", "datatype": "string", "type": "required" }
   ],
-  "primaryKey": ["imaging_protocol_id"],
   "partitionMode": "date",
   "datePartitionOptions": {
     "column": "version"

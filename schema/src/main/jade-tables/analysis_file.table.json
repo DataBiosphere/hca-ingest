@@ -1,14 +1,13 @@
 {
   "name": "analysis_file",
   "columns": [
-    { "name": "analysis_file_id", "datatype": "string" },
-    { "name": "version", "datatype": "timestamp" },
-    { "name": "content", "datatype": "string" },
-    { "name": "file_id", "datatype": "fileref" },
-    { "name": "source_file_id", "datatype": "string" },
-    { "name": "source_file_version", "datatype": "timestamp" }
+    { "name": "analysis_file_id", "datatype": "string", "type": "primary_key" },
+    { "name": "version", "datatype": "timestamp", "type": "primary_key" },
+    { "name": "content", "datatype": "string", "type": "required" },
+    { "name": "file_id", "datatype": "fileref", "type": "required" },
+    { "name": "source_file_id", "datatype": "string", "type": "required" },
+    { "name": "source_file_version", "datatype": "timestamp", "type": "required" }
   ],
-  "primaryKey": ["analysis_file_id"],
   "partitionMode": "date",
   "datePartitionOptions": {
     "column": "version"

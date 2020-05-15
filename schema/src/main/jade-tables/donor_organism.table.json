@@ -1,11 +1,10 @@
 {
   "name": "donor_organism",
   "columns": [
-    { "name": "donor_organism_id", "datatype": "string" },
-    { "name": "version", "datatype": "timestamp" },
-    { "name": "content", "datatype": "string" }
+    { "name": "donor_organism_id", "datatype": "string", "type": "primary_key" },
+    { "name": "version", "datatype": "timestamp", "type": "primary_key" },
+    { "name": "content", "datatype": "string", "type": "required" }
   ],
-  "primaryKey": ["donor_organism_id"],
   "partitionMode": "date",
   "datePartitionOptions": {
     "column": "version"

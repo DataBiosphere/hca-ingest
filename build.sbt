@@ -1,6 +1,8 @@
 //import _root_.io.circe.Json
 import org.broadinstitute.monster.sbt.model.JadeIdentifier
 
+val betterFilesVersion = "3.8.0"
+
 lazy val `hca-ingest` = project
   .in(file("."))
   .aggregate(`hca-schema`, `hca-transformation-pipeline`)
@@ -21,6 +23,9 @@ lazy val `hca-schema` = project
 lazy val `hca-transformation-pipeline` = project
   .in(file("transformation"))
   .enablePlugins(MonsterScioPipelinePlugin)
+  .settings(
+    libraryDependencies ++= Seq("com.github.pathikrit" %% "better-files" % betterFilesVersion)
+  )
   .dependsOn(`hca-schema`)
 
 //lazy val `hca-orchestration-workflow` = project
