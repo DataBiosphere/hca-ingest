@@ -43,7 +43,7 @@ object HcaUtils {
     *
     * @param tableName the name of the JSON table that was converted to Msg
     */
-  def jsonToMsg(tableName: String): SCollection[ReadableFile] => SCollection[(String, Msg)] =
+  def jsonToFilenameAndMsg(tableName: String): SCollection[ReadableFile] => SCollection[(String, Msg)] =
     _.transform(s"Extract $tableName JSON rows") {
       _.map { file =>
         (
@@ -74,7 +74,6 @@ object HcaUtils {
       )
     val entityId = matches.group(1)
     val entityVersion = matches.group(2)
-
     // and put in form we want
     Obj(
       mutable.LinkedHashMap[Msg, Msg](
@@ -86,7 +85,7 @@ object HcaUtils {
   }
 
   /**
-    * Given a pattern matching JSONs, get the JSONs as ReadableFiles and convert each JSON to Msg and get is filepath.
+    * Read, transform, and write a given entity type.
     *
     * @param context context of the main pipeline
     * @param inputPrefix the root directory containing JSONs to be converted
@@ -105,7 +104,7 @@ object HcaUtils {
       context
     )
     // then convert json to msg and get the filename
-    val processedData = jsonToMsg(entityType)(readableFiles)
+    val processedData = jsonToFilenameAndMsg(entityType)(readableFiles)
       .withName(s"Convert ${entityType} from JSON to Msg in output form")
       .map {
         case (filename, metadata) => transformMetadata(entityType, filename, metadata)
