@@ -2,10 +2,12 @@ package org.broadinstitute.monster.hca
 
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
+import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.{FileIO, ReadableFileCoder}
 import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
+import org.broadinstitute.monster.common.StorageIO
 import org.broadinstitute.monster.common.msg.{JsonParser, UpackMsgCoder}
 import upack.{Msg, Obj, Str}
 
@@ -13,12 +15,12 @@ import scala.collection.mutable
 import scala.util.matching.Regex
 
 object HcaUtils {
-  // read data in from input bucket
   implicit val msgCoder: Coder[Msg] = Coder.beam(new UpackMsgCoder)
   implicit val readableFileCoder: Coder[ReadableFile] = Coder.beam(new ReadableFileCoder)
 
+  // format is: metadata/{entity_type}/{entity_id}_{version}.json,
+  // but filename returns just {entity_id}_{version}.json, so that is what we deal with.
   val metadataPattern: Regex = "([\\S]+)_([\\S]+).json".r
-  // if the filename is not just the thing after the last slash, then might need to prepend: metadata\/([\S]+)\/
 
   /**
     * Given a pattern matching JSON, get the JSONs as ReadableFiles.
@@ -56,13 +58,13 @@ object HcaUtils {
     * extract the necessary info from a metadata file and put it into a form that makes it easy to
     * pass in to the table format
     *
-    * @param fileName
-    * @param metadata
-    * @return
+    * @param entityType the metadata entity type to prepend for the id field
+    * @param fileName the raw filename of the metadata file
+    * @param metadata the content of the metadata file in Msg format
+    * @return a Msg object in the desired output format
     */
   def transformMetadata(entityType: String, fileName: String, metadata: Msg): Msg = {
-    // needs to extract info from file name
-    // format is: metadata/{entity_type}/{entity_id}_{version}.json
+    // extract info from file name
     val matches = HcaUtils.metadataPattern
       .findFirstMatchIn(fileName)
       .getOrElse(
@@ -87,24 +89,32 @@ object HcaUtils {
     * Given a pattern matching JSONs, get the JSONs as ReadableFiles and convert each JSON to Msg and get is filepath.
     *
     * @param context context of the main pipeline
-    * @param inputDir the root directory containing JSONs to be converted
-    * @param relativeFilePath the file path containing JSONs to be converted relative to the input root directory
+    * @param inputPrefix the root directory containing JSONs to be converted
+    * @param outputPrefix the directory to write outputs to
+    * @param entityType the bucket name/table name to read/write from
     */
   def processMetadata(
     context: ScioContext,
-    inputDir: String,
-    entityType: String,
-    relativeFilePath: String = "**.json"
-  ): SCollection[Msg] = {
+    inputPrefix: String,
+    outputPrefix: String,
+    entityType: String
+  ): ClosedTap[String] = {
     // get the readable files for the given input path
     val readableFiles = getReadableFiles(
-      s"$inputDir/metadata/${entityType}/$relativeFilePath",
+      s"$inputPrefix/metadata/${entityType}/**.json",
       context
     )
-
     // then convert json to msg and get the filename
-    jsonToMsg(entityType)(readableFiles).map {
-      case (filename, metadata) => transformMetadata(entityType, filename, metadata)
-    }
+    val processedData = jsonToMsg(entityType)(readableFiles)
+      .withName(s"Convert ${entityType} from JSON to Msg in output form")
+      .map {
+        case (filename, metadata) => transformMetadata(entityType, filename, metadata)
+      }
+    // then write to storage
+    StorageIO.writeJsonLists(
+      processedData,
+      entityType,
+      s"${outputPrefix}/metadata/${entityType}"
+    )
   }
 }
