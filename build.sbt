@@ -23,9 +23,6 @@ lazy val `hca-schema` = project
 lazy val `hca-transformation-pipeline` = project
   .in(file("transformation"))
   .enablePlugins(MonsterScioPipelinePlugin)
-  .settings(
-    libraryDependencies ++= Seq("com.github.pathikrit" %% "better-files" % betterFilesVersion)
-  )
   .dependsOn(`hca-schema`)
 
 //lazy val `hca-orchestration-workflow` = project
