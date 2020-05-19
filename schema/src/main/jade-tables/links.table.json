@@ -1,0 +1,18 @@
+{
+  "name": "links",
+  "columns": [
+    { "name": "links_id", "datatype": "string", "type": "primary_key" },
+    { "name": "version", "datatype": "timestamp", "type": "primary_key" },
+    { "name": "project_id", "datatype": "string", "links": [
+      {
+        "table_name": "project",
+        "column_name": "project_id"
+      }
+    ], "type": "required"},
+    { "name": "content", "datatype": "string" }
+  ],
+  "partitionMode": "date",
+  "datePartitionOptions": {
+    "column": "version"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "reference_file",
+  "columns": [
+    { "name": "reference_file_id", "datatype": "string", "type": "primary_key" },
+    { "name": "version", "datatype": "timestamp", "type": "primary_key" },
+    { "name": "content", "datatype": "string", "type": "required" },
+    { "name": "file_id", "datatype": "fileref", "type": "required" },
+    { "name": "source_file_id", "datatype": "string", "type": "required" },
+    { "name": "source_file_version", "datatype": "timestamp", "type": "required" }
+  ],
+  "partitionMode": "date",
+  "datePartitionOptions": {
+    "column": "version"
+  }
+}
