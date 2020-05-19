@@ -1,8 +1,6 @@
 //import _root_.io.circe.Json
 import org.broadinstitute.monster.sbt.model.JadeIdentifier
 
-val betterFilesVersion = "3.8.0"
-
 lazy val `hca-ingest` = project
   .in(file("."))
   .aggregate(`hca-schema`, `hca-transformation-pipeline`)
