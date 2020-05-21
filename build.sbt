@@ -1,5 +1,4 @@
 //import _root_.io.circe.Json
-import org.broadinstitute.monster.sbt.model.JadeIdentifier
 
 lazy val `hca-ingest` = project
   .in(file("."))
@@ -10,10 +9,6 @@ lazy val `hca-schema` = project
   .in(file("schema"))
   .enablePlugins(MonsterJadeDatasetPlugin)
   .settings(
-    jadeDatasetName := JadeIdentifier
-      .fromString("broad_dsp_hca")
-      .fold(sys.error, identity),
-    jadeDatasetDescription := "Mirror of HCA archive, maintained by Broad's Data Sciences Platform",
     jadeTablePackage := "org.broadinstitute.monster.hca.jadeschema.table",
     jadeStructPackage := "org.broadinstitute.monster.hca.jadeschema.struct"
   )
