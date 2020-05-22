@@ -7,17 +7,17 @@ import org.scalatest.matchers.should.Matchers
 class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
   behavior of "HcaPipelineBuilder"
 
-  it should "transform metadata" in {
+  it should "transform basic metadata" in {
     val exampleFileContent = JsonParser.parseEncodedJson("""{"beep": "boop"}""")
     val actualOutput = HcaPipelineBuilder.transformMetadata(
       entityType = "entity_type",
-      fileName = "id_version.json",
+      fileName = "entityId_version.json",
       metadata = exampleFileContent
-    ) // TODO read hca planning doc to get more realistic filename
+    )
     val expectedOutput = JsonParser.parseEncodedJson(
       json = """
                | {
-               |   "entity_type_id": "id",
+               |   "entity_type_id": "entityId",
                |   "version": "version",
                |   "content": "{\"beep\":\"boop\"}"
                | }
