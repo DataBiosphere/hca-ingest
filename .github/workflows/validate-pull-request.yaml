@@ -1,0 +1,22 @@
+name: PR Validation
+on:
+  pull_request:
+    branches:
+      - master
+jobs:
+  pr-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: olafurpg/setup-scala@v7
+        with:
+          java-version: graalvm@20.0.0
+      - name: Check formatting
+        run: sbt scalafmtCheckAll
+      - name: Compile
+        run: sbt Compile/compile Test/compile IntegrationTest/compile
+      - name: Test
+        run: sbt "set ThisBuild/coverageEnabled := true" test IntegrationTest/test
+      - name: Aggregate coverage reports
+        run: sbt coverageAggregate
+      - uses: codecov/codecov-action@v1
