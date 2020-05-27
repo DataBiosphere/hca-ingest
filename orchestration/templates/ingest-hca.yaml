@@ -1,0 +1,61 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: ingest-hca
+spec:
+  entrypoint: main
+  serviceAccountName: {{ .Values.serviceAccount.k8sName }}
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - name: source-bucket-name
+          - name: staging-bucket-name
+
+      dag:
+        tasks:
+          # Pre-process the data found in a source bucket
+          - name: pre-process-source
+            templateRef:
+              name: run-dataflow
+              template: main
+            arguments:
+              parameters:
+                - name: source-bucket-name
+                  value: '{{ "{{inputs.parameters.source-bucket-name}}" }}'
+                - name: staging-bucket-name
+                  value: '{{ "{{inputs.parameters.staging-bucket-name}}" }}'
+
+    # Template used to launch a Dataflow processing job on raw ClinVar data,
+    # transforming it to our target schema.
+    - name: run-dataflow
+      inputs:
+        parameters:
+          - name: source-bucket-name
+          - name: staging-bucket-name
+      container:
+        {{- $version := default "latest" .Chart.AppVersion }}
+        image: us.gcr.io/broad-dsp-gcr-public/hca-transformation-pipeline:{{ $version }}
+        command: []
+        args:
+          - --runner=dataflow
+          - --inputPrefix=gs://{{ "{{inputs.parameters.source-bucket-name}}" }}
+          - --outputPrefix=gs://{{ "{{inputs.parameters.staging-bucket-name}}" }}
+          {{- with .Values.dataflow }}
+          - --project={{ .project }}
+          - --region={{ .region }}
+          - --tempLocation=gs://{{ .tmpBucketName }}/dataflow
+          - --subnetwork=regions/{{ .region }}/subnetworks/{{ .subnetName }}
+          - --serviceAccount={{ .workerAccount }}
+          - --workerMachineType={{ .workerMachineType }}
+          {{- with .autoscaling }}
+          - --autoscalingAlgorithm=THROUGHPUT_BASED
+          - --numWorkers={{ .minWorkers }}
+          - --maxNumWorkers={{ .maxWorkers }}
+          {{- end }}
+          {{- if .useFlexRS }}
+          - --flexRSGoal=COST_OPTIMIZED
+          {{- else }}
+          - --experiments=shuffle_mode=service
+          {{- end }}
+          {{- end }}
