@@ -22,6 +22,9 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     metadataEntities.foreach { entityType =>
       processMetadata(ctx, args.inputPrefix, args.outputPrefix, entityType)
     }
+    fileMetadataEntities.foreach { entityType =>
+      processMetadata(ctx, args.inputPrefix, args.outputPrefix, entityType, isFileMetadata = true)
+    }
     ()
   }
 
@@ -56,6 +59,10 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     "protocol",
     "sequencing_protocol",
     "specimen_from_organism"
+  )
+
+  val fileMetadataEntities = Set(
+    "" // TODO get the values for this list
   )
 
   /**
@@ -102,16 +109,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     * @return a Msg object in the desired output format
     */
   def transformMetadata(entityType: String, fileName: String, metadata: Msg): Msg = {
-    // extract info from file name
-    val matches = metadataPattern
-      .findFirstMatchIn(fileName)
-      .getOrElse(
-        throw new Exception(
-          s"transformMetadata: error when finding id and version from file named $fileName"
-        )
-      )
-    val entityId = matches.group(1)
-    val entityVersion = matches.group(2)
+    val (entityId, entityVersion) = getEntityIdAndVersion(fileName: String)
     // and put in form we want
     Obj(
       mutable.LinkedHashMap[Msg, Msg](
@@ -123,13 +121,13 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   }
 
   def transformFileMetadata(entityType: String, fileName: String, metadata: Msg): Msg = {
-    val basicMetadata = transformMetadata(entityType, fileName, metadata)
+    val (entityId, entityVersion) = getEntityIdAndVersion(fileName: String)
 
     // get the name of the data file and the MD5 checksum
     val coreFileMetadata = metadata.read[Msg]("file_core")
     val checksum = coreFileMetadata.tryRead[String]("checksum")
     val dataFileName = coreFileMetadata.read[String]("file_name")
-    // parse the data file name
+    // parse the data file name TODO: move this into a separate method?
     val matches = fileDataPattern
       .findFirstMatchIn(dataFileName)
       .getOrElse(
@@ -140,14 +138,31 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     val fileId = matches.group(2)
     val fileVersion = matches.group(3)
     // and put in form we want
-    // TODO prepend basicMetadata value
     Obj(
       mutable.LinkedHashMap[Msg, Msg](
+        Str(s"${entityType}_id") -> Str(entityId),
+        Str("version") -> Str(entityVersion),
+        Str("content") -> Str(encode(metadata).getOrElse("")),
         Str("file_id") -> Str(fileId),
         Str("file_version") -> Str(fileVersion),
         Str("content_hash") -> Str(checksum.getOrElse(""))
       )
     )
+  }
+
+  // TODO better documentation on methods
+  def getEntityIdAndVersion(fileName: String): (String, String) = {
+    // extract info from file name
+    val matches = metadataPattern
+      .findFirstMatchIn(fileName)
+      .getOrElse(
+        throw new Exception(
+          s"transformMetadata: error when finding id and version from file named $fileName"
+        )
+      )
+    val entityId = matches.group(1)
+    val entityVersion = matches.group(2)
+    (entityId, entityVersion)
   }
 
   def encode(msg: Msg): Option[String] =
@@ -169,7 +184,8 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     context: ScioContext,
     inputPrefix: String,
     outputPrefix: String,
-    entityType: String
+    entityType: String,
+    isFileMetadata: Boolean = false
   ): ClosedTap[String] = {
     // get the readable files for the given input path
     val readableFiles = getReadableFiles(
@@ -180,7 +196,9 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     val processedData = jsonToFilenameAndMsg(entityType)(readableFiles)
       .withName(s"Pre-process ${entityType} metadata")
       .map {
-        case (filename, metadata) => transformMetadata(entityType, filename, metadata)
+        case (filename, metadata) =>
+          if (isFileMetadata) transformFileMetadata(entityType, filename, metadata)
+          else transformMetadata(entityType, filename, metadata)
       }
     // then write to storage
     StorageIO.writeJsonLists(
