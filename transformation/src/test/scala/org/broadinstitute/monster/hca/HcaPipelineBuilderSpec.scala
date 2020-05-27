@@ -26,4 +26,41 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
 
     actualOutput shouldBe expectedOutput
   }
+
+  it should "transform basic file metadata" in {
+    val exampleMetadataContent = JsonParser.parseEncodedJson(
+      json = """
+               | {
+               |   "describedBy": "a url",
+               |    "file_core": {
+               |        "file_name": "some-id_some-version.numbers123_12-34_metrics_are_fun.csv",
+               |        "format": "csv"
+               |    },
+               |    "schema_type": "file"
+               | }
+               |""".stripMargin
+    )
+    val actualOutput = HcaPipelineBuilder.transformFileMetadata(
+      entityType = "some_file_entity_type",
+      fileName = "entity-id_entity-version.json",
+      metadata = exampleMetadataContent
+    )
+    val expectedOutput = JsonParser.parseEncodedJson(
+      json =
+        """
+          | {
+          |   "some_file_entity_type_id": "entity-id",
+          |   "version": "entity-version",
+          |   "content": "{\"describedBy\":\"a url\",\"file_core\":{\"file_name\":\"some-id_some-version.numbers123_12-34_metrics_are_fun.csv\",\"format\":\"csv\"},\"schema_type\":\"file\"}",
+          |   "file_id": "some-id",
+          |   "file_version": "some-version.numbers123",
+          |   "content_hash": ""
+          | }
+          |""".stripMargin
+    )
+
+    actualOutput shouldBe expectedOutput
+  }
+
+  it should "transform file metadata with a checksum" in {}
 }
