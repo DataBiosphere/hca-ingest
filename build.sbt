@@ -1,5 +1,4 @@
-//import _root_.io.circe.Json
-import org.broadinstitute.monster.sbt.model.JadeIdentifier
+import _root_.io.circe.Json
 
 lazy val `hca-ingest` = project
   .in(file("."))
@@ -10,10 +9,6 @@ lazy val `hca-schema` = project
   .in(file("schema"))
   .enablePlugins(MonsterJadeDatasetPlugin)
   .settings(
-    jadeDatasetName := JadeIdentifier
-      .fromString("broad_dsp_hca")
-      .fold(sys.error, identity),
-    jadeDatasetDescription := "Mirror of HCA archive, maintained by Broad's Data Sciences Platform",
     jadeTablePackage := "org.broadinstitute.monster.hca.jadeschema.table",
     jadeStructPackage := "org.broadinstitute.monster.hca.jadeschema.struct"
   )
@@ -23,20 +18,20 @@ lazy val `hca-transformation-pipeline` = project
   .enablePlugins(MonsterScioPipelinePlugin)
   .dependsOn(`hca-schema`)
 
-//lazy val `hca-orchestration-workflow` = project
-//  .in(file("orchestration"))
-//  .enablePlugins(MonsterHelmPlugin)
-//  .settings(
-//    helmChartOrganization := "DataBiosphere",
-//    helmChartRepository := "hca-ingest",
-//    helmInjectVersionValues := { (baseValues, version) =>
-//      val schemaVersionValues = Json.obj(
-//        "argoTemplates" -> Json.obj(
-//          "diffBQTable" -> Json.obj(
-//            "schemaImageVersion" -> Json.fromString(version)
-//          )
-//        )
-//      )
-//      baseValues.deepMerge(schemaVersionValues)
-//    }
-//  )
+lazy val `hca-orchestration-workflow` = project
+  .in(file("orchestration"))
+  .enablePlugins(MonsterHelmPlugin)
+  .settings(
+    helmChartOrganization := "DataBiosphere",
+    helmChartRepository := "hca-ingest",
+    helmInjectVersionValues := { (baseValues, version) =>
+      val schemaVersionValues = Json.obj(
+        "argoTemplates" -> Json.obj(
+          "diffBQTable" -> Json.obj(
+            "schemaImageVersion" -> Json.fromString(version)
+          )
+        )
+      )
+      baseValues.deepMerge(schemaVersionValues)
+    }
+  )
