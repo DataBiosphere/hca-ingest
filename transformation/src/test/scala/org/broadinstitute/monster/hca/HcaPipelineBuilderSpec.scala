@@ -31,7 +31,6 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
     val exampleMetadataContent = JsonParser.parseEncodedJson(
       json = """
                | {
-               |   "describedBy": "a url",
                |    "file_core": {
                |        "file_name": "some-id_some-version.numbers123_12-34_metrics_are_fun.csv",
                |        "format": "csv"
@@ -40,6 +39,7 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
                | }
                |""".stripMargin
     )
+    // TODO does this fail when checksum is "null"?
     val actualOutput = HcaPipelineBuilder.transformFileMetadata(
       entityType = "some_file_entity_type",
       fileName = "entity-id_entity-version.json",
@@ -51,10 +51,10 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
           | {
           |   "some_file_entity_type_id": "entity-id",
           |   "version": "entity-version",
-          |   "content": "{\"describedBy\":\"a url\",\"file_core\":{\"file_name\":\"some-id_some-version.numbers123_12-34_metrics_are_fun.csv\",\"format\":\"csv\"},\"schema_type\":\"file\"}",
+          |   "content": "{\"file_core\":{\"file_name\":\"some-id_some-version.numbers123_12-34_metrics_are_fun.csv\",\"format\":\"csv\"},\"schema_type\":\"file\"}",
           |   "file_id": "some-id",
           |   "file_version": "some-version.numbers123",
-          |   "content_hash": ""
+          |   "checksum": ""
           | }
           |""".stripMargin
     )
@@ -62,5 +62,37 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
     actualOutput shouldBe expectedOutput
   }
 
-  it should "transform file metadata with a checksum" in {}
+  it should "transform file metadata with a directory and checksum" in {
+    val exampleMetadataContent = JsonParser.parseEncodedJson(
+      json = """
+               | {
+               |    "file_core": {
+               |        "file_name": "a-directory/sub_directory/file-id_file-version_filename.json",
+               |        "format": "json",
+               |        "checksum": "abcdefg"
+               |    }
+               | }
+               |""".stripMargin
+    )
+    val actualOutput = HcaPipelineBuilder.transformFileMetadata(
+      entityType = "some_type",
+      fileName = "123_456.json",
+      metadata = exampleMetadataContent
+    )
+    val expectedOutput = JsonParser.parseEncodedJson(
+      json =
+        """
+          | {
+          |   "some_type_id": "123",
+          |   "version": "456",
+          |   "content": "{\"file_core\":{\"file_name\":\"a-directory/sub_directory/file-id_file-version_filename.json\",\"format\":\"json\",\"checksum\":\"abcdefg\"}}",
+          |   "file_id": "file-id",
+          |   "file_version": "file-version",
+          |   "checksum": "abcdefg"
+          | }
+          |""".stripMargin
+    )
+
+    actualOutput shouldBe expectedOutput
+  }
 }

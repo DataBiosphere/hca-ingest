@@ -34,7 +34,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   // format is: metadata/{entity_type}/{entity_id}_{version}.json,
   // but filename returns just {entity_id}_{version}.json, so that is what we deal with.
   val metadataPattern: Regex = "([^_]+)_(.+).json".r
-  // format is: {dir_path}{file_id}_{file_version}_{file_name},
+  // format is: {dir_path}/{file_id}_{file_version}_{file_name},
   // but the dir_path seems to be optional
   val fileDataPattern: Regex = "(.*\\/)?([^_^\\/]+)_([^_]+)_(.+)".r
 
@@ -145,7 +145,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         Str("content") -> Str(encode(metadata).getOrElse("")),
         Str("file_id") -> Str(fileId),
         Str("file_version") -> Str(fileVersion),
-        Str("content_hash") -> Str(checksum.getOrElse(""))
+        Str("checksum") -> Str(checksum.getOrElse(""))
       )
     )
   }
