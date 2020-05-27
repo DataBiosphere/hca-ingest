@@ -8,7 +8,7 @@ import org.apache.beam.sdk.io.{FileIO, ReadableFileCoder}
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
 import org.broadinstitute.monster.common.{PipelineBuilder, StorageIO}
-import org.broadinstitute.monster.common.msg.{JsonParser, UpackMsgCoder}
+import org.broadinstitute.monster.common.msg._
 import ujson.StringRenderer
 import upack.{Msg, Obj, Str}
 
@@ -31,6 +31,9 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   // format is: metadata/{entity_type}/{entity_id}_{version}.json,
   // but filename returns just {entity_id}_{version}.json, so that is what we deal with.
   val metadataPattern: Regex = "([^_]+)_(.+).json".r
+  // format is: {dir_path}{file_id}_{file_version}_{file_name},
+  // but the dir_path seems to be optional
+  val fileDataPattern: Regex = "(.*\\/)?([^_^\\/]+)_([^_]+)_(.+)".r
 
   val metadataEntities = Set(
     "aggregate_generation_protocol",
@@ -115,6 +118,34 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         Str(s"${entityType}_id") -> Str(entityId),
         Str("version") -> Str(entityVersion),
         Str("content") -> Str(encode(metadata).getOrElse(""))
+      )
+    )
+  }
+
+  def transformFileMetadata(entityType: String, fileName: String, metadata: Msg): Msg = {
+    val basicMetadata = transformMetadata(entityType, fileName, metadata)
+
+    // get the name of the data file and the MD5 checksum
+    val coreFileMetadata = metadata.read[Msg]("file_core")
+    val checksum = coreFileMetadata.tryRead[String]("checksum")
+    val dataFileName = coreFileMetadata.read[String]("file_name")
+    // parse the data file name
+    val matches = fileDataPattern
+      .findFirstMatchIn(dataFileName)
+      .getOrElse(
+        throw new Exception(
+          s"transformMetadata: error when finding file id and version from file named $dataFileName"
+        )
+      )
+    val fileId = matches.group(2)
+    val fileVersion = matches.group(3)
+    // and put in form we want
+    // TODO prepend basicMetadata value
+    Obj(
+      mutable.LinkedHashMap[Msg, Msg](
+        Str("file_id") -> Str(fileId),
+        Str("file_version") -> Str(fileVersion),
+        Str("content_hash") -> Str(checksum.getOrElse(""))
       )
     )
   }
