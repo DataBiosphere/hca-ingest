@@ -18,12 +18,11 @@ import scala.util.matching.Regex
 object HcaPipelineBuilder extends PipelineBuilder[Args] {
 
   override def buildPipeline(ctx: ScioContext, args: Args): Unit = {
-    // process metadata for each non-file metadata entity
-    metadataEntities.foreach { entityType =>
-      processMetadata(ctx, args.inputPrefix, args.outputPrefix, entityType)
-    }
-    fileMetadataEntities.foreach { entityType =>
-      processMetadata(ctx, args.inputPrefix, args.outputPrefix, entityType, isFileMetadata = true)
+    val allMetadataEntities =
+      metadataEntities.map(_ -> false) ++ fileMetadataEntities.map(_ -> true)
+    allMetadataEntities.foreach {
+      case (entityType, isFileMetadata) =>
+        processMetadata(ctx, args.inputPrefix, args.outputPrefix, entityType, isFileMetadata)
     }
     ()
   }
@@ -113,7 +112,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     * @return a Msg object in the desired output format
     */
   def transformMetadata(entityType: String, fileName: String, metadata: Msg): Msg = {
-    val (entityId, entityVersion) = getEntityIdAndVersion(fileName: String)
+    val (entityId, entityVersion) = getEntityIdAndVersion(fileName)
     Obj(
       mutable.LinkedHashMap[Msg, Msg](
         Str(s"${entityType}_id") -> Str(entityId),
@@ -134,8 +133,9 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     * @return a Msg object in the desired output format
     */
   def transformFileMetadata(entityType: String, fileName: String, metadata: Msg): Msg = {
-    val (entityId, entityVersion) = getEntityIdAndVersion(fileName: String)
-    val dataFileName = metadata.read[Msg]("file_core").read[String]("file_name")
+    val (entityId, entityVersion) = getEntityIdAndVersion(fileName)
+    val contentHash = metadata.read[String]("file_core", "file_crc32c")
+    val dataFileName = metadata.read[String]("file_core", "file_name")
     val (fileId, fileVersion) = getFileIdAndVersion(dataFileName)
     // put values in the form we want
     Obj(
@@ -143,6 +143,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         Str(s"${entityType}_id") -> Str(entityId),
         Str("version") -> Str(entityVersion),
         Str("content") -> Str(encode(metadata).getOrElse("")),
+        Str("content_hash") -> Str(contentHash),
         Str("source_file_id") -> Str(fileId),
         Str("source_file_version") -> Str(fileVersion)
       )
