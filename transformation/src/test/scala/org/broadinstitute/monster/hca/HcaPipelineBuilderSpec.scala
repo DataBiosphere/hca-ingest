@@ -27,7 +27,7 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
     actualOutput shouldBe expectedOutput
   }
 
-  it should "transform basic file metadata" in {
+  it should "transform file metadata with no directory in the filename" in {
     val exampleMetadataContent = JsonParser.parseEncodedJson(
       json = """
                | {
@@ -40,7 +40,7 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
                | }
                |""".stripMargin
     )
-    // TODO does this fail when checksum is "null"?
+
     val actualOutput = HcaPipelineBuilder.transformFileMetadata(
       entityType = "some_file_entity_type",
       fileName = "entity-id_entity-version.json",
@@ -53,9 +53,8 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
           |   "some_file_entity_type_id": "entity-id",
           |   "version": "entity-version",
           |   "content": "{\"file_core\":{\"file_name\":\"some-id_some-version.numbers123_12-34_metrics_are_fun.csv\",\"format\":\"csv\"},\"schema_type\":\"file\",\"checksum\":null}",
-          |   "file_id": "some-id",
-          |   "file_version": "some-version.numbers123",
-          |   "checksum": ""
+          |   "source_file_id": "some-id",
+          |   "source_file_version": "some-version.numbers123"
           | }
           |""".stripMargin
     )
@@ -63,14 +62,13 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
     actualOutput shouldBe expectedOutput
   }
 
-  it should "transform file metadata with a directory and checksum" in {
+  it should "transform file metadata with a directory in the filename" in {
     val exampleMetadataContent = JsonParser.parseEncodedJson(
       json = """
                | {
                |    "file_core": {
                |        "file_name": "a-directory/sub_directory/file-id_file-version_filename.json",
-               |        "format": "json",
-               |        "checksum": "abcdefg"
+               |        "format": "json"
                |    }
                | }
                |""".stripMargin
@@ -86,10 +84,9 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
           | {
           |   "some_type_id": "123",
           |   "version": "456",
-          |   "content": "{\"file_core\":{\"file_name\":\"a-directory/sub_directory/file-id_file-version_filename.json\",\"format\":\"json\",\"checksum\":\"abcdefg\"}}",
-          |   "file_id": "file-id",
-          |   "file_version": "file-version",
-          |   "checksum": "abcdefg"
+          |   "content": "{\"file_core\":{\"file_name\":\"a-directory/sub_directory/file-id_file-version_filename.json\",\"format\":\"json\"}}",
+          |   "source_file_id": "file-id",
+          |   "source_file_version": "file-version"
           | }
           |""".stripMargin
     )

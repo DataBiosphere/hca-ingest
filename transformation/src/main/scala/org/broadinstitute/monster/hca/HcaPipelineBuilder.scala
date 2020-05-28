@@ -134,10 +134,8 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     * @return a Msg object in the desired output format
     */
   def transformFileMetadata(entityType: String, fileName: String, metadata: Msg): Msg = {
-    val coreFileMetadata = metadata.read[Msg]("file_core")
-    val checksum = coreFileMetadata.tryRead[String]("checksum")
-    val dataFileName = coreFileMetadata.read[String]("file_name")
     val (entityId, entityVersion) = getEntityIdAndVersion(fileName: String)
+    val dataFileName = metadata.read[Msg]("file_core").read[String]("file_name")
     val (fileId, fileVersion) = getFileIdAndVersion(dataFileName)
     // put values in the form we want
     Obj(
@@ -145,9 +143,8 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         Str(s"${entityType}_id") -> Str(entityId),
         Str("version") -> Str(entityVersion),
         Str("content") -> Str(encode(metadata).getOrElse("")),
-        Str("file_id") -> Str(fileId),
-        Str("file_version") -> Str(fileVersion),
-        Str("checksum") -> Str(checksum.getOrElse(""))
+        Str("source_file_id") -> Str(fileId),
+        Str("source_file_version") -> Str(fileVersion)
       )
     )
   }
