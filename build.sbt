@@ -2,7 +2,7 @@ import _root_.io.circe.Json
 
 lazy val `hca-ingest` = project
   .in(file("."))
-  .aggregate(`hca-schema`, `hca-transformation-pipeline`)
+  .aggregate(`hca-schema`, `hca-transformation-pipeline`, `hca-orchestration-workflow`)
   .settings(publish / skip := true)
 
 lazy val `hca-schema` = project
