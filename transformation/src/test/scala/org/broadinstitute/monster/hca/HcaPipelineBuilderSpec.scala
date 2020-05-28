@@ -35,7 +35,8 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
                |        "file_name": "some-id_some-version.numbers123_12-34_metrics_are_fun.csv",
                |        "format": "csv"
                |    },
-               |    "schema_type": "file"
+               |    "schema_type": "file",
+               |    "checksum": null
                | }
                |""".stripMargin
     )
@@ -51,7 +52,7 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
           | {
           |   "some_file_entity_type_id": "entity-id",
           |   "version": "entity-version",
-          |   "content": "{\"file_core\":{\"file_name\":\"some-id_some-version.numbers123_12-34_metrics_are_fun.csv\",\"format\":\"csv\"},\"schema_type\":\"file\"}",
+          |   "content": "{\"file_core\":{\"file_name\":\"some-id_some-version.numbers123_12-34_metrics_are_fun.csv\",\"format\":\"csv\"},\"schema_type\":\"file\",\"checksum\":null}",
           |   "file_id": "some-id",
           |   "file_version": "some-version.numbers123",
           |   "checksum": ""
