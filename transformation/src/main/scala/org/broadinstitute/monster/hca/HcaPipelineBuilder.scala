@@ -62,7 +62,11 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   )
 
   val fileMetadataEntities = Set(
-    "" // TODO get the values for this list
+    "analysis_file",
+    "image_file",
+    "reference_file",
+    "sequence_file",
+    "supplementary_file"
   )
 
   /**
@@ -100,7 +104,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
 
   /**
     *
-    * extract the necessary info from a metadata file and put it into a form that makes it easy to
+    * Extract the necessary info from a metadata file and put it into a form that makes it easy to
     * pass in to the table format
     *
     * @param entityType the metadata entity type to prepend for the id field
@@ -110,7 +114,6 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     */
   def transformMetadata(entityType: String, fileName: String, metadata: Msg): Msg = {
     val (entityId, entityVersion) = getEntityIdAndVersion(fileName: String)
-    // and put in form we want
     Obj(
       mutable.LinkedHashMap[Msg, Msg](
         Str(s"${entityType}_id") -> Str(entityId),
@@ -120,24 +123,23 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     )
   }
 
+  /**
+    *
+    * Extract the necessary info from a file of file-related metadata and put it into a form that
+    * makes it easy to pass in to the table format
+    *
+    * @param entityType the metadata entity type to prepend for the id field
+    * @param fileName the raw filename of the metadata file
+    * @param metadata the content of the metadata file in Msg format
+    * @return a Msg object in the desired output format
+    */
   def transformFileMetadata(entityType: String, fileName: String, metadata: Msg): Msg = {
-    val (entityId, entityVersion) = getEntityIdAndVersion(fileName: String)
-
-    // get the name of the data file and the MD5 checksum
     val coreFileMetadata = metadata.read[Msg]("file_core")
     val checksum = coreFileMetadata.tryRead[String]("checksum")
     val dataFileName = coreFileMetadata.read[String]("file_name")
-    // parse the data file name TODO: move this into a separate method?
-    val matches = fileDataPattern
-      .findFirstMatchIn(dataFileName)
-      .getOrElse(
-        throw new Exception(
-          s"transformMetadata: error when finding file id and version from file named $dataFileName"
-        )
-      )
-    val fileId = matches.group(2)
-    val fileVersion = matches.group(3)
-    // and put in form we want
+    val (entityId, entityVersion) = getEntityIdAndVersion(fileName: String)
+    val (fileId, fileVersion) = getFileIdAndVersion(dataFileName)
+    // put values in the form we want
     Obj(
       mutable.LinkedHashMap[Msg, Msg](
         Str(s"${entityType}_id") -> Str(entityId),
@@ -150,19 +152,42 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     )
   }
 
-  // TODO better documentation on methods
+  /**
+    * Extract the entity id and entity version from the name of a metadata file.
+    *
+    * @param fileName the raw filename of the metadata file
+    * @return a tuple of the entity id and entity version
+    */
   def getEntityIdAndVersion(fileName: String): (String, String) = {
-    // extract info from file name
     val matches = metadataPattern
       .findFirstMatchIn(fileName)
       .getOrElse(
         throw new Exception(
-          s"transformMetadata: error when finding id and version from file named $fileName"
+          s"transformMetadata: error when finding entity id and version from file named $fileName"
         )
       )
     val entityId = matches.group(1)
     val entityVersion = matches.group(2)
     (entityId, entityVersion)
+  }
+
+  /**
+    * Extract the file id and file version from the name of a data file.
+    *
+    * @param fileName the raw filename of the data file
+    * @return a tuple of the file id and file version
+    */
+  def getFileIdAndVersion(fileName: String): (String, String) = {
+    val matches = fileDataPattern
+      .findFirstMatchIn(fileName)
+      .getOrElse(
+        throw new Exception(
+          s"transformMetadata: error when finding file id and version from file named $fileName"
+        )
+      )
+    val fileId = matches.group(2)
+    val fileVersion = matches.group(3)
+    (fileId, fileVersion)
   }
 
   def encode(msg: Msg): Option[String] =
