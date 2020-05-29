@@ -115,4 +115,32 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
 
     actualOutput shouldBe expectedOutput
   }
+
+  it should "correctly generate file ingest requests" in {
+    val exampleFileMetadata = JsonParser.parseEncodedJson(
+      json = """
+               | {
+               |    "file_core": {
+               |        "file_name": "file-id_version_filename.json",
+               |        "file_crc32c": "abcd1234"
+               |    }
+               | }
+               |""".stripMargin
+    )
+    val actualOutput = HcaPipelineBuilder.generateFileIngestRequest(
+      metadata = exampleFileMetadata,
+      inputPrefix = "some/local/directory"
+    )
+    val expectedOutput = JsonParser.parseEncodedJson(
+      json = """
+               | {
+               |   "source_path": "some/local/directory/data/file-id_version_filename.json",
+               |   "target_path": "/file-id_version_filename.json",
+               |   "crc32c": "abcd1234"
+               | }
+               |""".stripMargin
+    )
+
+    actualOutput shouldBe expectedOutput
+  }
 }

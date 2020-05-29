@@ -165,8 +165,8 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
 
     Obj(
       mutable.LinkedHashMap[Msg, Msg](
-        Str("sourcePath") -> Str(sourcePath),
-        Str("targetPath") -> Str(targetPath),
+        Str("source_path") -> Str(sourcePath),
+        Str("target_path") -> Str(targetPath),
         Str("crc32c") -> Str(contentHash)
       )
     )
