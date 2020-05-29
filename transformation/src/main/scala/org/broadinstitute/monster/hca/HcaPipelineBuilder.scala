@@ -18,14 +18,12 @@ import scala.util.matching.Regex
 object HcaPipelineBuilder extends PipelineBuilder[Args] {
 
   override def buildPipeline(ctx: ScioContext, args: Args): Unit = {
-    // transform metadata
     val allMetadataEntities =
       metadataEntities.map(_ -> false) ++ fileMetadataEntities.map(_ -> true)
     allMetadataEntities.foreach {
       case (entityType, isFileMetadata) =>
         processMetadata(ctx, args.inputPrefix, args.outputPrefix, entityType, isFileMetadata)
     }
-    // generateFileIngestRequests
     ()
   }
 
