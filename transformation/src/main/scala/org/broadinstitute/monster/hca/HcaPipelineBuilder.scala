@@ -143,7 +143,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         Str(s"${entityType}_id") -> Str(entityId),
         Str("version") -> Str(entityVersion),
         Str("content") -> Str(encode(metadata)),
-        Str("content_hash") -> Str(contentHash),
+        Str("crc32c") -> Str(contentHash),
         Str("source_file_id") -> Str(fileId),
         Str("source_file_version") -> Str(fileVersion)
       )

@@ -72,7 +72,7 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
           |   "some_file_entity_type_id": "entity-id",
           |   "version": "entity-version",
           |   "content": "{\"file_core\":{\"file_name\":\"some-id_some-version.numbers123_12-34_metrics_are_fun.csv\",\"format\":\"csv\",\"file_crc32c\":\"54321zyx\"},\"schema_type\":\"file\"}",
-          |   "content_hash": "54321zyx",
+          |   "crc32c": "54321zyx",
           |   "source_file_id": "some-id",
           |   "source_file_version": "some-version.numbers123"
           | }
@@ -106,7 +106,7 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
           |   "some_type_id": "123",
           |   "version": "456",
           |   "content": "{\"file_core\":{\"file_name\":\"a-directory/sub_directory/file-id_file-version_filename.json\",\"format\":\"json\",\"file_crc32c\":\"abcd1234\"}}",
-          |   "content_hash": "abcd1234",
+          |   "crc32c": "abcd1234",
           |   "source_file_id": "file-id",
           |   "source_file_version": "file-version"
           | }
