@@ -27,6 +27,25 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
     actualOutput shouldBe expectedOutput
   }
 
+  it should "transform an empty metadata file" in {
+    val actualOutput = HcaPipelineBuilder.transformMetadata(
+      entityType = "entity_type",
+      fileName = "id_version.json",
+      metadata = JsonParser.parseEncodedJson("{}")
+    )
+    val expectedOutput = JsonParser.parseEncodedJson(
+      json = """
+               | {
+               |   "entity_type_id": "id",
+               |   "version": "version",
+               |   "content": "{}"
+               | }
+               |""".stripMargin
+    )
+
+    actualOutput shouldBe expectedOutput
+  }
+
   it should "transform file metadata with no directory in the filename" in {
     val exampleMetadataContent = JsonParser.parseEncodedJson(
       json = """

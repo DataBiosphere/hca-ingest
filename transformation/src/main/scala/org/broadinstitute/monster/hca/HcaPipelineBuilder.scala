@@ -117,7 +117,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       mutable.LinkedHashMap[Msg, Msg](
         Str(s"${entityType}_id") -> Str(entityId),
         Str("version") -> Str(entityVersion),
-        Str("content") -> Str(encode(metadata).getOrElse(""))
+        Str("content") -> Str(encode(metadata))
       )
     )
   }
@@ -142,7 +142,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       mutable.LinkedHashMap[Msg, Msg](
         Str(s"${entityType}_id") -> Str(entityId),
         Str("version") -> Str(entityVersion),
-        Str("content") -> Str(encode(metadata).getOrElse("")),
+        Str("content") -> Str(encode(metadata)),
         Str("content_hash") -> Str(contentHash),
         Str("source_file_id") -> Str(fileId),
         Str("source_file_version") -> Str(fileVersion)
@@ -188,12 +188,9 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     (fileId, fileVersion)
   }
 
-  def encode(msg: Msg): Option[String] =
-    if (msg.obj.isEmpty) {
-      None
-    } else {
-      Some(upack.transform(msg, StringRenderer()).toString)
-    }
+  /** Convert a Msg to a JSON string. */
+  def encode(msg: Msg): String =
+    upack.transform(msg, StringRenderer()).toString
 
   /**
     * Read, transform, and write a given entity type.
