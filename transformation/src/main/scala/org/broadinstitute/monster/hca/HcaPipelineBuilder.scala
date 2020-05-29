@@ -18,12 +18,14 @@ import scala.util.matching.Regex
 object HcaPipelineBuilder extends PipelineBuilder[Args] {
 
   override def buildPipeline(ctx: ScioContext, args: Args): Unit = {
+    // transform metadata
     val allMetadataEntities =
       metadataEntities.map(_ -> false) ++ fileMetadataEntities.map(_ -> true)
     allMetadataEntities.foreach {
       case (entityType, isFileMetadata) =>
         processMetadata(ctx, args.inputPrefix, args.outputPrefix, entityType, isFileMetadata)
     }
+    // generateFileIngestRequests
     ()
   }
 
@@ -145,7 +147,8 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         Str("content") -> Str(encode(metadata)),
         Str("crc32c") -> Str(contentHash),
         Str("source_file_id") -> Str(fileId),
-        Str("source_file_version") -> Str(fileVersion)
+        Str("source_file_version") -> Str(fileVersion),
+        Str("data_file_name") -> Str(dataFileName)
       )
     )
   }
@@ -158,8 +161,8 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     * @return a Msg object in the desired output format
     */
   def generateFileIngestRequest(metadata: Msg, inputPrefix: String): Msg = {
-    val contentHash = metadata.read[String]("file_core", "file_crc32c")
-    val dataFileName = metadata.read[String]("file_core", "file_name")
+    val contentHash = metadata.read[String]("crc32c")
+    val dataFileName = metadata.read[String]("data_file_name")
     val sourcePath = s"$inputPrefix/data/$dataFileName"
     val targetPath = s"/$dataFileName"
 
@@ -242,6 +245,15 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
           if (isFileMetadata) transformFileMetadata(entityType, filename, metadata)
           else transformMetadata(entityType, filename, metadata)
       }
+    // generate a file ingest request (if applicable)
+    if (isFileMetadata) {
+      val fileIngestRequests = processedData.map(generateFileIngestRequest(_, inputPrefix))
+      StorageIO.writeJsonLists(
+        fileIngestRequests,
+        entityType,
+        s"${outputPrefix}/data/${entityType}"
+      )
+    }
     // then write to storage
     StorageIO.writeJsonLists(
       processedData,
