@@ -151,6 +151,28 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   }
 
   /**
+    * Extract the necessary info from file metadata and put it into a form that
+    * can be used to generate bulk file ingest requests.
+    * @param metadata the content of the metadata file in Msg format
+    * @param inputPrefix the root directory containing input files
+    * @return a Msg object in the desired output format
+    */
+  def generateFileIngestRequest(metadata: Msg, inputPrefix: String): Msg = {
+    val contentHash = metadata.read[String]("file_core", "file_crc32c")
+    val dataFileName = metadata.read[String]("file_core", "file_name")
+    val sourcePath = s"$inputPrefix/data/$dataFileName"
+    val targetPath = s"/$dataFileName"
+
+    Obj(
+      mutable.LinkedHashMap[Msg, Msg](
+        Str("sourcePath") -> Str(sourcePath),
+        Str("targetPath") -> Str(targetPath),
+        Str("crc32c") -> Str(contentHash)
+      )
+    )
+  }
+
+  /**
     * Extract the entity id and entity version from the name of a metadata file.
     *
     * @param fileName the raw filename of the metadata file
