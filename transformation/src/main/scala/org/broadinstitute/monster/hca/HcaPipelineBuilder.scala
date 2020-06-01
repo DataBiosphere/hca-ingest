@@ -249,7 +249,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       StorageIO.writeJsonLists(
         fileIngestRequests,
         entityType,
-        s"${outputPrefix}/data/${entityType}"
+        s"${outputPrefix}/data-transfer-requests/${entityType}"
       )
     }
     // then write to storage
