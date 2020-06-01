@@ -7,7 +7,7 @@
       "properties": {
         "stagingBucketName": {"type":  "string"}
       },
-      "required": ["bucketName", "resultBucketName"]
+      "required": ["stagingBucketName"]
     },
     "serviceAccount": {
       "type": "object",

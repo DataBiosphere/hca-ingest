@@ -1,8 +1,3 @@
-cron:
-  enable: true
-  # Every Sunday at 3:30am
-  schedule: '30 3 * * Sun'
-  timezone: 'America/New_York'
 dataflow:
   region: us-central1
   workerMachineType: n1-standard-1
