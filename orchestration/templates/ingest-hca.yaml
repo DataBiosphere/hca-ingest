@@ -16,9 +16,7 @@ spec:
         tasks:
           # Pre-process the data found in a source bucket
           - name: pre-process-source
-            templateRef:
-              name: run-dataflow
-              template: main
+            template: run-dataflow
             arguments:
               parameters:
                 - name: source-bucket-name
@@ -26,7 +24,7 @@ spec:
                 - name: staging-bucket-name
                   value: '{{ "{{inputs.parameters.staging-bucket-name}}" }}'
 
-    # Template used to launch a Dataflow processing job on raw ClinVar data,
+    # Template used to launch a Dataflow processing job on raw HCA data,
     # transforming it to our target schema.
     - name: run-dataflow
       inputs:
