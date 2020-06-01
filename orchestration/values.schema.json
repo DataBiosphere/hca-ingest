@@ -5,7 +5,6 @@
     "gcs": {
       "type": "object",
       "properties": {
-        "sourceBucketName": { "type": "string" },
         "stagingBucketName": {"type":  "string"}
       },
       "required": ["bucketName", "resultBucketName"]

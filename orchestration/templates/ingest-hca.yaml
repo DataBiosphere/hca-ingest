@@ -10,7 +10,7 @@ spec:
       inputs:
         parameters:
           - name: source-bucket-name
-          - name: staging-bucket-name
+          - name: source-bucket-prefix
 
       dag:
         tasks:
@@ -21,8 +21,8 @@ spec:
               parameters:
                 - name: source-bucket-name
                   value: '{{ "{{inputs.parameters.source-bucket-name}}" }}'
-                - name: staging-bucket-name
-                  value: '{{ "{{inputs.parameters.staging-bucket-name}}" }}'
+                - name: source-bucket-prefix
+                  value: '{{ "{{inputs.parameters.source-bucket-prefix}}" }}'
 
     # Template used to launch a Dataflow processing job on raw HCA data,
     # transforming it to our target schema.
@@ -30,15 +30,17 @@ spec:
       inputs:
         parameters:
           - name: source-bucket-name
-          - name: staging-bucket-name
+          {{- $sourceBucket := "{{inputs.parameters.source-bucket-name}}" }}
+          - name: source-bucket-prefix
+          {{- $sourcePrefix := "{{inputs.parameters.source-bucket-prefix}}" }}
       container:
         {{- $version := default "latest" .Chart.AppVersion }}
         image: us.gcr.io/broad-dsp-gcr-public/hca-transformation-pipeline:{{ $version }}
         command: []
         args:
           - --runner=dataflow
-          - --inputPrefix=gs://{{ "{{inputs.parameters.source-bucket-name}}" }}
-          - --outputPrefix=gs://{{ "{{inputs.parameters.staging-bucket-name}}" }}
+          - --inputPrefix=gs://{{ $sourceBucket }}/{{ $sourcePrefix }}
+          - --outputPrefix=gs://{{ .Values.gcs.stagingBucketName }}
           {{- with .Values.dataflow }}
           - --project={{ .project }}
           - --region={{ .region }}
