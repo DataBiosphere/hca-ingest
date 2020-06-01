@@ -2,7 +2,6 @@ apiVersion: v2
 name: hca-ingest
 description: Top-level orchestration workflow for HCA
 type: application
-# TODO: This needs to auto-update on every merge
 version: 0.0.0
 dependencies:
   - name: argo-templates
