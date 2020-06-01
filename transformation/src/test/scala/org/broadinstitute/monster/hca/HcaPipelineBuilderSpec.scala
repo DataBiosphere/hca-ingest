@@ -74,7 +74,8 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
           |   "content": "{\"file_core\":{\"file_name\":\"some-id_some-version.numbers123_12-34_metrics_are_fun.csv\",\"format\":\"csv\",\"file_crc32c\":\"54321zyx\"},\"schema_type\":\"file\"}",
           |   "crc32c": "54321zyx",
           |   "source_file_id": "some-id",
-          |   "source_file_version": "some-version.numbers123"
+          |   "source_file_version": "some-version.numbers123",
+          |   "data_file_name": "some-id_some-version.numbers123_12-34_metrics_are_fun.csv"
           | }
           |""".stripMargin
     )
@@ -108,7 +109,41 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
           |   "content": "{\"file_core\":{\"file_name\":\"a-directory/sub_directory/file-id_file-version_filename.json\",\"format\":\"json\",\"file_crc32c\":\"abcd1234\"}}",
           |   "crc32c": "abcd1234",
           |   "source_file_id": "file-id",
-          |   "source_file_version": "file-version"
+          |   "source_file_version": "file-version",
+          |   "data_file_name": "a-directory/sub_directory/file-id_file-version_filename.json"
+          | }
+          |""".stripMargin
+    )
+
+    actualOutput shouldBe expectedOutput
+  }
+
+  it should "correctly generate file ingest requests" in {
+    val exampleProcessedFileMetadata = JsonParser.parseEncodedJson(
+      json =
+        """
+          | {
+          |   "some_type_id": "123",
+          |   "version": "456",
+          |   "content": "{\"file_core\":{\"file_name\":\"a-directory/sub_directory/file-id_file-version_filename.json\",\"format\":\"json\",\"file_crc32c\":\"abcd1234\"}}",
+          |   "crc32c": "abcd1234",
+          |   "source_file_id": "file-id",
+          |   "source_file_version": "file-version",
+          |   "data_file_name": "a-directory/sub_directory/file-id_file-version_filename.json"
+          | }
+          |""".stripMargin
+    )
+    val actualOutput = HcaPipelineBuilder.generateFileIngestRequest(
+      metadata = exampleProcessedFileMetadata,
+      inputPrefix = "some/local/directory"
+    )
+    val expectedOutput = JsonParser.parseEncodedJson(
+      json =
+        """
+          | {
+          |   "source_path": "some/local/directory/data/a-directory/sub_directory/file-id_file-version_filename.json",
+          |   "target_path": "/a-directory/sub_directory/file-id_file-version_filename.json",
+          |   "crc32c": "abcd1234"
           | }
           |""".stripMargin
     )

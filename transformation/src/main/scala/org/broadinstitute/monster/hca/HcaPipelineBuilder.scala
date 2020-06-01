@@ -145,7 +145,30 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         Str("content") -> Str(encode(metadata)),
         Str("crc32c") -> Str(contentHash),
         Str("source_file_id") -> Str(fileId),
-        Str("source_file_version") -> Str(fileVersion)
+        Str("source_file_version") -> Str(fileVersion),
+        Str("data_file_name") -> Str(dataFileName)
+      )
+    )
+  }
+
+  /**
+    * Extract the necessary info from file metadata and put it into a form that
+    * can be used to generate bulk file ingest requests.
+    * @param metadata the content of the metadata file in Msg format
+    * @param inputPrefix the root directory containing input files
+    * @return a Msg object in the desired output format
+    */
+  def generateFileIngestRequest(metadata: Msg, inputPrefix: String): Msg = {
+    val contentHash = metadata.read[String]("crc32c")
+    val dataFileName = metadata.read[String]("data_file_name")
+    val sourcePath = s"$inputPrefix/data/$dataFileName"
+    val targetPath = s"/$dataFileName"
+
+    Obj(
+      mutable.LinkedHashMap[Msg, Msg](
+        Str("source_path") -> Str(sourcePath),
+        Str("target_path") -> Str(targetPath),
+        Str("crc32c") -> Str(contentHash)
       )
     )
   }
@@ -220,6 +243,15 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
           if (isFileMetadata) transformFileMetadata(entityType, filename, metadata)
           else transformMetadata(entityType, filename, metadata)
       }
+    // generate a file ingest request (if applicable)
+    if (isFileMetadata) {
+      val fileIngestRequests = processedData.map(generateFileIngestRequest(_, inputPrefix))
+      StorageIO.writeJsonLists(
+        fileIngestRequests,
+        entityType,
+        s"${outputPrefix}/data-transfer-requests/${entityType}"
+      )
+    }
     // then write to storage
     StorageIO.writeJsonLists(
       processedData,
