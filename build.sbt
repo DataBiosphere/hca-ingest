@@ -1,8 +1,8 @@
-//import _root_.io.circe.Json
+import _root_.io.circe.Json
 
 lazy val `hca-ingest` = project
   .in(file("."))
-  .aggregate(`hca-schema`, `hca-transformation-pipeline`)
+  .aggregate(`hca-schema`, `hca-transformation-pipeline`, `hca-orchestration-workflow`)
   .settings(publish / skip := true)
 
 lazy val `hca-schema` = project
@@ -18,20 +18,20 @@ lazy val `hca-transformation-pipeline` = project
   .enablePlugins(MonsterScioPipelinePlugin)
   .dependsOn(`hca-schema`)
 
-//lazy val `hca-orchestration-workflow` = project
-//  .in(file("orchestration"))
-//  .enablePlugins(MonsterHelmPlugin)
-//  .settings(
-//    helmChartOrganization := "DataBiosphere",
-//    helmChartRepository := "hca-ingest",
-//    helmInjectVersionValues := { (baseValues, version) =>
-//      val schemaVersionValues = Json.obj(
-//        "argoTemplates" -> Json.obj(
-//          "diffBQTable" -> Json.obj(
-//            "schemaImageVersion" -> Json.fromString(version)
-//          )
-//        )
-//      )
-//      baseValues.deepMerge(schemaVersionValues)
-//    }
-//  )
+lazy val `hca-orchestration-workflow` = project
+  .in(file("orchestration"))
+  .enablePlugins(MonsterHelmPlugin)
+  .settings(
+    helmChartOrganization := "DataBiosphere",
+    helmChartRepository := "hca-ingest",
+    helmInjectVersionValues := { (baseValues, version) =>
+      val schemaVersionValues = Json.obj(
+        "argoTemplates" -> Json.obj(
+          "diffBQTable" -> Json.obj(
+            "schemaImageVersion" -> Json.fromString(version)
+          )
+        )
+      )
+      baseValues.deepMerge(schemaVersionValues)
+    }
+  )

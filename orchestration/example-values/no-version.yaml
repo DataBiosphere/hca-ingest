@@ -1,0 +1,16 @@
+gcs:
+  stagingBucketName: buc
+serviceAccount:
+  k8sName: k8sss
+  googleName: goog@boog
+dataflow:
+  project: project
+  region: mars
+  tmpBucketName: tmp
+  subnetName: network
+  workerAccount: runner@zoog
+  workerMachineType: bot
+  autoscaling:
+    minWorkers: 1
+    maxWorkers: 2
+  useFlexRS: false

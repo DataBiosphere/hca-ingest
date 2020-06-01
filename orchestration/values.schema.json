@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "gcs": {
+      "type": "object",
+      "properties": {
+        "stagingBucketName": {"type":  "string"}
+      },
+      "required": ["stagingBucketName"]
+    },
+    "serviceAccount": {
+      "type": "object",
+      "properties": {
+        "k8sName": { "type": "string" },
+        "googleName": { "type": "string" }
+      },
+      "required": ["k8sName", "googleName"]
+    },
+    "dataflow": {
+      "type": "object",
+      "properties": {
+        "project": { "type": "string" },
+        "region": { "type": "string" },
+        "tmpBucketName": { "type": "string" },
+        "subnetName": { "type": "string" },
+        "workerAccount": { "type": "string" },
+        "workerMachineType": { "type": "string" },
+        "autoscaling": {
+          "type": "object",
+          "properties": {
+            "minWorkers": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "maxWorkers": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": ["minWorkers", "maxWorkers"]
+        },
+        "useFlexRS": { "type": "boolean" }
+      },
+      "required": ["project", "region", "tmpBucketName",  "subnetName", "workerAccount",
+        "workerMachineType", "autoscaling", "useFlexRS"]
+    }
+  },
+  "required": ["gcs", "serviceAccount", "dataflow"]
+}
