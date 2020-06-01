@@ -15,7 +15,7 @@ spec:
       dag:
         tasks:
           # Pre-process the data found in a source bucket
-          - name: pre-process-source
+          - name: pre-process-metadata
             template: run-dataflow
             arguments:
               parameters:
