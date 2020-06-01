@@ -27,7 +27,6 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     ()
   }
 
-  implicit val msgCoder: Coder[Msg] = Coder.beam(new UpackMsgCoder)
   implicit val readableFileCoder: Coder[ReadableFile] = Coder.beam(new ReadableFileCoder)
 
   // format is: metadata/{entity_type}/{entity_id}_{version}.json,

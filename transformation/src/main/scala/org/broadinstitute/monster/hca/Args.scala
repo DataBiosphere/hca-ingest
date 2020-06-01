@@ -1,7 +1,7 @@
 package org.broadinstitute.monster.hca
 
 import caseapp.{AppName, AppVersion, HelpMessage, ProgName}
-import org.broadinstitute.monster.HcaTransformationPipelineBuildInfo
+import org.broadinstitute.monster.buildinfo.HcaTransformationPipelineBuildInfo
 
 @AppName("HCA transformation pipeline")
 @AppVersion(HcaTransformationPipelineBuildInfo.version)
