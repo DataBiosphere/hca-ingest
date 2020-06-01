@@ -1,0 +1,11 @@
+gcs:
+  stagingBucketName: buc
+serviceAccount:
+  k8sName: k8sss
+  googleName: goog@boog
+dataflow:
+  project: project
+  tmpBucketName: tmp
+  subnetName: network
+  workerAccount: runner@zoog
+  useFlexRS: false
