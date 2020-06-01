@@ -18,15 +18,6 @@
       },
       "required": ["k8sName", "googleName"]
     },
-    "cron": {
-      "type": "object",
-      "properties": {
-        "enable": { "type": "boolean" },
-        "schedule": { "type": "string" },
-        "timezone": { "type": "string" }
-      },
-      "required": ["enable", "schedule"]
-    },
     "dataflow": {
       "type": "object",
       "properties": {
@@ -56,5 +47,5 @@
         "workerMachineType", "autoscaling", "useFlexRS"]
     }
   },
-  "required": ["gcs", "serviceAccount", "cron", "dataflow"]
+  "required": ["gcs", "serviceAccount", "dataflow"]
 }
