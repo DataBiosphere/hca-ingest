@@ -16,7 +16,6 @@ jobs:
       - name: Compile
         run: sbt Compile/compile Test/compile IntegrationTest/compile
       - name: Test
-        run: sbt "set ThisBuild/coverageEnabled := true" test IntegrationTest/test
-      - name: Aggregate coverage reports
-        run: sbt coverageAggregate
-      - uses: codecov/codecov-action@v1
+        run: sbt "set ThisBuild/coverageEnabled := true" test IntegrationTest/test coverageAggregate
+      - name: Publish coverage
+        uses: codecov/codecov-action@v1
