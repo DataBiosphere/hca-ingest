@@ -101,7 +101,7 @@ spec:
                   value: {{ "{{item.path}}" | quote }}
                 - name: control-file-index
                   value: {{ "{{item.id}}" | quote }}
-                - name: load-tag
+                - name: load-tag-prefix
                   value: {{ $stagingPrefix | quote }}
 
     ##
