@@ -72,7 +72,7 @@ spec:
                 - name: bq-project
                   value: {{ .Values.bigquery.stagingData.project }}
                 - name: bq-dataset
-                  value: {{ .Values.bigquery.stagingData.dataset }}
+                  value: {{ $datasetName | quote }}
                 - name: bq-table
                   value: {{ $fileLoadTable }}
                 - name: output-format
