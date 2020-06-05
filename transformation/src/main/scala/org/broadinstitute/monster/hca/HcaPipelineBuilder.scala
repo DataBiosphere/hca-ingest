@@ -24,6 +24,9 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       case (entityType, isFileMetadata) =>
         processMetadata(ctx, args.inputPrefix, args.outputPrefix, entityType, isFileMetadata)
     }
+    linksDataEntities.foreach { //TODO Do I need a loop here?
+      processLinksMetadata(ctx, args.inputPrefix, args.outputPrefix, entityType, isFileMetadata) //TODO
+    }
     ()
   }
 
@@ -32,9 +35,14 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   // format is: metadata/{entity_type}/{entity_id}_{version}.json,
   // but filename returns just {entity_id}_{version}.json, so that is what we deal with.
   val metadataPattern: Regex = "([^_]+)_(.+).json".r
-  // format is: {dir_path}/{file_id}_{file_version}_{file_name},
+  // format is: data/{dir_path}/{file_id}_{file_version}_{file_name},
   // but the dir_path seems to be optional
   val fileDataPattern: Regex = "(.*\\/)?([^_^\\/]+)_([^_]+)_(.+)".r
+  // format is: {links_id}_{version}_{project_id}.json
+  // but the `project_id` identifies the project the subgraph is part of
+  // A subgraph is part of exactly one project. The importer must record an error if it
+  // detects more than one object with the same `links/{links_id}_{version}_` prefix.
+  val linksDataPattern: Regex = "([^_]+)_(.+)_([^_]+).json".r
 
   val metadataEntities = Set(
     "aggregate_generation_protocol",
@@ -65,6 +73,10 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     "reference_file",
     "sequence_file",
     "supplementary_file"
+  )
+
+  val linksDataEntities = Set( //TODO what should go in this list? Is this list needed?
+    ""
   )
 
   /**
@@ -135,7 +147,9 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     val (entityId, entityVersion) = getEntityIdAndVersion(fileName)
     val contentHash = metadata.read[String]("file_core", "file_crc32c")
     val dataFileName = metadata.read[String]("file_core", "file_name")
+    val linksFileName = metadata.read[String]("file_core", "file_name") //TODO Is file_name unique or always "links.json"
     val (fileId, fileVersion) = getFileIdAndVersion(dataFileName)
+    val (linksId, linksVersion, projectId) = getLinksIdVersionAndProjectId(linksFileName) //TODO
     // put values in the form we want
     Obj(
       mutable.LinkedHashMap[Msg, Msg](
@@ -145,10 +159,15 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         Str("crc32c") -> Str(contentHash),
         Str("source_file_id") -> Str(fileId),
         Str("source_file_version") -> Str(fileVersion),
-        Str("data_file_name") -> Str(dataFileName)
+        Str("data_file_name") -> Str(dataFileName),
+        Str("links_id") -> Str(linksId),
+        Str("links_version") -> Str(linksVersion),
+        Str("project_id") -> Str(projectId),
       )
     )
   }
+
+  def transformLinksFileMetadata()
 
   /**
     * Extract the necessary info from file metadata and put it into a form that
@@ -210,6 +229,26 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     (fileId, fileVersion)
   }
 
+  /**
+    * Extract the links id, version, and project_id from the name of a "links.json" file.
+    *
+    * @param fileName the raw filename of the "links.json" file
+    * @return a tuple of the links id, version, and project id
+    */
+  def getLinksIdVersionAndProjectId(fileName: String): (String, String, String) = {
+    val matches = linksDataPattern
+      .findFirstMatchIn(fileName)
+      .getOrElse(
+        throw new Exception(
+          s"transformMetadata: error when finding links id, version, and project id from file named $fileName"
+        )
+      )
+    val linksId = matches.group(1)
+    val linksVersion = matches.group(2)
+    val projectId = matches.group(3)
+    (linksId, linksVersion, projectId)
+  }
+
   /** Convert a Msg to a JSON string. */
   def encode(msg: Msg): String =
     upack.transform(msg, StringRenderer()).toString
@@ -223,6 +262,42 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     * @param entityType the bucket name/table name to read/write from
     */
   def processMetadata(
+    context: ScioContext,
+    inputPrefix: String,
+    outputPrefix: String,
+    entityType: String,
+    isFileMetadata: Boolean = false
+  ): ClosedTap[String] = {
+    // get the readable files for the given input path
+    val readableFiles = getReadableFiles(
+      s"$inputPrefix/metadata/${entityType}/**.json",
+      context
+    )
+    // then convert json to msg and get the filename
+    val processedData = jsonToFilenameAndMsg(entityType)(readableFiles)
+      .withName(s"Pre-process ${entityType} metadata")
+      .map {
+        case (filename, metadata) =>
+          if (isFileMetadata) transformFileMetadata(entityType, filename, metadata)
+          else transformMetadata(entityType, filename, metadata)
+      }
+    // generate a file ingest request (if applicable)
+    if (isFileMetadata) {
+      val fileIngestRequests = processedData.map(generateFileIngestRequest(_, inputPrefix))
+      StorageIO.writeJsonLists(
+        fileIngestRequests,
+        entityType,
+        s"${outputPrefix}/data-transfer-requests/${entityType}"
+      )
+    }
+    // then write to storage
+    StorageIO.writeJsonLists(
+      processedData,
+      entityType,
+      s"${outputPrefix}/metadata/${entityType}"
+    )
+  }
+  def processLinksMetadata(
     context: ScioContext,
     inputPrefix: String,
     outputPrefix: String,
