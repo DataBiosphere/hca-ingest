@@ -99,7 +99,7 @@ spec:
         command: []
         args:
           - --runner=dataflow
-          - --inputPrefix=gs://{{ $sourceBucket }}/{{ $sourcePrefix }}
+          - --inputPrefix=gs://{{ $sourceBucket }}{{ $sourcePrefix }}
           - --outputPrefix=gs://{{ .Values.gcs.stagingBucketName }}/{{ $stagingPrefix }}
           {{- with .Values.dataflow }}
           - --project={{ .project }}
