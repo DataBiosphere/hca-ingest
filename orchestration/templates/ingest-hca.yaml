@@ -247,7 +247,7 @@ spec:
           {{- $controlFilePath := "{{inputs.parameters.control-file-path}}" }}
           - name: load-tag
           {{- $loadTag := "{{inputs.parameters.load-tag}}" }}
-      volumeMounts:
+      volumes:
         - name: sa-secret-volume
           secret:
             secretName: {{ .Values.repo.secretName }}
