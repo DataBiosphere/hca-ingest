@@ -14,3 +14,12 @@ dataflow:
     minWorkers: 1
     maxWorkers: 2
   useFlexRS: false
+bigquery:
+  stagingData:
+    project: sp
+    datasetPrefix: sd
+    description: foo
+    expiration: '123'
+  jadeData:
+    project: jd
+    dataset: jd

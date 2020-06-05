@@ -5,3 +5,10 @@ dataflow:
     minWorkers: 4
     maxWorkers: 8
   useFlexRS: false
+argoTemplates:
+  createBQDataset:
+    create: true
+    name: create-dataset
+  exportBQTable:
+    create: true
+    name: export-table
