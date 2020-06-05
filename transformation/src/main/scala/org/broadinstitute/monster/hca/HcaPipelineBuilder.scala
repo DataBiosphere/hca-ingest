@@ -24,9 +24,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       case (entityType, isFileMetadata) =>
         processMetadata(ctx, args.inputPrefix, args.outputPrefix, entityType, isFileMetadata)
     }
-    linksDataEntities.foreach { //TODO Do I need a loop here?
-      processLinksMetadata(ctx, args.inputPrefix, args.outputPrefix, entityType, isFileMetadata) //TODO
-    }
+    processLinksMetadata(ctx, args.inputPrefix, args.outputPrefix)
     ()
   }
 
@@ -147,9 +145,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     val (entityId, entityVersion) = getEntityIdAndVersion(fileName)
     val contentHash = metadata.read[String]("file_core", "file_crc32c")
     val dataFileName = metadata.read[String]("file_core", "file_name")
-    val linksFileName = metadata.read[String]("file_core", "file_name") //TODO Is file_name unique or always "links.json"
     val (fileId, fileVersion) = getFileIdAndVersion(dataFileName)
-    val (linksId, linksVersion, projectId) = getLinksIdVersionAndProjectId(linksFileName) //TODO
     // put values in the form we want
     Obj(
       mutable.LinkedHashMap[Msg, Msg](
@@ -159,15 +155,32 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         Str("crc32c") -> Str(contentHash),
         Str("source_file_id") -> Str(fileId),
         Str("source_file_version") -> Str(fileVersion),
-        Str("data_file_name") -> Str(dataFileName),
-        Str("links_id") -> Str(linksId),
-        Str("links_version") -> Str(linksVersion),
-        Str("project_id") -> Str(projectId),
+        Str("data_file_name") -> Str(dataFileName)
       )
     )
   }
 
-  def transformLinksFileMetadata()
+  /**
+    *
+    * Extract the necessary info from a file of table relationships and put it into a form that
+    * makes it easy to pass in to the table format
+    *
+    * @param fileName the raw filename of the metadata file
+    * @param metadata the content of the metadata file in Msg format
+    * @return a Msg object in the desired output format
+    */
+  def transformLinksFileMetadata(filename: String, metadata: Msg): Msg = {
+    val linksFileName = metadata.read[String]("file_core", filename) //TODO do I need to read from metadata here?
+    val (linksId, linksVersion, projectId) = getLinksIdVersionAndProjectId(linksFileName)
+    // put values in the form we want
+    Obj(
+      mutable.LinkedHashMap[Msg, Msg](
+        Str("links_id") -> Str(linksId),
+        Str("links_version") -> Str(linksVersion),
+        Str("project_id") -> Str(projectId)
+      )
+    )
+  }
 
   /**
     * Extract the necessary info from file metadata and put it into a form that
@@ -297,40 +310,30 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       s"${outputPrefix}/metadata/${entityType}"
     )
   }
+
   def processLinksMetadata(
     context: ScioContext,
     inputPrefix: String,
-    outputPrefix: String,
-    entityType: String,
-    isFileMetadata: Boolean = false
+    outputPrefix: String
   ): ClosedTap[String] = {
     // get the readable files for the given input path
     val readableFiles = getReadableFiles(
-      s"$inputPrefix/metadata/${entityType}/**.json",
+      s"$inputPrefix/links/**.json",
       context
     )
     // then convert json to msg and get the filename
-    val processedData = jsonToFilenameAndMsg(entityType)(readableFiles)
-      .withName(s"Pre-process ${entityType} metadata")
-      .map {
-        case (filename, metadata) =>
-          if (isFileMetadata) transformFileMetadata(entityType, filename, metadata)
-          else transformMetadata(entityType, filename, metadata)
-      }
-    // generate a file ingest request (if applicable)
-    if (isFileMetadata) {
-      val fileIngestRequests = processedData.map(generateFileIngestRequest(_, inputPrefix))
-      StorageIO.writeJsonLists(
-        fileIngestRequests,
-        entityType,
-        s"${outputPrefix}/data-transfer-requests/${entityType}"
-      )
-    }
+    val processedData =
+      jsonToFilenameAndMsg("links")(readableFiles) //TODO Can I put "links" for the table name
+        .withName(s"Pre-process links metadata")
+        .map {
+          case (filename, metadata) =>
+            transformLinksFileMetadata(filename, metadata)
+        }
     // then write to storage
     StorageIO.writeJsonLists(
       processedData,
-      entityType,
-      s"${outputPrefix}/metadata/${entityType}"
+      "links", //TODO is this right? Maybe we can feed in "links" as the entity_type somewhere upstream
+      s"${outputPrefix}/links"
     )
   }
 }
