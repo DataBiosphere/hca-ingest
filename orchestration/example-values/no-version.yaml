@@ -23,3 +23,10 @@ bigquery:
   jadeData:
     project: jd
     dataset: jd
+repo:
+  url: http://data.repo
+  datasetId: a
+  profileId: b
+  accessKey:
+    secretName: name
+    secretKey: key

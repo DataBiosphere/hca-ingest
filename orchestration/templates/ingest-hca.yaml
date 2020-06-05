@@ -82,8 +82,32 @@ spec:
                 - name: gcs-prefix
                   value: {{ $outputFileLoadPrefix | quote }}
 
-    # Template used to launch a Dataflow processing job on raw HCA data,
-    # transforming it to our target schema.
+          - name: list-deduped-requests
+            dependencies: [extract-file-loads]
+            template: list-gcs-contents
+            arguments:
+              parameters:
+                - name: gcs-prefix
+                  value: {{ $outputFileLoadPrefix | quote }}
+            {{- $fileLoads := "{{tasks.list-deduped-requests.outputs.result}}" }}
+
+          - name: ingest-data-files
+            dependencies: [list-deduped-requests]
+            template: run-bulk-file-ingest
+            withParam: {{ $fileLoads | quote }}
+            arguments:
+              parameters:
+                - name: control-file-path
+                  value: {{ "{{item.path}}" | quote }}
+                - name: control-file-index
+                  value: {{ "{{item.id}}" | quote }}
+                - name: load-tag
+                  value: {{ $stagingPrefix | quote }}
+
+    ##
+    ## Run a Dataflow job to pre-process JSON metadata from the input area,
+    ## moving it into our GCP space in the process.
+    ##
     - name: run-dataflow
       inputs:
         parameters:
@@ -120,6 +144,9 @@ spec:
           {{- end }}
           {{- end }}
 
+    ##
+    ## Diff the bulk file-load requests staged in GCS against the files already present in the repo.
+    ##
     - name: diff-file-loads
       inputs:
         parameters:
@@ -147,3 +174,108 @@ spec:
         command: [bash]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/diff-data-files.sh") | indent 10 }}
+
+    ##
+    ## List the contents of a GCS bucket under a prefix, returning the results as a JSON array
+    ## so Argo can parse and scatter over them.
+    ##
+    - name: list-gcs-contents
+      inputs:
+        parameters:
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/gcs-python:1.0.0
+        env:
+          - name: GCS_BUCKET
+            value: {{ .Values.gcs.stagingBucketName }}
+          - name: GCS_PREFIX
+            value: {{ $gcsPrefix | quote }}
+        command: [python]
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/list-gcs-files-as-array.py") | indent 10 }}
+
+    ##
+    ## Run a repo bulk-file ingest to completion.
+    ##
+    - name: run-bulk-file-ingest
+      inputs:
+        parameters:
+          - name: control-file-path
+          {{- $controlFilePath := "{{inputs.parameters.control-file-path}}" }}
+          - name: control-file-index
+          {{- $controlFileIndex := "{{inputs.parameters.control-file-index}}" }}
+          - name: load-tag-prefix
+          {{- $loadTagPrefix := "{{inputs.parameters.load-tag-prefix}}" }}
+      dag:
+        tasks:
+          - name: submit
+            template: submit-bulk-file-ingest
+            arguments:
+              parameters:
+                - name: control-file-path
+                  value: {{ $controlFilePath | quote }}
+                - name: load-tag
+                  value: {{ printf "%s-%s" $loadTagPrefix $controlFileIndex | quote }}
+          {{- $jobId := "{{tasks.submit.outputs.result}}" }}
+
+          - name: poll
+            dependencies: [submit]
+            template: poll-ingest-job
+            arguments:
+              parameters:
+                - name: job-id
+                  value: {{ $jobId | quote }}
+                {{- with .Values.repo }}
+                - name: api-url
+                  value: {{ .url }}
+                - name: timeout
+                  value: {{ .pollTimeout | quote }}
+                - name: sa-secret
+                  value: {{ .accessKey.secretName }}
+                - name: sa-secret-key
+                  value: {{ .accessKey.secretKey }}
+                {{- end }}
+
+    ##
+    ## Submit a bulk-file ingest using a request staged in GCS.
+    ##
+    - name: submit-bulk-file-ingest
+      inputs:
+        parameters:
+          - name: control-file-path
+          {{- $controlFilePath := "{{inputs.parameters.control-file-path}}" }}
+          - name: load-tag
+          {{- $loadTag := "{{inputs.parameters.load-tag}}" }}
+      volumeMounts:
+        - name: sa-secret-volume
+          secret:
+            secretName: {{ .Values.repo.secretName }}
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.1
+        volumeMounts:
+          - name: sa-secret-volume
+            mountPath: /secret
+        env:
+          - name: INPUT_PATH
+            value: {{ $controlFilePath | quote }}
+          - name: LOAD_TAG
+            value: {{ $loadTag | quote }}
+          {{- with .Values.repo }}
+          - name: API_URL
+            value: {{ .url }}
+          - name: DATASET_ID
+            value: {{ .datasetId }}
+          - name: PROFILE_ID
+            value: {{ .profileId }}
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: {{ printf "/secret/%s" .accessKey.secretKey }}
+          {{- end }}
+        command: [python]
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/submit-bulk-file-ingest.py") | indent 10 }}
+
+    ##
+    ## Inject common template used to poll TDR jobs.
+    ##
+    {{- include "argo.poll-ingest-job" . | indent 4 }}

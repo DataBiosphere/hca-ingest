@@ -5,6 +5,8 @@ dataflow:
     minWorkers: 4
     maxWorkers: 8
   useFlexRS: false
+repo:
+  pollTimeout: 86400
 argoTemplates:
   createBQDataset:
     create: true
