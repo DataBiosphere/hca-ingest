@@ -133,7 +133,7 @@ spec:
         image: google/cloud-sdk:slim
         env:
           - name: GCS_PREFIX
-            value: {{ $gcsPrefix | quote }}
+            value: {{ printf "gs://%s/%s" .Values.gcs.stagingBucketName $gcsPrefix | quote }}
           - name: TARGET_TABLE
             value: {{ $targetTable | quote }}
           - name: STAGING_PROJECT
