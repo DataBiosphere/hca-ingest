@@ -124,7 +124,7 @@ spec:
         container:
           image: google/cloud-sdk:slim
           command: [gsutil, -m]
-          args: [rm, -r, {{ printf "gs://%s/%s/*" .Values.gcs.stagingBucketName $gcsPrefix }}]
+          args: [rm, -r, {{ printf "gs://%s/%s/*" .Values.gcs.stagingBucketName $gcsPrefix | quote }}]
 
     ##
     ## Run a Dataflow job to pre-process JSON metadata from the input area,
