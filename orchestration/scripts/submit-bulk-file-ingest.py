@@ -10,6 +10,7 @@ dataset_id = os.environ["DATASET_ID"]
 profile_id = os.environ["PROFILE_ID"]
 control_file = os.environ["INPUT_PATH"]
 load_tag = os.environ["LOAD_TAG"]
+max_failures = int(os.environ["MAX_FAILURES"])
 
 authed_session = AuthorizedSession(credentials)
 
@@ -21,4 +22,4 @@ def submit_job(dataset_id: str, **kwargs):
   else:
     raise HTTPError(f'Bad response, got code of: {response.status_code}')
 
-print(submit_job(dataset_id, profileId=profile_id, loadControlFile=control_file, loadTag=load_tag, maxFailedFileLoads=0))
+print(submit_job(dataset_id, profileId=profile_id, loadControlFile=control_file, loadTag=load_tag, maxFailedFileLoads=max_failures))

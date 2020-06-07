@@ -90,6 +90,7 @@ spec:
                   value: {{ .Values.gcs.stagingBucketName }}
                 - name: gcs-prefix
                   value: {{ $outputFileLoadPrefix | quote }}
+          {{- $totalLoadCount := "{{tasks.extract-file-loads.outputs.parameters.row-count}}" }}
 
           - name: list-deduped-requests
             dependencies: [extract-file-loads]
@@ -101,7 +102,7 @@ spec:
             {{- $fileLoads := "{{tasks.list-deduped-requests.outputs.result}}" }}
 
           - name: ingest-data-files
-            dependencies: [list-deduped-requests]
+            dependencies: [list-deduped-requests, extract-file-loads]
             template: run-bulk-file-ingest
             withParam: {{ $fileLoads | quote }}
             arguments:
@@ -112,6 +113,8 @@ spec:
                   value: {{ "{{item.id}}" | quote }}
                 - name: load-tag-prefix
                   value: {{ $stagingPrefix | quote }}
+                - name: total-file-count
+                  value: {{ $totalLoadCount | quote }}
 
     ##
     ## Delete all the files under a prefix in GCS.
@@ -229,6 +232,8 @@ spec:
           {{- $controlFileIndex := "{{inputs.parameters.control-file-index}}" }}
           - name: load-tag-prefix
           {{- $loadTagPrefix := "{{inputs.parameters.load-tag-prefix}}" }}
+          - name: total-file-count
+          {{- $totalFileCount := "{{inputs.parameters.total-file-count}}" }}
       dag:
         tasks:
           - name: submit
@@ -239,6 +244,8 @@ spec:
                   value: {{ $controlFilePath | quote }}
                 - name: load-tag
                   value: {{ printf "%s-%s" $loadTagPrefix $controlFileIndex | quote }}
+                - name: max-failures
+                  value: {{ $totalFileCount | quote }}
           {{- $jobId := "{{tasks.submit.outputs.result}}" }}
 
           - name: poll
@@ -277,6 +284,8 @@ spec:
           {{- $controlFilePath := "{{inputs.parameters.control-file-path}}" }}
           - name: load-tag
           {{- $loadTag := "{{inputs.parameters.load-tag}}" }}
+          - name: max-failures
+          {{- $maxFailures := "{{inputs.parameters.max-failures}}" }}
       volumes:
         - name: sa-secret-volume
           secret:
@@ -291,6 +300,8 @@ spec:
             value: {{ $controlFilePath | quote }}
           - name: LOAD_TAG
             value: {{ $loadTag | quote }}
+          - name: MAX_FAILURES
+            value: {{ $maxFailures | quote }}
           {{- with .Values.repo }}
           - name: API_URL
             value: {{ .url }}
