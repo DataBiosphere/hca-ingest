@@ -261,7 +261,7 @@ spec:
 
           - name: check
             dependencies: [poll]
-            templates: check-bulk-file-ingest
+            template: check-bulk-file-ingest
             arguments:
               parameters:
                 - name: job-id
