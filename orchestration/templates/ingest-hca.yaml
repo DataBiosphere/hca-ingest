@@ -17,8 +17,17 @@ spec:
           {{- $stagingPrefix := "{{inputs.parameters.staging-bucket-prefix}}" }}
       dag:
         tasks:
+          # Clear the staging directory to avoid corrupt state.
+          - name: clear-staging-dir
+            template: delete-gcs-directory
+            arguments:
+              parameters:
+                - name: gcs-prefix
+                  value: {{ $stagingPrefix | quote }}
+
           # Pre-process the metadata found in a source bucket
           - name: pre-process-metadata
+            dependencies: [clear-staging-dir]
             template: run-dataflow
             arguments:
               parameters:
@@ -103,6 +112,19 @@ spec:
                   value: {{ "{{item.id}}" | quote }}
                 - name: load-tag-prefix
                   value: {{ $stagingPrefix | quote }}
+
+    ##
+    ## Delete all the files under a prefix in GCS.
+    ##
+    - name: delete-gcs-directory
+      inputs:
+        parameters:
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+        container:
+          image: google/cloud-sdk:slim
+          command: [gsutil, -m]
+          args: [rm, -r, {{ printf "gs://%s/%s/*" .Values.gcs.stagingBucketName $gcsPrefix }}]
 
     ##
     ## Run a Dataflow job to pre-process JSON metadata from the input area,
@@ -237,6 +259,14 @@ spec:
                   value: {{ .accessKey.secretKey }}
                 {{- end }}
 
+          - name: check
+            dependencies: [poll]
+            templates: check-bulk-file-ingest
+            arguments:
+              parameters:
+                - name: job-id
+                  value: {{ $jobId | quote }}
+
     ##
     ## Submit a bulk-file ingest using a request staged in GCS.
     ##
@@ -279,3 +309,29 @@ spec:
     ## Inject common template used to poll TDR jobs.
     ##
     {{- include "argo.poll-ingest-job" . | indent 4 }}
+
+    ##
+    ## Check that a bulk-file ingest completed without any failures.
+    ##
+    - name: check-bulk-file-ingest
+      inputs:
+        parameters:
+          - name: job-id
+          {{- $jobId := "{{inputs.parameters.job-id}}" }}
+      volumes:
+        - name: sa-secret-volume
+          secret:
+            secretName: {{ .Values.repo.accessKey.secretName }}
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/monster-auth-req-py:1.0.1
+        volumeMounts:
+          - name: sa-secret-volume
+            mountPath: /secret
+        env:
+          - name: JOB_ID
+            value: {{ $jobId | quote }}
+          - name: API_URL
+            value: {{ .Values.repo.url }}
+        command: [python]
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/check-bulk-file-ingest-result.py") | indent 10 }}
