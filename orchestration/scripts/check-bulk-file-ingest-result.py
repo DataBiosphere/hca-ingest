@@ -22,7 +22,7 @@ def get_counts(job_id: str) -> Counts:
       failed=json['failedFiles'],
       not_tried=json['notTriedFiles'])
   else:
-    raise HTTPError(f'Bad response, got code of: {response.status_code')
+    raise HTTPError(f'Bad response, got code of: {response.status_code}')
 
 
 counts = get_counts(job_id)
