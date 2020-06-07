@@ -21,4 +21,4 @@ def submit_job(dataset_id: str, **kwargs):
   else:
     raise HTTPError(f'Bad response, got code of: {response.status_code}')
 
-print(submit_job(dataset_id, profileId=profile_id, loadControlFile=control_file, loadTag=load_tag))
+print(submit_job(dataset_id, profileId=profile_id, loadControlFile=control_file, loadTag=load_tag, maxFailedFileLoads=0))
