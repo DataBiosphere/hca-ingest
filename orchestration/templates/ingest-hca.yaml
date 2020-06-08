@@ -406,7 +406,7 @@ spec:
                 - name: bq-dataset
                   value: {{ $datasetName | quote }}
                 - name: bq-table
-                  value: {{ $fileIdsTable }}
+                  value: {{ $fileIdsTable | quote }}
                 - name: output-format
                   value: NEWLINE_DELIMITED_JSON
                 - name: gcs-bucket
