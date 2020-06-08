@@ -124,7 +124,7 @@ spec:
               - reference_file
               - sequence_file
               - supplementary_file
-            template: inject-file-ids
+            template: ingest-file-metadata
             arguments:
               parameters:
                 - name: table
