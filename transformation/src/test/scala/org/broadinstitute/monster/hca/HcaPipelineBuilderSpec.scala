@@ -122,26 +122,26 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
     val exampleMetadataContent = JsonParser.parseEncodedJson(
       json = """
                | {
-               |    "file_core": {
-               |        "file_name": "links-id_links-version_project-id.json",
-               |        "format": "json",
-               |        "file_crc32c": "abcd1234"
-               |    }
+               |    "schema_type": "link_bundle",
+               |    "schema_version": "1.1.3",
+               |    "links": []
                | }
                |""".stripMargin
     )
     val actualOutput = HcaPipelineBuilder.transformLinksFileMetadata(
-      fileName = "123_456_789.json",
+      filename = "123_456_789.json",
       metadata = exampleMetadataContent
     )
     val expectedOutput = JsonParser.parseEncodedJson(
-      json = """
-               | {
-               |   "links_id": "123",
-               |   "links_version": "456",
-               |   "project_id": "789"
-               | }
-               |""".stripMargin
+      json =
+        """
+          | {
+          |   "content": "{\"schema_type\":\"link_bundle\",\"schema_version\":\"1.1.3\",\"links\":[]}",
+          |   "links_id": "123",
+          |   "version": "456",
+          |   "project_id": "789"
+          | }
+          |""".stripMargin
     )
 
     actualOutput shouldBe expectedOutput

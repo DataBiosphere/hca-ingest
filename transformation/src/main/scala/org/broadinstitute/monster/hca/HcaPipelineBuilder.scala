@@ -36,7 +36,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   // format is: data/{dir_path}/{file_id}_{file_version}_{file_name},
   // but the dir_path seems to be optional
   val fileDataPattern: Regex = "(.*\\/)?([^_^\\/]+)_([^_]+)_(.+)".r
-  // format is: {links_id}_{version}_{project_id}.json
+  // format is: links/{links_id}_{version}_{project_id}.json
   // but the `project_id` identifies the project the subgraph is part of
   // A subgraph is part of exactly one project. The importer must record an error if it
   // detects more than one object with the same `links/{links_id}_{version}_` prefix.
@@ -71,10 +71,6 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     "reference_file",
     "sequence_file",
     "supplementary_file"
-  )
-
-  val linksDataEntities = Set( //TODO what should go in this list? Is this list needed?
-    ""
   )
 
   /**
@@ -170,13 +166,13 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     * @return a Msg object in the desired output format
     */
   def transformLinksFileMetadata(filename: String, metadata: Msg): Msg = {
-    val linksFileName = metadata.read[String]("file_core", filename) //TODO do I need to read from metadata here?
-    val (linksId, linksVersion, projectId) = getLinksIdVersionAndProjectId(linksFileName)
+    val (linksId, linksVersion, projectId) = getLinksIdVersionAndProjectId(filename)
     // put values in the form we want
     Obj(
       mutable.LinkedHashMap[Msg, Msg](
+        Str("content") -> Str(encode(metadata)),
         Str("links_id") -> Str(linksId),
-        Str("links_version") -> Str(linksVersion),
+        Str("version") -> Str(linksVersion),
         Str("project_id") -> Str(projectId)
       )
     )
@@ -323,7 +319,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     )
     // then convert json to msg and get the filename
     val processedData =
-      jsonToFilenameAndMsg("links")(readableFiles) //TODO Can I put "links" for the table name
+      jsonToFilenameAndMsg("links")(readableFiles)
         .withName(s"Pre-process links metadata")
         .map {
           case (filename, metadata) =>
@@ -332,7 +328,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     // then write to storage
     StorageIO.writeJsonLists(
       processedData,
-      "links", //TODO is this right? Maybe we can feed in "links" as the entity_type somewhere upstream
+      "links",
       s"${outputPrefix}/links"
     )
   }
