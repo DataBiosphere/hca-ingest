@@ -443,4 +443,4 @@ spec:
             value: {{ .Values.bigquery.jadeData.dataset }}
         command: [bash]
         source: |
-        {{- include "argo.render-lines" (.Files.Lines "scripts/diff-data-files.sh") | indent 10 }}
+        {{- include "argo.render-lines" (.Files.Lines "scripts/inject-file-ids.sh") | indent 10 }}
