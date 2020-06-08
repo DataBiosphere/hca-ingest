@@ -24,17 +24,23 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       case (entityType, isFileMetadata) =>
         processMetadata(ctx, args.inputPrefix, args.outputPrefix, entityType, isFileMetadata)
     }
+    processLinksMetadata(ctx, args.inputPrefix, args.outputPrefix)
     ()
   }
 
   implicit val readableFileCoder: Coder[ReadableFile] = Coder.beam(new ReadableFileCoder)
 
-  // format is: metadata/{entity_type}/{entity_id}_{version}.json,
+  // format is: {entity_type}/{entity_id}_{version}.json,
   // but filename returns just {entity_id}_{version}.json, so that is what we deal with.
   val metadataPattern: Regex = "([^_]+)_(.+).json".r
   // format is: {dir_path}/{file_id}_{file_version}_{file_name},
   // but the dir_path seems to be optional
   val fileDataPattern: Regex = "(.*\\/)?([^_^\\/]+)_([^_]+)_(.+)".r
+  // format is: {links_id}_{version}_{project_id}.json
+  // but the `project_id` identifies the project the subgraph is part of
+  // A subgraph is part of exactly one project. The importer must record an error if it
+  // detects more than one object with the same `links/{links_id}_{version}_` prefix.
+  val linksDataPattern: Regex = "([^_]+)_(.+)_([^_]+).json".r
 
   val metadataEntities = Set(
     "aggregate_generation_protocol",
@@ -153,6 +159,28 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   }
 
   /**
+    *
+    * Extract the necessary info from a file of table relationships and put it into a form that
+    * makes it easy to pass in to the table format
+    *
+    * @param fileName the raw filename of the metadata file
+    * @param metadata the content of the metadata file in Msg format
+    * @return a Msg object in the desired output format
+    */
+  def transformLinksFileMetadata(filename: String, metadata: Msg): Msg = {
+    val (linksId, linksVersion, projectId) = getLinksIdVersionAndProjectId(filename)
+    // put values in the form we want
+    Obj(
+      mutable.LinkedHashMap[Msg, Msg](
+        Str("content") -> Str(encode(metadata)),
+        Str("links_id") -> Str(linksId),
+        Str("version") -> Str(linksVersion),
+        Str("project_id") -> Str(projectId)
+      )
+    )
+  }
+
+  /**
     * Extract the necessary info from file metadata and put it into a form that
     * can be used to generate bulk file ingest requests.
     * @param metadata the content of the metadata file in Msg format
@@ -212,6 +240,26 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     (fileId, fileVersion)
   }
 
+  /**
+    * Extract the links id, version, and project_id from the name of a "links.json" file.
+    *
+    * @param fileName the raw filename of the "links.json" file
+    * @return a tuple of the links id, version, and project id
+    */
+  def getLinksIdVersionAndProjectId(fileName: String): (String, String, String) = {
+    val matches = linksDataPattern
+      .findFirstMatchIn(fileName)
+      .getOrElse(
+        throw new Exception(
+          s"transformMetadata: error when finding links id, version, and project id from file named $fileName"
+        )
+      )
+    val linksId = matches.group(1)
+    val linksVersion = matches.group(2)
+    val projectId = matches.group(3)
+    (linksId, linksVersion, projectId)
+  }
+
   /** Convert a Msg to a JSON string. */
   def encode(msg: Msg): String =
     upack.transform(msg, StringRenderer()).toString
@@ -258,6 +306,32 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       processedData,
       entityType,
       s"${outputPrefix}/metadata/${entityType}"
+    )
+  }
+
+  def processLinksMetadata(
+    context: ScioContext,
+    inputPrefix: String,
+    outputPrefix: String
+  ): ClosedTap[String] = {
+    // get the readable files for the given input path
+    val readableFiles = getReadableFiles(
+      s"$inputPrefix/links/**.json",
+      context
+    )
+    // then convert json to msg and get the filename
+    val processedData =
+      jsonToFilenameAndMsg("links")(readableFiles)
+        .withName(s"Pre-process links metadata")
+        .map {
+          case (filename, metadata) =>
+            transformLinksFileMetadata(filename, metadata)
+        }
+    // then write to storage
+    StorageIO.writeJsonLists(
+      processedData,
+      "links",
+      s"${outputPrefix}/links"
     )
   }
 }
