@@ -404,7 +404,7 @@ spec:
                 - name: bq-project
                   value: {{ .Values.bigquery.stagingData.project }}
                 - name: bq-dataset
-                  value: {{ $datasetName | quote }}
+                  value: {{ $bqDataset | quote }}
                 - name: bq-table
                   value: {{ $fileIdsTable | quote }}
                 - name: output-format
