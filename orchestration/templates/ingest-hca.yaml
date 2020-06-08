@@ -10,22 +10,77 @@ spec:
       inputs:
         parameters:
           - name: source-bucket-name
+          {{- $inputBucket := "{{inputs.parameters.source-bucket-name}}" }}
           - name: source-bucket-prefix
+          {{- $inputPrefix := "{{inputs.parameters.source-bucket-prefix}}" }}
           - name: staging-bucket-prefix
-
+          {{- $stagingPrefix := "{{inputs.parameters.staging-bucket-prefix}}" }}
       dag:
         tasks:
-          # Pre-process the data found in a source bucket
+          # Pre-process the metadata found in a source bucket
           - name: pre-process-metadata
             template: run-dataflow
             arguments:
               parameters:
                 - name: source-bucket-name
-                  value: '{{ "{{inputs.parameters.source-bucket-name}}" }}'
+                  value: {{ $inputBucket | quote }}
                 - name: source-bucket-prefix
-                  value: '{{ "{{inputs.parameters.source-bucket-prefix}}" }}'
+                  value: {{ $inputPrefix | quote }}
                 - name: staging-bucket-prefix
-                  value: '{{ "{{inputs.parameters.staging-bucket-prefix}}" }}'
+                  value: {{ $stagingPrefix | quote }}
+
+          {{- $datasetName := printf "%s_%s" .Values.bigquery.stagingData.datasetPrefix $stagingPrefix }}
+          - name: create-staging-dataset
+            templateRef:
+              name: {{ .Values.argoTemplates.createBQDataset.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: dataset-name
+                  value: {{ $datasetName | quote }}
+                {{- with .Values.bigquery.stagingData }}
+                - name: bq-project
+                  value: {{ .project }}
+                - name: dataset-description
+                  value: {{ .description }}
+                - name: dataset-expiration
+                  value: {{ .expiration | quote }}
+                {{- end }}
+
+          {{- $inputFileLoadPrefix := printf "%s/data-transfer-requests" $stagingPrefix }}
+          {{- $fileLoadTable := "file_load_requests" }}
+          - name: diff-file-loads
+            dependencies: [pre-process-metadata, create-staging-dataset]
+            template: diff-file-loads
+            arguments:
+              parameters:
+                - name: gcs-prefix
+                  value: {{ $inputFileLoadPrefix | quote }}
+                - name: target-table
+                  value: {{ $fileLoadTable }}
+                - name: staging-bq-dataset
+                  value: {{ $datasetName | quote }}
+
+          {{- $outputFileLoadPrefix := printf "%s/data-transfer-requests-deduped" $stagingPrefix }}
+          - name: extract-file-loads
+            dependencies: [diff-file-loads]
+            templateRef:
+              name: {{ .Values.argoTemplates.exportBQTable.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: bq-project
+                  value: {{ .Values.bigquery.stagingData.project }}
+                - name: bq-dataset
+                  value: {{ $datasetName | quote }}
+                - name: bq-table
+                  value: {{ $fileLoadTable }}
+                - name: output-format
+                  value: NEWLINE_DELIMITED_JSON
+                - name: gcs-bucket
+                  value: {{ .Values.gcs.stagingBucketName }}
+                - name: gcs-prefix
+                  value: {{ $outputFileLoadPrefix | quote }}
 
     # Template used to launch a Dataflow processing job on raw HCA data,
     # transforming it to our target schema.
@@ -44,7 +99,7 @@ spec:
         command: []
         args:
           - --runner=dataflow
-          - --inputPrefix=gs://{{ $sourceBucket }}/{{ $sourcePrefix }}
+          - --inputPrefix=gs://{{ $sourceBucket }}{{ $sourcePrefix }}
           - --outputPrefix=gs://{{ .Values.gcs.stagingBucketName }}/{{ $stagingPrefix }}
           {{- with .Values.dataflow }}
           - --project={{ .project }}
@@ -64,3 +119,31 @@ spec:
           - --experiments=shuffle_mode=service
           {{- end }}
           {{- end }}
+
+    - name: diff-file-loads
+      inputs:
+        parameters:
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: target-table
+          {{- $targetTable := "{{inputs.parameters.target-table}}" }}
+          - name: staging-bq-dataset
+          {{- $bqDataset := "{{inputs.parameters.staging-bq-dataset}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        env:
+          - name: GCS_PREFIX
+            value: {{ printf "gs://%s/%s" .Values.gcs.stagingBucketName $gcsPrefix | quote }}
+          - name: TARGET_TABLE
+            value: {{ $targetTable | quote }}
+          - name: STAGING_PROJECT
+            value: {{ .Values.bigquery.stagingData.project }}
+          - name: STAGING_DATASET
+            value: {{ $bqDataset | quote }}
+          - name: JADE_PROJECT
+            value: {{ .Values.bigquery.jadeData.project }}
+          - name: JADE_DATASET
+            value: {{ .Values.bigquery.jadeData.dataset }}
+        command: [bash]
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/diff-data-files.sh") | indent 10 }}
