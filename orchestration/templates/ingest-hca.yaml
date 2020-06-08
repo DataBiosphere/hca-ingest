@@ -414,6 +414,7 @@ spec:
                 - name: gcs-prefix
                   value: {{ $metadataPrefix | quote }}
 
+    {{- $schemaImage := printf "%s:%s" .Values.argoTemplates.diffBQTable.schemaImageName (default "latest" .Values.argoTemplates.diffBQTable.schemaImageVersion) }}
     ##
     ## Rewrite staged tabular data for files to inject corresponding TDR file IDs.
     ##
@@ -427,7 +428,7 @@ spec:
           - name: bq-dataset
           {{- $bqDataset := "{{inputs.parameters.bq-dataset}}" }}
       script:
-        image: google/cloud-sdk:slim
+        image: {{ $schemaImage }}
         env:
           - name: GCS_PREFIX
             value: {{ printf "gs://%s/%s/%s" .Values.gcs.stagingBucketName $gcsPrefix $table | quote }}
