@@ -20,7 +20,7 @@ declare -ra BQ_QUERY=(
   --destination_table=${STAGING_PROJECT}:${STAGING_DATASET}.${TARGET_TABLE}
 )
 1>&2 ${BQ_QUERY[@]} "SELECT S.${TABLE}_id, S.version, J.file_id, S.source_file_id, S.source_file_version, S.content
-  FROM ${TABLE} S LEFT JOIN \`${JADE_PROJECT}.${JADE_DATASET}.${TABLE}\` J
+  FROM ${TABLE} S LEFT JOIN \`${JADE_PROJECT}.${JADE_DATASET}.datarepo_load_history\` J
   ON S.crc32c = J.checksum_crc32c"
 
 # Echo the output table name to Argo can slurp it into a parameter.
