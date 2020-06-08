@@ -133,7 +133,9 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     */
   def transformFileMetadata(entityType: String, fileName: String, metadata: Msg): Msg = {
     val (entityId, entityVersion) = getEntityIdAndVersion(fileName)
-    val contentHash = metadata.read[String]("file_core", "file_crc32c")
+    val contentHash = metadata
+      .tryRead[String]("file_core", "file_provenance", "crc32c")
+      .getOrElse(metadata.read[String]("file_core", "crc32c"))
     val dataFileName = metadata.read[String]("file_core", "file_name")
     val (fileId, fileVersion) = getFileIdAndVersion(dataFileName)
     // put values in the form we want
