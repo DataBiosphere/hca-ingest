@@ -83,6 +83,43 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
     actualOutput shouldBe expectedOutput
   }
 
+  it should "be resilient to the old placement of crc32c" in {
+    val exampleMetadataContent = JsonParser.parseEncodedJson(
+      json = """
+               | {
+               |    "file_core": {
+               |        "file_name": "some-id_some-version.numbers123_12-34_metrics_are_fun.csv",
+               |        "format": "csv",
+               |        "crc32c": "54321zyx"
+               |    },
+               |    "schema_type": "file"
+               | }
+               |""".stripMargin
+    )
+
+    val actualOutput = HcaPipelineBuilder.transformFileMetadata(
+      entityType = "some_file_entity_type",
+      fileName = "entity-id_entity-version.json",
+      metadata = exampleMetadataContent
+    )
+    val expectedOutput = JsonParser.parseEncodedJson(
+      json =
+        """
+          | {
+          |   "some_file_entity_type_id": "entity-id",
+          |   "version": "entity-version",
+          |   "content": "{\"file_core\":{\"file_name\":\"some-id_some-version.numbers123_12-34_metrics_are_fun.csv\",\"format\":\"csv\",\"crc32c\":\"54321zyx\"},\"schema_type\":\"file\"}",
+          |   "crc32c": "54321zyx",
+          |   "source_file_id": "some-id",
+          |   "source_file_version": "some-version.numbers123",
+          |   "data_file_name": "some-id_some-version.numbers123_12-34_metrics_are_fun.csv"
+          | }
+          |""".stripMargin
+    )
+
+    actualOutput shouldBe expectedOutput
+  }
+
   it should "transform file metadata with a directory in the filename" in {
     val exampleMetadataContent = JsonParser.parseEncodedJson(
       json = """
