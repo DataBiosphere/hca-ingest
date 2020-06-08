@@ -344,7 +344,7 @@ spec:
           - name: API_URL
             value: {{ .Values.repo.url }}
           - name: GOOGLE_APPLICATION_CREDENTIALS
-            value: {{ printf "/secret/%s" .accessKey.secretKey }}
+            value: {{ printf "/secret/%s" .Values.repo.accessKey.secretKey }}
         command: [python]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/check-bulk-file-ingest-result.py") | indent 10 }}
