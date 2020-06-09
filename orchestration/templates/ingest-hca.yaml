@@ -15,6 +15,9 @@ spec:
           {{- $inputPrefix := "{{inputs.parameters.source-bucket-prefix}}" }}
           - name: staging-bucket-prefix
           {{- $stagingPrefix := "{{inputs.parameters.staging-bucket-prefix}}" }}
+      # Limit to one active processing "arm" at a time.
+      # There may be multiple pods running within the arm.
+      parallelism: 1
       dag:
         tasks:
           # Clear the staging directory to avoid corrupt state.
@@ -69,8 +72,8 @@ spec:
               - dissociation_protocol
               - donor_organism
               - enrichment_protocol
-              - image_specimen
-              - imaging_preperation_protocol
+              - imaged_specimen
+              - imaging_preparation_protocol
               - imaging_protocol
               - ipsc_induction_protocol
               - organoid
