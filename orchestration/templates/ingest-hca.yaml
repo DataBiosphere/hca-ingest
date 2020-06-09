@@ -116,6 +116,24 @@ spec:
                 - name: total-file-count
                   value: {{ $totalLoadCount | quote }}
 
+          - name: ingest-file-metadata
+            dependencies: [ingest-data-files]
+            withItems:
+              - analysis_file
+              - image_file
+              - reference_file
+              - sequence_file
+              - supplementary_file
+            template: ingest-file-metadata
+            arguments:
+              parameters:
+                - name: table
+                  value: {{ "{{item}}" | quote }}
+                - name: staging-prefix
+                  value: {{ $stagingPrefix | quote }}
+                - name: bq-dataset
+                  value: {{ $datasetName | quote }}
+
     ##
     ## Delete all the files under a prefix in GCS.
     ##
@@ -348,3 +366,81 @@ spec:
         command: [python]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/check-bulk-file-ingest-result.py") | indent 10 }}
+
+    ##
+    ## Ingest metadata for a table containing information about data files.
+    ##
+    - name: ingest-file-metadata
+      inputs:
+        parameters:
+          - name: table
+          {{- $table := "{{inputs.parameters.table}}" }}
+          - name: staging-prefix
+          {{- $stagingPrefix := "{{inputs.parameters.staging-prefix}}" }}
+          - name: bq-dataset
+          {{- $bqDataset := "{{inputs.parameters.bq-dataset}}" }}
+      dag:
+        tasks:
+          - name: inject-file-ids
+            template: inject-file-ids
+            arguments:
+              parameters:
+                - name: table
+                  value: {{ $table | quote }}
+                - name: gcs-prefix
+                  value: {{ printf "%s/metadata" $stagingPrefix | quote }}
+                - name: bq-dataset
+                  value: {{ $bqDataset | quote }}
+          {{- $fileIdsTable := "{{tasks.inject-file-ids.outputs.result}}" }}
+
+          {{- $metadataPrefix := printf "%s/file-metadata-with-ids/%s" $stagingPrefix $table }}
+          - name: export-metadata-with-ids
+            dependencies: [inject-file-ids]
+            templateRef:
+              name: {{ .Values.argoTemplates.exportBQTable.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: bq-project
+                  value: {{ .Values.bigquery.stagingData.project }}
+                - name: bq-dataset
+                  value: {{ $bqDataset | quote }}
+                - name: bq-table
+                  value: {{ $fileIdsTable | quote }}
+                - name: output-format
+                  value: NEWLINE_DELIMITED_JSON
+                - name: gcs-bucket
+                  value: {{ .Values.gcs.stagingBucketName }}
+                - name: gcs-prefix
+                  value: {{ $metadataPrefix | quote }}
+
+    ##
+    ## Rewrite staged tabular data for files to inject corresponding TDR file IDs.
+    ##
+    - name: inject-file-ids
+      inputs:
+        parameters:
+          - name: table
+          {{- $table := "{{inputs.parameters.table}}" }}
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: bq-dataset
+          {{- $bqDataset := "{{inputs.parameters.bq-dataset}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        env:
+          - name: GCS_PREFIX
+            value: {{ printf "gs://%s/%s/%s" .Values.gcs.stagingBucketName $gcsPrefix $table | quote }}
+          - name: TABLE
+            value: {{ $table | quote }}
+          - name: STAGING_PROJECT
+            value: {{ .Values.bigquery.stagingData.project }}
+          - name: STAGING_DATASET
+            value: {{ $bqDataset | quote }}
+          - name: JADE_PROJECT
+            value: {{ .Values.bigquery.jadeData.project }}
+          - name: JADE_DATASET
+            value: {{ .Values.bigquery.jadeData.dataset }}
+        command: [bash]
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/inject-file-ids.sh") | indent 10 }}
