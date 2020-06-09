@@ -331,7 +331,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     StorageIO.writeJsonLists(
       processedData,
       "links",
-      s"${outputPrefix}/links"
+      s"${outputPrefix}/metadata/links"
     )
   }
 }

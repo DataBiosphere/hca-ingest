@@ -56,6 +56,42 @@ spec:
                   value: {{ .expiration | quote }}
                 {{- end }}
 
+          - name: ingest-non-file-metadata
+            dependencies: [pre-process-metadata, create-staging-dataset]
+            withItems:
+              - aggregate_generation_protocol
+              - analysis_process
+              - analysis_protocol
+              - cell_line
+              - cell_suspension
+              - collection_protocol
+              - differentiation_protocol
+              - dissociation_protocol
+              - donor_organism
+              - enrichment_protocol
+              - image_specimen
+              - imaging_preperation_protocol
+              - imaging_protocol
+              - ipsc_induction_protocol
+              - organoid
+              - process
+              - project
+              - protocol
+              - sequencing_protocol
+              - specimen_from_organism
+              - links
+            template: ingest-metadata
+            arguments:
+              parameters:
+                - name: table
+                  value: {{ "{{item}}" | quote }}
+                - name: staging-prefix
+                  value: {{ $stagingPrefix | quote }}
+                - name: metadata-type
+                  value: metadata
+                - name: bq-dataset
+                  value: {{ $datasetName | quote }}
+
           {{- $inputFileLoadPrefix := printf "%s/data-transfer-requests" $stagingPrefix }}
           {{- $fileLoadTable := "file_load_requests" }}
           - name: diff-file-loads
@@ -368,6 +404,105 @@ spec:
         {{- include "argo.render-lines" (.Files.Lines "scripts/check-bulk-file-ingest-result.py") | indent 10 }}
 
     ##
+    ## Ingest metadata staged in GCS into a TDR table.
+    ##
+    - name: ingest-metadata
+      inputs:
+        parameters:
+          - name: table
+          {{- $table := "{{inputs.parameters.table}}" }}
+          - name: staging-prefix
+          {{- $stagingPrefix := "{{inputs.parameters.staging-prefix}}" }}
+          - name: metadata-type
+          {{- $metadataType := "{{inputs.parameters.metadata-type}}" }}
+          - name: bq-dataset
+          {{- $bqDataset := "{{inputs.parameters.bq-dataset}}" }}
+      dag:
+        tasks:
+          {{- $newRowsPrefix := printf "%s/new-rows/%s" $stagingPrefix $table }}
+          {{- $oldIdsPrefix := printf "%s/old-ids/%s" $stagingPrefix $table }}
+          - name: diff-table
+            templateRef:
+              name: {{ .Values.argoTemplates.diffBQTable.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: table-name
+                  value: {{ $table | quote }}
+                - name: gcs-bucket
+                  value: {{ .Values.gcs.stagingBucketName }}
+                - name: input-prefix
+                  value: {{ printf "%s/%s/%s" $stagingPrefix $metadataType $table | quote }}
+                - name: old-ids-output-prefix
+                  value: {{ $oldIdsPrefix | quote }}
+                - name: new-rows-output-prefix
+                  value: {{ $newRowsPrefix | quote }}
+                - name: staging-bq-project
+                  value: {{ .Values.bigquery.stagingData.project }}
+                - name: staging-bq-dataset
+                  value: {{ $bqDataset | quote }}
+                - name: jade-bq-project
+                  value: {{ .Values.bigquery.jadeData.project }}
+                - name: jade-bq-dataset
+                  value: {{ .Values.bigquery.jadeData.dataset }}
+            {{- $shouldAppend := "{{tasks.diff-table.outputs.parameters.rows-to-append-count}} > 0" }}
+            {{- $shouldDelete := "{{tasks.diff-table.outputs.parameters.ids-to-delete-count}} > 0" }}
+
+          - name: soft-delete-table
+            dependencies: [diff-table]
+            when: {{ $shouldDelete | quote }}
+            templateRef:
+              name: {{ .Values.argoTemplates.softDeleteTable.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: table-name
+                  value: {{ $table | quote}}
+                - name: gcs-prefix
+                  value: {{ $oldIdsPrefix | quote }}
+                - name: gcs-bucket
+                  value: {{ .Values.gcs.stagingBucketName }}
+                {{- with .Values.repo }}
+                - name: url
+                  value: {{ .url }}
+                - name: dataset-id
+                  value: {{ .datasetId }}
+                - name: timeout
+                  value: {{ .pollTimeout }}
+                - name: sa-secret
+                  value: {{ .accessKey.secretName }}
+                - name: sa-secret-key
+                  value: {{ .accessKey.secretKey }}
+                {{- end }}
+
+          - name: ingest-table
+            dependencies: [diff-table, soft-delete-table]
+            when: {{ $shouldAppend | quote }}
+            templateRef:
+              name: {{ .Values.argoTemplates.ingestTable.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: table-name
+                  value: {{ $table | quote}}
+                - name: gcs-prefix
+                  value: {{ $newRowsPrefix | quote }}
+                - name: gcs-bucket
+                  value: {{ .Values.gcs.stagingBucketName }}
+                {{- with .Values.repo }}
+                - name: url
+                  value: {{ .url }}
+                - name: dataset-id
+                  value: {{ .datasetId }}
+                - name: timeout
+                  value: {{ .pollTimeout }}
+                - name: sa-secret
+                  value: {{ .accessKey.secretName }}
+                - name: sa-secret-key
+                  value: {{ .accessKey.secretKey }}
+                {{- end }}
+
+    ##
     ## Ingest metadata for a table containing information about data files.
     ##
     - name: ingest-file-metadata
@@ -413,6 +548,20 @@ spec:
                   value: {{ .Values.gcs.stagingBucketName }}
                 - name: gcs-prefix
                   value: {{ $metadataPrefix | quote }}
+
+          - name: ingest-metadata
+            dependencies: [export-metadata-with-ids]
+            template: ingest-metadata
+            arguments:
+              parameters:
+                - name: table
+                  value: {{ $table | quote }}
+                - name: staging-prefix
+                  value: {{ $stagingPrefix | quote }}
+                - name: metadata-type
+                  value: file-metadata-with-ids
+                - name: bq-dataset
+                  value: {{ $bqDataset | quote }}
 
     ##
     ## Rewrite staged tabular data for files to inject corresponding TDR file IDs.
