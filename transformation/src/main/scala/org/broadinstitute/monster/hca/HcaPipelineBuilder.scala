@@ -53,8 +53,8 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     "dissociation_protocol",
     "donor_organism",
     "enrichment_protocol",
-    "image_specimen",
-    "imaging_preperation_protocol",
+    "imaged_specimen",
+    "imaging_preparation_protocol",
     "imaging_protocol",
     "ipsc_induction_protocol",
     "organoid",
@@ -331,7 +331,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     StorageIO.writeJsonLists(
       processedData,
       "links",
-      s"${outputPrefix}/links"
+      s"${outputPrefix}/metadata/links"
     )
   }
 }
