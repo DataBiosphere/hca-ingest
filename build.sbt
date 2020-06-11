@@ -10,6 +10,7 @@ lazy val `hca-schema` = project
   .enablePlugins(MonsterJadeDatasetPlugin)
   .settings(
     jadeTablePackage := "org.broadinstitute.monster.hca.jadeschema.table",
+    jadeTableFragmentPackage := "org.broadinstitute.monster.hca.jadeschema.fragment",
     jadeStructPackage := "org.broadinstitute.monster.hca.jadeschema.struct"
   )
 

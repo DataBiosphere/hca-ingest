@@ -1,5 +1,3 @@
-val sbtPluginsVersion = "1.0.0"
-
 val patternBase =
   "org/broadinstitute/monster/[module](_[scalaVersion])(_[sbtVersion])/[revision]"
 
@@ -13,6 +11,4 @@ resolvers += Resolver.url(
   new URL("https://broadinstitute.jfrog.io/broadinstitute/libs-release/")
 )(publishPatterns)
 
-addSbtPlugin("org.broadinstitute.monster" % "sbt-plugins-jade" % sbtPluginsVersion)
-addSbtPlugin("org.broadinstitute.monster" % "sbt-plugins-scio" % sbtPluginsVersion)
-addSbtPlugin("org.broadinstitute.monster" % "sbt-plugins-helm" % sbtPluginsVersion)
+addSbtPlugin("org.broadinstitute.monster" % "ingest-sbt-plugins" % "2.0.0")
