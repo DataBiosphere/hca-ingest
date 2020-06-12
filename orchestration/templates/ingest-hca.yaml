@@ -448,6 +448,10 @@ spec:
                   value: {{ .Values.bigquery.jadeData.project }}
                 - name: jade-bq-dataset
                   value: {{ .Values.bigquery.jadeData.dataset }}
+                - name: upsert
+                  value: 'true'
+                - name: diff-full-history
+                  value: 'true'
             {{- $shouldAppend := "{{tasks.diff-table.outputs.parameters.rows-to-append-count}} > 0" }}
             {{- $shouldDelete := "{{tasks.diff-table.outputs.parameters.ids-to-delete-count}} > 0" }}
 
