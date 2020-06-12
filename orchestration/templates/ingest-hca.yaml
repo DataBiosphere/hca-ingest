@@ -181,10 +181,13 @@ spec:
         parameters:
           - name: gcs-prefix
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
-      container:
+      script:
         image: google/cloud-sdk:slim
-        command: [gsutil, -m]
-        args: [rm, -r, {{ printf "gs://%s/%s/*" .Values.gcs.stagingBucketName $gcsPrefix | quote }}]
+        {{- $fullPath := printf "gs://%s/%s/*" .Values.gcs.stagingBucketName $gcsPrefix }}
+        command: [bash]
+        source: |
+          # rm will fail if there's already nothing at the target path.
+          gsutil -m rm -r {{ $fullPath }} || true
 
     ##
     ## Run a Dataflow job to pre-process JSON metadata from the input area,
@@ -448,6 +451,10 @@ spec:
                   value: {{ .Values.bigquery.jadeData.project }}
                 - name: jade-bq-dataset
                   value: {{ .Values.bigquery.jadeData.dataset }}
+                - name: upsert
+                  value: 'true'
+                - name: diff-full-history
+                  value: 'true'
             {{- $shouldAppend := "{{tasks.diff-table.outputs.parameters.rows-to-append-count}} > 0" }}
             {{- $shouldDelete := "{{tasks.diff-table.outputs.parameters.ids-to-delete-count}} > 0" }}
 
@@ -551,9 +558,11 @@ spec:
                   value: {{ .Values.gcs.stagingBucketName }}
                 - name: gcs-prefix
                   value: {{ $metadataPrefix | quote }}
+          {{- $rowCount := "{{tasks.export-metadata-with-ids.outputs.parameters.row-count}}" }}
 
           - name: ingest-metadata
             dependencies: [export-metadata-with-ids]
+            when: {{ printf "%s > 0" $rowCount | quote }}
             template: ingest-metadata
             arguments:
               parameters:
