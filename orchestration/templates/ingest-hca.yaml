@@ -558,9 +558,11 @@ spec:
                   value: {{ .Values.gcs.stagingBucketName }}
                 - name: gcs-prefix
                   value: {{ $metadataPrefix | quote }}
+          {{- $rowCount := "{{tasks.export-metadata-with-ids.outputs.parameters.row-count}}" }}
 
           - name: ingest-metadata
             dependencies: [export-metadata-with-ids]
+            when: {{ printf "%s > 0" $rowCount | quote }}
             template: ingest-metadata
             arguments:
               parameters:

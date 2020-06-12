@@ -5,6 +5,6 @@ type: application
 version: 0.0.0
 dependencies:
   - name: argo-templates
-    version: 1.1.0-RC2
+    version: 1.1.0
     repository: https://broadinstitute.github.io/monster-helm
     alias: argoTemplates
