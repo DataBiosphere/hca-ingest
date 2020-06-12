@@ -184,6 +184,7 @@ spec:
       script:
         image: google/cloud-sdk:slim
         {{- $fullPath := printf "gs://%s/%s/*" .Values.gcs.stagingBucketName $gcsPrefix }}
+        command: [bash]
         source: |
           # rm will fail if there's already nothing at the target path.
           gsutil -m rm -r {{ $fullPath }} || true
