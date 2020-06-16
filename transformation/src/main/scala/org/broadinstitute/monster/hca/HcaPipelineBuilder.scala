@@ -57,6 +57,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     "imaging_preparation_protocol",
     "imaging_protocol",
     "ipsc_induction_protocol",
+    "library_preparation_protocol",
     "organoid",
     "process",
     "project",
