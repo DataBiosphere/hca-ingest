@@ -23,7 +23,7 @@ declare -ra BQ_QUERY=(
     SELECT target_path, checksum_crc32c FROM \`${JADE_PROJECT}.${JADE_DATASET}.datarepo_load_history\` WHERE state = 'succeeded'
   )
   SELECT S.source_path AS sourcePath, S.target_path AS targetPath
-  FROM ${TABLE} S LEFT JOIN J ON J.state = 'succeeded' AND S.crc32c = J.checksum_crc32c AND S.target_path = J.target_path
+  FROM ${TABLE} S LEFT JOIN J ON S.crc32c = J.checksum_crc32c AND S.target_path = J.target_path
   WHERE J.checksum_crc32c IS NULL"
 
 # Echo the output table name so Argo can slurp it into a parameter.
