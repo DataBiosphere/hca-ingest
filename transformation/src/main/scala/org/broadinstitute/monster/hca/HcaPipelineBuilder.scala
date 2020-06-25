@@ -154,7 +154,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         Str("crc32c") -> Str(contentHash),
         Str("source_file_id") -> Str(fileId),
         Str("source_file_version") -> Str(fileVersion),
-        Str("data_file_name") -> Str(dataFileName)
+        Str("virtual_path") -> Str(s"/$dataFileName")
       )
     )
   }
@@ -190,9 +190,8 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     */
   def generateFileIngestRequest(metadata: Msg, inputPrefix: String): Msg = {
     val contentHash = metadata.read[String]("crc32c")
-    val dataFileName = metadata.read[String]("data_file_name")
-    val sourcePath = s"$inputPrefix/data/$dataFileName"
-    val targetPath = s"/$dataFileName"
+    val targetPath = metadata.read[String]("virtual_path")
+    val sourcePath = s"$inputPrefix/data$targetPath"
 
     Obj(
       mutable.LinkedHashMap[Msg, Msg](
