@@ -136,15 +136,20 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     * @param entityType the metadata entity type to prepend for the id field
     * @param fileName the raw filename of the metadata file
     * @param metadata the content of the metadata file in Msg format
+    * @param descriptor the content of the descriptor file in Msg format
     * @return a Msg object in the desired output format
     */
-  def transformFileMetadata(entityType: String, fileName: String, metadata: Msg): Msg = {
+  def transformFileMetadata(
+    entityType: String,
+    fileName: String,
+    metadata: Msg,
+    descriptor: Msg
+  ): Msg = {
     val (entityId, entityVersion) = getEntityIdAndVersion(fileName)
-    val contentHash = metadata
-      .tryRead[String]("file_core", "file_provenance", "crc32c")
-      .getOrElse(metadata.read[String]("file_core", "crc32c"))
-    val dataFileName = metadata.read[String]("file_core", "file_name")
-    val (fileId, fileVersion) = getFileIdAndVersion(dataFileName)
+    val contentHash = descriptor.read[String]("crc32c")
+    val dataFileName = descriptor.read[String]("file_name")
+    val fileId = descriptor.read[String]("file_id")
+    val fileVersion = descriptor.read[String]("file_version")
     // put values in the form we want
     Obj(
       mutable.LinkedHashMap[Msg, Msg](
@@ -154,7 +159,8 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         Str("crc32c") -> Str(contentHash),
         Str("source_file_id") -> Str(fileId),
         Str("source_file_version") -> Str(fileVersion),
-        Str("data_file_name") -> Str(dataFileName)
+        Str("data_file_name") -> Str(dataFileName),
+        Str("descriptor") -> Str(encode(descriptor))
       )
     )
   }
@@ -168,8 +174,8 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     * @param metadata the content of the metadata file in Msg format
     * @return a Msg object in the desired output format
     */
-  def transformLinksFileMetadata(filename: String, metadata: Msg): Msg = {
-    val (linksId, linksVersion, projectId) = getLinksIdVersionAndProjectId(filename)
+  def transformLinksFileMetadata(fileName: String, metadata: Msg): Msg = {
+    val (linksId, linksVersion, projectId) = getLinksIdVersionAndProjectId(fileName)
     // put values in the form we want
     Obj(
       mutable.LinkedHashMap[Msg, Msg](
@@ -281,21 +287,31 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     isFileMetadata: Boolean = false
   ): ClosedTap[String] = {
     // get the readable files for the given input path
-    val readableFiles = getReadableFiles(
-      s"$inputPrefix/metadata/${entityType}/**.json",
-      context
-    )
-    // then convert json to msg and get the filename
-    val processedData = jsonToFilenameAndMsg(entityType)(readableFiles)
-      .withName(s"Pre-process ${entityType} metadata")
-      .map {
-        case (filename, metadata) =>
-          if (isFileMetadata) transformFileMetadata(entityType, filename, metadata)
-          else transformMetadata(entityType, filename, metadata)
-      }
+    val metadataFiles = getReadableFiles(s"$inputPrefix/metadata/${entityType}/**.json", context)
+    val metadataFilenameAndMsg = jsonToFilenameAndMsg(entityType)(metadataFiles)
+
+    // for file metadata
+    val readyMetadata = if (isFileMetadata) {
+      val descriptorFiles = getReadableFiles(
+        s"$inputPrefix/descriptors/$entityType/**.json",
+        context
+      )
+      val descriptorFilenameAndMsg = jsonToFilenameAndMsg(entityType)(descriptorFiles)
+      metadataFilenameAndMsg.join(descriptorFilenameAndMsg)
+    } else {
+      // for non-file metadata
+      jsonToFilenameAndMsg(entityType)(metadataFiles)
+    }
+
+    val processedMetadata = readyMetadata.withName(s"Pre-process $entityType metadata").map {
+      case (filename: String, metadata: Msg) => transformMetadata(entityType, filename, metadata)
+      case (filename: String, (metadata: Msg, descriptor: Msg)) =>
+        transformFileMetadata(entityType, filename, metadata, descriptor)
+    }
+
     // generate a file ingest request (if applicable)
     if (isFileMetadata) {
-      val fileIngestRequests = processedData.map(generateFileIngestRequest(_, inputPrefix))
+      val fileIngestRequests = processedMetadata.map(generateFileIngestRequest(_, inputPrefix))
       StorageIO.writeJsonLists(
         fileIngestRequests,
         entityType,
@@ -304,7 +320,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     }
     // then write to storage
     StorageIO.writeJsonLists(
-      processedData,
+      processedMetadata,
       entityType,
       s"${outputPrefix}/metadata/${entityType}"
     )

@@ -60,10 +60,23 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
                |""".stripMargin
     )
 
+    val exampleDescriptorContent = JsonParser.parseEncodedJson(
+      json = """
+               | {
+               |    "file_name": "some-id_some-version.numbers123_12-34_metrics_are_fun.csv",
+               |    "file_id": "my-file-id",
+               |    "file_version": "my-file-version",
+               |    "crc32c": "54321zyx",
+               |    "schema_type": "file_descriptor"
+               | }
+               |""".stripMargin
+    )
+
     val actualOutput = HcaPipelineBuilder.transformFileMetadata(
       entityType = "some_file_entity_type",
       fileName = "entity-id_entity-version.json",
-      metadata = exampleMetadataContent
+      metadata = exampleMetadataContent,
+      descriptor = exampleDescriptorContent
     )
     val expectedOutput = JsonParser.parseEncodedJson(
       json =
@@ -73,46 +86,10 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
           |   "version": "entity-version",
           |   "content": "{\"file_core\":{\"file_name\":\"some-id_some-version.numbers123_12-34_metrics_are_fun.csv\",\"format\":\"csv\",\"file_provenance\":{\"crc32c\":\"54321zyx\"}},\"schema_type\":\"file\"}",
           |   "crc32c": "54321zyx",
-          |   "source_file_id": "some-id",
-          |   "source_file_version": "some-version.numbers123",
-          |   "data_file_name": "some-id_some-version.numbers123_12-34_metrics_are_fun.csv"
-          | }
-          |""".stripMargin
-    )
-
-    actualOutput shouldBe expectedOutput
-  }
-
-  it should "be resilient to the old placement of crc32c" in {
-    val exampleMetadataContent = JsonParser.parseEncodedJson(
-      json = """
-               | {
-               |    "file_core": {
-               |        "file_name": "some-id_some-version.numbers123_12-34_metrics_are_fun.csv",
-               |        "format": "csv",
-               |        "crc32c": "54321zyx"
-               |    },
-               |    "schema_type": "file"
-               | }
-               |""".stripMargin
-    )
-
-    val actualOutput = HcaPipelineBuilder.transformFileMetadata(
-      entityType = "some_file_entity_type",
-      fileName = "entity-id_entity-version.json",
-      metadata = exampleMetadataContent
-    )
-    val expectedOutput = JsonParser.parseEncodedJson(
-      json =
-        """
-          | {
-          |   "some_file_entity_type_id": "entity-id",
-          |   "version": "entity-version",
-          |   "content": "{\"file_core\":{\"file_name\":\"some-id_some-version.numbers123_12-34_metrics_are_fun.csv\",\"format\":\"csv\",\"crc32c\":\"54321zyx\"},\"schema_type\":\"file\"}",
-          |   "crc32c": "54321zyx",
-          |   "source_file_id": "some-id",
-          |   "source_file_version": "some-version.numbers123",
-          |   "data_file_name": "some-id_some-version.numbers123_12-34_metrics_are_fun.csv"
+          |   "source_file_id": "my-file-id",
+          |   "source_file_version": "my-file-version",
+          |   "data_file_name": "some-id_some-version.numbers123_12-34_metrics_are_fun.csv",
+          |   "descriptor": "{\"file_name\":\"some-id_some-version.numbers123_12-34_metrics_are_fun.csv\",\"file_id\":\"my-file-id\",\"file_version\":\"my-file-version\",\"crc32c\":\"54321zyx\",\"schema_type\":\"file_descriptor\"}"
           | }
           |""".stripMargin
     )
@@ -132,10 +109,23 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
                | }
                |""".stripMargin
     )
+    val exampleDescriptorContent = JsonParser.parseEncodedJson(
+      json = """
+               | {
+               |    "file_name": "a-directory/sub_directory/file-id_file-version_filename.json",
+               |    "file_id": "my-file-id",
+               |    "file_version": "my-file-version",
+               |    "crc32c": "54321zyx",
+               |    "schema_type": "file_descriptor"
+               | }
+               |""".stripMargin
+    )
+
     val actualOutput = HcaPipelineBuilder.transformFileMetadata(
       entityType = "some_type",
       fileName = "123_456.json",
-      metadata = exampleMetadataContent
+      metadata = exampleMetadataContent,
+      descriptor = exampleDescriptorContent
     )
     val expectedOutput = JsonParser.parseEncodedJson(
       json =
@@ -144,10 +134,11 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
           |   "some_type_id": "123",
           |   "version": "456",
           |   "content": "{\"file_core\":{\"file_name\":\"a-directory/sub_directory/file-id_file-version_filename.json\",\"format\":\"json\",\"file_provenance\":{\"crc32c\":\"abcd1234\"}}}",
-          |   "crc32c": "abcd1234",
-          |   "source_file_id": "file-id",
-          |   "source_file_version": "file-version",
-          |   "data_file_name": "a-directory/sub_directory/file-id_file-version_filename.json"
+          |   "crc32c": "54321zyx",
+          |   "source_file_id": "my-file-id",
+          |   "source_file_version": "my-file-version",
+          |   "data_file_name": "a-directory/sub_directory/file-id_file-version_filename.json",
+          |   "descriptor": "{\"file_name\":\"a-directory/sub_directory/file-id_file-version_filename.json\",\"file_id\":\"my-file-id\",\"file_version\":\"my-file-version\",\"crc32c\":\"54321zyx\",\"schema_type\":\"file_descriptor\"}"
           | }
           |""".stripMargin
     )
@@ -166,7 +157,7 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
                |""".stripMargin
     )
     val actualOutput = HcaPipelineBuilder.transformLinksFileMetadata(
-      filename = "123_456_789.json",
+      fileName = "123_456_789.json",
       metadata = exampleMetadataContent
     )
     val expectedOutput = JsonParser.parseEncodedJson(
