@@ -88,6 +88,9 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
           |   "crc32c": "54321zyx",
           |   "data_file_name": "some-id_some-version.numbers123_12-34_metrics_are_fun.csv",
           |   "descriptor": "{\"file_name\":\"some-id_some-version.numbers123_12-34_metrics_are_fun.csv\",\"file_id\":\"my-file-id\",\"file_version\":\"my-file-version\",\"crc32c\":\"54321zyx\",\"schema_type\":\"file_descriptor\"}"
+          |   "source_file_id": "some-id",
+          |   "source_file_version": "some-version.numbers123",
+          |   "virtual_path": "/some-id_some-version.numbers123_12-34_metrics_are_fun.csv"
           | }
           |""".stripMargin
     )
@@ -135,6 +138,10 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
           |   "crc32c": "54321zyx",
           |   "data_file_name": "a-directory/sub_directory/file-id_file-version_filename.json",
           |   "descriptor": "{\"file_name\":\"a-directory/sub_directory/file-id_file-version_filename.json\",\"file_id\":\"my-file-id\",\"file_version\":\"my-file-version\",\"crc32c\":\"54321zyx\",\"schema_type\":\"file_descriptor\"}"
+          |   "crc32c": "abcd1234",
+          |   "source_file_id": "file-id",
+          |   "source_file_version": "file-version",
+          |   "virtual_path": "/a-directory/sub_directory/file-id_file-version_filename.json"
           | }
           |""".stripMargin
     )
@@ -182,7 +189,7 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
           |   "crc32c": "abcd1234",
           |   "source_file_id": "file-id",
           |   "source_file_version": "file-version",
-          |   "data_file_name": "a-directory/sub_directory/file-id_file-version_filename.json"
+          |   "virtual_path": "/a-directory/sub_directory/file-id_file-version_filename.json"
           | }
           |""".stripMargin
     )

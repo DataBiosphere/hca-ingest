@@ -19,9 +19,12 @@ declare -ra BQ_QUERY=(
   --destination_table=${STAGING_PROJECT}:${STAGING_DATASET}.${TARGET_TABLE}
 )
 
-1>&2 ${BQ_QUERY[@]} "SELECT S.source_path AS sourcePath, S.target_path AS targetPath
-  FROM ${TABLE} S LEFT OUTER JOIN \`${JADE_PROJECT}.${JADE_DATASET}.datarepo_load_history\` J
-  ON S.crc32c = J.checksum_crc32c WHERE J.checksum_crc32c IS NULL"
+1>&2 ${BQ_QUERY[@]} "WITH J AS (
+    SELECT target_path, checksum_crc32c FROM \`${JADE_PROJECT}.${JADE_DATASET}.datarepo_load_history\` WHERE state = 'succeeded'
+  )
+  SELECT S.source_path AS sourcePath, S.target_path AS targetPath
+  FROM ${TABLE} S LEFT JOIN J ON S.crc32c = J.checksum_crc32c AND S.target_path = J.target_path
+  WHERE J.checksum_crc32c IS NULL"
 
 # Echo the output table name so Argo can slurp it into a parameter.
 echo ${TARGET_TABLE}
