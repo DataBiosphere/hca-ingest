@@ -146,18 +146,15 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     descriptor: Msg
   ): Msg = {
     val (entityId, entityVersion) = getEntityIdAndVersion(fileName)
+    val dataFileName = descriptor.read[String]("file_name")
     // put values in the form we want
     Obj(
       mutable.LinkedHashMap[Msg, Msg](
         Str(s"${entityType}_id") -> Str(entityId),
         Str("version") -> Str(entityVersion),
         Str("content") -> Str(encode(metadata)),
-        Str("crc32c") -> Str(contentHash),
-        Str("source_file_id") -> Str(fileId),
-        Str("source_file_version") -> Str(fileVersion),
-        Str("virtual_path") -> Str(s"/$dataFileName")
+        Str("virtual_path") -> Str(s"/$dataFileName"),
         Str("crc32c") -> Str(descriptor.read[String]("crc32c")),
-        Str("data_file_name") -> Str(descriptor.read[String]("file_name")),
         Str("descriptor") -> Str(encode(descriptor))
       )
     )
