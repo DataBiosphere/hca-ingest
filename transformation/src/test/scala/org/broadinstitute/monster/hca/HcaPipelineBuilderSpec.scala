@@ -86,8 +86,6 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
           |   "version": "entity-version",
           |   "content": "{\"file_core\":{\"file_name\":\"some-id_some-version.numbers123_12-34_metrics_are_fun.csv\",\"format\":\"csv\",\"file_provenance\":{\"crc32c\":\"54321zyx\"}},\"schema_type\":\"file\"}",
           |   "crc32c": "54321zyx",
-          |   "source_file_id": "my-file-id",
-          |   "source_file_version": "my-file-version",
           |   "data_file_name": "some-id_some-version.numbers123_12-34_metrics_are_fun.csv",
           |   "descriptor": "{\"file_name\":\"some-id_some-version.numbers123_12-34_metrics_are_fun.csv\",\"file_id\":\"my-file-id\",\"file_version\":\"my-file-version\",\"crc32c\":\"54321zyx\",\"schema_type\":\"file_descriptor\"}"
           | }
@@ -135,8 +133,6 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
           |   "version": "456",
           |   "content": "{\"file_core\":{\"file_name\":\"a-directory/sub_directory/file-id_file-version_filename.json\",\"format\":\"json\",\"file_provenance\":{\"crc32c\":\"abcd1234\"}}}",
           |   "crc32c": "54321zyx",
-          |   "source_file_id": "my-file-id",
-          |   "source_file_version": "my-file-version",
           |   "data_file_name": "a-directory/sub_directory/file-id_file-version_filename.json",
           |   "descriptor": "{\"file_name\":\"a-directory/sub_directory/file-id_file-version_filename.json\",\"file_id\":\"my-file-id\",\"file_version\":\"my-file-version\",\"crc32c\":\"54321zyx\",\"schema_type\":\"file_descriptor\"}"
           | }
