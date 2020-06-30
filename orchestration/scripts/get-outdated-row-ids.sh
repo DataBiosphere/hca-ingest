@@ -23,3 +23,5 @@ declare -ra BQ_QUERY=(
   ${JADE_TABLE} J JOIN latest_versions L
   ON J.${TABLE}_id = L.${TABLE}_id
   WHERE J.version < L.latest_version"
+
+echo ${TARGET_TABLE}
