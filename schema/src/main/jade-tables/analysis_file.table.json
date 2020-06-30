@@ -7,8 +7,8 @@
     { "name": "file_id", "datatype": "fileref", "type": "required" },
     { "name": "descriptor", "datatype": "string", "type": "required" }
   ],
-  "partitionMode": "date",
-  "datePartitionOptions": {
+  "partitioning": {
+    "mode": "date_from_column",
     "column": "version"
   }
 }

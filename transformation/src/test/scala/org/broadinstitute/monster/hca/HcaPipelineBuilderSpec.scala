@@ -86,8 +86,7 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
           |   "version": "entity-version",
           |   "content": "{\"file_core\":{\"file_name\":\"some-id_some-version.numbers123_12-34_metrics_are_fun.csv\",\"format\":\"csv\",\"file_provenance\":{\"crc32c\":\"54321zyx\"}},\"schema_type\":\"file\"}",
           |   "crc32c": "54321zyx",
-          |   "descriptor": "{\"file_name\":\"some-id_some-version.numbers123_12-34_metrics_are_fun.csv\",\"file_id\":\"my-file-id\",\"file_version\":\"my-file-version\",\"crc32c\":\"54321zyx\",\"schema_type\":\"file_descriptor\"}",
-          |   "virtual_path": "/some-id_some-version.numbers123_12-34_metrics_are_fun.csv"
+          |   "descriptor": "{\"file_name\":\"some-id_some-version.numbers123_12-34_metrics_are_fun.csv\",\"file_id\":\"my-file-id\",\"file_version\":\"my-file-version\",\"crc32c\":\"54321zyx\",\"schema_type\":\"file_descriptor\"}"
           | }
           |""".stripMargin
     )
@@ -133,8 +132,7 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
           |   "version": "456",
           |   "content": "{\"file_core\":{\"file_name\":\"a-directory/sub_directory/file-id_file-version_filename.json\",\"format\":\"json\",\"file_provenance\":{\"crc32c\":\"abcd1234\"}}}",
           |   "crc32c": "54321zyx",
-          |   "descriptor": "{\"file_name\":\"a-directory/sub_directory/file-id_file-version_filename.json\",\"file_id\":\"my-file-id\",\"file_version\":\"my-file-version\",\"crc32c\":\"54321zyx\",\"schema_type\":\"file_descriptor\"}",
-          |   "virtual_path": "/a-directory/sub_directory/file-id_file-version_filename.json"
+          |   "descriptor": "{\"file_name\":\"a-directory/sub_directory/file-id_file-version_filename.json\",\"file_id\":\"my-file-id\",\"file_version\":\"my-file-version\",\"crc32c\":\"54321zyx\",\"schema_type\":\"file_descriptor\"}"
           | }
           |""".stripMargin
     )
@@ -172,22 +170,21 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "correctly generate file ingest requests" in {
-    val exampleProcessedFileMetadata = JsonParser.parseEncodedJson(
-      json =
-        """
-          | {
-          |   "some_type_id": "123",
-          |   "version": "456",
-          |   "content": "{\"file_core\":{\"file_name\":\"a-directory/sub_directory/file-id_file-version_filename.json\",\"format\":\"json\",\"file_crc32c\":\"abcd1234\"}}",
-          |   "crc32c": "abcd1234",
-          |   "source_file_id": "file-id",
-          |   "source_file_version": "file-version",
-          |   "virtual_path": "/a-directory/sub_directory/file-id_file-version_filename.json"
-          | }
-          |""".stripMargin
+    val exampleHash = "54321zyx"
+    val exampleDescriptor = JsonParser.parseEncodedJson(
+      json = s"""
+                | {
+                |    "file_name": "a-directory/sub_directory/file-id_file-version_filename.json",
+                |    "file_id": "my-file-id",
+                |    "file_version": "my-file-version",
+                |    "crc32c": "$exampleHash",
+                |    "schema_type": "file_descriptor"
+                | }
+                |""".stripMargin
     )
-    val actualOutput = HcaPipelineBuilder.generateFileIngestRequest(
-      metadata = exampleProcessedFileMetadata,
+    val (actualHash, actualOutput) = HcaPipelineBuilder.generateFileIngestRequest(
+      descriptor = exampleDescriptor,
+      entityType = "foo_file",
       inputPrefix = "some/local/directory"
     )
     val expectedOutput = JsonParser.parseEncodedJson(
@@ -195,12 +192,12 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
         """
           | {
           |   "source_path": "some/local/directory/data/a-directory/sub_directory/file-id_file-version_filename.json",
-          |   "target_path": "/a-directory/sub_directory/file-id_file-version_filename.json",
-          |   "crc32c": "abcd1234"
+          |   "target_path": "/foo_file/54321zyx"
           | }
           |""".stripMargin
     )
 
+    actualHash shouldBe exampleHash
     actualOutput shouldBe expectedOutput
   }
 }

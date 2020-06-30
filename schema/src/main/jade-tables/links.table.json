@@ -11,8 +11,8 @@
     ], "type": "required"},
     { "name": "content", "datatype": "string" }
   ],
-  "partitionMode": "date",
-  "datePartitionOptions": {
+  "partitioning": {
+    "mode": "date_from_column",
     "column": "version"
   }
 }

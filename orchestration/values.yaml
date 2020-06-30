@@ -24,3 +24,4 @@ argoTemplates:
   softDeleteTable:
     create: true
     name: soft-delete-table
+parallelism: 4

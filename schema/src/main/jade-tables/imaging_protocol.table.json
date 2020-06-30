@@ -5,8 +5,8 @@
     { "name": "version", "datatype": "timestamp", "type": "primary_key" },
     { "name": "content", "datatype": "string", "type": "required" }
   ],
-  "partitionMode": "date",
-  "datePartitionOptions": {
+  "partitioning": {
+    "mode": "date_from_column",
     "column": "version"
   }
 }
