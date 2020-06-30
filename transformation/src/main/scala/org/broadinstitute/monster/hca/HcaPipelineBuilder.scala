@@ -12,7 +12,6 @@ import org.broadinstitute.monster.common.msg._
 import ujson.StringRenderer
 import upack.{Msg, Obj, Str}
 
-import scala.collection.mutable
 import scala.util.matching.Regex
 
 object HcaPipelineBuilder extends PipelineBuilder[Args] {
@@ -120,11 +119,9 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   def transformMetadata(entityType: String, fileName: String, metadata: Msg): Msg = {
     val (entityId, entityVersion) = getEntityIdAndVersion(fileName)
     Obj(
-      mutable.LinkedHashMap[Msg, Msg](
-        Str(s"${entityType}_id") -> Str(entityId),
-        Str("version") -> Str(entityVersion),
-        Str("content") -> Str(encode(metadata))
-      )
+      Str(s"${entityType}_id") -> Str(entityId),
+      Str("version") -> Str(entityVersion),
+      Str("content") -> Str(encode(metadata))
     )
   }
 
@@ -146,17 +143,13 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     descriptor: Msg
   ): Msg = {
     val (entityId, entityVersion) = getEntityIdAndVersion(fileName)
-    val dataFileName = descriptor.read[String]("file_name")
     // put values in the form we want
     Obj(
-      mutable.LinkedHashMap[Msg, Msg](
-        Str(s"${entityType}_id") -> Str(entityId),
-        Str("version") -> Str(entityVersion),
-        Str("content") -> Str(encode(metadata)),
-        Str("virtual_path") -> Str(s"/$dataFileName"),
-        Str("crc32c") -> descriptor.read[Msg]("crc32c"),
-        Str("descriptor") -> Str(encode(descriptor))
-      )
+      Str(s"${entityType}_id") -> Str(entityId),
+      Str("version") -> Str(entityVersion),
+      Str("content") -> Str(encode(metadata)),
+      Str("crc32c") -> descriptor.read[Msg]("crc32c"),
+      Str("descriptor") -> Str(encode(descriptor))
     )
   }
 
@@ -173,33 +166,31 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     val (linksId, linksVersion, projectId) = getLinksIdVersionAndProjectId(fileName)
     // put values in the form we want
     Obj(
-      mutable.LinkedHashMap[Msg, Msg](
-        Str("content") -> Str(encode(metadata)),
-        Str("links_id") -> Str(linksId),
-        Str("version") -> Str(linksVersion),
-        Str("project_id") -> Str(projectId)
-      )
+      Str("content") -> Str(encode(metadata)),
+      Str("links_id") -> Str(linksId),
+      Str("version") -> Str(linksVersion),
+      Str("project_id") -> Str(projectId)
     )
   }
 
   /**
-    * Extract the necessary info from file metadata and put it into a form that
-    * can be used to generate bulk file ingest requests.
-    * @param metadata the content of the metadata file in Msg format
+    * Convert a file descriptor into a row in a bulk-file ingest request for the TDR.
+    *
+    * @param descriptor the content of a descriptor JSON file in Msg format
     * @param inputPrefix the root directory containing input files
-    * @return a Msg object in the desired output format
     */
-  def generateFileIngestRequest(metadata: Msg, inputPrefix: String): Msg = {
-    val contentHash = metadata.read[String]("crc32c")
-    val targetPath = metadata.read[String]("virtual_path")
-    val sourcePath = s"$inputPrefix/data$targetPath"
+  def generateFileIngestRequest(
+    descriptor: Msg,
+    entityType: String,
+    inputPrefix: String
+  ): (String, Msg) = {
+    val contentHash = descriptor.read[String]("crc32c")
+    val targetPath = descriptor.read[String]("file_name")
+    val sourcePath = s"$inputPrefix/data/$targetPath"
 
-    Obj(
-      mutable.LinkedHashMap[Msg, Msg](
-        Str("source_path") -> Str(sourcePath),
-        Str("target_path") -> Str(targetPath),
-        Str("crc32c") -> Str(contentHash)
-      )
+    contentHash -> Obj(
+      Str("source_path") -> Str(sourcePath),
+      Str("target_path") -> Str(s"/$entityType/$contentHash")
     )
   }
 
@@ -298,8 +289,11 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
           case (filename, (metadata, descriptor)) =>
             transformFileMetadata(entityType, filename, metadata, descriptor)
         }
-      // generate file ingest request
-      val fileIngestRequests = processedFileMetadata.map(generateFileIngestRequest(_, inputPrefix))
+
+      // Generate file ingest requests from descriptors. Deduplicate by the content hash.
+      val fileIngestRequests = descriptorFilenameAndMsg.map {
+        case (_, descriptor) => generateFileIngestRequest(descriptor, entityType, inputPrefix)
+      }.distinctByKey.values
       StorageIO.writeJsonLists(
         fileIngestRequests,
         entityType,
