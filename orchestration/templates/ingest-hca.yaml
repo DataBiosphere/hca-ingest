@@ -15,9 +15,9 @@ spec:
           {{- $inputPrefix := "{{inputs.parameters.source-bucket-prefix}}" }}
           - name: staging-bucket-prefix
           {{- $stagingPrefix := "{{inputs.parameters.staging-bucket-prefix}}" }}
-      # Limit to one active processing "arm" at a time.
-      # There may be multiple pods running within the arm.
-      parallelism: 1
+      # Limit the number of active processing "arms" at a time.
+      # There may be multiple pods running within each arm.
+      parallelism: {{ .Values.parallelism }}
       dag:
         tasks:
           # Clear the staging directory to avoid corrupt state.

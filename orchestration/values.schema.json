@@ -2,6 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
+    "parallelism": { "type": "integer", "minimum": 1 },
     "gcs": {
       "type": "object",
       "properties": {
@@ -88,5 +89,5 @@
       "required": ["url", "datasetId", "profileId", "pollTimeout", "accessKey"]
     }
   },
-  "required": ["gcs", "serviceAccount", "dataflow", "bigquery", "repo"]
+  "required": ["parallelism", "gcs", "serviceAccount", "dataflow", "bigquery", "repo"]
 }
