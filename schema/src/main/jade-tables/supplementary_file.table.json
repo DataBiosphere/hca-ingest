@@ -5,8 +5,7 @@
     { "name": "version", "datatype": "timestamp", "type": "primary_key" },
     { "name": "content", "datatype": "string", "type": "required" },
     { "name": "file_id", "datatype": "fileref", "type": "required" },
-    { "name": "source_file_id", "datatype": "string", "type": "required" },
-    { "name": "source_file_version", "datatype": "timestamp", "type": "required" }
+    { "name": "descriptor", "datatype": "string", "type": "required" }
   ],
   "partitionMode": "date",
   "datePartitionOptions": {
