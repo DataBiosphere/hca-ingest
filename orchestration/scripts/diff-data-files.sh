@@ -21,7 +21,7 @@ declare -ra BQ_QUERY=(
 
 1>&2 ${BQ_QUERY[@]} "WITH J AS (
     SELECT target_path FROM \`${JADE_PROJECT}.${JADE_DATASET}.datarepo_load_history\` WHERE state = 'succeeded'
-  ),
+  )
   SELECT S.source_path AS sourcePath, S.target_path AS targetPath
   FROM ${TABLE} S LEFT JOIN J USING (target_path)
   WHERE J.target_path IS NULL"
