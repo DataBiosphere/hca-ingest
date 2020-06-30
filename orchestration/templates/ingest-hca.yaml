@@ -513,34 +513,8 @@ spec:
                   value: {{ .accessKey.secretKey }}
                 {{- end }}
 
-            - name: delete-outdated
-              dependencies: [ingest-table]
-              when: {{ $shouldAppend | quote }}
-              template: soft-delete-outdated-rows
-              arguments:
-                parameters:
-                  - name: table
-                    value: {{ $table | quote }}
-                  - name: staging-prefix
-                    value: {{ $stagingPrefix | quote }}
-                  - name: bq-dataset
-                    value: {{ $bqDataset | quote }}
-
-    ##
-    ## Soft-delete all rows in a table with outdated versions.
-    ##
-    - name: soft-delete-outdated-rows
-      inputs:
-        parameters:
-          - name: table
-          {{- $table := "{{inputs.parameters.table}}" }}
-          - name: staging-prefix
-          {{- $stagingPrefix := "{{inputs.parameters.staging-prefix}}" }}
-          - name: bq-dataset
-          {{- $bqDataset := "{{inputs.parameters.bq-dataset}}" }}
-      dag:
-        tasks:
           - name: get-outdated-ids
+            dependencies: [ingest-table]
             template: get-outdated-ids
             arguments:
               parameters:
