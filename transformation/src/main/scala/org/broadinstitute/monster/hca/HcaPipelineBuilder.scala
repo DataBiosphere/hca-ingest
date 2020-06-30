@@ -154,7 +154,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         Str("version") -> Str(entityVersion),
         Str("content") -> Str(encode(metadata)),
         Str("virtual_path") -> Str(s"/$dataFileName"),
-        Str("crc32c") -> Str(descriptor.read[String]("crc32c")),
+        Str("crc32c") -> descriptor.read[Msg]("crc32c"),
         Str("descriptor") -> Str(encode(descriptor))
       )
     )
