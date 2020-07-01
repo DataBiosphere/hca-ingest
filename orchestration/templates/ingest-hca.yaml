@@ -513,6 +513,66 @@ spec:
                   value: {{ .accessKey.secretKey }}
                 {{- end }}
 
+          - name: get-outdated-ids
+            dependencies: [ingest-table]
+            template: get-outdated-ids
+            arguments:
+              parameters:
+                - name: table
+                  value: {{ $table | quote }}
+                - name: staging-bq-dataset
+                  value: {{ $bqDataset | quote }}
+            {{- $outdatedIdsTable := "{{tasks.get-outdated-ids.outputs.result}}" }}
+
+          {{- $outdatedIdsPrefix := printf "%s/outdated-ids/%s" $stagingPrefix $table }}
+          - name: export-outdated
+            dependencies: [get-outdated-ids]
+            templateRef:
+              name: {{ .Values.argoTemplates.exportBQTable.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: bq-project
+                  value: {{ .Values.bigquery.stagingData.project }}
+                - name: bq-dataset
+                  value: {{ $bqDataset | quote }}
+                - name: bq-table
+                  value: {{ $outdatedIdsTable | quote }}
+                - name: output-format
+                  value: CSV
+                - name: gcs-bucket
+                  value: {{ .Values.gcs.stagingBucketName }}
+                - name: gcs-prefix
+                  value: {{ $outdatedIdsPrefix | quote }}
+            {{- $outdatedCount := "{{tasks.export-outdated.outputs.parameters.row-count}}" }}
+
+          - name: soft-delete-outdated
+            dependencies: [export-outdated]
+            when: {{ printf "%s > 0" $outdatedCount | quote }}
+            templateRef:
+              name: {{ .Values.argoTemplates.softDeleteTable.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: table-name
+                  value: {{ $table | quote}}
+                - name: gcs-prefix
+                  value: {{ $outdatedIdsPrefix | quote }}
+                - name: gcs-bucket
+                  value: {{ .Values.gcs.stagingBucketName }}
+                {{- with .Values.repo }}
+                - name: url
+                  value: {{ .url }}
+                - name: dataset-id
+                  value: {{ .datasetId }}
+                - name: timeout
+                  value: {{ .pollTimeout }}
+                - name: sa-secret
+                  value: {{ .accessKey.secretName }}
+                - name: sa-secret-key
+                  value: {{ .accessKey.secretKey }}
+                {{- end }}
+
     ##
     ## Ingest metadata for a table containing information about data files.
     ##
@@ -606,3 +666,31 @@ spec:
         command: [bash]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/inject-file-ids.sh") | indent 10 }}
+
+    ##
+    ## Extract the TDR row IDs for rows containing an "outdated" version of a document,
+    ## where "outdated" is determined by the version of other data stored in the TDR dataset.
+    ##
+    - name: get-outdated-ids
+      inputs:
+        parameters:
+          - name: table
+          {{- $table := "{{inputs.parameters.table}}" }}
+          - name: staging-bq-dataset
+          {{- $bqDataset := "{{inputs.parameters.staging-bq-dataset}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        env:
+          - name: TABLE
+            value: {{ $table | quote }}
+          - name: STAGING_PROJECT
+            value: {{ .Values.bigquery.stagingData.project }}
+          - name: STAGING_DATASET
+            value: {{ $bqDataset | quote }}
+          - name: JADE_PROJECT
+            value: {{ .Values.bigquery.jadeData.project }}
+          - name: JADE_DATASET
+            value: {{ .Values.bigquery.jadeData.dataset }}
+        command: [bash]
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/get-outdated-row-ids.sh") | indent 10 }}
