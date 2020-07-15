@@ -36,4 +36,4 @@ jobs:
       - name: Publish
         run: sbt publish reindexHelmRepository
         env:
-          CR_TOKEN: ${{ secrets.ChartReleaserToken }}
+          CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
