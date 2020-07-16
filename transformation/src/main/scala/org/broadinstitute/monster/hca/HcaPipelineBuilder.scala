@@ -381,14 +381,17 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       s"$inputPrefix/links/**.json",
       context
     )
+    val linksMetadataFilenameAndMsg = jsonToFilenameAndMsg("links")(readableFiles)
+
+    validateJson(linksMetadataFilenameAndMsg)
+
     // then convert json to msg and get the filename
-    val processedData =
-      jsonToFilenameAndMsg("links")(readableFiles)
-        .withName(s"Pre-process links metadata")
-        .map {
-          case (filename, metadata) =>
-            transformLinksFileMetadata(filename, metadata)
-        }
+    val processedData = linksMetadataFilenameAndMsg
+      .withName(s"Pre-process links metadata")
+      .map {
+        case (filename, metadata) =>
+          transformLinksFileMetadata(filename, metadata)
+      }
     // then write to storage
     StorageIO.writeJsonLists(
       processedData,
