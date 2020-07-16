@@ -1,11 +1,16 @@
 package org.broadinstitute.monster.hca
 
+import com.spotify.scio.coders.Coder
+import com.spotify.scio.testing.PipelineSpec
+import io.circe.schema.Schema
 import org.broadinstitute.monster.common.msg.JsonParser
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
+class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec {
   behavior of "HcaPipelineBuilder"
+
+  implicit def coderSchema: Coder[Schema] = Coder.kryo[Schema]
 
   it should "transform basic metadata" in {
     val exampleFileContent = JsonParser.parseEncodedJson("""{"beep": "boop"}""")
@@ -199,5 +204,46 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers {
 
     actualHash shouldBe exampleHash
     actualOutput shouldBe expectedOutput
+  }
+
+  it should "validate json schemas" in {
+    val exampleFileContent = JsonParser.parseEncodedJson(
+      """
+        |{
+        |    "organ": {
+        |        "text": "brain",
+        |        "ontology": "astrocyte"
+        |    },
+        |    "schema_type": "biomaterial",
+        |    "biomaterial_core": {
+        |        "ncbi_taxon_id": [
+        |            9606
+        |        ],
+        |        "biomaterial_id": "Q4_DEMO-sample_SAMN02797092",
+        |        "has_input_biomaterial": "Q4_DEMO-donor_MGH30",
+        |        "biomaterial_name": "Q4_DEMO-Single cell mRNA-seq_MGH30_A01",
+        |        "supplementary_files": [
+        |            "Q4_DEMO-protocol"
+        |        ]
+        |    },
+        |    "organ_part": {
+        |        "text": "glioblastoma"
+        |    },
+        |    "genus_species": [
+        |        {
+        |            "text": "Homo sapiens",
+        |            "ontology": "NCBITaxon:9606"
+        |        }
+        |    ],
+        |    "describedBy": "https://schema.humancellatlas.org/type/biomaterial/5.1.0/specimen_from_organism"
+        |}
+        |""".stripMargin
+    )
+
+//    val exampleUrlAndFile = (
+//      "https://schema.humancellatlas.org/type/biomaterial/5.1.0/specimen_from_organism",
+//      exampleFileContent
+//    )
+    runWithContext(sc => sc.parallelize(Seq(exampleFileContent)))
   }
 }
