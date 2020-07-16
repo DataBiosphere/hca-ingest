@@ -1,5 +1,6 @@
 package org.broadinstitute.monster.hca
 
+import cats.data.Validated
 import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
@@ -261,9 +262,9 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   def encode(msg: Msg): String =
     upack.transform(msg, StringRenderer()).toString
 
-  def validateJson(value: SCollection[(String, Msg)]): Unit = {
+  def validateJson(filenamesAndMsg: SCollection[(String, Msg)]): Unit = {
     // pull out the url for where the schema definition is for each file
-    val content = value.map {
+    val content = filenamesAndMsg.map {
       case (filename, msg) => (msg.read[String]("describedBy"), (filename, msg))
     }
     // get the distinct urls (so as to minimize the number of get requests) and then get the schemas as strings
@@ -284,12 +285,20 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
                 )
               case Success(value) =>
                 // try to parse the actual data into a json format for validation
-                parse(data.str) match {
+                parse(encode(data)) match {
                   case Left(_) =>
                     throw new Exception(s"Unable to parse data into json for file $filename")
                   // if everything is parsed/encoded/etc correctly, actually try to validate against schema here
                   // if not valid, will return list of issues
-                  case Right(success) => value.validate(success)
+                  case Right(success) => {
+                    value.validate(success) match {
+                      case Validated.Valid(_) => ()
+                      case Validated.Invalid(e) =>
+                        throw new Exception(
+                          s"Data does not conform to schema: ${e.map(_.getMessage)}"
+                        )
+                    }
+                  }
                 }
             }
           }
