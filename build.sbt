@@ -17,6 +17,13 @@ lazy val `hca-schema` = project
 lazy val `hca-transformation-pipeline` = project
   .in(file("transformation"))
   .enablePlugins(MonsterScioPipelinePlugin)
+  .settings(
+    resolvers += "jitpack".at("https://jitpack.io"),
+    libraryDependencies ++= Seq(
+      "com.lihaoyi" %% "requests" % "0.5.1",
+      "io.circe" %% "circe-json-schema" % "0.1.0"
+    )
+  )
   .dependsOn(`hca-schema`)
 
 lazy val `hca-orchestration-workflow` = project
