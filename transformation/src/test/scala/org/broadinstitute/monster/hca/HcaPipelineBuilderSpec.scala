@@ -288,6 +288,8 @@ class HcaPipelineBuilderSpec
 
     the[Exception] thrownBy runWithContext { sc =>
       HcaPipelineBuilder.validateJson(sc.parallelize(Seq(exampleUrlAndFile)))
-    } should have message "java.lang.Exception: Data does not conform to schema: NonEmptyList(#: required key [schema_type] not found)"
+    } should have message "org.broadinstitute.monster.hca.SchemaValidationError: Data does not conform to schema " +
+      "from https://schema.humancellatlas.org/type/biomaterial/5.1.0/specimen_from_organism; " +
+      "#: required key [schema_type] not found"
   }
 }
