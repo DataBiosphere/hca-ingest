@@ -13,6 +13,7 @@ import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
 import org.broadinstitute.monster.common.{PipelineBuilder, StorageIO}
 import org.broadinstitute.monster.common.msg._
+import org.slf4j.LoggerFactory
 import ujson.StringRenderer
 import upack.{Msg, Obj, Str}
 
@@ -31,6 +32,8 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     processLinksMetadata(ctx, args.inputPrefix, args.outputPrefix)
     ()
   }
+
+  private val logger = LoggerFactory.getLogger(getClass)
 
   implicit def coderSchema: Coder[Schema] = Coder.kryo[Schema]
   implicit val readableFileCoder: Coder[ReadableFile] = Coder.beam(new ReadableFileCoder)
@@ -293,11 +296,18 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
                   case Right(success) => {
                     value.validate(success) match {
                       case Validated.Valid(_) => (filename, data)
-                      case Validated.Invalid(e) =>
-                        throw new SchemaValidationError(
-                          filename,
-                          e.map(_.getMessage).toList.mkString(",")
+                      case Validated.Invalid(e) => {
+                        val errorObject = ujson.Obj(
+                          "errorType" -> ujson.Str("SchemaValidationError"),
+                          "filePath" -> ujson.Str(""),
+                          "fileName" -> ujson.Str(""),
+                          "message" -> ujson.Str(e.map(_.getMessage).toList.mkString(","))
                         )
+                        logger.error(errorObject.toString())
+                        throw new Exception(
+                          s"Data does not conform to schema: ${e.map(_.getMessage)}"
+                        )
+                      }
                     }
                   }
                 }
