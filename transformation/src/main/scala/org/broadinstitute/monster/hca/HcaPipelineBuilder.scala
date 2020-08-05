@@ -293,17 +293,19 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
             // if the schema is not able to load, throw an exception, otherwise try to use it to validate
             Schema.loadFromString(schema) match {
               case Failure(_) => {
-                val errorMessage = s"Schema not loaded properly for schema at $url, file $filename"
+                val errorMessage =
+                  s"Schema not loaded properly for schema at $url, file $filename"
                 logSchemaValidationError(filename, errorMessage)
                 throw new Exception(errorMessage)
               }
               case Success(value) =>
                 // try to parse the actual data into a json format for validation
                 parse(encode(data)) match {
-                  case Left(_) =>
+                  case Left(_) => {
                     val errorMessage = s"Unable to parse data into json for file $filename"
                     logSchemaValidationError(filename, errorMessage)
                     throw new Exception(errorMessage)
+                  }
                   // if everything is parsed/encoded/etc correctly, actually try to validate against schema here
                   // if not valid, will return list of issues
                   case Right(success) => {
@@ -320,9 +322,11 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
                 }
             }
           }
-          val errorMessage = s"No schema found at $url for file $filename"
-          logSchemaValidationError(filename, errorMessage)
-          throw new Exception(errorMessage)
+          case None => {
+            val errorMessage = s"No schema found at $url for file $filename"
+            logSchemaValidationError(filename, errorMessage)
+            throw new Exception(errorMessage)
+          }
         }
       }
     }
