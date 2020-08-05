@@ -284,10 +284,10 @@ class HcaPipelineBuilderSpec
         |""".stripMargin
     )
 
-    val exampleUrlAndFile = (exampleFileContent.read[String]("describedBy"), exampleFileContent)
+    val exampleFilenameAndMsg = ("/metadata/organoid/123456_VERSION1.json", exampleFileContent)
 
     the[Exception] thrownBy runWithContext { sc =>
-      HcaPipelineBuilder.validateJson(sc.parallelize(Seq(exampleUrlAndFile)))
+      HcaPipelineBuilder.validateJson(sc.parallelize(Seq(exampleFilenameAndMsg)))
     } should have message "java.lang.Exception: Data does not conform to schema " +
       "from https://schema.humancellatlas.org/type/biomaterial/5.1.0/specimen_from_organism; " +
       "#: required key [schema_type] not found"

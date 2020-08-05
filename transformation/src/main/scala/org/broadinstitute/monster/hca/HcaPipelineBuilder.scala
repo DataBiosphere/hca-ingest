@@ -298,11 +298,11 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
                       case Validated.Valid(_) => (filename, data)
                       case Validated.Invalid(e) => {
                         val schemaValidationMessage =
-                          s"Data does not conform to schema from $filename; ${e.map(_.getMessage).toList.mkString(",")}"
+                          s"Data does not conform to schema from $url; ${e.map(_.getMessage).toList.mkString(",")}"
                         val errorLog = ujson.Obj(
                           "errorType" -> ujson.Str("SchemaValidationError"),
                           "filePath" -> ujson.Str(""),
-                          "fileName" -> ujson.Str(""),
+                          "fileName" -> ujson.Str(filename),
                           "message" -> ujson.Str(schemaValidationMessage)
                         )
                         logger.error(errorLog.toString())
