@@ -265,19 +265,21 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   def encode(msg: Msg): String =
     upack.transform(msg, StringRenderer()).toString
 
-  def logSchemaValidationError(filename: String, errorMessage: String): Unit = {
+  def logSchemaValidationError(filepath: String, errorMessage: String): Unit = {
+    val filenameRegex = "[^/]*$".r // match everything that is not followed by a "/" (only the filename)
+    val filename = filenameRegex.findFirstIn(filepath).getOrElse("")
     val errorLog = ujson.Obj(
       "errorType" -> ujson.Str("SchemaValidationError"),
-      "filePath" -> ujson.Str(""),
+      "filePath" -> ujson.Str(filepath),
       "fileName" -> ujson.Str(filename),
       "message" -> ujson.Str(errorMessage)
     )
     logger.error(errorLog.toString())
   }
 
-  def validateJson(filenamesAndMsg: SCollection[(String, Msg)]): SCollection[(String, Msg)] = {
+  def validateJson(filenameAndMsg: SCollection[(String, Msg)]): SCollection[(String, Msg)] = {
     // pull out the url for where the schema definition is for each file
-    val content = filenamesAndMsg.map {
+    val content = filenameAndMsg.map {
       case (filename, msg) => (msg.read[String]("describedBy"), (filename, msg))
     }
     // get the distinct urls (so as to minimize the number of get requests) and then get the schemas as strings
@@ -293,8 +295,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
             // if the schema is not able to load, throw an exception, otherwise try to use it to validate
             Schema.loadFromString(schema) match {
               case Failure(_) => {
-                val errorMessage =
-                  s"Schema not loaded properly for schema at $url, file $filename"
+                val errorMessage = s"Schema not loaded properly for schema at $url, file $filename"
                 logSchemaValidationError(filename, errorMessage)
                 throw new Exception(errorMessage)
               }
