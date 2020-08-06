@@ -4,7 +4,7 @@
     { "name": "supplementary_file_id", "datatype": "string", "type": "primary_key" },
     { "name": "version", "datatype": "timestamp", "type": "primary_key" },
     { "name": "content", "datatype": "string", "type": "required" },
-    { "name": "file_id", "datatype": "fileref", "type": "required" },
+    { "name": "file_id", "datatype": "fileref"},
     { "name": "descriptor", "datatype": "string", "type": "required" }
   ],
   "partitioning": {
