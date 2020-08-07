@@ -1,6 +1,6 @@
 set -euo pipefail
 
-declare -r LOGS_DIR=../../transformation/logs
+declare -r LOGS_DIR=../../logs
 declare -r LOG_FILE=${LOGS_DIR}/errors.log
 declare -r NEW_FILENAME=${LOGS_DIR}/${TIMESTAMP}.log
 

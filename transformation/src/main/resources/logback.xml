@@ -6,7 +6,7 @@
     </appender>
 
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>logs/errors.log</file>
+        <file>../logs/errors.log</file>
         <encoder>
             <pattern>%msg%n</pattern>
         </encoder>
