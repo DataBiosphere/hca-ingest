@@ -711,7 +711,7 @@ spec:
         image: google/cloud-sdk:slim
         env:
           - name: TIMESTAMP
-            value: {{ workflow.creationTimestamp }}
+            value: {{ include "argo.timestamp" . | quote }}
           - name: BUCKET_NAME
             value: {{ .Values.gcs.stagingBucketName }}
         command: [bash]
