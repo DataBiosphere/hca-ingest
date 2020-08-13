@@ -3,17 +3,17 @@ from google.cloud import bigquery
 import json
 import os
 
-# take contextual information as arguments
+# Take contextual information as arguments.
 project_id = os.environ["PROJECT_ID"]
 dataset_name = os.environ["DATASET_NAME"]
 load_tag = os.environ["LOAD_TAG"]
 
-# Set up BigQuery client
+# Set up BigQuery client.
 credentials, project = google.auth.default(scopes=['openid', 'email', 'profile'])
 bqclient = bigquery.Client(credentials=credentials, project=project_id,)
 
 
-# log a checksum error for the given source and target path
+# Log a checksum error for the given source and target path.
 def log_checksum_error(source_name: str, target_path: str):
     error_log = {
         "errorType": "ChecksumError",
