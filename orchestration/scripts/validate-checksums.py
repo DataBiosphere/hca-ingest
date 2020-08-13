@@ -1,13 +1,12 @@
 import google.auth
 from google.cloud import bigquery
 import json
-import sys
+import os
 
-# TODO use ENV vars instead
 # take contextual information as arguments
-project_id = sys.argv[1]
-dataset_name = sys.argv[2]
-load_tag = sys.argv[3]
+project_id = os.environ["PROJECT_ID"]
+dataset_name = os.environ["DATASET_NAME"]
+load_tag = os.environ["LOAD_TAG"]
 
 # Set up BigQuery client
 credentials, project = google.auth.default(scopes=['openid', 'email', 'profile'])
@@ -20,9 +19,9 @@ def log_checksum_error(source_name: str, target_path: str):
         "errorType": "ChecksumError",
         "filePath": source_name,
         "fileName": source_name.split("/")[-1],
-        "message": f"New crc32c checksum does not match the original for the file ingested to ${target_path}."
+        "message": f"New crc32c checksum does not match the original for the file ingested to {target_path}."
     }
-    with open('../../logs/errors.log', 'a') as log_file:
+    with open('../../logs/errors.log', 'a+') as log_file:
         log_file.write(json.dumps(error_log) + "\n")
 
 
@@ -40,11 +39,10 @@ def validate_checksum(load_history_row):
 
 # Query the BQ API for summary information about each successful file load.
 sql_query = f"""
-SELECT source_name, target_path, checksum_crc32c
-FROM `{project_id}.{dataset_name}.datarepo_load_history`
-WHERE state='succeeded'
-AND load_tag='{load_tag}'
-LIMIT 10
+    SELECT source_name, target_path, checksum_crc32c
+    FROM `{project_id}.{dataset_name}.datarepo_load_history`
+    WHERE state='succeeded'
+    AND load_tag='{load_tag}'
     """
 query_job = bqclient.query(sql_query)
 
