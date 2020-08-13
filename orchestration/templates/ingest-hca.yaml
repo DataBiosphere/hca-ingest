@@ -297,6 +297,7 @@ spec:
           {{- $totalFileCount := "{{inputs.parameters.total-file-count}}" }}
       dag:
         tasks:
+          {{- $loadTag := printf "%s-%s" $loadTagPrefix $controlFileIndex }}
           - name: submit
             template: submit-bulk-file-ingest
             arguments:
@@ -304,7 +305,7 @@ spec:
                 - name: control-file-path
                   value: {{ $controlFilePath | quote }}
                 - name: load-tag
-                  value: {{ printf "%s-%s" $loadTagPrefix $controlFileIndex | quote }}
+                  value: {{ $loadTag | quote }}
                 - name: max-failures
                   value: {{ $totalFileCount | quote }}
           {{- $jobId := "{{tasks.submit.outputs.result}}" }}
@@ -334,6 +335,13 @@ spec:
               parameters:
                 - name: job-id
                   value: {{ $jobId | quote }}
+          - name: validate-checksums
+            dependencies: [poll]
+            template: validate-checksums
+            arguments:
+              parameters:
+                - name: load-tag
+                  value: {{ $loadTag | quote }}
 
     ##
     ## Submit a bulk-file ingest using a request staged in GCS.
@@ -694,3 +702,24 @@ spec:
         command: [bash]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/get-outdated-row-ids.sh") | indent 10 }}
+
+    ##
+    ## Validate that the file checksums have not changed after files were loaded into the data repo.
+    ##
+    - name: validate-checksums
+      inputs:
+        parameters:
+          - name: load-tag
+          {{- $loadTag := "{{inputs.parameters.load-tag}}" }} # TODO pass in this parameter (see above for reference)
+      script:
+        image: us.gcr.io/broad-dsp-gcr-public/gcs-python:1.0.0
+        env:
+          - name: PROJECT_ID
+            value: {{ .Values.bigquery.jadeData.project }}
+          - name: DATASET_NAME
+            value: {{ .Values.bigquery.jadeData.dataset }}
+          - name: LOAD_TAG
+            value: {{ $loadTag }}
+        command: [python]
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/validate-checksums.py") | indent 10 }}
