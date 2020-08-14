@@ -1,10 +1,15 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: ingest-hca
+  name: import-hca
 spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
+  arguments:
+    parameters:
+      - name: source-bucket-name
+      - name: source-bucket-prefix
+      - name: staging-bucket-prefix
   templates:
     - name: main
       inputs:
