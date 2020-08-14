@@ -15,13 +15,13 @@ spec:
       inputs:
         parameters:
           - name: source-bucket-name
-            value: {{ "{{workflow.parameters.source-bucket-name}}" }}
+            value: "{{workflow.parameters.source-bucket-name}}"
           {{- $inputBucket := "{{inputs.parameters.source-bucket-name}}" }}
           - name: source-bucket-prefix
-            value: {{ "{{workflow.parameters.source-bucket-prefix}}" }}
+            value: "{{workflow.parameters.source-bucket-prefix}}"
           {{- $inputPrefix := "{{inputs.parameters.source-bucket-prefix}}" }}
           - name: staging-bucket-prefix
-            value: {{ "{{workflow.parameters.staging-bucket-prefix}}" }}
+            value: "{{workflow.parameters.staging-bucket-prefix}}"
           {{- $stagingPrefix := "{{inputs.parameters.staging-bucket-prefix}}" }}
       # Limit the number of active processing "arms" at a time.
       # There may be multiple pods running within each arm.
