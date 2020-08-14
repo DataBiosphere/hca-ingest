@@ -1,0 +1,100 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: stage-hca
+spec:
+  entrypoint: main
+  serviceAccountName: {{ .Values.serviceAccount.k8sName }}
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - name: source-bucket-name
+          {{- $inputBucket := "{{inputs.parameters.source-bucket-name}}" }}
+          - name: source-bucket-prefix
+          {{- $inputPrefix := "{{inputs.parameters.source-bucket-prefix}}" }}
+          - name: staging-bucket-prefix
+          {{- $stagingPrefix := "{{inputs.parameters.staging-bucket-prefix}}" }}
+      # Limit the number of active processing "arms" at a time.
+      # There may be multiple pods running within each arm.
+      parallelism: {{ .Values.parallelism }}
+      dag:
+        tasks:
+          # Clear the staging directory to avoid corrupt state.
+          - name: clear-staging-dir
+            template: delete-gcs-directory
+            arguments:
+              parameters:
+                - name: gcs-prefix
+                  value: {{ $stagingPrefix | quote }}
+
+          # Pre-process the metadata found in a source bucket
+          - name: pre-process-metadata
+            dependencies: [clear-staging-dir]
+            template: run-dataflow
+            arguments:
+              parameters:
+                - name: source-bucket-name
+                  value: {{ $inputBucket | quote }}
+                - name: source-bucket-prefix
+                  value: {{ $inputPrefix | quote }}
+                - name: staging-bucket-prefix
+                  value: {{ $stagingPrefix | quote }}
+
+          {{- $datasetName := printf "%s_%s" .Values.bigquery.stagingData.datasetPrefix $stagingPrefix }}
+
+    ##
+    ## Delete all the files under a prefix in GCS.
+    ##
+    - name: delete-gcs-directory
+      inputs:
+        parameters:
+          - name: gcs-prefix
+          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+      script:
+        image: google/cloud-sdk:slim
+        {{- $fullPath := printf "gs://%s/%s/*" .Values.gcs.stagingBucketName $gcsPrefix }}
+        command: [bash]
+        source: |
+          # rm will fail if there's already nothing at the target path.
+          gsutil -m rm -r {{ $fullPath }} || true
+
+    ##
+    ## Run a Dataflow job to pre-process JSON metadata from the input area,
+    ## moving it into our GCP space in the process.
+    ##
+    - name: run-dataflow
+      inputs:
+        parameters:
+          - name: source-bucket-name
+          {{- $sourceBucket := "{{inputs.parameters.source-bucket-name}}" }}
+          - name: source-bucket-prefix
+          {{- $sourcePrefix := "{{inputs.parameters.source-bucket-prefix}}" }}
+          - name: staging-bucket-prefix
+          {{- $stagingPrefix := "{{inputs.parameters.staging-bucket-prefix}}" }}
+      container:
+        {{- $version := default "latest" .Chart.AppVersion }}
+        image: us.gcr.io/broad-dsp-gcr-public/hca-transformation-pipeline:{{ $version }}
+        command: []
+        args:
+          - --runner=dataflow
+          - --inputPrefix=gs://{{ $sourceBucket }}{{ $sourcePrefix }}
+          - --outputPrefix=gs://{{ .Values.gcs.stagingBucketName }}/{{ $stagingPrefix }}
+          {{- with .Values.dataflow }}
+          - --project={{ .project }}
+          - --region={{ .region }}
+          - --tempLocation=gs://{{ .tmpBucketName }}/dataflow
+          - --subnetwork=regions/{{ .region }}/subnetworks/{{ .subnetName }}
+          - --serviceAccount={{ .workerAccount }}
+          - --workerMachineType={{ .workerMachineType }}
+          {{- with .autoscaling }}
+          - --autoscalingAlgorithm=THROUGHPUT_BASED
+          - --numWorkers={{ .minWorkers }}
+          - --maxNumWorkers={{ .maxWorkers }}
+          {{- end }}
+          {{- if .useFlexRS }}
+          - --flexRSGoal=COST_OPTIMIZED
+          {{- else }}
+          - --experiments=shuffle_mode=service
+          {{- end }}
+          {{- end }}
