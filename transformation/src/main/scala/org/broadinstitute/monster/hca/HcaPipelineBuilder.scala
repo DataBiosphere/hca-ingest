@@ -332,7 +332,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         }
       }
     }
-    filenamesAndMsg
+    filenameAndMsg
   }
 
   /**
