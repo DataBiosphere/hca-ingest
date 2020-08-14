@@ -8,11 +8,11 @@ spec:
   arguments:
     parameters:
       - name: source-bucket-name
-        value: src
+        value: 'src'
       - name: source-bucket-prefix
-        value: pre
+        value: 'pre'
       - name: staging-bucket-prefix
-        value: stage
+        value: 'stage'
   templates:
     - name: main
       inputs:
