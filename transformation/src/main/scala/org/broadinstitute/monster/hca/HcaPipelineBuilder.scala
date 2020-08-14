@@ -35,7 +35,8 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  implicit def coderSchema: Coder[Schema] = Coder.kryo[Schema]
+  implicit val coder: Coder[Msg] = Coder.beam(new UpackMsgCoder)
+
   implicit val readableFileCoder: Coder[ReadableFile] = Coder.beam(new ReadableFileCoder)
 
   // format is: {entity_type}/{entity_id}_{version}.json,
@@ -331,6 +332,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         }
       }
     }
+    filenamesAndMsg
   }
 
   /**
