@@ -321,7 +321,7 @@ class HcaPipelineBuilderSpec
         |""".stripMargin
     )
 
-    val exampleUrlAndFile = (exampleFileContent.read[String]("describedBy"), exampleFileContent)
+    val exampleUrlAndFile = ("sampleFileName.json", exampleFileContent)
 
     runWithContext { sc =>
       val validated = HcaPipelineBuilder.validateJson(sc.parallelize(Seq(exampleUrlAndFile)))
