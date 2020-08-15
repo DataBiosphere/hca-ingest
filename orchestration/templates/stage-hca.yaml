@@ -5,11 +5,6 @@ metadata:
 spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
-  arguments:
-    parameters:
-      - name: source-bucket-name
-      - name: source-bucket-prefix
-      - name: staging-bucket-prefix
   templates:
     - name: main
       inputs:
