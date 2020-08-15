@@ -161,7 +161,6 @@ spec:
           {{- end }}
           {{- end }}
 
-
     ##
     ## List the contents of a GCS bucket under a prefix, returning the results as a JSON array
     ## so Argo can parse and scatter over them.
@@ -181,7 +180,6 @@ spec:
         command: [python]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/list-gcs-files-as-array.py") | indent 10 }}
-
 
     ##
     ## Inject common template used to poll TDR jobs.
@@ -229,7 +227,7 @@ spec:
                 - name: jade-bq-project
                   value: {{ .Values.bigquery.jadeData.project }}
                 - name: jade-bq-dataset
-                  value: {{ $dataRepoName }}
+                  value: {{ $dataRepoName | quote }}
                 - name: upsert
                   value: 'true'
                 - name: diff-full-history
@@ -255,7 +253,7 @@ spec:
                 - name: url
                   value: {{ .url }}
                 - name: dataset-id
-                  value: {{ .datasetId }}
+                  value: {{ $datasetId | quote }}
                 - name: timeout
                   value: {{ .pollTimeout }}
                 - name: sa-secret
@@ -282,7 +280,7 @@ spec:
                 - name: url
                   value: {{ .url }}
                 - name: dataset-id
-                  value: {{ .datasetId }}
+                  value: {{ $datasetId | quote }}
                 - name: timeout
                   value: {{ .pollTimeout }}
                 - name: sa-secret
@@ -300,6 +298,8 @@ spec:
                   value: {{ $table | quote }}
                 - name: staging-bq-dataset
                   value: {{ $bqDataset | quote }}
+                - name: data-repo-name
+                  value: {{ $dataRepoName | quote }}
             {{- $outdatedIdsTable := "{{tasks.get-outdated-ids.outputs.result}}" }}
 
           {{- $outdatedIdsPrefix := printf "%s/outdated-ids/%s" $stagingPrefix $table }}
@@ -342,7 +342,7 @@ spec:
                 - name: url
                   value: {{ .url }}
                 - name: dataset-id
-                  value: {{ .datasetId }}
+                  value: {{ $datasetId | quote }}
                 - name: timeout
                   value: {{ .pollTimeout }}
                 - name: sa-secret
@@ -362,6 +362,7 @@ spec:
           {{- $table := "{{inputs.parameters.table}}" }}
           - name: staging-bq-dataset
           {{- $bqDataset := "{{inputs.parameters.staging-bq-dataset}}" }}
+          - name: data-repo-name
       script:
         image: google/cloud-sdk:slim
         env:
@@ -374,7 +375,7 @@ spec:
           - name: JADE_PROJECT
             value: {{ .Values.bigquery.jadeData.project }}
           - name: JADE_DATASET
-            value: {{ $dataRepoName }}
+            value: {{ $dataRepoName | quote }}
         command: [bash]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/get-outdated-row-ids.sh") | indent 10 }}

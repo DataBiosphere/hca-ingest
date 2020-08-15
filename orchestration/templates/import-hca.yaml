@@ -113,6 +113,8 @@ spec:
                   value: {{ $fileLoadTable }}
                 - name: staging-bq-dataset
                   value: {{ $datasetName | quote }}
+                - name: data-repo-name
+                  value: {{ $dataRepoName | quote }}
 
           {{- $outputFileLoadPrefix := printf "%s/data-transfer-requests-deduped" $stagingPrefix }}
           - name: extract-file-loads
@@ -246,6 +248,8 @@ spec:
           {{- $targetTable := "{{inputs.parameters.target-table}}" }}
           - name: staging-bq-dataset
           {{- $bqDataset := "{{inputs.parameters.staging-bq-dataset}}" }}
+          - name: data-repo-name
+            value: {{ $dataRepoName | quote }}
       script:
         image: google/cloud-sdk:slim
         env:
@@ -260,7 +264,7 @@ spec:
           - name: JADE_PROJECT
             value: {{ .Values.bigquery.jadeData.project }}
           - name: JADE_DATASET
-            value: {{ $dataRepoName }}
+            value: {{ $dataRepoName | quote }}
         command: [bash]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/diff-data-files.sh") | indent 10 }}
@@ -455,7 +459,7 @@ spec:
                 - name: jade-bq-project
                   value: {{ .Values.bigquery.jadeData.project }}
                 - name: jade-bq-dataset
-                  value: {{ $dataRepoName }}
+                  value: {{ $dataRepoName | quote }}
                 - name: upsert
                   value: 'true'
                 - name: diff-full-history
@@ -526,6 +530,8 @@ spec:
                   value: {{ $table | quote }}
                 - name: staging-bq-dataset
                   value: {{ $bqDataset | quote }}
+                - name: data-repo-name
+                  value: {{ $dataRepoName | quote }}
             {{- $outdatedIdsTable := "{{tasks.get-outdated-ids.outputs.result}}" }}
 
           {{- $outdatedIdsPrefix := printf "%s/outdated-ids/%s" $stagingPrefix $table }}
@@ -601,6 +607,8 @@ spec:
                   value: {{ printf "%s/metadata" $stagingPrefix | quote }}
                 - name: bq-dataset
                   value: {{ $bqDataset | quote }}
+                - name: data-repo-name
+                  value: {{ $dataRepoName | quote }}
           {{- $fileIdsTable := "{{tasks.inject-file-ids.outputs.result}}" }}
 
           {{- $metadataPrefix := printf "%s/file-metadata-with-ids/%s" $stagingPrefix $table }}
@@ -652,6 +660,7 @@ spec:
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
           - name: bq-dataset
           {{- $bqDataset := "{{inputs.parameters.bq-dataset}}" }}
+          - name: data-repo-name
       script:
         image: google/cloud-sdk:slim
         env:
@@ -666,7 +675,7 @@ spec:
           - name: JADE_PROJECT
             value: {{ .Values.bigquery.jadeData.project }}
           - name: JADE_DATASET
-            value: {{ $dataRepoName }}
+            value: {{ $dataRepoName | quote }}
         command: [bash]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/inject-file-ids.sh") | indent 10 }}
@@ -682,6 +691,7 @@ spec:
           {{- $table := "{{inputs.parameters.table}}" }}
           - name: staging-bq-dataset
           {{- $bqDataset := "{{inputs.parameters.staging-bq-dataset}}" }}
+          - name: data-repo-name
       script:
         image: google/cloud-sdk:slim
         env:
@@ -694,7 +704,7 @@ spec:
           - name: JADE_PROJECT
             value: {{ .Values.bigquery.jadeData.project }}
           - name: JADE_DATASET
-            value: {{ $dataRepoName }}
+            value: {{ $dataRepoName | quote }}
         command: [bash]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/get-outdated-row-ids.sh") | indent 10 }}
