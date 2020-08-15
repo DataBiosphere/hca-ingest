@@ -17,8 +17,8 @@ spec:
           {{- $stagingPrefix := "{{inputs.parameters.staging-bucket-prefix}}" }}
           - name: dataset-id
           {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
-          - name: dataset-name
-          {{- $datasetName := "{{inputs.parameters.dataset-name}}" }}
+          - name: data-repo-name
+          {{- $dataRepoName := "{{inputs.parameters.data-repo-name}}" }}
       # Limit the number of active processing "arms" at a time.
       # There may be multiple pods running within each arm.
       parallelism: {{ .Values.parallelism }}
@@ -229,7 +229,7 @@ spec:
                 - name: jade-bq-project
                   value: {{ .Values.bigquery.jadeData.project }}
                 - name: jade-bq-dataset
-                  value: {{ $datasetName | quote }}
+                  value: {{ $dataRepoName | quote }}
                 - name: upsert
                   value: 'true'
                 - name: diff-full-history
@@ -255,7 +255,7 @@ spec:
                 - name: url
                   value: {{ .url }}
                 - name: dataset-id
-                  value: {{ $datasetId | quote }}
+                  value: {{ .datasetId }}
                 - name: timeout
                   value: {{ .pollTimeout }}
                 - name: sa-secret
@@ -282,7 +282,7 @@ spec:
                 - name: url
                   value: {{ .url }}
                 - name: dataset-id
-                  value: {{ $datasetId | quote }}
+                  value: {{ .datasetId }}
                 - name: timeout
                   value: {{ .pollTimeout }}
                 - name: sa-secret
@@ -342,7 +342,7 @@ spec:
                 - name: url
                   value: {{ .url }}
                 - name: dataset-id
-                  value: {{ $datasetId | quote }}
+                  value: {{ .datasetId }}
                 - name: timeout
                   value: {{ .pollTimeout }}
                 - name: sa-secret
@@ -374,7 +374,7 @@ spec:
           - name: JADE_PROJECT
             value: {{ .Values.bigquery.jadeData.project }}
           - name: JADE_DATASET
-            value: {{ $datasetName | quote }}
+            value: {{ $dataRepoName | quote }}
         command: [bash]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/get-outdated-row-ids.sh") | indent 10 }}
