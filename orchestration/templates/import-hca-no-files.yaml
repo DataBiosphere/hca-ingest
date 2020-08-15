@@ -229,7 +229,7 @@ spec:
                 - name: jade-bq-project
                   value: {{ .Values.bigquery.jadeData.project }}
                 - name: jade-bq-dataset
-                  value: {{ $dataRepoName | quote }}
+                  value: {{ $dataRepoName }}
                 - name: upsert
                   value: 'true'
                 - name: diff-full-history
@@ -374,7 +374,7 @@ spec:
           - name: JADE_PROJECT
             value: {{ .Values.bigquery.jadeData.project }}
           - name: JADE_DATASET
-            value: {{ $dataRepoName | quote }}
+            value: {{ $dataRepoName }}
         command: [bash]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/get-outdated-row-ids.sh") | indent 10 }}
