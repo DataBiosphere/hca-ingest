@@ -163,7 +163,7 @@ spec:
                   value: {{ $totalLoadCount | quote }}
 
           - name: ingest-file-metadata
-            dependencies: [pre-process-metadata, create-staging-dataset]
+            dependencies: [ingest-data-files]
             withItems:
               - analysis_file
               - image_file
