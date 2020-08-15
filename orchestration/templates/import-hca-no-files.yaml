@@ -4,6 +4,12 @@ metadata:
   name: import-hca-no-files
 spec:
   entrypoint: main
+  arguments:
+    parameters:
+      - name: data-repo-name
+        {{- $dataRepoName := "{{workflow.parameters.data-repo-name}}" }}
+      - name: dataset-id
+        {{- $datasetId := "{{workflow.parameters.dataset-id}}" }}
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
   templates:
     - name: main
@@ -15,10 +21,6 @@ spec:
           {{- $inputPrefix := "{{inputs.parameters.source-bucket-prefix}}" }}
           - name: staging-bucket-prefix
           {{- $stagingPrefix := "{{inputs.parameters.staging-bucket-prefix}}" }}
-          - name: dataset-id
-          {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
-          - name: data-repo-name
-          {{- $dataRepoName := "{{inputs.parameters.data-repo-name}}" }}
       # Limit the number of active processing "arms" at a time.
       # There may be multiple pods running within each arm.
       parallelism: {{ .Values.parallelism }}
@@ -100,8 +102,6 @@ spec:
                   value: {{ "{{item}}" | quote }}
                 - name: staging-prefix
                   value: {{ $stagingPrefix | quote }}
-                - name: metadata-type
-                  value: metadata
                 - name: bq-dataset
                   value: {{ $datasetName | quote }}
 
@@ -298,8 +298,6 @@ spec:
                   value: {{ $table | quote }}
                 - name: staging-bq-dataset
                   value: {{ $bqDataset | quote }}
-                - name: data-repo-name
-                  value: {{ $dataRepoName | quote }}
             {{- $outdatedIdsTable := "{{tasks.get-outdated-ids.outputs.result}}" }}
 
           {{- $outdatedIdsPrefix := printf "%s/outdated-ids/%s" $stagingPrefix $table }}

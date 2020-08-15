@@ -4,6 +4,12 @@ metadata:
   name: import-hca
 spec:
   entrypoint: main
+  arguments:
+    parameters:
+      - name: data-repo-name
+        {{- $dataRepoName := "{{workflow.parameters.data-repo-name}}" }}
+      - name: dataset-id
+        {{- $datasetId := "{{workflow.parameters.dataset-id}}" }}
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
   templates:
     - name: main
@@ -15,10 +21,6 @@ spec:
           {{- $inputPrefix := "{{inputs.parameters.source-bucket-prefix}}" }}
           - name: staging-bucket-prefix
           {{- $stagingPrefix := "{{inputs.parameters.staging-bucket-prefix}}" }}
-          - name: dataset-id
-          {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
-          - name: data-repo-name
-          {{- $dataRepoName := "{{inputs.parameters.data-repo-name}}" }}
       # Limit the number of active processing "arms" at a time.
       # There may be multiple pods running within each arm.
       parallelism: {{ .Values.parallelism }}
@@ -113,8 +115,6 @@ spec:
                   value: {{ $fileLoadTable }}
                 - name: staging-bq-dataset
                   value: {{ $datasetName | quote }}
-                - name: data-repo-name
-                  value: {{ $dataRepoName | quote }}
 
           {{- $outputFileLoadPrefix := printf "%s/data-transfer-requests-deduped" $stagingPrefix }}
           - name: extract-file-loads
@@ -248,8 +248,6 @@ spec:
           {{- $targetTable := "{{inputs.parameters.target-table}}" }}
           - name: staging-bq-dataset
           {{- $bqDataset := "{{inputs.parameters.staging-bq-dataset}}" }}
-          - name: data-repo-name
-            value: {{ $dataRepoName | quote }}
       script:
         image: google/cloud-sdk:slim
         env:
@@ -530,8 +528,6 @@ spec:
                   value: {{ $table | quote }}
                 - name: staging-bq-dataset
                   value: {{ $bqDataset | quote }}
-                - name: data-repo-name
-                  value: {{ $dataRepoName | quote }}
             {{- $outdatedIdsTable := "{{tasks.get-outdated-ids.outputs.result}}" }}
 
           {{- $outdatedIdsPrefix := printf "%s/outdated-ids/%s" $stagingPrefix $table }}
@@ -607,8 +603,6 @@ spec:
                   value: {{ printf "%s/metadata" $stagingPrefix | quote }}
                 - name: bq-dataset
                   value: {{ $bqDataset | quote }}
-                - name: data-repo-name
-                  value: {{ $dataRepoName | quote }}
           {{- $fileIdsTable := "{{tasks.inject-file-ids.outputs.result}}" }}
 
           {{- $metadataPrefix := printf "%s/file-metadata-with-ids/%s" $stagingPrefix $table }}
