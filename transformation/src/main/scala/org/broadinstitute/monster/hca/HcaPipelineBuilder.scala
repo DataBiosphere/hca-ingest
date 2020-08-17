@@ -267,8 +267,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     upack.transform(msg, StringRenderer()).toString
 
   def logSchemaValidationError(filepath: String, errorMessage: String): Unit = {
-    val filenameRegex = "[^/]*$".r // match everything that is not followed by a "/" (only the filename)
-    val filename = filenameRegex.findFirstIn(filepath).getOrElse("")
+    val filename = filepath.split('/').lastOption.getOrElse("")
     val errorLog = ujson.Obj(
       "errorType" -> ujson.Str("SchemaValidationError"),
       "filePath" -> ujson.Str(filepath),
@@ -278,9 +277,9 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     logger.error(errorLog.toString())
   }
 
-  def validateJson(filenameAndMsg: SCollection[(String, Msg)]): SCollection[(String, Msg)] = {
+  def validateJson(filenamesAndMsgs: SCollection[(String, Msg)]): SCollection[(String, Msg)] = {
     // pull out the url for where the schema definition is for each file
-    val content = filenameAndMsg.map {
+    val content = filenamesAndMsgs.map {
       case (filename, msg) => (msg.read[String]("describedBy"), (filename, msg))
     }
     // get the distinct urls (so as to minimize the number of get requests) and then get the schemas as strings
@@ -288,51 +287,48 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     // join the schemas to the data keyed by the schema url
     val joined = content.leftOuterJoin(schemas)
     // go over each row
-    joined.map {
+    joined.flatMap {
       case (url, ((filename, data), schemaOption)) => {
-        // if there is nothing in the schemaOption, then something went wrong; if there is, try to validate
-        schemaOption match {
-          case Some(schema) => {
-            // if the schema is not able to load, throw an exception, otherwise try to use it to validate
-            Schema.loadFromString(schema) match {
-              case Failure(_) => {
-                val errorMessage = s"Schema not loaded properly for schema at $url, file $filename"
-                logSchemaValidationError(filename, errorMessage)
-                throw new Exception(errorMessage)
-              }
-              case Success(value) =>
-                // try to parse the actual data into a json format for validation
-                parse(encode(data)) match {
-                  case Left(_) => {
-                    val errorMessage = s"Unable to parse data into json for file $filename"
-                    logSchemaValidationError(filename, errorMessage)
-                    throw new Exception(errorMessage)
-                  }
-                  // if everything is parsed/encoded/etc correctly, actually try to validate against schema here
-                  // if not valid, will return list of issues
-                  case Right(success) => {
-                    value.validate(success) match {
-                      case Validated.Valid(_) => (filename, data)
-                      case Validated.Invalid(e) => {
-                        val errorMessage =
-                          s"Data does not conform to schema from $url; ${e.map(_.getMessage).toList.mkString(",")}"
-                        logSchemaValidationError(filename, errorMessage)
-                        throw new Exception(errorMessage)
+        try {
+          // if there is nothing in the schemaOption, then something went wrong; if there is, try to validate
+          schemaOption match {
+            case Some(schema) => {
+              // if the schema is not able to load, throw an exception, otherwise try to use it to validate
+              Schema.loadFromString(schema) match {
+                case Failure(_) =>
+                  throw new Exception(
+                    s"Schema not loaded properly for schema at $url, file $filename"
+                  )
+                case Success(value) =>
+                  // try to parse the actual data into a json format for validation
+                  parse(encode(data)) match {
+                    case Left(_) =>
+                      throw new Exception(s"Unable to parse data into json for file $filename")
+                    // if everything is parsed/encoded/etc correctly, actually try to validate against schema here
+                    // if not valid, will return list of issues
+                    case Right(success) => {
+                      value.validate(success) match {
+                        case Validated.Valid(_) => Some((filename, data))
+                        case Validated.Invalid(e) => {
+                          throw new Exception(
+                            s"Data does not conform to schema from $url; ${e.map(_.getMessage).toList.mkString(",")}"
+                          )
+                        }
                       }
                     }
                   }
-                }
+              }
             }
+            case None => throw new Exception(s"No schema found at $url for file $filename")
           }
-          case None => {
-            val errorMessage = s"No schema found at $url for file $filename"
-            logSchemaValidationError(filename, errorMessage)
-            throw new Exception(errorMessage)
-          }
+        } catch {
+          case e: Exception =>
+            logSchemaValidationError(filename, e.getMessage)
+            None
         }
       }
     }
-    filenameAndMsg
+    filenamesAndMsgs
   }
 
   /**
