@@ -703,10 +703,6 @@ spec:
     ## Move any logs to GCS.
     ##
     - name: move-error-logs-to-gcs
-      inputs:
-        parameters:
-          - name: table
-          {{- $bucket := "{{inputs.parameters.bucket}}" }} # TODO update this
       script:
         image: google/cloud-sdk:slim
         env:
