@@ -77,6 +77,8 @@ spec:
                   value: {{ "{{item}}" | quote }}
                 - name: staging-prefix
                   value: {{ $stagingPrefix | quote }}
+                - name: metadata-type
+                  value: metadata
                 - name: bq-dataset
                   value: {{ $datasetName | quote }}
 
