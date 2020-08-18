@@ -6,7 +6,7 @@ spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
   templates:
-    - name: ingest-metadata
+    - name: main
       inputs:
         parameters:
           - name: table
