@@ -167,6 +167,7 @@ spec:
           {{- $targetTable := "{{inputs.parameters.target-table}}" }}
           - name: staging-bq-dataset
           {{- $bqDataset := "{{inputs.parameters.staging-bq-dataset}}" }}
+          - name: data-repo-name
       script:
         image: google/cloud-sdk:slim
         env:
@@ -232,6 +233,8 @@ spec:
                   value: {{ printf "%s-%s" $loadTagPrefix $controlFileIndex | quote }}
                 - name: max-failures
                   value: {{ $totalFileCount | quote }}
+                - name: dataset-id
+                  value: {{ $datasetId | quote }}
           {{- $jobId := "{{tasks.submit.outputs.result}}" }}
 
           - name: poll
@@ -272,6 +275,7 @@ spec:
           {{- $loadTag := "{{inputs.parameters.load-tag}}" }}
           - name: max-failures
           {{- $maxFailures := "{{inputs.parameters.max-failures}}" }}
+          - name: dataset-id
       volumes:
         - name: sa-secret-volume
           secret:
@@ -359,6 +363,8 @@ spec:
                   value: {{ printf "%s/metadata" $stagingPrefix | quote }}
                 - name: bq-dataset
                   value: {{ $bqDataset | quote }}
+                - name: data-repo-name
+                  value: {{ $dataRepoName | quote }}
           {{- $fileIdsTable := "{{tasks.inject-file-ids.outputs.result}}" }}
 
           {{- $metadataPrefix := printf "%s/file-metadata-with-ids/%s" $stagingPrefix $table }}
@@ -412,6 +418,7 @@ spec:
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
           - name: bq-dataset
           {{- $bqDataset := "{{inputs.parameters.bq-dataset}}" }}
+          - name: data-repo-name
       script:
         image: google/cloud-sdk:slim
         env:

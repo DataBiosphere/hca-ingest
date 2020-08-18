@@ -181,6 +181,7 @@ spec:
           {{- $table := "{{inputs.parameters.table}}" }}
           - name: staging-bq-dataset
           {{- $bqDataset := "{{inputs.parameters.staging-bq-dataset}}" }}
+          - name: data-repo-name
       script:
         image: google/cloud-sdk:slim
         env:
