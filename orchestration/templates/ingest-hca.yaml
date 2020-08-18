@@ -415,6 +415,10 @@ spec:
                   value: file-metadata-with-ids
                 - name: bq-dataset
                   value: {{ $bqDataset | quote }}
+                - name: data-repo-name
+                  value: {{ $dataRepoName | quote }}
+                - name: dataset-id
+                  value: {{ $datasetId | quote }}
 
     ##
     ## Rewrite staged tabular data for files to inject corresponding TDR file IDs.
