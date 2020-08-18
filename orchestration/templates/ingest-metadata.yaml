@@ -18,9 +18,9 @@ spec:
           - name: bq-dataset
           {{- $bqDataset := "{{inputs.parameters.bq-dataset}}" }}
           - name: data-repo-name
-          {{- $dataRepoName := "{{inputs.parameters.jade-bq-dataset}}" }}
+          {{- $dataRepoName := "{{inputs.parameters.data-repo-name}}" }}
           - name: dataset-id
-          {{- $datasetId := "{{input.parameters.dataset-id}}" }}
+          {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
       dag:
         tasks:
           {{- $newRowsPrefix := printf "%s/new-rows/%s" $stagingPrefix $table }}
