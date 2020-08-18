@@ -81,3 +81,7 @@ spec:
                   value: metadata
                 - name: bq-dataset
                   value: {{ $datasetName | quote }}
+                - name: data-repo-name
+                  value: {{ $dataRepoName | quote }}
+                - name: dataset-id
+                  value: {{ $datasetId | quote }}

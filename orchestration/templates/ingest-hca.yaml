@@ -76,6 +76,10 @@ spec:
                   value: metadata
                 - name: bq-dataset
                   value: {{ $datasetName | quote }}
+                - name: data-repo-name
+                  value: {{ $dataRepoName | quote }}
+                - name: dataset-id
+                  value: {{ $datasetId | quote }}
 
           {{- $inputFileLoadPrefix := printf "%s/data-transfer-requests" $stagingPrefix }}
           {{- $fileLoadTable := "file_load_requests" }}

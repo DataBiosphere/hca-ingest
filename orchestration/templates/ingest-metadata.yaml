@@ -24,7 +24,7 @@ spec:
       dag:
         tasks:
           {{- $newRowsPrefix := printf "%s/new-rows/%s" $stagingPrefix $table }}
-            {{- $oldIdsPrefix := printf "%s/old-ids/%s" $stagingPrefix $table }}
+          {{- $oldIdsPrefix := printf "%s/old-ids/%s" $stagingPrefix $table }}
             - name: diff-table
               templateRef:
                 name: {{ .Values.argoTemplates.diffBQTable.name }}
