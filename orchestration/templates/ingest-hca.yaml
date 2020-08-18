@@ -162,6 +162,8 @@ spec:
                   value: {{ $datasetName | quote }}
                 - name: data-repo-name
                   value: {{ $dataRepoName | quote }}
+                - name: dataset-id
+                  value: {{ $datasetId | quote }}
 
     ##
     ## Diff the bulk file-load requests staged in GCS against the files already present in the repo.
@@ -361,6 +363,7 @@ spec:
           - name: bq-dataset
           {{- $bqDataset := "{{inputs.parameters.bq-dataset}}" }}
           - name: data-repo-name
+          - name: dataset-id
       dag:
         tasks:
           - name: inject-file-ids
