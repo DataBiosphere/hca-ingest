@@ -156,6 +156,8 @@ spec:
                   value: {{ $stagingPrefix | quote }}
                 - name: bq-dataset
                   value: {{ $datasetName | quote }}
+                - name: data-repo-name
+                  value: {{ $dataRepoName | quote }}
 
     ##
     ## Diff the bulk file-load requests staged in GCS against the files already present in the repo.
@@ -354,6 +356,7 @@ spec:
           {{- $stagingPrefix := "{{inputs.parameters.staging-prefix}}" }}
           - name: bq-dataset
           {{- $bqDataset := "{{inputs.parameters.bq-dataset}}" }}
+          - name: data-repo-name
       dag:
         tasks:
           - name: inject-file-ids
