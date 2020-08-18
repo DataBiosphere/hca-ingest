@@ -136,6 +136,8 @@ spec:
                   value: {{ $stagingPrefix | quote }}
                 - name: total-file-count
                   value: {{ $totalLoadCount | quote }}
+                - name: dataset-id
+                  value: {{ $datasetId | quote }}
 
           - name: ingest-file-metadata
             dependencies: [ingest-data-files]
@@ -221,6 +223,7 @@ spec:
           {{- $loadTagPrefix := "{{inputs.parameters.load-tag-prefix}}" }}
           - name: total-file-count
           {{- $totalFileCount := "{{inputs.parameters.total-file-count}}" }}
+          - name: dataset-id
       dag:
         tasks:
           - name: submit
