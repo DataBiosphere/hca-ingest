@@ -94,6 +94,8 @@ spec:
                   value: {{ $fileLoadTable }}
                 - name: staging-bq-dataset
                   value: {{ $datasetName | quote }}
+                - name: date-repo-name
+                  value: {{ dataRepoName | quote }}
 
           {{- $outputFileLoadPrefix := printf "%s/data-transfer-requests-deduped" $stagingPrefix }}
           - name: extract-file-loads
