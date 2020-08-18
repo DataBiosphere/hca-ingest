@@ -80,7 +80,7 @@ spec:
           {{- $inputFileLoadPrefix := printf "%s/data-transfer-requests" $stagingPrefix }}
           {{- $fileLoadTable := "file_load_requests" }}
           - name: diff-file-loads
-            dependencies: [pre-process-metadata, create-staging-dataset]
+            dependencies: [create-staging-dataset]
             template: diff-file-loads
             arguments:
               parameters:
