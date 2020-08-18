@@ -119,6 +119,8 @@ spec:
                     value: {{ $table | quote }}
                   - name: staging-bq-dataset
                     value: {{ $bqDataset | quote }}
+                  - name: data-repo-name
+                    value: {{ $dataRepoName | quote }}
                   {{- $outdatedIdsTable := "{{tasks.get-outdated-ids.outputs.result}}" }}
 
             {{- $outdatedIdsPrefix := printf "%s/outdated-ids/%s" $stagingPrefix $table }}
