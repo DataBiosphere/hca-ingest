@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: ingest-hca-no-files
+  name: load-hca-no-files
 spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
@@ -69,7 +69,7 @@ spec:
               - sequence_file
               - supplementary_file
             templateRef:
-              name: ingest-metadata
+              name: load-table
               template: main
             arguments:
               parameters:

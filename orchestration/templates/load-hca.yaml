@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: ingest-hca
+  name: load-hca
 spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
@@ -64,7 +64,7 @@ spec:
               - specimen_from_organism
               - links
             templateRef:
-              name: ingest-metadata
+              name: load-table
               template: main
             arguments:
               parameters:
@@ -408,7 +408,7 @@ spec:
             dependencies: [export-metadata-with-ids]
             when: {{ printf "%s > 0" $rowCount | quote }}
             templateRef:
-              name: ingest-metadata
+              name: load-table
               template: main
             arguments:
               parameters:

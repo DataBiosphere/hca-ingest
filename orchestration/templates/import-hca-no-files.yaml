@@ -39,10 +39,10 @@ spec:
                 - name: staging-bucket-prefix
                   value: {{ $stagingPrefix | quote }}
 
-          - name: ingest-hca-no-files
+          - name: load-hca-no-files
             dependencies: [stage-hca]
             templateRef:
-              name: ingest-hca-no-files
+              name: load-hca-no-files
               template: main
             arguments:
               parameters:
