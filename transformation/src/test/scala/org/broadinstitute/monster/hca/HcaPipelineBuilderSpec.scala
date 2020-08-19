@@ -244,7 +244,7 @@ class HcaPipelineBuilderSpec
 
     val exampleUrlAndFile = (exampleFileContent.read[String]("describedBy"), exampleFileContent)
 
-    runWithContext(sc => HcaPipelineBuilder.validateJson(sc.parallelize(Seq(exampleUrlAndFile))))
+    runWithContext(sc => HcaPipelineBuilder.ensureValidJson(sc.parallelize(Seq(exampleUrlAndFile))))
   }
 
   it should "validate json schemas and throw an exception if files are incorrectly formatted" in {
@@ -282,11 +282,20 @@ class HcaPipelineBuilderSpec
 
     val exampleFilenameAndMsg = ("/metadata/organoid/123456_VERSION1.json", exampleFileContent)
 
-    the[Exception] thrownBy runWithContext { sc =>
-      HcaPipelineBuilder.validateJson(sc.parallelize(Seq(exampleFilenameAndMsg)))
-    } should have message "java.lang.Exception: Data does not conform to schema " +
-      "from https://schema.humancellatlas.org/type/biomaterial/5.1.0/specimen_from_organism; " +
-      "#: required key [schema_type] not found"
+    runWithContext { sc =>
+      val validated = HcaPipelineBuilder.validateJson(sc.parallelize(Seq(exampleFilenameAndMsg)))
+      validated should haveSize(1)
+      validated should containSingleValue(
+        Left(
+          HcaPipelineBuilder.ValidateError(
+            exampleFilenameAndMsg._1,
+            "Data does not conform to schema " +
+              "from https://schema.humancellatlas.org/type/biomaterial/5.1.0/specimen_from_organism; " +
+              "#: required key [schema_type] not found"
+          )
+        )
+      )
+    }
   }
 
   it should "not mutate the json when validating" in {
@@ -328,7 +337,7 @@ class HcaPipelineBuilderSpec
     runWithContext { sc =>
       val validated = HcaPipelineBuilder.validateJson(sc.parallelize(Seq(exampleUrlAndFile)))
       validated should haveSize(1)
-      validated should containSingleValue(exampleUrlAndFile)
+      validated should containSingleValue(Right(exampleUrlAndFile))
     }
   }
 }

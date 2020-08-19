@@ -266,21 +266,40 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   def encode(msg: Msg): String =
     upack.transform(msg, StringRenderer()).toString
 
-  def logSchemaValidationError(filepath: String, errorMessage: String): Unit = {
-    val filenameRegex = "[^/]*$".r // match everything that is not followed by a "/" (only the filename)
-    val filename = filenameRegex.findFirstIn(filepath).getOrElse("")
-    val errorLog = ujson.Obj(
-      "errorType" -> ujson.Str("SchemaValidationError"),
-      "filePath" -> ujson.Str(filepath),
-      "fileName" -> ujson.Str(filename),
-      "message" -> ujson.Str(errorMessage)
-    )
-    logger.error(errorLog.toString())
+  case class ValidateError(filepath: String, errorMessage: String) {
+
+    def log(): Unit = {
+      val filenameRegex = "[^/]*$".r // match everything that is not followed by a "/" (only the filename)
+      val filename = filenameRegex.findFirstIn(filepath).getOrElse("")
+      val errorLog = ujson.Obj(
+        "errorType" -> ujson.Str("SchemaValidationError"),
+        "filePath" -> ujson.Str(filepath),
+        "fileName" -> ujson.Str(filename),
+        "message" -> ujson.Str(errorMessage)
+      )
+      logger.error(errorLog.toString())
+    }
   }
 
-  def validateJson(filenameAndMsg: SCollection[(String, Msg)]): SCollection[(String, Msg)] = {
+  def ensureValidJson(filenamesAndMsg: SCollection[(String, Msg)]): Unit = {
+    var anyErrors = false
+    validateJson(filenamesAndMsg).map {
+      case Left(error) =>
+        error.log()
+        anyErrors = true
+      case Right(_) =>
+      // Ignored, because the JSON is modified somehow by validation.
+    }
+    if (anyErrors) {
+      throw new RuntimeException("Validation Failed")
+    }
+  }
+
+  def validateJson(
+    filenamesAndMsg: SCollection[(String, Msg)]
+  ): SCollection[Either[ValidateError, (String, Msg)]] = {
     // pull out the url for where the schema definition is for each file
-    val content = filenameAndMsg.map {
+    val content = filenamesAndMsg.map {
       case (filename, msg) => (msg.read[String]("describedBy"), (filename, msg))
     }
     // get the distinct urls (so as to minimize the number of get requests) and then get the schemas as strings
@@ -289,50 +308,45 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     val joined = content.leftOuterJoin(schemas)
     // go over each row
     joined.map {
-      case (url, ((filename, data), schemaOption)) => {
+      case (url, ((filename, data), schemaOption)) =>
         // if there is nothing in the schemaOption, then something went wrong; if there is, try to validate
         schemaOption match {
           case Some(schema) => {
             // if the schema is not able to load, throw an exception, otherwise try to use it to validate
             Schema.loadFromString(schema) match {
-              case Failure(_) => {
-                val errorMessage = s"Schema not loaded properly for schema at $url, file $filename"
-                logSchemaValidationError(filename, errorMessage)
-                throw new Exception(errorMessage)
-              }
+              case Failure(_) =>
+                Left(
+                  ValidateError(
+                    filename,
+                    s"Schema not loaded properly for schema at $url, file $filename"
+                  )
+                )
               case Success(value) =>
                 // try to parse the actual data into a json format for validation
                 parse(encode(data)) match {
-                  case Left(_) => {
-                    val errorMessage = s"Unable to parse data into json for file $filename"
-                    logSchemaValidationError(filename, errorMessage)
-                    throw new Exception(errorMessage)
-                  }
+                  case Left(_) =>
+                    Left(
+                      ValidateError(filename, s"Unable to parse data into json for file $filename")
+                    )
                   // if everything is parsed/encoded/etc correctly, actually try to validate against schema here
                   // if not valid, will return list of issues
-                  case Right(success) => {
+                  case Right(success) =>
                     value.validate(success) match {
-                      case Validated.Valid(_) => (filename, data)
-                      case Validated.Invalid(e) => {
-                        val errorMessage =
-                          s"Data does not conform to schema from $url; ${e.map(_.getMessage).toList.mkString(",")}"
-                        logSchemaValidationError(filename, errorMessage)
-                        throw new Exception(errorMessage)
-                      }
+                      case Validated.Valid(_) => Right((filename, data))
+                      case Validated.Invalid(e) =>
+                        Left(
+                          ValidateError(
+                            filename,
+                            s"Data does not conform to schema from $url; ${e.map(_.getMessage).toList.mkString(",")}"
+                          )
+                        )
                     }
-                  }
                 }
             }
           }
-          case None => {
-            val errorMessage = s"No schema found at $url for file $filename"
-            logSchemaValidationError(filename, errorMessage)
-            throw new Exception(errorMessage)
-          }
+          case None => Left(ValidateError(filename, s"No schema found at $url for file $filename"))
         }
-      }
     }
-    filenameAndMsg
   }
 
   /**
@@ -354,7 +368,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     val metadataFiles = getReadableFiles(s"$inputPrefix/metadata/${entityType}/**.json", context)
     val metadataFilenameAndMsg = jsonToFilenameAndMsg(entityType)(metadataFiles)
 
-    val validatedFilenameAndMsg = validateJson(metadataFilenameAndMsg)
+    ensureValidJson(metadataFilenameAndMsg)
 
     // for file metadata
     val processedMetadata = if (isFileMetadata) {
@@ -363,7 +377,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         context
       )
       val descriptorFilenameAndMsg = jsonToFilenameAndMsg(entityType)(descriptorFiles)
-      val processedFileMetadata = validatedFilenameAndMsg
+      val processedFileMetadata = metadataFilenameAndMsg
         .join(descriptorFilenameAndMsg)
         .withName(s"Pre-process $entityType metadata")
         .map {
@@ -383,7 +397,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       processedFileMetadata
     } else {
       // for non-file metadata
-      validatedFilenameAndMsg
+      metadataFilenameAndMsg
         .withName(s"Pre-process $entityType metadata")
         .map {
           case (filename, metadata) => transformMetadata(entityType, filename, metadata)
@@ -409,10 +423,10 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     )
     val linksMetadataFilenameAndMsg = jsonToFilenameAndMsg("links")(readableFiles)
 
-    val validatedFilenameAndMsg = validateJson(linksMetadataFilenameAndMsg)
+    ensureValidJson(linksMetadataFilenameAndMsg)
 
     // then convert json to msg and get the filename
-    val processedData = validatedFilenameAndMsg
+    val processedData = linksMetadataFilenameAndMsg
       .withName(s"Pre-process links metadata")
       .map {
         case (filename, metadata) =>
