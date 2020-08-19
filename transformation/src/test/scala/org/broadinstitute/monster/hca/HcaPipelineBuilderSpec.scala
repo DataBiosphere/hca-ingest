@@ -2,10 +2,9 @@ package org.broadinstitute.monster.hca
 
 import com.spotify.scio.testing.PipelineSpec
 import org.broadinstitute.monster.common.PipelineCoders
-import org.broadinstitute.monster.common.msg.JsonParser
+import org.broadinstitute.monster.common.msg.{JsonParser, _}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.broadinstitute.monster.common.msg._
 
 class HcaPipelineBuilderSpec
     extends AnyFlatSpec
@@ -282,10 +281,8 @@ class HcaPipelineBuilderSpec
 
     val exampleFilenameAndMsg = ("/metadata/organoid/123456_VERSION1.json", exampleFileContent)
 
-    runWithContext { sc =>
-      val validated = HcaPipelineBuilder.validateJson(sc.parallelize(Seq(exampleFilenameAndMsg)))
-      validated should haveSize(1)
-      validated should containSingleValue(
+    runWithData(Seq(exampleFilenameAndMsg))(HcaPipelineBuilder.validateJson) shouldBe
+      Seq(
         Left(
           HcaPipelineBuilder.ValidateError(
             exampleFilenameAndMsg._1,
@@ -295,7 +292,6 @@ class HcaPipelineBuilderSpec
           )
         )
       )
-    }
   }
 
   it should "not mutate the json when validating" in {
@@ -333,11 +329,7 @@ class HcaPipelineBuilderSpec
     )
 
     val exampleUrlAndFile = ("sampleFileName.json", exampleFileContent)
-
-    runWithContext { sc =>
-      val validated = HcaPipelineBuilder.validateJson(sc.parallelize(Seq(exampleUrlAndFile)))
-      validated should haveSize(1)
-      validated should containSingleValue(Right(exampleUrlAndFile))
-    }
+    runWithData(Seq(exampleUrlAndFile))(HcaPipelineBuilder.validateJson) shouldBe
+      Stream(Right(exampleUrlAndFile))
   }
 }
