@@ -280,11 +280,11 @@ class HcaPipelineBuilderSpec
         |""".stripMargin
     )
 
-    val exampleUrlAndFile = (exampleFileContent.read[String]("describedBy"), exampleFileContent)
+    val exampleData = ("sampleFileName.json", exampleFileContent)
 
     the[Exception] thrownBy runWithContext { sc =>
-      HcaPipelineBuilder.validateJson(sc.parallelize(Seq(exampleUrlAndFile)))
-    } should have message "java.lang.Exception: Data does not conform to schema: NonEmptyList(#: required key [schema_type] not found)"
+      HcaPipelineBuilder.validateJson(sc.parallelize(Seq(exampleData)))
+    } should have message "java.lang.Exception: Data in file sampleFileName.json does not conform to schema from https://schema.humancellatlas.org/type/biomaterial/5.1.0/specimen_from_organism: NonEmptyList(#: required key [schema_type] not found)"
   }
 
   it should "not mutate the json when validating" in {
