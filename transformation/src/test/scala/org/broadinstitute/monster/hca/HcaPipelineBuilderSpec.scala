@@ -283,7 +283,7 @@ class HcaPipelineBuilderSpec
 
     runWithData(Seq(exampleFilenameAndMsg))(HcaPipelineBuilder.validateJson) shouldBe
       Seq(
-        Left(
+        Some(
           HcaPipelineBuilder.ValidateError(
             exampleFilenameAndMsg._1,
             "Data does not conform to schema " +
@@ -299,7 +299,7 @@ class HcaPipelineBuilderSpec
       """
         |{
         |    "organ": {
-        |        "text": "brain",
+        |        "text": "bräîn",
         |        "ontology": "astrocyte"
         |    },
         |    "schema_type": "biomaterial",
@@ -330,6 +330,6 @@ class HcaPipelineBuilderSpec
 
     val exampleUrlAndFile = ("sampleFileName.json", exampleFileContent)
     runWithData(Seq(exampleUrlAndFile))(HcaPipelineBuilder.validateJson) shouldBe
-      Stream(Right(exampleUrlAndFile))
+      Seq(None)
   }
 }

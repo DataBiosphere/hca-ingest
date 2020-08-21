@@ -5,20 +5,19 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
-
 import io.circe.parser._
 import io.circe.schema.Schema
-import org.apache.beam.sdk.io.{FileIO, ReadableFileCoder}
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
-import org.broadinstitute.monster.common.{PipelineBuilder, StorageIO}
+import org.apache.beam.sdk.io.{FileIO, ReadableFileCoder}
 import org.broadinstitute.monster.common.msg._
+import org.broadinstitute.monster.common.{PipelineBuilder, StorageIO}
 import org.slf4j.LoggerFactory
 import ujson.StringRenderer
 import upack.{Msg, Obj, Str}
 
-import scala.util.{Failure, Success}
 import scala.util.matching.Regex
+import scala.util.{Failure, Success}
 
 object HcaPipelineBuilder extends PipelineBuilder[Args] {
 
@@ -284,11 +283,10 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   def ensureValidJson(filenamesAndMsg: SCollection[(String, Msg)]): Unit = {
     var anyErrors = false
     validateJson(filenamesAndMsg).map {
-      case Left(error) =>
+      case Some(error) =>
         error.log()
         anyErrors = true
-      case Right(_) =>
-      // Ignored, because the JSON is modified somehow by validation.
+      case None =>
     }
     if (anyErrors) {
       throw new RuntimeException("Validation Failed")
@@ -297,7 +295,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
 
   def validateJson(
     filenamesAndMsg: SCollection[(String, Msg)]
-  ): SCollection[Either[ValidateError, (String, Msg)]] = {
+  ): SCollection[Option[ValidateError]] = {
     // pull out the url for where the schema definition is for each file
     val content = filenamesAndMsg.map {
       case (filename, msg) => (msg.read[String]("describedBy"), (filename, msg))
@@ -315,7 +313,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
             // if the schema is not able to load, throw an exception, otherwise try to use it to validate
             Schema.loadFromString(schema) match {
               case Failure(_) =>
-                Left(
+                Option(
                   ValidateError(
                     filename,
                     s"Schema not loaded properly for schema at $url, file $filename"
@@ -325,16 +323,16 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
                 // try to parse the actual data into a json format for validation
                 parse(encode(data)) match {
                   case Left(_) =>
-                    Left(
+                    Option(
                       ValidateError(filename, s"Unable to parse data into json for file $filename")
                     )
                   // if everything is parsed/encoded/etc correctly, actually try to validate against schema here
                   // if not valid, will return list of issues
                   case Right(success) =>
                     value.validate(success) match {
-                      case Validated.Valid(_) => Right((filename, data))
+                      case Validated.Valid(_) => None
                       case Validated.Invalid(e) =>
-                        Left(
+                        Option(
                           ValidateError(
                             filename,
                             s"Data does not conform to schema from $url; ${e.map(_.getMessage).toList.mkString(",")}"
@@ -344,7 +342,8 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
                 }
             }
           }
-          case None => Left(ValidateError(filename, s"No schema found at $url for file $filename"))
+          case None =>
+            Option(ValidateError(filename, s"No schema found at $url for file $filename"))
         }
     }
   }
