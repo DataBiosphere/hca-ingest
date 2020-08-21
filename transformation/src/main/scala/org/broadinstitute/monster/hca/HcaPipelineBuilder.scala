@@ -281,15 +281,11 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   }
 
   def validateJson(filenamesAndMsg: SCollection[(String, Msg)]): SCollection[(String, Msg)] = {
-    var anyErrors = false
     validateJsonInternal(filenamesAndMsg).withName("Validate: Log Validation").map {
       case Some(error) =>
         error.log()
-        anyErrors = true
+        throw new RuntimeException(error.errorMessage)
       case None =>
-    }
-    if (anyErrors) {
-      throw new RuntimeException("Validation Failed")
     }
     filenamesAndMsg
   }
