@@ -280,9 +280,9 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     }
   }
 
-  def ensureValidJson(filenamesAndMsg: SCollection[(String, Msg)]): Unit = {
+  def validateJson(filenamesAndMsg: SCollection[(String, Msg)]): SCollection[(String, Msg)] = {
     var anyErrors = false
-    validateJson(filenamesAndMsg).map {
+    validateJsonInternal(filenamesAndMsg).map {
       case Some(error) =>
         error.log()
         anyErrors = true
@@ -291,9 +291,10 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     if (anyErrors) {
       throw new RuntimeException("Validation Failed")
     }
+    filenamesAndMsg
   }
 
-  def validateJson(
+  def validateJsonInternal(
     filenamesAndMsg: SCollection[(String, Msg)]
   ): SCollection[Option[ValidateError]] = {
     // pull out the url for where the schema definition is for each file
@@ -367,7 +368,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     val metadataFiles = getReadableFiles(s"$inputPrefix/metadata/${entityType}/**.json", context)
     val metadataFilenameAndMsg = jsonToFilenameAndMsg(entityType)(metadataFiles)
 
-    ensureValidJson(metadataFilenameAndMsg)
+    val validatedFilenameAndMsg = validateJson(metadataFilenameAndMsg)
 
     // for file metadata
     val processedMetadata = if (isFileMetadata) {
@@ -376,7 +377,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         context
       )
       val descriptorFilenameAndMsg = jsonToFilenameAndMsg(entityType)(descriptorFiles)
-      val processedFileMetadata = metadataFilenameAndMsg
+      val processedFileMetadata = validatedFilenameAndMsg
         .join(descriptorFilenameAndMsg)
         .withName(s"Pre-process $entityType metadata")
         .map {
@@ -396,7 +397,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       processedFileMetadata
     } else {
       // for non-file metadata
-      metadataFilenameAndMsg
+      validatedFilenameAndMsg
         .withName(s"Pre-process $entityType metadata")
         .map {
           case (filename, metadata) => transformMetadata(entityType, filename, metadata)
@@ -422,10 +423,10 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     )
     val linksMetadataFilenameAndMsg = jsonToFilenameAndMsg("links")(readableFiles)
 
-    ensureValidJson(linksMetadataFilenameAndMsg)
+    val validatedFilenameAndMsg = validateJson(linksMetadataFilenameAndMsg)
 
     // then convert json to msg and get the filename
-    val processedData = linksMetadataFilenameAndMsg
+    val processedData = validatedFilenameAndMsg
       .withName(s"Pre-process links metadata")
       .map {
         case (filename, metadata) =>
