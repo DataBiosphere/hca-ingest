@@ -243,7 +243,7 @@ class HcaPipelineBuilderSpec
 
     val exampleUrlAndFile = (exampleFileContent.read[String]("describedBy"), exampleFileContent)
 
-    runWithContext(sc => HcaPipelineBuilder.ensureValidJson(sc.parallelize(Seq(exampleUrlAndFile))))
+    runWithContext(sc => HcaPipelineBuilder.validateJson(sc.parallelize(Seq(exampleUrlAndFile))))
   }
 
   it should "validate json schemas and throw an exception if files are incorrectly formatted" in {
@@ -281,7 +281,7 @@ class HcaPipelineBuilderSpec
 
     val exampleFilenameAndMsg = ("/metadata/organoid/123456_VERSION1.json", exampleFileContent)
 
-    runWithData(Seq(exampleFilenameAndMsg))(HcaPipelineBuilder.validateJson) shouldBe
+    runWithData(Seq(exampleFilenameAndMsg))(HcaPipelineBuilder.validateJsonInternal) shouldBe
       Seq(
         Some(
           HcaPipelineBuilder.ValidateError(
@@ -329,7 +329,7 @@ class HcaPipelineBuilderSpec
     )
 
     val exampleUrlAndFile = ("sampleFileName.json", exampleFileContent)
-    runWithData(Seq(exampleUrlAndFile))(HcaPipelineBuilder.validateJson) shouldBe
+    runWithData(Seq(exampleUrlAndFile))(HcaPipelineBuilder.validateJsonInternal) shouldBe
       Seq(None)
   }
 }

@@ -282,7 +282,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
 
   def validateJson(filenamesAndMsg: SCollection[(String, Msg)]): SCollection[(String, Msg)] = {
     var anyErrors = false
-    validateJsonInternal(filenamesAndMsg).map {
+    validateJsonInternal(filenamesAndMsg).withName("Validate: Log Validation").map {
       case Some(error) =>
         error.log()
         anyErrors = true
@@ -298,15 +298,20 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     filenamesAndMsg: SCollection[(String, Msg)]
   ): SCollection[Option[ValidateError]] = {
     // pull out the url for where the schema definition is for each file
-    val content = filenamesAndMsg.map {
+    val content = filenamesAndMsg.withName("Validate: Schema Definition URL").map {
       case (filename, msg) => (msg.read[String]("describedBy"), (filename, msg))
     }
     // get the distinct urls (so as to minimize the number of get requests) and then get the schemas as strings
-    val schemas = content.map(_._1).distinct.map(url => (url, requests.get(url).text))
+    val schemas = content
+      .withName("Validate: Schema Content URL")
+      .map(_._1)
+      .distinct
+      .withName("Validate: Schema Content")
+      .map(url => (url, requests.get(url).text))
     // join the schemas to the data keyed by the schema url
     val joined = content.leftOuterJoin(schemas)
     // go over each row
-    joined.map {
+    joined.withName("Validate: Metadata files against schema definition").map {
       case (url, ((filename, data), schemaOption)) =>
         // if there is nothing in the schemaOption, then something went wrong; if there is, try to validate
         schemaOption match {
