@@ -295,7 +295,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
                       case Validated.Valid(_) => (filename, data)
                       case Validated.Invalid(e) =>
                         throw new Exception(
-                          s"Data does not conform to schema: ${e.map(_.getMessage)}"
+                          s"Data in file $filename does not conform to schema from $url: ${e.map(_.getMessage)}"
                         )
                     }
                   }
