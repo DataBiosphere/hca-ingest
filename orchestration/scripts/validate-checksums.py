@@ -14,37 +14,31 @@ bqclient = bigquery.Client(credentials=credentials, project=project_id,)
 
 
 # Log a checksum error for the given source and target path.
-def log_checksum_error(source_name: str, target_path: str):
+def generate_checksum_error(load_history_row) -> str:
+    source_name = load_history_row["source_name"]
+    target_path = load_history_row["target_path"]
+    new_checksum = load_history_row["checksum_crc32c"]
     error_log = {
         "errorType": "ChecksumError",
         "filePath": source_name,
         "fileName": source_name.split("/")[-1],
-        "message": f"New crc32c checksum does not match the original for the file ingested to {target_path}."
+        "message": f"For the file ingested to {target_path}, the new checksum ({new_checksum}) "
+                   "does not match the original checksum in the target path."
     }
-    with open('../../logs/errors.log', 'a+') as log_file:
-        log_file.write(json.dumps(error_log) + "\n")
+    return json.dumps(error_log) + "\n"
 
 
-# Validate the checksums for a single file ingested into the jade repo.
-# Log an error if the checksums do not match.
-def validate_checksum(load_history_row):
-    target_path = load_history_row["target_path"]
-    jade_checksum = load_history_row["checksum_crc32c"]
-
-    # check that the original checksum matches the new one
-    original_checksum = target_path.split("/")[-1]
-    if not (original_checksum == jade_checksum):
-        log_checksum_error(load_history_row["source_name"], target_path)
-
-
-# Query the BQ API for summary information about each successful file load.
+# Query the BigQuery API
+# For any files that have mis-matched checksums, query information for logging.
 sql_query = f"""
     SELECT source_name, target_path, checksum_crc32c
     FROM `{project_id}.{dataset_name}.datarepo_load_history`
     WHERE state='succeeded'
     AND load_tag='{load_tag}'
+    AND NOT ENDS_WITH(target_path, CONCAT('/', checksum_crc32c))
     """
-query_job = bqclient.query(sql_query)
+query_result = bqclient.query(sql_query)
+error_logs = map(generate_checksum_error, query_result)
 
-for result_row in query_job:
-    validate_checksum(result_row)
+with open('../../logs/errors.log', 'a+') as log_file:
+    log_file.writelines(error_logs)
