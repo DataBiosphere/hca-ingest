@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: ingest-hca
+  name: load-hca
 spec:
   entrypoint: main
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
@@ -9,10 +9,10 @@ spec:
     - name: main
       inputs:
         parameters:
-          - name: source-bucket-name
-          {{- $inputBucket := "{{inputs.parameters.source-bucket-name}}" }}
-          - name: source-bucket-prefix
-          {{- $inputPrefix := "{{inputs.parameters.source-bucket-prefix}}" }}
+          - name: data-repo-name
+            {{- $dataRepoName := "{{inputs.parameters.data-repo-name}}" }}
+          - name: dataset-id
+            {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
           - name: staging-bucket-prefix
           {{- $stagingPrefix := "{{inputs.parameters.staging-bucket-prefix}}" }}
       # Limit the number of active processing "arms" at a time.
@@ -20,27 +20,6 @@ spec:
       parallelism: {{ .Values.parallelism }}
       dag:
         tasks:
-          # Clear the staging directory to avoid corrupt state.
-          - name: clear-staging-dir
-            template: delete-gcs-directory
-            arguments:
-              parameters:
-                - name: gcs-prefix
-                  value: {{ $stagingPrefix | quote }}
-
-          # Pre-process the metadata found in a source bucket
-          - name: pre-process-metadata
-            dependencies: [clear-staging-dir]
-            template: run-dataflow
-            arguments:
-              parameters:
-                - name: source-bucket-name
-                  value: {{ $inputBucket | quote }}
-                - name: source-bucket-prefix
-                  value: {{ $inputPrefix | quote }}
-                - name: staging-bucket-prefix
-                  value: {{ $stagingPrefix | quote }}
-
           {{- $datasetName := printf "%s_%s" .Values.bigquery.stagingData.datasetPrefix $stagingPrefix }}
           - name: create-staging-dataset
             templateRef:
@@ -60,7 +39,7 @@ spec:
                 {{- end }}
 
           - name: ingest-non-file-metadata
-            dependencies: [pre-process-metadata, create-staging-dataset]
+            dependencies: [create-staging-dataset]
             withItems:
               - aggregate_generation_protocol
               - analysis_process
@@ -84,7 +63,9 @@ spec:
               - sequencing_protocol
               - specimen_from_organism
               - links
-            template: ingest-metadata
+            templateRef:
+              name: load-table
+              template: main
             arguments:
               parameters:
                 - name: table
@@ -95,11 +76,15 @@ spec:
                   value: metadata
                 - name: bq-dataset
                   value: {{ $datasetName | quote }}
+                - name: data-repo-name
+                  value: {{ $dataRepoName | quote }}
+                - name: dataset-id
+                  value: {{ $datasetId | quote }}
 
           {{- $inputFileLoadPrefix := printf "%s/data-transfer-requests" $stagingPrefix }}
           {{- $fileLoadTable := "file_load_requests" }}
           - name: diff-file-loads
-            dependencies: [pre-process-metadata, create-staging-dataset]
+            dependencies: [create-staging-dataset]
             template: diff-file-loads
             arguments:
               parameters:
@@ -109,6 +94,8 @@ spec:
                   value: {{ $fileLoadTable }}
                 - name: staging-bq-dataset
                   value: {{ $datasetName | quote }}
+                - name: data-repo-name
+                  value: {{ $dataRepoName | quote }}
 
           {{- $outputFileLoadPrefix := printf "%s/data-transfer-requests-deduped" $stagingPrefix }}
           - name: extract-file-loads
@@ -155,9 +142,11 @@ spec:
                   value: {{ $stagingPrefix | quote }}
                 - name: total-file-count
                   value: {{ $totalLoadCount | quote }}
+                - name: dataset-id
+                  value: {{ $datasetId | quote }}
 
           - name: ingest-file-metadata
-            dependencies: [pre-process-metadata, create-staging-dataset]
+            dependencies: [ingest-data-files]
             withItems:
               - analysis_file
               - image_file
@@ -173,66 +162,10 @@ spec:
                   value: {{ $stagingPrefix | quote }}
                 - name: bq-dataset
                   value: {{ $datasetName | quote }}
-
-          - name: move-error-logs-to-gcs
-            dependencies: [ingest-non-file-metadata, ingest-file-metadata, ingest-data-files]
-            template: move-error-logs-to-gcs
-
-    ##
-    ## Delete all the files under a prefix in GCS.
-    ##
-    - name: delete-gcs-directory
-      inputs:
-        parameters:
-          - name: gcs-prefix
-          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
-      script:
-        image: google/cloud-sdk:slim
-        {{- $fullPath := printf "gs://%s/%s/*" .Values.gcs.stagingBucketName $gcsPrefix }}
-        command: [bash]
-        source: |
-          # rm will fail if there's already nothing at the target path.
-          gsutil -m rm -r {{ $fullPath }} || true
-
-    ##
-    ## Run a Dataflow job to pre-process JSON metadata from the input area,
-    ## moving it into our GCP space in the process.
-    ##
-    - name: run-dataflow
-      inputs:
-        parameters:
-          - name: source-bucket-name
-          {{- $sourceBucket := "{{inputs.parameters.source-bucket-name}}" }}
-          - name: source-bucket-prefix
-          {{- $sourcePrefix := "{{inputs.parameters.source-bucket-prefix}}" }}
-          - name: staging-bucket-prefix
-          {{- $stagingPrefix := "{{inputs.parameters.staging-bucket-prefix}}" }}
-      container:
-        {{- $version := default "latest" .Chart.AppVersion }}
-        image: us.gcr.io/broad-dsp-gcr-public/hca-transformation-pipeline:{{ $version }}
-        command: []
-        args:
-          - --runner=dataflow
-          - --inputPrefix=gs://{{ $sourceBucket }}{{ $sourcePrefix }}
-          - --outputPrefix=gs://{{ .Values.gcs.stagingBucketName }}/{{ $stagingPrefix }}
-          {{- with .Values.dataflow }}
-          - --project={{ .project }}
-          - --region={{ .region }}
-          - --tempLocation=gs://{{ .tmpBucketName }}/dataflow
-          - --subnetwork=regions/{{ .region }}/subnetworks/{{ .subnetName }}
-          - --serviceAccount={{ .workerAccount }}
-          - --workerMachineType={{ .workerMachineType }}
-          {{- with .autoscaling }}
-          - --autoscalingAlgorithm=THROUGHPUT_BASED
-          - --numWorkers={{ .minWorkers }}
-          - --maxNumWorkers={{ .maxWorkers }}
-          {{- end }}
-          {{- if .useFlexRS }}
-          - --flexRSGoal=COST_OPTIMIZED
-          {{- else }}
-          - --experiments=shuffle_mode=service
-          {{- end }}
-          {{- end }}
+                - name: data-repo-name
+                  value: {{ $dataRepoName | quote }}
+                - name: dataset-id
+                  value: {{ $datasetId | quote }}
 
     ##
     ## Diff the bulk file-load requests staged in GCS against the files already present in the repo.
@@ -246,6 +179,7 @@ spec:
           {{- $targetTable := "{{inputs.parameters.target-table}}" }}
           - name: staging-bq-dataset
           {{- $bqDataset := "{{inputs.parameters.staging-bq-dataset}}" }}
+          - name: data-repo-name
       script:
         image: google/cloud-sdk:slim
         env:
@@ -260,7 +194,7 @@ spec:
           - name: JADE_PROJECT
             value: {{ .Values.bigquery.jadeData.project }}
           - name: JADE_DATASET
-            value: {{ .Values.bigquery.jadeData.dataset }}
+            value: {{ $dataRepoName | quote }}
         command: [bash]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/diff-data-files.sh") | indent 10 }}
@@ -299,6 +233,7 @@ spec:
           {{- $loadTagPrefix := "{{inputs.parameters.load-tag-prefix}}" }}
           - name: total-file-count
           {{- $totalFileCount := "{{inputs.parameters.total-file-count}}" }}
+          - name: dataset-id
       dag:
         tasks:
           {{- $loadTag := printf "%s-%s" $loadTagPrefix $controlFileIndex }}
@@ -312,6 +247,8 @@ spec:
                   value: {{ $loadTag | quote }}
                 - name: max-failures
                   value: {{ $totalFileCount | quote }}
+                - name: dataset-id
+                  value: {{ $datasetId | quote }}
           {{- $jobId := "{{tasks.submit.outputs.result}}" }}
 
           - name: poll
@@ -359,6 +296,7 @@ spec:
           {{- $loadTag := "{{inputs.parameters.load-tag}}" }}
           - name: max-failures
           {{- $maxFailures := "{{inputs.parameters.max-failures}}" }}
+          - name: dataset-id
       volumes:
         - name: sa-secret-volume
           secret:
@@ -379,7 +317,7 @@ spec:
           - name: API_URL
             value: {{ .url }}
           - name: DATASET_ID
-            value: {{ .datasetId }}
+            value: {{ $datasetId | quote }}
           - name: PROFILE_ID
             value: {{ .profileId }}
           - name: GOOGLE_APPLICATION_CREDENTIALS
@@ -423,169 +361,6 @@ spec:
         {{- include "argo.render-lines" (.Files.Lines "scripts/check-bulk-file-ingest-result.py") | indent 10 }}
 
     ##
-    ## Ingest metadata staged in GCS into a TDR table.
-    ##
-    - name: ingest-metadata
-      inputs:
-        parameters:
-          - name: table
-          {{- $table := "{{inputs.parameters.table}}" }}
-          - name: staging-prefix
-          {{- $stagingPrefix := "{{inputs.parameters.staging-prefix}}" }}
-          - name: metadata-type
-          {{- $metadataType := "{{inputs.parameters.metadata-type}}" }}
-          - name: bq-dataset
-          {{- $bqDataset := "{{inputs.parameters.bq-dataset}}" }}
-      dag:
-        tasks:
-          {{- $newRowsPrefix := printf "%s/new-rows/%s" $stagingPrefix $table }}
-          {{- $oldIdsPrefix := printf "%s/old-ids/%s" $stagingPrefix $table }}
-          - name: diff-table
-            templateRef:
-              name: {{ .Values.argoTemplates.diffBQTable.name }}
-              template: main
-            arguments:
-              parameters:
-                - name: table-name
-                  value: {{ $table | quote }}
-                - name: gcs-bucket
-                  value: {{ .Values.gcs.stagingBucketName }}
-                - name: input-prefix
-                  value: {{ printf "%s/%s/%s" $stagingPrefix $metadataType $table | quote }}
-                - name: old-ids-output-prefix
-                  value: {{ $oldIdsPrefix | quote }}
-                - name: new-rows-output-prefix
-                  value: {{ $newRowsPrefix | quote }}
-                - name: staging-bq-project
-                  value: {{ .Values.bigquery.stagingData.project }}
-                - name: staging-bq-dataset
-                  value: {{ $bqDataset | quote }}
-                - name: jade-bq-project
-                  value: {{ .Values.bigquery.jadeData.project }}
-                - name: jade-bq-dataset
-                  value: {{ .Values.bigquery.jadeData.dataset }}
-                - name: upsert
-                  value: 'true'
-                - name: diff-full-history
-                  value: 'true'
-            {{- $shouldAppend := "{{tasks.diff-table.outputs.parameters.rows-to-append-count}} > 0" }}
-            {{- $shouldDelete := "{{tasks.diff-table.outputs.parameters.ids-to-delete-count}} > 0" }}
-
-          - name: soft-delete-table
-            dependencies: [diff-table]
-            when: {{ $shouldDelete | quote }}
-            templateRef:
-              name: {{ .Values.argoTemplates.softDeleteTable.name }}
-              template: main
-            arguments:
-              parameters:
-                - name: table-name
-                  value: {{ $table | quote}}
-                - name: gcs-prefix
-                  value: {{ $oldIdsPrefix | quote }}
-                - name: gcs-bucket
-                  value: {{ .Values.gcs.stagingBucketName }}
-                {{- with .Values.repo }}
-                - name: url
-                  value: {{ .url }}
-                - name: dataset-id
-                  value: {{ .datasetId }}
-                - name: timeout
-                  value: {{ .pollTimeout }}
-                - name: sa-secret
-                  value: {{ .accessKey.secretName }}
-                - name: sa-secret-key
-                  value: {{ .accessKey.secretKey }}
-                {{- end }}
-
-          - name: ingest-table
-            dependencies: [diff-table, soft-delete-table]
-            when: {{ $shouldAppend | quote }}
-            templateRef:
-              name: {{ .Values.argoTemplates.ingestTable.name }}
-              template: main
-            arguments:
-              parameters:
-                - name: table-name
-                  value: {{ $table | quote}}
-                - name: gcs-prefix
-                  value: {{ $newRowsPrefix | quote }}
-                - name: gcs-bucket
-                  value: {{ .Values.gcs.stagingBucketName }}
-                {{- with .Values.repo }}
-                - name: url
-                  value: {{ .url }}
-                - name: dataset-id
-                  value: {{ .datasetId }}
-                - name: timeout
-                  value: {{ .pollTimeout }}
-                - name: sa-secret
-                  value: {{ .accessKey.secretName }}
-                - name: sa-secret-key
-                  value: {{ .accessKey.secretKey }}
-                {{- end }}
-
-          - name: get-outdated-ids
-            dependencies: [ingest-table]
-            template: get-outdated-ids
-            arguments:
-              parameters:
-                - name: table
-                  value: {{ $table | quote }}
-                - name: staging-bq-dataset
-                  value: {{ $bqDataset | quote }}
-            {{- $outdatedIdsTable := "{{tasks.get-outdated-ids.outputs.result}}" }}
-
-          {{- $outdatedIdsPrefix := printf "%s/outdated-ids/%s" $stagingPrefix $table }}
-          - name: export-outdated
-            dependencies: [get-outdated-ids]
-            templateRef:
-              name: {{ .Values.argoTemplates.exportBQTable.name }}
-              template: main
-            arguments:
-              parameters:
-                - name: bq-project
-                  value: {{ .Values.bigquery.stagingData.project }}
-                - name: bq-dataset
-                  value: {{ $bqDataset | quote }}
-                - name: bq-table
-                  value: {{ $outdatedIdsTable | quote }}
-                - name: output-format
-                  value: CSV
-                - name: gcs-bucket
-                  value: {{ .Values.gcs.stagingBucketName }}
-                - name: gcs-prefix
-                  value: {{ $outdatedIdsPrefix | quote }}
-            {{- $outdatedCount := "{{tasks.export-outdated.outputs.parameters.row-count}}" }}
-
-          - name: soft-delete-outdated
-            dependencies: [export-outdated]
-            when: {{ printf "%s > 0" $outdatedCount | quote }}
-            templateRef:
-              name: {{ .Values.argoTemplates.softDeleteTable.name }}
-              template: main
-            arguments:
-              parameters:
-                - name: table-name
-                  value: {{ $table | quote}}
-                - name: gcs-prefix
-                  value: {{ $outdatedIdsPrefix | quote }}
-                - name: gcs-bucket
-                  value: {{ .Values.gcs.stagingBucketName }}
-                {{- with .Values.repo }}
-                - name: url
-                  value: {{ .url }}
-                - name: dataset-id
-                  value: {{ .datasetId }}
-                - name: timeout
-                  value: {{ .pollTimeout }}
-                - name: sa-secret
-                  value: {{ .accessKey.secretName }}
-                - name: sa-secret-key
-                  value: {{ .accessKey.secretKey }}
-                {{- end }}
-
-    ##
     ## Ingest metadata for a table containing information about data files.
     ##
     - name: ingest-file-metadata
@@ -597,6 +372,8 @@ spec:
           {{- $stagingPrefix := "{{inputs.parameters.staging-prefix}}" }}
           - name: bq-dataset
           {{- $bqDataset := "{{inputs.parameters.bq-dataset}}" }}
+          - name: data-repo-name
+          - name: dataset-id
       dag:
         tasks:
           - name: inject-file-ids
@@ -609,6 +386,8 @@ spec:
                   value: {{ printf "%s/metadata" $stagingPrefix | quote }}
                 - name: bq-dataset
                   value: {{ $bqDataset | quote }}
+                - name: data-repo-name
+                  value: {{ $dataRepoName | quote }}
           {{- $fileIdsTable := "{{tasks.inject-file-ids.outputs.result}}" }}
 
           {{- $metadataPrefix := printf "%s/file-metadata-with-ids/%s" $stagingPrefix $table }}
@@ -636,7 +415,9 @@ spec:
           - name: ingest-metadata
             dependencies: [export-metadata-with-ids]
             when: {{ printf "%s > 0" $rowCount | quote }}
-            template: ingest-metadata
+            templateRef:
+              name: load-table
+              template: main
             arguments:
               parameters:
                 - name: table
@@ -647,6 +428,10 @@ spec:
                   value: file-metadata-with-ids
                 - name: bq-dataset
                   value: {{ $bqDataset | quote }}
+                - name: data-repo-name
+                  value: {{ $dataRepoName | quote }}
+                - name: dataset-id
+                  value: {{ $datasetId | quote }}
 
     ##
     ## Rewrite staged tabular data for files to inject corresponding TDR file IDs.
@@ -660,6 +445,7 @@ spec:
           {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
           - name: bq-dataset
           {{- $bqDataset := "{{inputs.parameters.bq-dataset}}" }}
+          - name: data-repo-name
       script:
         image: google/cloud-sdk:slim
         env:
@@ -674,38 +460,10 @@ spec:
           - name: JADE_PROJECT
             value: {{ .Values.bigquery.jadeData.project }}
           - name: JADE_DATASET
-            value: {{ .Values.bigquery.jadeData.dataset }}
+            value: {{ $dataRepoName | quote }}
         command: [bash]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/inject-file-ids.sh") | indent 10 }}
-
-    ##
-    ## Extract the TDR row IDs for rows containing an "outdated" version of a document,
-    ## where "outdated" is determined by the version of other data stored in the TDR dataset.
-    ##
-    - name: get-outdated-ids
-      inputs:
-        parameters:
-          - name: table
-          {{- $table := "{{inputs.parameters.table}}" }}
-          - name: staging-bq-dataset
-          {{- $bqDataset := "{{inputs.parameters.staging-bq-dataset}}" }}
-      script:
-        image: google/cloud-sdk:slim
-        env:
-          - name: TABLE
-            value: {{ $table | quote }}
-          - name: STAGING_PROJECT
-            value: {{ .Values.bigquery.stagingData.project }}
-          - name: STAGING_DATASET
-            value: {{ $bqDataset | quote }}
-          - name: JADE_PROJECT
-            value: {{ .Values.bigquery.jadeData.project }}
-          - name: JADE_DATASET
-            value: {{ .Values.bigquery.jadeData.dataset }}
-        command: [bash]
-        source: |
-        {{- include "argo.render-lines" (.Files.Lines "scripts/get-outdated-row-ids.sh") | indent 10 }}
 
     ##
     ## Validate that the file checksums have not changed after files were loaded into the data repo.

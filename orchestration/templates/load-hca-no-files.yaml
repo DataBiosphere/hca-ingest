@@ -1,0 +1,87 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: load-hca-no-files
+spec:
+  entrypoint: main
+  serviceAccountName: {{ .Values.serviceAccount.k8sName }}
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - name: data-repo-name
+            {{- $dataRepoName := "{{inputs.parameters.data-repo-name}}" }}
+          - name: dataset-id
+            {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
+          - name: staging-bucket-prefix
+          {{- $stagingPrefix := "{{inputs.parameters.staging-bucket-prefix}}" }}
+      # Limit the number of active processing "arms" at a time.
+      # There may be multiple pods running within each arm.
+      parallelism: {{ .Values.parallelism }}
+      dag:
+        tasks:
+          {{- $datasetName := printf "%s_%s" .Values.bigquery.stagingData.datasetPrefix $stagingPrefix }}
+          - name: create-staging-dataset
+            templateRef:
+              name: {{ .Values.argoTemplates.createBQDataset.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: dataset-name
+                  value: {{ $datasetName | quote }}
+                {{- with .Values.bigquery.stagingData }}
+                - name: bq-project
+                  value: {{ .project }}
+                - name: dataset-description
+                  value: {{ .description }}
+                - name: dataset-expiration
+                  value: {{ .expiration | quote }}
+                {{- end }}
+
+          - name: ingest-all-metadata
+            dependencies: [create-staging-dataset]
+            withItems:
+              - aggregate_generation_protocol
+              - analysis_process
+              - analysis_protocol
+              - cell_line
+              - cell_suspension
+              - collection_protocol
+              - differentiation_protocol
+              - dissociation_protocol
+              - donor_organism
+              - enrichment_protocol
+              - imaged_specimen
+              - imaging_preparation_protocol
+              - imaging_protocol
+              - ipsc_induction_protocol
+              - library_preparation_protocol
+              - organoid
+              - process
+              - project
+              - protocol
+              - sequencing_protocol
+              - specimen_from_organism
+              - links
+              - analysis_file
+              - image_file
+              - reference_file
+              - sequence_file
+              - supplementary_file
+            templateRef:
+              name: load-table
+              template: main
+            arguments:
+              parameters:
+                - name: table
+                  value: {{ "{{item}}" | quote }}
+                - name: staging-prefix
+                  value: {{ $stagingPrefix | quote }}
+                - name: metadata-type
+                  value: metadata
+                - name: bq-dataset
+                  value: {{ $datasetName | quote }}
+                - name: data-repo-name
+                  value: {{ $dataRepoName | quote }}
+                - name: dataset-id
+                  value: {{ $datasetId | quote }}

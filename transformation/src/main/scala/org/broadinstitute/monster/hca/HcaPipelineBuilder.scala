@@ -5,20 +5,19 @@ import com.spotify.scio.ScioContext
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
-
 import io.circe.parser._
 import io.circe.schema.Schema
-import org.apache.beam.sdk.io.{FileIO, ReadableFileCoder}
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
-import org.broadinstitute.monster.common.{PipelineBuilder, StorageIO}
+import org.apache.beam.sdk.io.{FileIO, ReadableFileCoder}
 import org.broadinstitute.monster.common.msg._
+import org.broadinstitute.monster.common.{PipelineBuilder, StorageIO}
 import org.slf4j.LoggerFactory
 import ujson.StringRenderer
 import upack.{Msg, Obj, Str}
 
-import scala.util.{Failure, Success}
 import scala.util.matching.Regex
+import scala.util.{Failure, Success}
 
 object HcaPipelineBuilder extends PipelineBuilder[Args] {
 
@@ -266,73 +265,89 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   def encode(msg: Msg): String =
     upack.transform(msg, StringRenderer()).toString
 
-  def logSchemaValidationError(filepath: String, errorMessage: String): Unit = {
-    val filenameRegex = "[^/]*$".r // match everything that is not followed by a "/" (only the filename)
-    val filename = filenameRegex.findFirstIn(filepath).getOrElse("")
-    val errorLog = ujson.Obj(
-      "errorType" -> ujson.Str("SchemaValidationError"),
-      "filePath" -> ujson.Str(filepath),
-      "fileName" -> ujson.Str(filename),
-      "message" -> ujson.Str(errorMessage)
-    )
-    logger.error(errorLog.toString())
+  case class ValidateError(filepath: String, errorMessage: String) {
+
+    def log(): Unit = {
+      val filenameRegex = "[^/]*$".r // match everything that is not followed by a "/" (only the filename)
+      val filename = filenameRegex.findFirstIn(filepath).getOrElse("")
+      val errorLog = ujson.Obj(
+        "errorType" -> ujson.Str("SchemaValidationError"),
+        "filePath" -> ujson.Str(filepath),
+        "fileName" -> ujson.Str(filename),
+        "message" -> ujson.Str(errorMessage)
+      )
+      logger.error(errorLog.toString())
+    }
   }
 
-  def validateJson(filenameAndMsg: SCollection[(String, Msg)]): SCollection[(String, Msg)] = {
+  def validateJson(filenamesAndMsg: SCollection[(String, Msg)]): SCollection[(String, Msg)] = {
+    validateJsonInternal(filenamesAndMsg).withName("Validate: Log Validation").map {
+      case Some(error) =>
+        error.log()
+        throw new RuntimeException(error.errorMessage)
+      case None =>
+    }
+    filenamesAndMsg
+  }
+
+  def validateJsonInternal(
+    filenamesAndMsg: SCollection[(String, Msg)]
+  ): SCollection[Option[ValidateError]] = {
     // pull out the url for where the schema definition is for each file
-    val content = filenameAndMsg.map {
+    val content = filenamesAndMsg.withName("Validate: Schema Definition URL").map {
       case (filename, msg) => (msg.read[String]("describedBy"), (filename, msg))
     }
     // get the distinct urls (so as to minimize the number of get requests) and then get the schemas as strings
-    val schemas = content.map(_._1).distinct.map(url => (url, requests.get(url).text))
+    val schemas = content
+      .withName("Validate: Schema Content URL")
+      .map(_._1)
+      .distinct
+      .withName("Validate: Schema Content")
+      .map(url => (url, requests.get(url).text))
     // join the schemas to the data keyed by the schema url
     val joined = content.leftOuterJoin(schemas)
     // go over each row
-    joined.map {
-      case (url, ((filename, data), schemaOption)) => {
+    joined.withName("Validate: Metadata files against schema definition").map {
+      case (url, ((filename, data), schemaOption)) =>
         // if there is nothing in the schemaOption, then something went wrong; if there is, try to validate
         schemaOption match {
           case Some(schema) => {
             // if the schema is not able to load, throw an exception, otherwise try to use it to validate
             Schema.loadFromString(schema) match {
-              case Failure(_) => {
-                val errorMessage = s"Schema not loaded properly for schema at $url, file $filename"
-                logSchemaValidationError(filename, errorMessage)
-                throw new Exception(errorMessage)
-              }
+              case Failure(_) =>
+                Option(
+                  ValidateError(
+                    filename,
+                    s"Schema not loaded properly for schema at $url, file $filename"
+                  )
+                )
               case Success(value) =>
                 // try to parse the actual data into a json format for validation
                 parse(encode(data)) match {
-                  case Left(_) => {
-                    val errorMessage = s"Unable to parse data into json for file $filename"
-                    logSchemaValidationError(filename, errorMessage)
-                    throw new Exception(errorMessage)
-                  }
+                  case Left(_) =>
+                    Option(
+                      ValidateError(filename, s"Unable to parse data into json for file $filename")
+                    )
                   // if everything is parsed/encoded/etc correctly, actually try to validate against schema here
                   // if not valid, will return list of issues
-                  case Right(success) => {
+                  case Right(success) =>
                     value.validate(success) match {
-                      case Validated.Valid(_) => (filename, data)
-                      case Validated.Invalid(e) => {
-                        val errorMessage =
-                          s"Data does not conform to schema from $url; ${e.map(_.getMessage).toList.mkString(",")}"
-                        logSchemaValidationError(filename, errorMessage)
-                        throw new Exception(errorMessage)
-                      }
+                      case Validated.Valid(_) => None
+                      case Validated.Invalid(e) =>
+                        Option(
+                          ValidateError(
+                            filename,
+                            s"Data in file $filename does not conform to schema from $url; ${e.map(_.getMessage).toList.mkString(",")}"
+                          )
+                        )
                     }
-                  }
                 }
             }
           }
-          case None => {
-            val errorMessage = s"No schema found at $url for file $filename"
-            logSchemaValidationError(filename, errorMessage)
-            throw new Exception(errorMessage)
-          }
+          case None =>
+            Option(ValidateError(filename, s"No schema found at $url for file $filename"))
         }
-      }
     }
-    filenameAndMsg
   }
 
   /**
