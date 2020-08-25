@@ -283,6 +283,9 @@ spec:
               parameters:
                 - name: load-tag
                   value: {{ $loadTag | quote }}
+          - name: move-error-logs-to-gcs
+            dependencies: [validate-checksums]
+            template: move-error-logs-to-gcs
 
     ##
     ## Submit a bulk-file ingest using a request staged in GCS.
