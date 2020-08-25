@@ -337,7 +337,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
                         Option(
                           ValidateError(
                             filename,
-                            s"Data does not conform to schema from $url; ${e.map(_.getMessage).toList.mkString(",")}"
+                            s"Data in file $filename does not conform to schema from $url; ${e.map(_.getMessage).toList.mkString(",")}"
                           )
                         )
                     }

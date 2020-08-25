@@ -286,7 +286,7 @@ class HcaPipelineBuilderSpec
         Some(
           HcaPipelineBuilder.ValidateError(
             exampleFilenameAndMsg._1,
-            "Data does not conform to schema " +
+            "Data in file sampleFileName.json does not conform to schema " +
               "from https://schema.humancellatlas.org/type/biomaterial/5.1.0/specimen_from_organism; " +
               "#: required key [schema_type] not found"
           )
