@@ -279,7 +279,7 @@ class HcaPipelineBuilderSpec
         |""".stripMargin
     )
 
-    val exampleFilenameAndMsg = ("/metadata/organoid/123456_VERSION1.json", exampleFileContent)
+    val exampleFilenameAndMsg = ("sampleFileName.json", exampleFileContent)
 
     runWithData(Seq(exampleFilenameAndMsg))(HcaPipelineBuilder.validateJsonInternal) shouldBe
       Seq(
