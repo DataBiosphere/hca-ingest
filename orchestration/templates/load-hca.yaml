@@ -456,18 +456,3 @@ spec:
         command: [bash]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/inject-file-ids.sh") | indent 10 }}
-
-    ##
-    ## Move any logs to GCS.
-    ##
-    - name: move-error-logs-to-gcs
-      script:
-        image: google/cloud-sdk:slim
-        env:
-          - name: TIMESTAMP
-            value: {{ include "argo.timestamp" . | quote }}
-          - name: BUCKET_NAME
-            value: {{ .Values.gcs.stagingBucketName }}
-        command: [bash]
-        source: |
-        {{- include "argo.render-lines" (.Files.Lines "scripts/move-error-logs-to-gcs.sh") | indent 10 }}
