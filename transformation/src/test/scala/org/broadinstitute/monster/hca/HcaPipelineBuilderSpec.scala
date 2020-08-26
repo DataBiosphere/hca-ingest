@@ -2,10 +2,9 @@ package org.broadinstitute.monster.hca
 
 import com.spotify.scio.testing.PipelineSpec
 import org.broadinstitute.monster.common.PipelineCoders
-import org.broadinstitute.monster.common.msg.JsonParser
+import org.broadinstitute.monster.common.msg.{JsonParser, _}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.broadinstitute.monster.common.msg._
 
 class HcaPipelineBuilderSpec
     extends AnyFlatSpec
@@ -280,11 +279,19 @@ class HcaPipelineBuilderSpec
         |""".stripMargin
     )
 
-    val exampleData = ("sampleFileName.json", exampleFileContent)
+    val exampleFilenameAndMsg = ("sampleFileName.json", exampleFileContent)
 
-    the[Exception] thrownBy runWithContext { sc =>
-      HcaPipelineBuilder.validateJson(sc.parallelize(Seq(exampleData)))
-    } should have message "java.lang.Exception: Data in file sampleFileName.json does not conform to schema from https://schema.humancellatlas.org/type/biomaterial/5.1.0/specimen_from_organism: NonEmptyList(#: required key [schema_type] not found)"
+    runWithData(Seq(exampleFilenameAndMsg))(HcaPipelineBuilder.validateJsonInternal) shouldBe
+      Seq(
+        Some(
+          HcaPipelineBuilder.ValidateError(
+            exampleFilenameAndMsg._1,
+            "Data in file sampleFileName.json does not conform to schema " +
+              "from https://schema.humancellatlas.org/type/biomaterial/5.1.0/specimen_from_organism; " +
+              "#: required key [schema_type] not found"
+          )
+        )
+      )
   }
 
   it should "not mutate the json when validating" in {
@@ -292,7 +299,7 @@ class HcaPipelineBuilderSpec
       """
         |{
         |    "organ": {
-        |        "text": "brain",
+        |        "text": "bräîn",
         |        "ontology": "astrocyte"
         |    },
         |    "schema_type": "biomaterial",
@@ -322,11 +329,7 @@ class HcaPipelineBuilderSpec
     )
 
     val exampleUrlAndFile = ("sampleFileName.json", exampleFileContent)
-
-    runWithContext { sc =>
-      val validated = HcaPipelineBuilder.validateJson(sc.parallelize(Seq(exampleUrlAndFile)))
-      validated should haveSize(1)
-      validated should containSingleValue(exampleUrlAndFile)
-    }
+    runWithData(Seq(exampleUrlAndFile))(HcaPipelineBuilder.validateJsonInternal) shouldBe
+      Seq(None)
   }
 }

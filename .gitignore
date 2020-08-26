@@ -6,3 +6,4 @@ project/metals.sbt
 .bloop/
 Chart.lock
 charts/
+logs/errors.log
