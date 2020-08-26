@@ -231,12 +231,12 @@ spec:
           {{- $controlFileIndex := "{{inputs.parameters.control-file-index}}" }}
           - name: load-tag-prefix
           {{- $loadTagPrefix := "{{inputs.parameters.load-tag-prefix}}" }}
-          {{- $loadTag := printf "%s-%s" $loadTagPrefix $controlFileIndex }}
           - name: total-file-count
           {{- $totalFileCount := "{{inputs.parameters.total-file-count}}" }}
           - name: dataset-id
       dag:
         tasks:
+          {{- $loadTag := printf "%s-%s" $loadTagPrefix $controlFileIndex }}
           - name: submit
             template: submit-bulk-file-ingest
             arguments:
@@ -475,7 +475,7 @@ spec:
       inputs:
         parameters:
           - name: load-tag
-          {{- $loadTag := "{{inputs.parameters.load-tag}}" }}
+          {{- $loadTag := "{{inputs.parameters.load-tag}}" }} # TODO pass in this parameter (see above for reference)
       script:
         image: us.gcr.io/broad-dsp-gcr-public/gcs-python:1.0.0
         env:
