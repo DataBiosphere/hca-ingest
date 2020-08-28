@@ -1,6 +1,6 @@
 dataflow:
   region: us-central1
-  workerMachineType: n1-standard-1
+  workerMachineType: n1-standard-2
   autoscaling:
     minWorkers: 4
     maxWorkers: 8
