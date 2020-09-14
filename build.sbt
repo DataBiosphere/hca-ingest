@@ -21,7 +21,8 @@ lazy val `hca-transformation-pipeline` = project
     resolvers += "jitpack".at("https://jitpack.io"),
     libraryDependencies ++= Seq(
       "com.lihaoyi" %% "requests" % "0.5.1",
-      "io.circe" %% "circe-json-schema" % "0.1.0"
+      "io.circe" %% "circe-json-schema" % "0.1.0",
+      "com.google.cloud" % "google-cloud-storage" % "1.113.0"
     )
   )
   .dependsOn(`hca-schema`)
