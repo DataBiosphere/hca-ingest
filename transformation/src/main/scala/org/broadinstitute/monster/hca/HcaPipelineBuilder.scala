@@ -15,14 +15,37 @@ import org.broadinstitute.monster.common.{PipelineBuilder, StorageIO}
 import org.slf4j.LoggerFactory
 import ujson.StringRenderer
 import upack.{Msg, Obj, Str}
-import com.google.cloud.storage.Bucket
 
 import scala.util.matching.Regex
 import scala.util.{Failure, Success}
 
 object HcaPipelineBuilder extends PipelineBuilder[Args] {
 
+  // key used by Google Log Routing filter to know what to look for
+  val logErrorKey: String = "Validate"
+
   override def buildPipeline(ctx: ScioContext, args: Args): Unit = {
+    // are all top level dirs present? If not, which ones are absent?
+    checkDirs(args.inputPrefix, ctx, expectedTopLevelDirs)
+      .withName("Top dir warnings")
+      .map(_.log(logger))
+    // are all the right entities under metadata and descriptors present? If not, which ones are absent?
+    checkDirs(s"${args.inputPrefix}/descriptors", ctx, fileMetadataEntities)
+      .withName("Descriptors dir warnings")
+      .map(_.log(logger))
+    checkDirs(s"${args.inputPrefix}/metadata", ctx, metadataEntities ++ fileMetadataEntities)
+      .withName("Metadata dir warnings")
+      .map(_.log(logger))
+
+    // are there .json files in the leaves of all dir paths (excluding data)? If not, what paths are problematic?
+
+    // Is the count of metadata/{entity_type} == descriptors/{entity_type}?
+
+    // Is the count of data/** == metadata/** == descriptors/**?
+
+    // In a given directory, are all .json files uniquely named?
+
+    // any nulls in metadata/{file_type} outer join descriptors/{file_type} outer join data? If so, where?
     val allMetadataEntities =
       metadataEntities.map(_ -> false) ++ fileMetadataEntities.map(_ -> true)
     allMetadataEntities.foreach {
@@ -50,6 +73,13 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   // A subgraph is part of exactly one project. The importer must record an error if it
   // detects more than one object with the same `links/{links_id}_{version}_` prefix.
   val linksDataPattern: Regex = "([^_]+)_(.+)_([^_]+).json".r
+
+  val expectedTopLevelDirs = Set(
+    "data",
+    "descriptors",
+    "links",
+    "metadata"
+  )
 
   val metadataEntities = Set(
     "aggregate_generation_protocol",
@@ -82,6 +112,30 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     "sequence_file",
     "supplementary_file"
   )
+
+  def checkDirs(
+    dirPath: String,
+    ctx: ScioContext,
+    checkDirs: Set[String]
+  ): SCollection[DirectoryOrganizationWarning] =
+    ctx.wrap {
+      ctx.pipeline.apply(
+        FileIO.`match`().filepattern(dirPath).withEmptyMatchTreatment(EmptyMatchTreatment.DISALLOW)
+      )
+    }.withName(s"Check all dir names at ${dirPath}")
+      // filter to only directories
+      .filter(_.resourceId().isDirectory)
+      // get directory names as strings
+      .map(_.resourceId().getFilename)
+      // combine names into a Set
+      .combine(dirName => Set(dirName))((seqDirNames, dirName) => seqDirNames ++ Set(dirName))(
+        _ ++ _
+      )
+      // diff the dir names that "should" be there against reality, resulting in a Set of whatever is missing
+      .map(allDirs => checkDirs.diff(allDirs))
+      .flatMap { dirs =>
+        dirs.map(dirName => DirectoryOrganizationWarning(s"${dirPath} does not contain ${dirName}"))
+      }
 
   /**
     * Given a pattern matching JSON, get the JSONs as ReadableFiles.
