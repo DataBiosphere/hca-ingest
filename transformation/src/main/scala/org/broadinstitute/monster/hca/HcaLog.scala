@@ -22,42 +22,32 @@ abstract class HcaLog {
 
 class HcaWarn(msg: String) extends HcaLog {
   val level: HcaWarnLog = HcaWarnLog()
+
   val jsonMsg: Obj = ujson.Obj(
-    "type" -> ujson.Str(this.getClass.getName),
+    "warningType" -> ujson.Str(this.getClass.getSimpleName),
     "message" -> ujson.Str(msg)
   )
 }
 
-trait HcaError extends HcaLog {
+class HcaError(filepath: String, msg: String) extends HcaLog {
   val level: HcaErrorLog = HcaErrorLog()
-}
 
-// case classes for all the different actual warnings and errors we want to raise during the workflow
-case class DirectoryOrganizationWarning(msg: String) extends HcaWarn(msg)
-
-case class EmptyDirectoryWarning(msg: String) extends HcaWarn(msg)
-
-case class FileCountWarning(msg: String) extends HcaWarn(msg)
-
-case class UniqueNameError(msg: String) extends HcaError {
-  // TODO
-  // In a given directory, are all .json files uniquely named?
-}
-
-case class FileMismatchError(msg: String) extends HcaError {
-  // TODO
-  // any nulls in metadata/{file_type} outer join descriptors/{file_type} outer join data?
-}
-
-case class SchemaValidationError(filepath: String, message: String) extends HcaError {
-  private val filenameRegex = "[^/]*$".r // match everything that is not followed by a "/" (only the filename)
+  // match everything that is not followed by a "/" (only the filename)
+  private val filenameRegex = "[^/]*$".r
   private val filename = filenameRegex.findFirstIn(filepath).getOrElse("")
 
   val jsonMsg: Obj = ujson
     .Obj(
-      "errorType" -> ujson.Str(this.getClass.getName),
+      "errorType" -> ujson.Str(this.getClass.getSimpleName),
       "filePath" -> ujson.Str(filepath),
       "fileName" -> ujson.Str(filename),
-      "message" -> ujson.Str(message)
+      "message" -> ujson.Str(msg)
     )
 }
+
+// case classes for all the different actual warnings and errors we want to raise during the workflow
+case class NoMatchWarning(msg: String) extends HcaWarn(msg)
+
+case class FileMismatchError(filepath: String, msg: String) extends HcaError(filepath, msg)
+
+case class SchemaValidationError(filepath: String, msg: String) extends HcaError(filepath, msg)

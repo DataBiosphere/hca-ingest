@@ -25,29 +25,13 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   val logErrorKey: String = "Validate"
 
   override def buildPipeline(ctx: ScioContext, args: Args): Unit = {
-    // are all top level dirs present? If not, which ones are absent?
-    checkDirs(args.inputPrefix, ctx, expectedTopLevelDirs)
-      .withName("Top dir warnings")
-      .map(_.log(logger))
-    // are all the right entities under metadata and descriptors present? If not, which ones are absent?
-    checkDirs(s"${args.inputPrefix}/descriptors", ctx, fileMetadataEntities)
-      .withName("Descriptors dir warnings")
-      .map(_.log(logger))
-    checkDirs(s"${args.inputPrefix}/metadata", ctx, metadataEntities ++ fileMetadataEntities)
-      .withName("Metadata dir warnings")
-      .map(_.log(logger))
+    // are all top level dirs present? If not, which ones are absent? raise warns
+    // are all the right entities under metadata and descriptors present? If not, which ones are absent? raise warns
+    // Is the count of metadata/{file_type} == descriptors/{file_type}? if not, raise warns
+    // Is the count of data/** == metadata/** == descriptors/**? if not, raise warns
 
-    // are there .json files in the leaves of all dir paths (excluding data)? If not, what paths are problematic?
-
-    // Is the count of metadata/{entity_type} == descriptors/{entity_type}?
-
-    // Is the count of data/** == metadata/** == descriptors/**?
-
-    // In a given directory, are all .json files uniquely named?
-
-    // any nulls in metadata/{file_type} outer join descriptors/{file_type} outer join data? If so, where?
     val allMetadataEntities =
-      metadataEntities.map(_ -> false) ++ fileMetadataEntities.map(_ -> true)
+      expectedMetadataEntities.map(_ -> false) ++ expectedFileEntities.map(_ -> true)
     allMetadataEntities.foreach {
       case (entityType, isFileMetadata) =>
         processMetadata(ctx, args.inputPrefix, args.outputPrefix, entityType, isFileMetadata)
@@ -81,7 +65,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     "metadata"
   )
 
-  val metadataEntities = Set(
+  val expectedMetadataEntities = Set(
     "aggregate_generation_protocol",
     "analysis_process",
     "analysis_protocol",
@@ -105,7 +89,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     "specimen_from_organism"
   )
 
-  val fileMetadataEntities = Set(
+  val expectedFileEntities = Set(
     "analysis_file",
     "image_file",
     "reference_file",
@@ -113,45 +97,25 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     "supplementary_file"
   )
 
-  def checkDirs(
-    dirPath: String,
-    ctx: ScioContext,
-    checkDirs: Set[String]
-  ): SCollection[DirectoryOrganizationWarning] =
-    ctx.wrap {
-      ctx.pipeline.apply(
-        FileIO.`match`().filepattern(dirPath).withEmptyMatchTreatment(EmptyMatchTreatment.DISALLOW)
-      )
-    }.withName(s"Check all dir names at ${dirPath}")
-      // filter to only directories
-      .filter(_.resourceId().isDirectory)
-      // get directory names as strings
-      .map(_.resourceId().getFilename)
-      // combine names into a Set
-      .combine(dirName => Set(dirName))((seqDirNames, dirName) => seqDirNames ++ Set(dirName))(
-        _ ++ _
-      )
-      // diff the dir names that "should" be there against reality, resulting in a Set of whatever is missing
-      .map(allDirs => checkDirs.diff(allDirs))
-      .flatMap { dirs =>
-        dirs.map(dirName => DirectoryOrganizationWarning(s"${dirPath} does not contain ${dirName}"))
-      }
-
   /**
     * Given a pattern matching JSON, get the JSONs as ReadableFiles.
     *
     * @param jsonPath the root path containing JSONs to be converted
-    * @param context context of the main V2F pipeline
+    * @param context context of the main pipeline
     */
-  def getReadableFiles(jsonPath: String, context: ScioContext): SCollection[FileIO.ReadableFile] =
-    context.wrap {
+  def getReadableFiles(jsonPath: String, context: ScioContext): SCollection[FileIO.ReadableFile] = {
+    val metadata = context.wrap {
       context.pipeline.apply(
         FileIO
           .`match`()
           .filepattern(jsonPath)
           .withEmptyMatchTreatment(EmptyMatchTreatment.ALLOW_IF_WILDCARD)
       )
-    }.applyTransform[ReadableFile](FileIO.readMatches())
+    }
+    metadata.count
+      .map(c => if (c == 0.toLong) NoMatchWarning(s"$jsonPath had $c matches").log(logger))
+    metadata.applyTransform[ReadableFile](FileIO.readMatches())
+  }
 
   /**
     * Given the SCollection of ReadableFiles that contains JSONs convert each JSON to a Msg and get its filename.
@@ -349,10 +313,25 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       )
       val descriptorFilenameAndMsg = jsonToFilenameAndMsg(entityType)(descriptorFiles)
       val processedFileMetadata = validatedFilenameAndMsg
-        .join(descriptorFilenameAndMsg)
+        .fullOuterJoin(descriptorFilenameAndMsg)
         .withName(s"Pre-process $entityType metadata")
         .map {
-          case (filename, (metadata, descriptor)) =>
+          // file is present in metadata but not descriptors
+          case (filename, (Some(_), None)) =>
+            FileMismatchError(
+              s"$inputPrefix/metadata/$entityType/$filename",
+              s"$filename is present in metadata/$entityType but not in descriptors/$entityType"
+            ).log(logger)
+            Obj()
+          // file is present in descriptors but not metadata
+          case (filename, (None, Some(_))) =>
+            FileMismatchError(
+              s"$inputPrefix/descriptors/$entityType/$filename",
+              s"$filename is present in descriptors/$entityType but not in metadata/$entityType"
+            ).log(logger)
+            Obj()
+          // file is present in both, only valid case to continue on
+          case (filename, (Some(metadata), Some(descriptor))) =>
             transformFileMetadata(entityType, filename, metadata, descriptor)
         }
 
@@ -415,7 +394,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     validateJsonInternal(filenamesAndMsg).withName("Validate: Log Validation").map {
       case Some(error) =>
         error.log(logger)
-        throw new RuntimeException(error.message)
+        throw new RuntimeException(error.msg)
       case None =>
     }
     filenamesAndMsg
