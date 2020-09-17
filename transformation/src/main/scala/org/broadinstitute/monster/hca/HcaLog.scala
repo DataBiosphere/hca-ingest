@@ -1,9 +1,11 @@
 package org.broadinstitute.monster.hca
 
+import com.spotify.scio.ScioMetrics
+import org.apache.beam.sdk.metrics.Counter
 import org.slf4j.Logger
 import ujson.Obj
 
-// a simple log level case class heirarchy to make sure we log at the right level
+// a simple log level case class hierarchy to make sure we log at the right level
 trait LogLevel
 case class HcaErrorLog() extends LogLevel
 case class HcaWarnLog() extends LogLevel
@@ -12,10 +14,13 @@ case class HcaWarnLog() extends LogLevel
 abstract class HcaLog {
   val level: LogLevel
   val jsonMsg: Obj
+  val errorCount: Counter = ScioMetrics.counter("errorCount")
 
   def log(logger: Logger): Unit =
     level match {
-      case HcaErrorLog() => logger.error(jsonMsg.toString())
+      case HcaErrorLog() =>
+        logger.error(jsonMsg.toString())
+        errorCount.inc(1.toLong)
       case HcaWarnLog()  => logger.warn(jsonMsg.toString())
     }
 }

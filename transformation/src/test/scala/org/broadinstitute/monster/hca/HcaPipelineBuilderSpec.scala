@@ -284,7 +284,7 @@ class HcaPipelineBuilderSpec
     runWithData(Seq(exampleFilenameAndMsg))(HcaPipelineBuilder.validateJsonInternal) shouldBe
       Seq(
         Some(
-          HcaPipelineBuilder.SchemaValidationError(
+          SchemaValidationError(
             exampleFilenameAndMsg._1,
             "Data in file sampleFileName.json does not conform to schema " +
               "from https://schema.humancellatlas.org/type/biomaterial/5.1.0/specimen_from_organism; " +

@@ -8,7 +8,7 @@ import com.spotify.scio.values.SCollection
 import io.circe.parser._
 import io.circe.schema.Schema
 import org.apache.beam.sdk.io.FileIO.ReadableFile
-import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
+import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, MatchResult}
 import org.apache.beam.sdk.io.{FileIO, ReadableFileCoder}
 import org.broadinstitute.monster.common.msg._
 import org.broadinstitute.monster.common.{PipelineBuilder, StorageIO}
@@ -30,11 +30,21 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     // Is the count of metadata/{file_type} == descriptors/{file_type}? if not, raise warns
     // Is the count of data/** == metadata/** == descriptors/**? if not, raise warns
 
+    val dataFiles =
+      matchFiles(s"${args.inputPrefix}/data/**", ctx).keyBy(_.resourceId().getFilename)
+
     val allMetadataEntities =
       expectedMetadataEntities.map(_ -> false) ++ expectedFileEntities.map(_ -> true)
     allMetadataEntities.foreach {
       case (entityType, isFileMetadata) =>
-        processMetadata(ctx, args.inputPrefix, args.outputPrefix, entityType, isFileMetadata)
+        processMetadata(
+          ctx,
+          args.inputPrefix,
+          args.outputPrefix,
+          entityType,
+          dataFiles,
+          isFileMetadata
+        )
     }
     processLinksMetadata(ctx, args.inputPrefix, args.outputPrefix)
     ()
@@ -98,22 +108,33 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   )
 
   /**
+    * Given a pattern match, get the file MatchResult.Metadata.
+    *
+    * @param filePattern the root path containing files to be matched
+    * @param context context of the main pipeline
+    */
+  def matchFiles(filePattern: String, context: ScioContext): SCollection[MatchResult.Metadata] = {
+    val metadata = context.wrap {
+      context.pipeline.apply(
+        FileIO
+          .`match`()
+          .filepattern(filePattern)
+          .withEmptyMatchTreatment(EmptyMatchTreatment.ALLOW_IF_WILDCARD)
+      )
+    }
+    metadata.count
+      .map(c => if (c == 0.toLong) NoMatchWarning(s"$filePattern had $c matches").log(logger))
+    metadata
+  }
+
+  /**
     * Given a pattern matching JSON, get the JSONs as ReadableFiles.
     *
     * @param jsonPath the root path containing JSONs to be converted
     * @param context context of the main pipeline
     */
   def getReadableFiles(jsonPath: String, context: ScioContext): SCollection[FileIO.ReadableFile] = {
-    val metadata = context.wrap {
-      context.pipeline.apply(
-        FileIO
-          .`match`()
-          .filepattern(jsonPath)
-          .withEmptyMatchTreatment(EmptyMatchTreatment.ALLOW_IF_WILDCARD)
-      )
-    }
-    metadata.count
-      .map(c => if (c == 0.toLong) NoMatchWarning(s"$jsonPath had $c matches").log(logger))
+    val metadata = matchFiles(jsonPath, context)
     metadata.applyTransform[ReadableFile](FileIO.readMatches())
   }
 
@@ -297,6 +318,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     inputPrefix: String,
     outputPrefix: String,
     entityType: String,
+    files: SCollection[(String, MatchResult.Metadata)],
     isFileMetadata: Boolean = false
   ): ClosedTap[String] = {
     // get the readable files for the given input path
@@ -318,17 +340,19 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         .map {
           // file is present in metadata but not descriptors
           case (filename, (Some(_), None)) =>
-            FileMismatchError(
+            val err = FileMismatchError(
               s"$inputPrefix/metadata/$entityType/$filename",
               s"$filename is present in metadata/$entityType but not in descriptors/$entityType"
-            ).log(logger)
+            )
+            err.log(logger)
             Obj()
           // file is present in descriptors but not metadata
           case (filename, (None, Some(_))) =>
-            FileMismatchError(
+            val err = FileMismatchError(
               s"$inputPrefix/descriptors/$entityType/$filename",
               s"$filename is present in descriptors/$entityType but not in metadata/$entityType"
-            ).log(logger)
+            )
+            err.log(logger)
             Obj()
           // file is present in both, only valid case to continue on
           case (filename, (Some(metadata), Some(descriptor))) =>
@@ -336,9 +360,21 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         }
 
       // Generate file ingest requests from descriptors. Deduplicate by the content hash.
-      val fileIngestRequests = descriptorFilenameAndMsg.map {
+      val keyedIngestRequests = descriptorFilenameAndMsg.map {
         case (_, descriptor) => generateFileIngestRequest(descriptor, entityType, inputPrefix)
-      }.distinctByKey.values
+      }.distinctByKey.values.keyBy(request => request.read[String]("source_path"))
+
+      val fileIngestRequests = keyedIngestRequests.leftOuterJoin(files).map {
+        case (filename, (_, None)) =>
+          val err = FileMismatchError(
+            filename,
+            s"$filename has a descriptors/$entityType and metadata/$entityType but doesn't actually exist under data/"
+          )
+          err.log(logger)
+          Obj()
+        case (_, (request, Some(_))) => request
+      }
+
       StorageIO.writeJsonLists(
         fileIngestRequests,
         entityType,
@@ -394,7 +430,6 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     validateJsonInternal(filenamesAndMsg).withName("Validate: Log Validation").map {
       case Some(error) =>
         error.log(logger)
-        throw new RuntimeException(error.msg)
       case None =>
     }
     filenamesAndMsg
@@ -422,7 +457,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         // if there is nothing in the schemaOption, then something went wrong; if there is, try to validate
         schemaOption match {
           case Some(schema) => {
-            // if the schema is not able to load, throw an exception, otherwise try to use it to validate
+            // if the schema is not able to load, log an error, otherwise try to use it to validate
             Schema.loadFromString(schema) match {
               case Failure(_) =>
                 Option(
