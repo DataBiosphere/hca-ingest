@@ -49,6 +49,8 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   // A subgraph is part of exactly one project. The importer must record an error if it
   // detects more than one object with the same `links/{links_id}_{version}_` prefix.
   val linksDataPattern: Regex = "([^_]+)_(.+)_([^_]+).json".r
+  // grab everything after the last "/"
+  val fileNamePattern: Regex = "([^/]+$)".r
 
   val metadataEntities = Set(
     "aggregate_generation_protocol",
@@ -196,10 +198,13 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     val contentHash = descriptor.read[String]("crc32c")
     val targetPath = descriptor.read[String]("file_name")
     val sourcePath = s"$inputPrefix/data/$targetPath"
+    val matches = fileNamePattern
+      .findFirstMatchIn(targetPath)
+      .getOrElse(throw new Exception(s"Could not parse filename: $targetPath"))
 
     contentHash -> Obj(
       Str("source_path") -> Str(sourcePath),
-      Str("target_path") -> Str(s"/$entityType/$contentHash")
+      Str("target_path") -> Str(s"/$entityType/${matches.group(1)}")
     )
   }
 
