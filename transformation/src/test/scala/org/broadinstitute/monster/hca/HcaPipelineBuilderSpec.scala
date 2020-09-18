@@ -198,7 +198,7 @@ class HcaPipelineBuilderSpec
         """
           | {
           |   "source_path": "some/local/directory/data/a-directory/sub_directory/file-id_file-version_filename.json",
-          |   "target_path": "/foo_file/54321zyx"
+          |   "target_path": "/foo_file/file-id_file-version_filename.json"
           | }
           |""".stripMargin
     )
