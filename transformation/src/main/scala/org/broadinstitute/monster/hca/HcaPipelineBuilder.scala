@@ -158,7 +158,6 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     }
 
   /**
-    *
     * Extract the necessary info from a metadata file and put it into a form that makes it easy to
     * pass in to the table format
     *
@@ -177,7 +176,6 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   }
 
   /**
-    *
     * Extract the necessary info from a file of file-related metadata and put it into a form that
     * makes it easy to pass in to the table format
     *
@@ -205,7 +203,6 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   }
 
   /**
-    *
     * Extract the necessary info from a file of table relationships and put it into a form that
     * makes it easy to pass in to the table format
     *
@@ -240,12 +237,19 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     val sourcePath = s"$inputPrefix/data/$targetPath"
     val matches = fileNamePattern
       .findFirstMatchIn(targetPath)
-      .getOrElse(throw new Exception(s"Could not parse filename: $targetPath"))
+      .getOrElse(NoRegexPatternMatchError(sourcePath, s"Could not parse filename: $targetPath"))
 
-    contentHash -> Obj(
-      Str("source_path") -> Str(sourcePath),
-      Str("target_path") -> Str(s"/$entityType/${matches.group(1)}")
-    )
+    matches match {
+      case valid: Regex.Match =>
+        contentHash -> Obj(
+          Str("source_path") -> Str(sourcePath),
+          Str("target_path") -> Str(s"/$entityType/${valid.group(1)}")
+        )
+      case err: HcaError =>
+        err.log(logger)
+        ("", Obj())
+    }
+
   }
 
   /**
@@ -258,13 +262,21 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     val matches = metadataPattern
       .findFirstMatchIn(fileName)
       .getOrElse(
-        throw new Exception(
+        NoRegexPatternMatchError(
+          fileName,
           s"transformMetadata: error when finding entity id and version from file named $fileName"
         )
       )
-    val entityId = matches.group(1)
-    val entityVersion = matches.group(2)
-    (entityId, entityVersion)
+
+    matches match {
+      case valid: Regex.Match =>
+        val entityId = valid.group(1)
+        val entityVersion = valid.group(2)
+        (entityId, entityVersion)
+      case err: HcaError =>
+        err.log(logger)
+        ("", "")
+    }
   }
 
   /**
@@ -277,13 +289,21 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     val matches = fileDataPattern
       .findFirstMatchIn(fileName)
       .getOrElse(
-        throw new Exception(
+        NoRegexPatternMatchError(
+          fileName,
           s"transformMetadata: error when finding file id and version from file named $fileName"
         )
       )
-    val fileId = matches.group(2)
-    val fileVersion = matches.group(3)
-    (fileId, fileVersion)
+
+    matches match {
+      case valid: Regex.Match =>
+        val fileId = valid.group(2)
+        val fileVersion = valid.group(3)
+        (fileId, fileVersion)
+      case err: HcaError =>
+        err.log(logger)
+        ("", "")
+    }
   }
 
   /**
@@ -296,14 +316,22 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     val matches = linksDataPattern
       .findFirstMatchIn(fileName)
       .getOrElse(
-        throw new Exception(
+        NoRegexPatternMatchError(
+          fileName,
           s"transformMetadata: error when finding links id, version, and project id from file named $fileName"
         )
       )
-    val linksId = matches.group(1)
-    val linksVersion = matches.group(2)
-    val projectId = matches.group(3)
-    (linksId, linksVersion, projectId)
+
+    matches match {
+      case valid: Regex.Match =>
+        val linksId = valid.group(1)
+        val linksVersion = valid.group(2)
+        val projectId = valid.group(3)
+        (linksId, linksVersion, projectId)
+      case err: HcaError =>
+        err.log(logger)
+        ("", "", "")
+    }
   }
 
   /** Convert a Msg to a JSON string. */

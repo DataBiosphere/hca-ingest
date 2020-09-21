@@ -6,11 +6,7 @@ import org.broadinstitute.monster.common.msg.{JsonParser, _}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class HcaPipelineBuilderSpec
-    extends AnyFlatSpec
-    with Matchers
-    with PipelineSpec
-    with PipelineCoders {
+class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec with PipelineCoders {
   behavior of "HcaPipelineBuilder"
 
   it should "transform basic metadata" in {

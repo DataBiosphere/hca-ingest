@@ -1,7 +1,6 @@
 package org.broadinstitute.monster.hca
 
-import com.spotify.scio.ScioMetrics
-import org.apache.beam.sdk.metrics.Counter
+import org.broadinstitute.monster.hca.PostProcess.errorCount
 import org.slf4j.Logger
 import ujson.Obj
 
@@ -14,14 +13,13 @@ case class HcaWarnLog() extends LogLevel
 abstract class HcaLog {
   val level: LogLevel
   val jsonMsg: Obj
-  val errorCount: Counter = ScioMetrics.counter("errorCount")
 
   def log(logger: Logger): Unit =
     level match {
       case HcaErrorLog() =>
         logger.error(jsonMsg.toString())
-        errorCount.inc(1.toLong)
-      case HcaWarnLog()  => logger.warn(jsonMsg.toString())
+        errorCount.inc()
+      case HcaWarnLog() => logger.warn(jsonMsg.toString())
     }
 }
 
@@ -54,5 +52,7 @@ class HcaError(filepath: String, msg: String) extends HcaLog {
 case class NoMatchWarning(msg: String) extends HcaWarn(msg)
 
 case class FileMismatchError(filepath: String, msg: String) extends HcaError(filepath, msg)
+
+case class NoRegexPatternMatchError(filepath: String, msg: String) extends HcaError(filepath, msg)
 
 case class SchemaValidationError(filepath: String, msg: String) extends HcaError(filepath, msg)
