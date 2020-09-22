@@ -188,7 +188,7 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
       descriptor = exampleDescriptor,
       entityType = "foo_file",
       inputPrefix = "some/local/directory"
-    )
+    ).get
     val expectedOutput = JsonParser.parseEncodedJson(
       json =
         """
