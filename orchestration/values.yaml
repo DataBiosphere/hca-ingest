@@ -16,7 +16,7 @@ argoTemplates:
     name: export-table
   diffBQTable:
     create: true
-    name: diff-bq-table
+    name: diff-hca-table
     schemaImageName: us.gcr.io/broad-dsp-gcr-public/hca-schema
   ingestTable:
     create: true
