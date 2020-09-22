@@ -4,6 +4,7 @@ kind: WorkflowTemplate
 metadata:
   name: diff-hca-table
 spec:
+  entrypoint: main
   templates:
     - name: main
       inputs:
