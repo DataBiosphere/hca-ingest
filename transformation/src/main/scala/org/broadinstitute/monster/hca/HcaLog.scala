@@ -14,7 +14,7 @@ abstract class HcaLog {
   val level: LogLevel
   val jsonMsg: Obj
 
-  def log(logger: Logger): Unit =
+  def log(implicit logger: Logger): Unit =
     level match {
       case HcaErrorLog() =>
         logger.error(jsonMsg.toString())

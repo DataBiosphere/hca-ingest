@@ -12,7 +12,7 @@ import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, MatchResult}
 import org.apache.beam.sdk.io.{FileIO, ReadableFileCoder}
 import org.broadinstitute.monster.common.msg._
 import org.broadinstitute.monster.common.{PipelineBuilder, StorageIO}
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 import ujson.StringRenderer
 import upack.{Msg, Obj, Str}
 
@@ -20,9 +20,6 @@ import scala.util.matching.Regex
 import scala.util.{Failure, Success}
 
 object HcaPipelineBuilder extends PipelineBuilder[Args] {
-
-  // key used by Google Log Routing filter to know what to look for
-  val logErrorKey: String = "Validate"
 
   override def buildPipeline(ctx: ScioContext, args: Args): Unit = {
     // are all top level dirs present? If not, which ones are absent? raise warns
@@ -50,7 +47,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     ()
   }
 
-  private val logger = LoggerFactory.getLogger(getClass)
+  implicit val logger: Logger = LoggerFactory.getLogger(getClass)
 
   implicit val coder: Coder[Msg] = Coder.beam(new UpackMsgCoder)
 
@@ -125,7 +122,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       )
     }
     metadata.count
-      .map(c => if (c == 0.toLong) NoMatchWarning(s"$filePattern had $c matches").log(logger))
+      .map(c => if (c == 0.toLong) NoMatchWarning(s"$filePattern had $c matches").log)
     metadata
   }
 
@@ -250,7 +247,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
           Str("target_path") -> Str(s"/$entityType/${valid.group(1)}")
         ))
       case err: HcaError =>
-        err.log(logger)
+        err.log
         None
     }
 
@@ -278,7 +275,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         val entityVersion = valid.group(2)
         Some((entityId, entityVersion))
       case err: HcaError =>
-        err.log(logger)
+        err.log
         None
     }
   }
@@ -306,7 +303,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         val projectId = valid.group(3)
         Some((linksId, linksVersion, projectId))
       case err: HcaError =>
-        err.log(logger)
+        err.log
         None
     }
   }
@@ -344,6 +341,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         context
       )
       val descriptorFilenameAndMsg = jsonToFilenameAndMsg(entityType)(descriptorFiles)
+      val validatedDescriptors = validateJson(descriptorFilenameAndMsg)
       val processedFileMetadata = validatedFilenameAndMsg
         .fullOuterJoin(descriptorFilenameAndMsg)
         .withName(s"Pre-process $entityType metadata")
@@ -354,7 +352,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
               s"$inputPrefix/metadata/$entityType/$filename",
               s"$filename is present in metadata/$entityType but not in descriptors/$entityType"
             )
-            err.log(logger)
+            err.log
             None
           // file is present in descriptors but not metadata
           case (filename, (None, Some(_))) =>
@@ -362,7 +360,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
               s"$inputPrefix/descriptors/$entityType/$filename",
               s"$filename is present in descriptors/$entityType but not in metadata/$entityType"
             )
-            err.log(logger)
+            err.log
             None
           // file is present in both, only valid case to continue on
           case (filename, (Some(metadata), Some(descriptor))) =>
@@ -379,7 +377,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
           FileMismatchError(
             filename,
             s"$filename has a descriptors/$entityType and metadata/$entityType but doesn't actually exist under data/"
-          ).log(logger)
+          ).log
           None
         case (_, (request, Some(_))) => Some(request)
       }
@@ -438,7 +436,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   def validateJson(filenamesAndMsg: SCollection[(String, Msg)]): SCollection[(String, Msg)] = {
     validateJsonInternal(filenamesAndMsg).withName("Validate: Log Validation").map {
       case Some(error) =>
-        error.log(logger)
+        error.log
       case None =>
     }
     filenamesAndMsg
