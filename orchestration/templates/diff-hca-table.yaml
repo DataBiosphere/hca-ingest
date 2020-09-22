@@ -19,7 +19,6 @@ spec:
           - name: jade-bq-project
           - name: jade-bq-dataset
           - name: diff-full-history
-          - name: jade-table-pre-filter
       dag:
         tasks:
           # Build a join table containing new rows to append.
@@ -43,8 +42,6 @@ spec:
                   value: '{{ "{{inputs.parameters.jade-bq-dataset}}" }}'
                 - name: use-raw-table
                   value: '{{ "{{inputs.parameters.diff-full-history}}" }}'
-                - name: jade-table-pre-filter
-                  value: '{{ "{{inputs.parameters.jade-table-pre-filter}}" }}'
 
           # Export the values of new rows that should be appended.
           - name: query-rows-to-append
@@ -99,7 +96,6 @@ spec:
           - name: jade-bq-project
           - name: jade-bq-dataset
           - name: use-raw-table
-          - name: jade-table-pre-filter
       script:
         image: {{ $schemaImage }}
         env:
@@ -117,8 +113,6 @@ spec:
             value: '{{ "gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.input-prefix}}" }}'
           - name: USE_RAW_TABLE
             value: '{{ "{{inputs.parameters.use-raw-table}}" }}'
-          - name: JADE_FILTER
-            value: '{{ "{{inputs.parameters.jade-table-pre-filter}}" }}'
         command: [bash]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/diff-hca-table.sh") | indent 10 }}
