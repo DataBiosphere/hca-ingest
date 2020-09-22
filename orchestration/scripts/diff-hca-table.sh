@@ -11,7 +11,7 @@ declare -r COMPARE_COLS=$(cat ${TABLE_DIR}/compare-cols)
 # Build the WHERE clause of the SQL query.
 declare -a COMPARISONS=()
 for pk in ${PK_COLS//,/ }; do
-  COMPARISONS+=("datarepo_${col} = S.${col}")
+  COMPARISONS+=("datarepo_${pk} = S.${pk}")
 done
 declare -r FULL_DIFF=$(join_by ' AND ' "${COMPARISONS[@]}")
 
