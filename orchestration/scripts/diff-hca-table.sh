@@ -17,7 +17,7 @@ declare -r FULL_DIFF=$(join_by ' AND ' "${COMPARISONS[@]}")
 
 declare -a DATAREPO_PKS=()
 for col in ${PK_COLS//,/ }; do
-  DATAREPO_PKS+=("J.${col} as datarepo_${col}")
+  DATAREPO_PKS+=("${col} as datarepo_${col}")
 done
 declare -r REPO_KEYS=$(join_by ', ' "${DATAREPO_PKS[@]}")
 
