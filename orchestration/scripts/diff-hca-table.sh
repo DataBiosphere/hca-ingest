@@ -33,10 +33,6 @@ else
   JADE_TABLE="\`${JADE_PROJECT}.${JADE_DATASET}.${TABLE}\`"
 fi
 
-if [[ ! -z "${JADE_FILTER}" ]]; then
-  JADE_TABLE="(SELECT * FROM ${JADE_TABLE} WHERE ${JADE_FILTER})"
-fi
-
 # Join the data staged in GCS against the existing Jade data, filtering out identical rows.
 # The result is stored back in BigQuery for subsequent processing.
 declare -ra BQ_QUERY=(
