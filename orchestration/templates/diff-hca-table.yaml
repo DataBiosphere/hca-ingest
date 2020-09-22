@@ -1,11 +1,8 @@
-{{- if .Values.diffBQTable.create }}
-{{- $schemaImage := printf "%s:%s" .Values.diffBQTable.schemaImageName (default "latest" .Values.diffBQTable.schemaImageVersion ) }}
-{{- $alwaysPull := not .Values.diffBQTable.schemaImageVersion }}
-{{- $exportTemplate := default (printf "%s-export" .Values.diffBQTable.name) .Values.exportBQTable.name }}
+{{- $schemaImage := printf "%s:%s" us.gcr.io/broad-dsp-gcr-public/hca-schema latest }}
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
-  name: {{ .Values.diffBQTable.name }}
+  name: diff-hca-table
 spec:
   templates:
     - name: main
@@ -65,7 +62,7 @@ spec:
           - name: export-appends
             dependencies: [query-rows-to-append]
             templateRef:
-              name: {{ $exportTemplate }}
+              name: {{ .Values.argoTemplates.exportBQTable.name }}
               template: main
             arguments:
               parameters:
@@ -104,9 +101,6 @@ spec:
           - name: jade-table-pre-filter
       script:
         image: {{ $schemaImage }}
-        {{- if $alwaysPull }}
-        imagePullPolicy: Always
-        {{- end }}
         env:
           - name: STAGING_PROJECT
             value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
@@ -137,9 +131,6 @@ spec:
           - name: bq-dataset
       script:
         image: {{ $schemaImage }}
-        {{- if $alwaysPull }}
-        imagePullPolicy: Always
-        {{- end }}
         env:
           - name: PROJECT
             value: '{{ "{{inputs.parameters.bq-project}}" }}'
@@ -152,4 +143,3 @@ spec:
         command: [bash]
         source: |
         {{- include "argo.render-lines" (.Files.Lines "scripts/query-rows-to-append.sh") | indent 10 }}
-{{- end }}
