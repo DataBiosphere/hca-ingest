@@ -329,7 +329,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     isFileMetadata: Boolean = false
   ): ClosedTap[String] = {
     // get the readable files for the given input path
-    val metadataFiles = getReadableFiles(s"$inputPrefix/metadata/${entityType}/**.json", context)
+    val metadataFiles = getReadableFiles(s"$inputPrefix/metadata/$entityType/**.json", context)
     val metadataFilenameAndMsg = jsonToFilenameAndMsg(entityType)(metadataFiles)
 
     val validatedFilenameAndMsg = validateJson(metadataFilenameAndMsg)
@@ -343,7 +343,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       val descriptorFilenameAndMsg = jsonToFilenameAndMsg(entityType)(descriptorFiles)
       val validatedDescriptors = validateJson(descriptorFilenameAndMsg)
       val processedFileMetadata = validatedFilenameAndMsg
-        .fullOuterJoin(descriptorFilenameAndMsg)
+        .fullOuterJoin(validatedDescriptors)
         .withName(s"Pre-process $entityType metadata")
         .flatMap {
           // file is present in metadata but not descriptors
@@ -368,7 +368,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         }
 
       // Generate file ingest requests from descriptors. Deduplicate by the content hash.
-      val keyedIngestRequests = descriptorFilenameAndMsg.flatMap {
+      val keyedIngestRequests = validatedDescriptors.flatMap {
         case (_, descriptor) => generateFileIngestRequest(descriptor, entityType, inputPrefix)
       }.distinctByKey.values.keyBy(request => request.read[String]("source_path"))
 
@@ -385,7 +385,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       StorageIO.writeJsonLists(
         fileIngestRequests,
         entityType,
-        s"${outputPrefix}/data-transfer-requests/${entityType}"
+        s"$outputPrefix/data-transfer-requests/$entityType"
       )
       processedFileMetadata
     } else {
@@ -400,7 +400,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     StorageIO.writeJsonLists(
       processedMetadata,
       entityType,
-      s"${outputPrefix}/metadata/${entityType}"
+      s"$outputPrefix/metadata/$entityType"
     )
   }
 
@@ -429,7 +429,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     StorageIO.writeJsonLists(
       processedData,
       "links",
-      s"${outputPrefix}/metadata/links"
+      s"$outputPrefix/metadata/links"
     )
   }
 
@@ -463,7 +463,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       case (url, ((filename, data), schemaOption)) =>
         // if there is nothing in the schemaOption, then something went wrong; if there is, try to validate
         schemaOption match {
-          case Some(schema) => {
+          case Some(schema) =>
             // if the schema is not able to load, log an error, otherwise try to use it to validate
             Schema.loadFromString(schema) match {
               case Failure(_) =>
@@ -498,7 +498,6 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
                     }
                 }
             }
-          }
           case None =>
             Option(SchemaValidationError(filename, s"No schema found at $url for file $filename"))
         }
