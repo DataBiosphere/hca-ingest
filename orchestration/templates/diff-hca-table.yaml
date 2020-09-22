@@ -1,4 +1,4 @@
-{{- $schemaImage := printf "%s:%s" us.gcr.io/broad-dsp-gcr-public/hca-schema latest }}
+{{- $schemaImage := printf "us.gcr.io/broad-dsp-gcr-public/hca-schema:latest" }}
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
