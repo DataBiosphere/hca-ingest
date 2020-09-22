@@ -231,7 +231,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     descriptor: Msg,
     entityType: String,
     inputPrefix: String
-  ): (String, Msg) = {
+  ): Option[(String, Msg)] = {
     val contentHash = descriptor.read[String]("crc32c")
     val targetPath = descriptor.read[String]("file_name")
     val sourcePath = s"$inputPrefix/data/$targetPath"
@@ -241,13 +241,13 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
 
     matches match {
       case valid: Regex.Match =>
-        contentHash -> Obj(
+        Some(contentHash -> Obj(
           Str("source_path") -> Str(sourcePath),
           Str("target_path") -> Str(s"/$entityType/${valid.group(1)}")
-        )
+        ))
       case err: HcaError =>
         err.log(logger)
-        ("", Obj())
+        None
     }
 
   }
@@ -258,7 +258,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     * @param fileName the raw filename of the metadata file
     * @return a tuple of the entity id and entity version
     */
-  def getEntityIdAndVersion(fileName: String): (String, String) = {
+  def getEntityIdAndVersion(fileName: String): Option[(String, String)] = {
     val matches = metadataPattern
       .findFirstMatchIn(fileName)
       .getOrElse(
@@ -272,10 +272,10 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       case valid: Regex.Match =>
         val entityId = valid.group(1)
         val entityVersion = valid.group(2)
-        (entityId, entityVersion)
+        Some((entityId, entityVersion))
       case err: HcaError =>
         err.log(logger)
-        ("", "")
+        None
     }
   }
 
@@ -285,7 +285,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     * @param fileName the raw filename of the data file
     * @return a tuple of the file id and file version
     */
-  def getFileIdAndVersion(fileName: String): (String, String) = {
+  def getFileIdAndVersion(fileName: String): Option[(String, String)] = {
     val matches = fileDataPattern
       .findFirstMatchIn(fileName)
       .getOrElse(
@@ -299,10 +299,10 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       case valid: Regex.Match =>
         val fileId = valid.group(2)
         val fileVersion = valid.group(3)
-        (fileId, fileVersion)
+        Some((fileId, fileVersion))
       case err: HcaError =>
         err.log(logger)
-        ("", "")
+        None
     }
   }
 
@@ -312,7 +312,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     * @param fileName the raw filename of the "links.json" file
     * @return a tuple of the links id, version, and project id
     */
-  def getLinksIdVersionAndProjectId(fileName: String): (String, String, String) = {
+  def getLinksIdVersionAndProjectId(fileName: String): Option[(String, String, String)] = {
     val matches = linksDataPattern
       .findFirstMatchIn(fileName)
       .getOrElse(
@@ -327,10 +327,10 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         val linksId = valid.group(1)
         val linksVersion = valid.group(2)
         val projectId = valid.group(3)
-        (linksId, linksVersion, projectId)
+        Some((linksId, linksVersion, projectId))
       case err: HcaError =>
         err.log(logger)
-        ("", "", "")
+        None
     }
   }
 
