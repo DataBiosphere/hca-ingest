@@ -8,13 +8,6 @@ declare -r TABLE_DIR=/bq-metadata/${TABLE}
 declare -r PK_COLS=$(cat ${TABLE_DIR}/primary-keys)
 declare -r COMPARE_COLS=$(cat ${TABLE_DIR}/compare-cols)
 
-# Build the WHERE clause of the SQL query.
-declare -a COMPARISONS=()
-for pk in ${PK_COLS//,/ }; do
-  COMPARISONS+=("J.${pk} = S.${pk}")
-done
-declare -r FULL_DIFF=$(join_by ' AND ' "${COMPARISONS[@]}")
-
 declare -a DATAREPO_PKS=()
 for col in ${PK_COLS//,/ }; do
   DATAREPO_PKS+=("${col} as datarepo_${col}")
@@ -50,7 +43,7 @@ declare -ra BQ_QUERY=(
 )
 1>&2 ${BQ_QUERY[@]} "SELECT J.datarepo_row_id, S.*, ${REPO_KEYS}
   FROM ${TABLE} S FULL JOIN ${JADE_TABLE} J
-  USING (${PK_COLS}) WHERE ${FULL_DIFF}"
+  USING (${PK_COLS})"
 
 # Echo the output table name so Argo can slurp it into a parameter.
 echo ${TARGET_TABLE}
