@@ -166,14 +166,16 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     * @param metadata the content of the metadata file in Msg format
     * @return a Msg object in the desired output format
     */
-  def transformMetadata(entityType: String, fileName: String, metadata: Msg): Msg = {
-    val (entityId, entityVersion) = getEntityIdAndVersion(fileName)
-    Obj(
-      Str(s"${entityType}_id") -> Str(entityId),
-      Str("version") -> Str(entityVersion),
-      Str("content") -> Str(encode(metadata))
-    )
-  }
+  def transformMetadata(entityType: String, fileName: String, metadata: Msg): Option[Msg] =
+    getEntityIdAndVersion(fileName) match {
+      case Some((entityId, entityVersion)) =>
+        Some(Obj(
+          Str(s"${entityType}_id") -> Str(entityId),
+          Str("version") -> Str(entityVersion),
+          Str("content") -> Str(encode(metadata))
+        ))
+      case None => None
+    }
 
   /**
     * Extract the necessary info from a file of file-related metadata and put it into a form that
@@ -190,17 +192,18 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     fileName: String,
     metadata: Msg,
     descriptor: Msg
-  ): Msg = {
-    val (entityId, entityVersion) = getEntityIdAndVersion(fileName)
-    // put values in the form we want
-    Obj(
-      Str(s"${entityType}_id") -> Str(entityId),
-      Str("version") -> Str(entityVersion),
-      Str("content") -> Str(encode(metadata)),
-      Str("crc32c") -> descriptor.read[Msg]("crc32c"),
-      Str("descriptor") -> Str(encode(descriptor))
-    )
-  }
+  ): Option[Msg] =
+    getEntityIdAndVersion(fileName) match {
+      case Some((entityId, entityVersion)) =>
+        Some(Obj(
+          Str(s"${entityType}_id") -> Str(entityId),
+          Str("version") -> Str(entityVersion),
+          Str("content") -> Str(encode(metadata)),
+          Str("crc32c") -> descriptor.read[Msg]("crc32c"),
+          Str("descriptor") -> Str(encode(descriptor))
+        ))
+      case None => None
+    }
 
   /**
     * Extract the necessary info from a file of table relationships and put it into a form that
@@ -210,16 +213,17 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     * @param metadata the content of the metadata file in Msg format
     * @return a Msg object in the desired output format
     */
-  def transformLinksFileMetadata(fileName: String, metadata: Msg): Msg = {
-    val (linksId, linksVersion, projectId) = getLinksIdVersionAndProjectId(fileName)
-    // put values in the form we want
-    Obj(
-      Str("content") -> Str(encode(metadata)),
-      Str("links_id") -> Str(linksId),
-      Str("version") -> Str(linksVersion),
-      Str("project_id") -> Str(projectId)
-    )
-  }
+  def transformLinksFileMetadata(fileName: String, metadata: Msg): Option[Msg] =
+    getLinksIdVersionAndProjectId(fileName) match {
+      case Some((linksId, linksVersion, projectId)) =>
+        Some(Obj(
+          Str("content") -> Str(encode(metadata)),
+          Str("links_id") -> Str(linksId),
+          Str("version") -> Str(linksVersion),
+          Str("project_id") -> Str(projectId)
+        ))
+      case None => None
+    }
 
   /**
     * Convert a file descriptor into a row in a bulk-file ingest request for the TDR.
@@ -237,7 +241,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     val sourcePath = s"$inputPrefix/data/$targetPath"
     val matches = fileNamePattern
       .findFirstMatchIn(targetPath)
-      .getOrElse(NoRegexPatternMatchError(sourcePath, s"Could not parse filename: $targetPath"))
+      .getOrElse(NoRegexPatternMatchError(sourcePath, s"Could not parse filename for file ingest request creation: $targetPath"))
 
     matches match {
       case valid: Regex.Match =>
@@ -264,7 +268,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       .getOrElse(
         NoRegexPatternMatchError(
           fileName,
-          s"transformMetadata: error when finding entity id and version from file named $fileName"
+          s"Error when finding entity id and version from file named $fileName"
         )
       )
 
@@ -273,33 +277,6 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         val entityId = valid.group(1)
         val entityVersion = valid.group(2)
         Some((entityId, entityVersion))
-      case err: HcaError =>
-        err.log(logger)
-        None
-    }
-  }
-
-  /**
-    * Extract the file id and file version from the name of a data file.
-    *
-    * @param fileName the raw filename of the data file
-    * @return a tuple of the file id and file version
-    */
-  def getFileIdAndVersion(fileName: String): Option[(String, String)] = {
-    val matches = fileDataPattern
-      .findFirstMatchIn(fileName)
-      .getOrElse(
-        NoRegexPatternMatchError(
-          fileName,
-          s"transformMetadata: error when finding file id and version from file named $fileName"
-        )
-      )
-
-    matches match {
-      case valid: Regex.Match =>
-        val fileId = valid.group(2)
-        val fileVersion = valid.group(3)
-        Some((fileId, fileVersion))
       case err: HcaError =>
         err.log(logger)
         None
@@ -318,7 +295,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       .getOrElse(
         NoRegexPatternMatchError(
           fileName,
-          s"transformMetadata: error when finding links id, version, and project id from file named $fileName"
+          s"Error when finding links id, version, and project id from file named $fileName"
         )
       )
 
@@ -370,7 +347,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       val processedFileMetadata = validatedFilenameAndMsg
         .fullOuterJoin(descriptorFilenameAndMsg)
         .withName(s"Pre-process $entityType metadata")
-        .map {
+        .flatMap {
           // file is present in metadata but not descriptors
           case (filename, (Some(_), None)) =>
             val err = FileMismatchError(
@@ -378,7 +355,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
               s"$filename is present in metadata/$entityType but not in descriptors/$entityType"
             )
             err.log(logger)
-            Obj()
+            None
           // file is present in descriptors but not metadata
           case (filename, (None, Some(_))) =>
             val err = FileMismatchError(
@@ -386,26 +363,25 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
               s"$filename is present in descriptors/$entityType but not in metadata/$entityType"
             )
             err.log(logger)
-            Obj()
+            None
           // file is present in both, only valid case to continue on
           case (filename, (Some(metadata), Some(descriptor))) =>
             transformFileMetadata(entityType, filename, metadata, descriptor)
         }
 
       // Generate file ingest requests from descriptors. Deduplicate by the content hash.
-      val keyedIngestRequests = descriptorFilenameAndMsg.map {
+      val keyedIngestRequests = descriptorFilenameAndMsg.flatMap {
         case (_, descriptor) => generateFileIngestRequest(descriptor, entityType, inputPrefix)
       }.distinctByKey.values.keyBy(request => request.read[String]("source_path"))
 
-      val fileIngestRequests = keyedIngestRequests.leftOuterJoin(files).map {
+      val fileIngestRequests = keyedIngestRequests.leftOuterJoin(files).flatMap {
         case (filename, (_, None)) =>
-          val err = FileMismatchError(
+          FileMismatchError(
             filename,
             s"$filename has a descriptors/$entityType and metadata/$entityType but doesn't actually exist under data/"
-          )
-          err.log(logger)
-          Obj()
-        case (_, (request, Some(_))) => request
+          ).log(logger)
+          None
+        case (_, (request, Some(_))) => Some(request)
       }
 
       StorageIO.writeJsonLists(
@@ -418,7 +394,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       // for non-file metadata
       validatedFilenameAndMsg
         .withName(s"Pre-process $entityType metadata")
-        .map {
+        .flatMap {
           case (filename, metadata) => transformMetadata(entityType, filename, metadata)
         }
     }
@@ -447,7 +423,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     // then convert json to msg and get the filename
     val processedData = validatedFilenameAndMsg
       .withName(s"Pre-process links metadata")
-      .map {
+      .flatMap {
         case (filename, metadata) =>
           transformLinksFileMetadata(filename, metadata)
       }
