@@ -166,11 +166,13 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   def transformMetadata(entityType: String, fileName: String, metadata: Msg): Option[Msg] =
     getEntityIdAndVersion(fileName) match {
       case Some((entityId, entityVersion)) =>
-        Some(Obj(
-          Str(s"${entityType}_id") -> Str(entityId),
-          Str("version") -> Str(entityVersion),
-          Str("content") -> Str(encode(metadata))
-        ))
+        Some(
+          Obj(
+            Str(s"${entityType}_id") -> Str(entityId),
+            Str("version") -> Str(entityVersion),
+            Str("content") -> Str(encode(metadata))
+          )
+        )
       case None => None
     }
 
@@ -192,13 +194,15 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   ): Option[Msg] =
     getEntityIdAndVersion(fileName) match {
       case Some((entityId, entityVersion)) =>
-        Some(Obj(
-          Str(s"${entityType}_id") -> Str(entityId),
-          Str("version") -> Str(entityVersion),
-          Str("content") -> Str(encode(metadata)),
-          Str("crc32c") -> descriptor.read[Msg]("crc32c"),
-          Str("descriptor") -> Str(encode(descriptor))
-        ))
+        Some(
+          Obj(
+            Str(s"${entityType}_id") -> Str(entityId),
+            Str("version") -> Str(entityVersion),
+            Str("content") -> Str(encode(metadata)),
+            Str("crc32c") -> descriptor.read[Msg]("crc32c"),
+            Str("descriptor") -> Str(encode(descriptor))
+          )
+        )
       case None => None
     }
 
@@ -213,12 +217,14 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   def transformLinksFileMetadata(fileName: String, metadata: Msg): Option[Msg] =
     getLinksIdVersionAndProjectId(fileName) match {
       case Some((linksId, linksVersion, projectId)) =>
-        Some(Obj(
-          Str("content") -> Str(encode(metadata)),
-          Str("links_id") -> Str(linksId),
-          Str("version") -> Str(linksVersion),
-          Str("project_id") -> Str(projectId)
-        ))
+        Some(
+          Obj(
+            Str("content") -> Str(encode(metadata)),
+            Str("links_id") -> Str(linksId),
+            Str("version") -> Str(linksVersion),
+            Str("project_id") -> Str(projectId)
+          )
+        )
       case None => None
     }
 
@@ -238,14 +244,21 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     val sourcePath = s"$inputPrefix/data/$targetPath"
     val matches = fileNamePattern
       .findFirstMatchIn(targetPath)
-      .getOrElse(NoRegexPatternMatchError(sourcePath, s"Could not parse filename for file ingest request creation: $targetPath"))
+      .getOrElse(
+        NoRegexPatternMatchError(
+          sourcePath,
+          s"Could not parse filename for file ingest request creation: $targetPath"
+        )
+      )
 
     matches match {
       case valid: Regex.Match =>
-        Some(contentHash -> Obj(
-          Str("source_path") -> Str(sourcePath),
-          Str("target_path") -> Str(s"/$entityType/${valid.group(1)}")
-        ))
+        Some(
+          contentHash -> Obj(
+            Str("source_path") -> Str(sourcePath),
+            Str("target_path") -> Str(s"/$entityType/${valid.group(1)}")
+          )
+        )
       case err: HcaError =>
         err.log
         None

@@ -11,11 +11,13 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
 
   it should "transform basic metadata" in {
     val exampleFileContent = JsonParser.parseEncodedJson("""{"beep": "boop"}""")
-    val actualOutput = HcaPipelineBuilder.transformMetadata(
-      entityType = "entity_type",
-      fileName = "entityId_version.json",
-      metadata = exampleFileContent
-    )
+    val actualOutput = HcaPipelineBuilder
+      .transformMetadata(
+        entityType = "entity_type",
+        fileName = "entityId_version.json",
+        metadata = exampleFileContent
+      )
+      .get
     val expectedOutput = JsonParser.parseEncodedJson(
       json = """
                | {
@@ -30,11 +32,13 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
   }
 
   it should "transform an empty metadata file" in {
-    val actualOutput = HcaPipelineBuilder.transformMetadata(
-      entityType = "entity_type",
-      fileName = "id_version.json",
-      metadata = JsonParser.parseEncodedJson("{}")
-    )
+    val actualOutput = HcaPipelineBuilder
+      .transformMetadata(
+        entityType = "entity_type",
+        fileName = "id_version.json",
+        metadata = JsonParser.parseEncodedJson("{}")
+      )
+      .get
     val expectedOutput = JsonParser.parseEncodedJson(
       json = """
                | {
@@ -74,12 +78,14 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
                |""".stripMargin
     )
 
-    val actualOutput = HcaPipelineBuilder.transformFileMetadata(
-      entityType = "some_file_entity_type",
-      fileName = "entity-id_entity-version.json",
-      metadata = exampleMetadataContent,
-      descriptor = exampleDescriptorContent
-    )
+    val actualOutput = HcaPipelineBuilder
+      .transformFileMetadata(
+        entityType = "some_file_entity_type",
+        fileName = "entity-id_entity-version.json",
+        metadata = exampleMetadataContent,
+        descriptor = exampleDescriptorContent
+      )
+      .get
     val expectedOutput = JsonParser.parseEncodedJson(
       json =
         """
@@ -120,12 +126,14 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
                |""".stripMargin
     )
 
-    val actualOutput = HcaPipelineBuilder.transformFileMetadata(
-      entityType = "some_type",
-      fileName = "123_456.json",
-      metadata = exampleMetadataContent,
-      descriptor = exampleDescriptorContent
-    )
+    val actualOutput = HcaPipelineBuilder
+      .transformFileMetadata(
+        entityType = "some_type",
+        fileName = "123_456.json",
+        metadata = exampleMetadataContent,
+        descriptor = exampleDescriptorContent
+      )
+      .get
     val expectedOutput = JsonParser.parseEncodedJson(
       json =
         """
@@ -152,10 +160,12 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
                | }
                |""".stripMargin
     )
-    val actualOutput = HcaPipelineBuilder.transformLinksFileMetadata(
-      fileName = "123_456_789.json",
-      metadata = exampleMetadataContent
-    )
+    val actualOutput = HcaPipelineBuilder
+      .transformLinksFileMetadata(
+        fileName = "123_456_789.json",
+        metadata = exampleMetadataContent
+      )
+      .get
     val expectedOutput = JsonParser.parseEncodedJson(
       json =
         """
@@ -184,11 +194,13 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
                 | }
                 |""".stripMargin
     )
-    val (actualHash, actualOutput) = HcaPipelineBuilder.generateFileIngestRequest(
-      descriptor = exampleDescriptor,
-      entityType = "foo_file",
-      inputPrefix = "some/local/directory"
-    ).get
+    val (actualHash, actualOutput) = HcaPipelineBuilder
+      .generateFileIngestRequest(
+        descriptor = exampleDescriptor,
+        entityType = "foo_file",
+        inputPrefix = "some/local/directory"
+      )
+      .get
     val expectedOutput = JsonParser.parseEncodedJson(
       json =
         """
