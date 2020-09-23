@@ -55,4 +55,6 @@ case class FileMismatchError(filepath: String, msg: String) extends HcaError(fil
 
 case class NoRegexPatternMatchError(filepath: String, msg: String) extends HcaError(filepath, msg)
 
+case class MissingPropertyError(filepath: String, msg: String) extends HcaError(filepath, msg)
+
 case class SchemaValidationError(filepath: String, msg: String) extends HcaError(filepath, msg)
