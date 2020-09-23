@@ -122,7 +122,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       )
     }
     metadata.count
-      .map(c => if (c == 0.toLong) NoMatchWarning(s"$filePattern had $c matches").log)
+      .map(c => if (c == 0) NoMatchWarning(s"$filePattern had $c matches").log)
     metadata
   }
 
