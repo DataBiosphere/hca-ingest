@@ -4,7 +4,6 @@ import org.broadinstitute.monster.hca.PostProcess.errorCount
 import org.slf4j.Logger
 import ujson.Obj
 
-
 // a trait to capture the generic logging mechanism we'll want, with case classes for the different logging levels
 abstract class HcaLog {
   val jsonMsg: Obj
@@ -22,6 +21,7 @@ class HcaWarn(msg: String) extends HcaLog {
 }
 
 class HcaError(filepath: String, msg: String) extends HcaLog {
+
   def log(implicit logger: Logger): Unit = {
     logger.error(jsonMsg.toString())
     errorCount.inc()
