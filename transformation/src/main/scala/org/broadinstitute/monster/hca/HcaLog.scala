@@ -4,27 +4,16 @@ import org.broadinstitute.monster.hca.PostProcess.errorCount
 import org.slf4j.Logger
 import ujson.Obj
 
-// a simple log level case class hierarchy to make sure we log at the right level
-trait LogLevel
-case class HcaErrorLog() extends LogLevel
-case class HcaWarnLog() extends LogLevel
 
 // a trait to capture the generic logging mechanism we'll want, with case classes for the different logging levels
 abstract class HcaLog {
-  val level: LogLevel
   val jsonMsg: Obj
 
-  def log(implicit logger: Logger): Unit =
-    level match {
-      case HcaErrorLog() =>
-        logger.error(jsonMsg.toString())
-        errorCount.inc()
-      case HcaWarnLog() => logger.warn(jsonMsg.toString())
-    }
+  def log(implicit logger: Logger): Unit
 }
 
 class HcaWarn(msg: String) extends HcaLog {
-  val level: HcaWarnLog = HcaWarnLog()
+  def log(implicit logger: Logger): Unit = logger.warn(jsonMsg.toString())
 
   val jsonMsg: Obj = ujson.Obj(
     "warningType" -> ujson.Str(this.getClass.getSimpleName),
@@ -33,7 +22,10 @@ class HcaWarn(msg: String) extends HcaLog {
 }
 
 class HcaError(filepath: String, msg: String) extends HcaLog {
-  val level: HcaErrorLog = HcaErrorLog()
+  def log(implicit logger: Logger): Unit = {
+    logger.error(jsonMsg.toString())
+    errorCount.inc()
+  }
 
   // match everything that is not followed by a "/" (only the filename)
   private val filenameRegex = "[^/]*$".r
