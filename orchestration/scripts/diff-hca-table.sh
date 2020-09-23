@@ -6,7 +6,6 @@ function join_by { local d=$1; shift; echo -n "$1"; shift; printf "%s" "${@/#/$d
 # Point to BQ metadata we expect to be present on disk.
 declare -r TABLE_DIR=/bq-metadata/${TABLE}
 declare -r PK_COLS=$(cat ${TABLE_DIR}/primary-keys)
-declare -r COMPARE_COLS=$(cat ${TABLE_DIR}/compare-cols)
 
 declare -a DATAREPO_PKS=()
 for col in ${PK_COLS//,/ }; do
