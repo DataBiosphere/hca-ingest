@@ -15,7 +15,8 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
       .transformMetadata(
         entityType = "entity_type",
         fileName = "entityId_version.json",
-        metadata = exampleFileContent
+        metadata = exampleFileContent,
+        inputPrefix = "prefix"
       )
       .get
     val expectedOutput = JsonParser.parseEncodedJson(
@@ -36,7 +37,8 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
       .transformMetadata(
         entityType = "entity_type",
         fileName = "id_version.json",
-        metadata = JsonParser.parseEncodedJson("{}")
+        metadata = JsonParser.parseEncodedJson("{}"),
+        inputPrefix = "prefix"
       )
       .get
     val expectedOutput = JsonParser.parseEncodedJson(
@@ -83,7 +85,8 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
         entityType = "some_file_entity_type",
         fileName = "entity-id_entity-version.json",
         metadata = exampleMetadataContent,
-        descriptor = exampleDescriptorContent
+        descriptor = exampleDescriptorContent,
+        inputPrefix = "prefix"
       )
       .get
     val expectedOutput = JsonParser.parseEncodedJson(
@@ -131,7 +134,8 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
         entityType = "some_type",
         fileName = "123_456.json",
         metadata = exampleMetadataContent,
-        descriptor = exampleDescriptorContent
+        descriptor = exampleDescriptorContent,
+        inputPrefix = "prefix"
       )
       .get
     val expectedOutput = JsonParser.parseEncodedJson(
@@ -163,7 +167,8 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
     val actualOutput = HcaPipelineBuilder
       .transformLinksFileMetadata(
         fileName = "123_456_789.json",
-        metadata = exampleMetadataContent
+        metadata = exampleMetadataContent,
+        inputPrefix = "prefix"
       )
       .get
     val expectedOutput = JsonParser.parseEncodedJson(
@@ -198,7 +203,8 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
       .generateFileIngestRequest(
         descriptor = exampleDescriptor,
         entityType = "foo_file",
-        inputPrefix = "some/local/directory"
+        inputPrefix = "some/local/directory",
+        filename = "my_file_name"
       )
       .get
     val expectedOutput = JsonParser.parseEncodedJson(
@@ -251,7 +257,9 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
 
     val exampleUrlAndFile = (exampleFileContent.read[String]("describedBy"), exampleFileContent)
 
-    runWithContext(sc => HcaPipelineBuilder.validateJson(sc.parallelize(Seq(exampleUrlAndFile))))
+    runWithContext(sc =>
+      HcaPipelineBuilder.validateJson(sc.parallelize(Seq(exampleUrlAndFile)), "prefix")
+    )
   }
 
   it should "validate json schemas and throw an exception if files are incorrectly formatted" in {
@@ -289,11 +297,13 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
 
     val exampleFilenameAndMsg = ("sampleFileName.json", exampleFileContent)
 
-    runWithData(Seq(exampleFilenameAndMsg))(HcaPipelineBuilder.validateJsonInternal) shouldBe
+    runWithData(Seq(exampleFilenameAndMsg))(
+      HcaPipelineBuilder.validateJsonInternal("prefix")
+    ) shouldBe
       Seq(
         Some(
           SchemaValidationError(
-            exampleFilenameAndMsg._1,
+            s"prefix/${exampleFilenameAndMsg._1}",
             "Data in file sampleFileName.json does not conform to schema " +
               "from https://schema.humancellatlas.org/type/biomaterial/5.1.0/specimen_from_organism; " +
               "#: required key [schema_type] not found"
@@ -337,7 +347,7 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
     )
 
     val exampleUrlAndFile = ("sampleFileName.json", exampleFileContent)
-    runWithData(Seq(exampleUrlAndFile))(HcaPipelineBuilder.validateJsonInternal) shouldBe
+    runWithData(Seq(exampleUrlAndFile))(HcaPipelineBuilder.validateJsonInternal("prefix")) shouldBe
       Seq(None)
   }
 }
