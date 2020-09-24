@@ -169,16 +169,13 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     metadata: Msg,
     inputPrefix: String
   ): Option[Msg] =
-    getEntityIdAndVersion(fileName, entityType, inputPrefix) match {
-      case Some((entityId, entityVersion)) =>
-        Some(
-          Obj(
-            Str(s"${entityType}_id") -> Str(entityId),
-            Str("version") -> Str(entityVersion),
-            Str("content") -> Str(encode(metadata))
-          )
+    getEntityIdAndVersion(fileName, entityType, inputPrefix).map {
+      case (entityId, entityVersion) =>
+        Obj(
+          Str(s"${entityType}_id") -> Str(entityId),
+          Str("version") -> Str(entityVersion),
+          Str("content") -> Str(encode(metadata))
         )
-      case None => None
     }
 
   /**
@@ -198,24 +195,21 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     descriptor: Msg,
     inputPrefix: String
   ): Option[Msg] =
-    getEntityIdAndVersion(fileName, entityType, inputPrefix) match {
-      case Some((entityId, entityVersion)) =>
-        Some(
-          Obj(
-            Str(s"${entityType}_id") -> Str(entityId),
-            Str("version") -> Str(entityVersion),
-            Str("content") -> Str(encode(metadata)),
-            Str("crc32c") -> descriptor.tryRead[Msg]("crc32c").getOrElse {
-              MissingPropertyError(
-                s"$inputPrefix/metadata/$entityType/$fileName",
-                s"Descriptor for file $fileName has no crc32c property."
-              ).log
-              Str("")
-            },
-            Str("descriptor") -> Str(encode(descriptor))
-          )
+    getEntityIdAndVersion(fileName, entityType, inputPrefix).map {
+      case (entityId, entityVersion) =>
+        Obj(
+          Str(s"${entityType}_id") -> Str(entityId),
+          Str("version") -> Str(entityVersion),
+          Str("content") -> Str(encode(metadata)),
+          Str("crc32c") -> descriptor.tryRead[Msg]("crc32c").getOrElse {
+            MissingPropertyError(
+              s"$inputPrefix/metadata/$entityType/$fileName",
+              s"Descriptor for file $fileName has no crc32c property."
+            ).log
+            Str("")
+          },
+          Str("descriptor") -> Str(encode(descriptor))
         )
-      case None => None
     }
 
   /**
@@ -231,17 +225,14 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     metadata: Msg,
     inputPrefix: String
   ): Option[Msg] =
-    getLinksIdVersionAndProjectId(fileName, inputPrefix) match {
-      case Some((linksId, linksVersion, projectId)) =>
-        Some(
-          Obj(
-            Str("content") -> Str(encode(metadata)),
-            Str("links_id") -> Str(linksId),
-            Str("version") -> Str(linksVersion),
-            Str("project_id") -> Str(projectId)
-          )
+    getLinksIdVersionAndProjectId(fileName, inputPrefix).map {
+      case (linksId, linksVersion, projectId) =>
+        Obj(
+          Str("content") -> Str(encode(metadata)),
+          Str("links_id") -> Str(linksId),
+          Str("version") -> Str(linksVersion),
+          Str("project_id") -> Str(projectId)
         )
-      case None => None
     }
 
   /**
@@ -498,24 +489,28 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     filenamesAndMsg: SCollection[(String, Msg)]
   ): SCollection[Option[SchemaValidationError]] = {
     // pull out the url for where the schema definition is for each file
-    val content = filenamesAndMsg.withName("Validate: Schema Definition URL").map {
-      case (filename, msg) =>
-        (
-          msg.tryRead[String]("describedBy").getOrElse {
-            MissingPropertyError(
-              s"$inputPrefix/$filename",
-              s"File $filename has no describedBy property."
-            ).log
-            ""
-          },
-          (filename, msg)
-        )
-    }
+    val content = filenamesAndMsg
+      .withName("Validate: Schema Definition URL")
+      .map {
+        case (filename, msg) =>
+          (
+            msg
+              .tryRead[String]("describedBy")
+              .fold[Option[String]] {
+                MissingPropertyError(
+                  s"$inputPrefix/$filename",
+                  s"File $filename has no describedBy property."
+                ).log
+                None
+              }(Some(_)),
+            (filename, msg)
+          )
+      }
+      .collect { case (Some(url), rest) => (url, rest) }
     // get the distinct urls (so as to minimize the number of get requests) and then get the schemas as strings
     val schemas = content
       .withName("Validate: Schema Content URL")
       .map(_._1)
-      .filter(!_.isEmpty)
       .distinct
       .withName("Validate: Schema Content")
       .map(url => (url, requests.get(url).text))

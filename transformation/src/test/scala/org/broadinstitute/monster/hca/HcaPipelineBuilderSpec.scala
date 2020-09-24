@@ -18,7 +18,6 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
         metadata = exampleFileContent,
         inputPrefix = "prefix"
       )
-      .get
     val expectedOutput = JsonParser.parseEncodedJson(
       json = """
                | {
@@ -29,7 +28,7 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
                |""".stripMargin
     )
 
-    actualOutput shouldBe expectedOutput
+    actualOutput shouldBe Some(expectedOutput)
   }
 
   it should "transform an empty metadata file" in {
@@ -40,7 +39,6 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
         metadata = JsonParser.parseEncodedJson("{}"),
         inputPrefix = "prefix"
       )
-      .get
     val expectedOutput = JsonParser.parseEncodedJson(
       json = """
                | {
@@ -51,7 +49,7 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
                |""".stripMargin
     )
 
-    actualOutput shouldBe expectedOutput
+    actualOutput shouldBe Some(expectedOutput)
   }
 
   it should "transform file metadata with no directory in the filename" in {
@@ -88,7 +86,6 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
         descriptor = exampleDescriptorContent,
         inputPrefix = "prefix"
       )
-      .get
     val expectedOutput = JsonParser.parseEncodedJson(
       json =
         """
@@ -102,7 +99,7 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
           |""".stripMargin
     )
 
-    actualOutput shouldBe expectedOutput
+    actualOutput shouldBe Some(expectedOutput)
   }
 
   it should "transform file metadata with a directory in the filename" in {
@@ -137,7 +134,6 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
         descriptor = exampleDescriptorContent,
         inputPrefix = "prefix"
       )
-      .get
     val expectedOutput = JsonParser.parseEncodedJson(
       json =
         """
@@ -151,7 +147,7 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
           |""".stripMargin
     )
 
-    actualOutput shouldBe expectedOutput
+    actualOutput shouldBe Some(expectedOutput)
   }
 
   it should "transform links.json file" in {
@@ -170,7 +166,6 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
         metadata = exampleMetadataContent,
         inputPrefix = "prefix"
       )
-      .get
     val expectedOutput = JsonParser.parseEncodedJson(
       json =
         """
@@ -183,7 +178,7 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
           |""".stripMargin
     )
 
-    actualOutput shouldBe expectedOutput
+    actualOutput shouldBe Some(expectedOutput)
   }
 
   it should "correctly generate file ingest requests" in {
@@ -199,14 +194,13 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
                 | }
                 |""".stripMargin
     )
-    val (actualHash, actualOutput) = HcaPipelineBuilder
+    val Some((actualHash, actualOutput)) = HcaPipelineBuilder
       .generateFileIngestRequest(
         descriptor = exampleDescriptor,
         entityType = "foo_file",
         inputPrefix = "some/local/directory",
         filename = "my_file_name"
       )
-      .get
     val expectedOutput = JsonParser.parseEncodedJson(
       json =
         """
