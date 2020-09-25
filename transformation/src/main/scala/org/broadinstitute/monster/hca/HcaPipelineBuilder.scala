@@ -58,15 +58,15 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
 
   // format is: {entity_type}/{entity_id}_{version}.json,
   // but filename returns just {entity_id}_{version}.json, so that is what we deal with.
-  val metadataPattern: Regex = "([^_]+)_(.+).json".r
+//  val metadataPattern: Regex = "([^_]+)_(.+).json".r
   // format is: {dir_path}/{file_id}_{file_version}_{file_name},
   // but the dir_path seems to be optional
-  val fileDataPattern: Regex = "(.*\\/)?([^_^\\/]+)_([^_]+)_(.+)".r
+//  val fileDataPattern: Regex = "(.*\\/)?([^_^\\/]+)_([^_]+)_(.+)".r
   // format is: {links_id}_{version}_{project_id}.json
   // but the `project_id` identifies the project the subgraph is part of
   // A subgraph is part of exactly one project. The importer must record an error if it
   // detects more than one object with the same `links/{links_id}_{version}_` prefix.
-  val linksDataPattern: Regex = "([^_]+)_(.+)_([^_]+).json".r
+//  val linksDataPattern: Regex = "([^_]+)_(.+)_([^_]+).json".r
   // grab everything after the last "/"
   val fileNamePattern: Regex = "([^/]+$)".r
 
@@ -172,7 +172,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     metadata: Msg,
     inputPrefix: String
   ): Option[Msg] =
-    getEntityIdAndVersion(fileName, entityType, inputPrefix).map {
+    getEntityIdAndVersion(fileName, inputPrefix, entityType).map {
       case (entityId, entityVersion) =>
         Obj(
           Str(s"${entityType}_id") -> Str(entityId),
@@ -198,7 +198,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     descriptor: Msg,
     inputPrefix: String
   ): Option[Msg] =
-    getEntityIdAndVersion(fileName, entityType, inputPrefix).map {
+    getEntityIdAndVersion(fileName, inputPrefix, entityType).map {
       case (entityId, entityVersion) =>
         Obj(
           Str(s"${entityType}_id") -> Str(entityId),
@@ -266,7 +266,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       .getOrElse(
         NoRegexPatternMatchError(
           totalPath,
-          s"Could not parse filename for file ingest request creation."
+          "Could not parse file_name for file ingest request creation."
         )
       )
 
@@ -296,27 +296,20 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     inputPrefix: String,
     entityType: String
   ): Option[(String, String)] = {
-    val regexError = NoRegexPatternMatchError(
-      s"$inputPrefix/metadata/$entityType/$fileName",
-      s"Error when finding entity id and version from file named $fileName"
-    )
-    val matches = metadataPattern
-      .findFirstMatchIn(fileName)
-      .getOrElse(regexError)
+    val parts = fileName.stripSuffix(".json").split("_")
 
-    matches match {
-      case valid: Regex.Match =>
-        if (valid.groupCount != 2) {
-          regexError.log
-          None
-        } else {
-          val entityId = valid.group(1)
-          val entityVersion = valid.group(2)
-          Some((entityId, entityVersion))
-        }
-      case err: HcaError =>
-        err.log
-        None
+    logger.debug(s"This is inputPrefix: $inputPrefix")
+    logger.debug(s"This is entityType: $entityType")
+    logger.debug(s"This is fileName: $fileName")
+
+    if (parts.length != 2) {
+      NoRegexPatternMatchError(
+        s"$inputPrefix/metadata/$entityType/$fileName",
+        "Error when finding entity id and version from file name."
+      ).log
+      None
+    } else {
+      Some((parts(0), parts(1)))
     }
   }
 
@@ -330,28 +323,16 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     fileName: String,
     inputPrefix: String
   ): Option[(String, String, String)] = {
-    val regexError = NoRegexPatternMatchError(
-      s"$inputPrefix/links/$fileName",
-      s"Error when finding links id, version, and project id from file named $fileName"
-    )
-    val matches = linksDataPattern
-      .findFirstMatchIn(fileName)
-      .getOrElse(regexError)
+    val parts = fileName.stripSuffix(".json").split("_")
 
-    matches match {
-      case valid: Regex.Match =>
-        if (valid.groupCount != 3) {
-          regexError.log
-          None
-        } else {
-          val linksId = valid.group(1)
-          val linksVersion = valid.group(2)
-          val projectId = valid.group(3)
-          Some((linksId, linksVersion, projectId))
-        }
-      case err: HcaError =>
-        err.log
-        None
+    if (parts.length != 3) {
+      NoRegexPatternMatchError(
+        s"$inputPrefix/links/$fileName",
+        "Error when finding links id, version, and project id from file."
+      ).log
+      None
+    } else {
+      Some((parts(0), parts(1), parts(2)))
     }
   }
 
@@ -399,7 +380,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
           case (filename, (Some(_), None)) =>
             val err = FileMismatchError(
               s"$inputPrefix/descriptors/$entityType/$filename",
-              s"File is present in metadata/$entityType but not in descriptors/$entityType"
+              s"File is present in metadata/$entityType but not in descriptors/$entityType."
             )
             err.log
             None
@@ -407,7 +388,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
           case (filename, (None, Some(_))) =>
             val err = FileMismatchError(
               s"$inputPrefix/metadata/$entityType/$filename",
-              s"File is present in descriptors/$entityType but not in metadata/$entityType"
+              s"File is present in descriptors/$entityType but not in metadata/$entityType."
             )
             err.log
             None
@@ -426,7 +407,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         case (filename, (_, None)) =>
           FileMismatchError(
             s"$filename",
-            s"File has a descriptors/$entityType and metadata/$entityType but doesn't actually exist under data/"
+            s"File has a descriptors/$entityType and metadata/$entityType but doesn't actually exist under data/."
           ).log
           None
         case (_, (request, Some(_))) => Some(request)
