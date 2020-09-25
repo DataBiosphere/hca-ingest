@@ -27,8 +27,11 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     // Is the count of metadata/{file_type} == descriptors/{file_type}? if not, raise warns
     // Is the count of data/** == metadata/** == descriptors/**? if not, raise warns
 
+    // need to include the input prefix here so that a join can work later for validation
     val dataFiles =
-      matchFiles(s"${args.inputPrefix}/data/**", ctx).keyBy(_.resourceId().getFilename)
+      matchFiles(s"${args.inputPrefix}/data/**", ctx).keyBy(_.resourceId().getFilename).map {
+        case (filename, rest) => (s"${args.inputPrefix}/data/$filename", rest)
+      }
 
     val allMetadataEntities =
       expectedMetadataEntities.map(_ -> false) ++ expectedFileEntities.map(_ -> true)
@@ -293,20 +296,24 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     inputPrefix: String,
     entityType: String
   ): Option[(String, String)] = {
+    val regexError = NoRegexPatternMatchError(
+      s"$inputPrefix/metadata/$entityType/$fileName",
+      s"Error when finding entity id and version from file named $fileName"
+    )
     val matches = metadataPattern
       .findFirstMatchIn(fileName)
-      .getOrElse(
-        NoRegexPatternMatchError(
-          s"$inputPrefix/metadata/$entityType/$fileName",
-          s"Error when finding entity id and version from file named $fileName"
-        )
-      )
+      .getOrElse(regexError)
 
     matches match {
       case valid: Regex.Match =>
-        val entityId = valid.group(1)
-        val entityVersion = valid.group(2)
-        Some((entityId, entityVersion))
+        if (valid.groupCount != 2) {
+          regexError.log
+          None
+        } else {
+          val entityId = valid.group(1)
+          val entityVersion = valid.group(2)
+          Some((entityId, entityVersion))
+        }
       case err: HcaError =>
         err.log
         None
@@ -323,21 +330,25 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     fileName: String,
     inputPrefix: String
   ): Option[(String, String, String)] = {
+    val regexError = NoRegexPatternMatchError(
+      s"$inputPrefix/links/$fileName",
+      s"Error when finding links id, version, and project id from file named $fileName"
+    )
     val matches = linksDataPattern
       .findFirstMatchIn(fileName)
-      .getOrElse(
-        NoRegexPatternMatchError(
-          s"$inputPrefix/links/$fileName",
-          s"Error when finding links id, version, and project id from file named $fileName"
-        )
-      )
+      .getOrElse(regexError)
 
     matches match {
       case valid: Regex.Match =>
-        val linksId = valid.group(1)
-        val linksVersion = valid.group(2)
-        val projectId = valid.group(3)
-        Some((linksId, linksVersion, projectId))
+        if (valid.groupCount != 3) {
+          regexError.log
+          None
+        } else {
+          val linksId = valid.group(1)
+          val linksVersion = valid.group(2)
+          val projectId = valid.group(3)
+          Some((linksId, linksVersion, projectId))
+        }
       case err: HcaError =>
         err.log
         None
@@ -388,7 +399,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
           case (filename, (Some(_), None)) =>
             val err = FileMismatchError(
               s"$inputPrefix/descriptors/$entityType/$filename",
-              s"$filename is present in metadata/$entityType but not in descriptors/$entityType"
+              s"File is present in metadata/$entityType but not in descriptors/$entityType"
             )
             err.log
             None
@@ -396,7 +407,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
           case (filename, (None, Some(_))) =>
             val err = FileMismatchError(
               s"$inputPrefix/metadata/$entityType/$filename",
-              s"$filename is present in descriptors/$entityType but not in metadata/$entityType"
+              s"File is present in descriptors/$entityType but not in metadata/$entityType"
             )
             err.log
             None
@@ -414,8 +425,8 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       val fileIngestRequests = keyedIngestRequests.leftOuterJoin(files).flatMap {
         case (filename, (_, None)) =>
           FileMismatchError(
-            s"$inputPrefix/data/$filename",
-            s"$filename has a descriptors/$entityType and metadata/$entityType but doesn't actually exist under data/"
+            s"$filename",
+            s"File has a descriptors/$entityType and metadata/$entityType but doesn't actually exist under data/"
           ).log
           None
         case (_, (request, Some(_))) => Some(request)
