@@ -298,10 +298,6 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   ): Option[(String, String)] = {
     val parts = fileName.stripSuffix(".json").split("_")
 
-    logger.debug(s"This is inputPrefix: $inputPrefix")
-    logger.debug(s"This is entityType: $entityType")
-    logger.debug(s"This is fileName: $fileName")
-
     if (parts.length != 2) {
       NoRegexPatternMatchError(
         s"$inputPrefix/metadata/$entityType/$fileName",

@@ -48,7 +48,7 @@ class HcaPipelineValidationSpec
     val src = Source.fromFile("../logs/errors.log")
     val lines = src.getLines.toList
     src.close()
-    lines.map(err => JsonParser.parseEncodedJson(err)) should contain(expectedErrorMsg)
+    lines.map(err => JsonParser.parseEncodedJson(err)).last shouldBe expectedErrorMsg
     // make sure counter was incremented right number of times
     result.counter(PostProcess.errorCount).attempted shouldBe 1
     // this should fail things, so check that it fails with the specific exception
