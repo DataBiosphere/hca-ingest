@@ -206,7 +206,7 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
         """
           | {
           |   "source_path": "some/local/directory/data/a-directory/sub_directory/file-id_file-version_filename.json",
-          |   "target_path": "/foo_file/file-id_file-version_filename.json"
+          |   "target_path": "/54321zyx/file-id_file-version_filename.json"
           | }
           |""".stripMargin
     )
@@ -293,17 +293,15 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
 
     runWithData(Seq(exampleFilenameAndMsg))(
       HcaPipelineBuilder.validateJsonInternal("prefix")
-    ) shouldBe
-      Seq(
-        Some(
-          SchemaValidationError(
-            s"prefix/${exampleFilenameAndMsg._1}",
-            "Data in file sampleFileName.json does not conform to schema " +
-              "from https://schema.humancellatlas.org/type/biomaterial/5.1.0/specimen_from_organism; " +
-              "#: required key [schema_type] not found"
-          )
-        )
+    ) should contain
+    Some(
+      SchemaValidationError(
+        s"prefix/${exampleFilenameAndMsg._1}",
+        "Data in file does not conform to schema " +
+          "from https://schema.humancellatlas.org/type/biomaterial/5.1.0/specimen_from_organism; " +
+          "#: required key [schema_type] not found"
       )
+    )
   }
 
   it should "not mutate the json when validating" in {

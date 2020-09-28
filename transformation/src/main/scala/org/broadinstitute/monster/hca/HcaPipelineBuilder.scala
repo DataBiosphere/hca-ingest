@@ -242,7 +242,6 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         MissingPropertyError(totalPath, "Descriptor file has no file_name property.").log
         None
       }(Some(_))
-      .map(tpath => tpath.substring(tpath.lastIndexOf("/") + 1))
     val contentHash = descriptor
       .tryRead[String]("crc32c")
       .fold[Option[String]] {
@@ -254,7 +253,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       targetPath.map { tpath =>
         theHash -> Obj(
           Str("source_path") -> Str(s"$inputPrefix/data/$tpath"),
-          Str("target_path") -> Str(s"/$entityType/$tpath")
+          Str("target_path") -> Str(s"/$theHash/${tpath.substring(tpath.lastIndexOf("/") + 1)}")
         )
       }
     }
