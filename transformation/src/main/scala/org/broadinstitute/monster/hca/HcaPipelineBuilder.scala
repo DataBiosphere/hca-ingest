@@ -56,20 +56,6 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
 
   implicit val readableFileCoder: Coder[ReadableFile] = Coder.beam(new ReadableFileCoder)
 
-  // format is: {entity_type}/{entity_id}_{version}.json,
-  // but filename returns just {entity_id}_{version}.json, so that is what we deal with.
-//  val metadataPattern: Regex = "([^_]+)_(.+).json".r
-  // format is: {dir_path}/{file_id}_{file_version}_{file_name},
-  // but the dir_path seems to be optional
-//  val fileDataPattern: Regex = "(.*\\/)?([^_^\\/]+)_([^_]+)_(.+)".r
-  // format is: {links_id}_{version}_{project_id}.json
-  // but the `project_id` identifies the project the subgraph is part of
-  // A subgraph is part of exactly one project. The importer must record an error if it
-  // detects more than one object with the same `links/{links_id}_{version}_` prefix.
-//  val linksDataPattern: Regex = "([^_]+)_(.+)_([^_]+).json".r
-  // grab everything after the last "/"
-  val fileNamePattern: Regex = "([^/]+$)".r
-
   val expectedTopLevelDirs = Set(
     "data",
     "descriptors",
