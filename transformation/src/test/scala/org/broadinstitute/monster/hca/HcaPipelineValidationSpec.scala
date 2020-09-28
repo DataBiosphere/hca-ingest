@@ -24,8 +24,8 @@ class HcaPipelineValidationSpec
       HcaPipelineBuilder.buildPipeline(
         ctx,
         Args(
-          "gs://broad-dsp-monster-hca-dev-test/inputs/Success",
-          "gs://broad-dsp-monster-hca-dev-test/outputs-to-overwrite"
+          "gs://broad-dsp-monster-hca-dev-test-storage/inputs/Success",
+          "gs://broad-dsp-monster-hca-dev-test-storage/outputs-to-overwrite"
         )
       )
     ).waitUntilDone()
@@ -41,8 +41,8 @@ class HcaPipelineValidationSpec
       HcaPipelineBuilder.buildPipeline(
         ctx,
         Args(
-          s"gs://broad-dsp-monster-hca-dev-test/inputs/$inputPath",
-          "gs://broad-dsp-monster-hca-dev-test/outputs-to-overwrite"
+          s"gs://broad-dsp-monster-hca-dev-test-storage/inputs/$inputPath",
+          "gs://broad-dsp-monster-hca-dev-test-storage/outputs-to-overwrite"
         )
       )
     ).waitUntilFinish()
@@ -67,7 +67,7 @@ class HcaPipelineValidationSpec
     val expected =
       """
         |{"errorType":"FileMismatchError",
-        |"filePath":"gs://broad-dsp-monster-hca-dev-test/inputs/FileMismatchErrorNoData/data/40d994d9-de67-458f-82f2-db971e082724.loom",
+        |"filePath":"gs://broad-dsp-monster-hca-dev-test-storage/inputs/FileMismatchErrorNoData/data/40d994d9-de67-458f-82f2-db971e082724.loom",
         |"fileName":"40d994d9-de67-458f-82f2-db971e082724.loom",
         |"message":"File has a descriptors/analysis_file and metadata/analysis_file but doesn't actually exist under data/."}
         |""".stripMargin
@@ -79,7 +79,7 @@ class HcaPipelineValidationSpec
     val expected =
       """
         |{"errorType":"FileMismatchError",
-        |"filePath":"gs://broad-dsp-monster-hca-dev-test/inputs/FileMismatchErrorNoMetadata/metadata/analysis_file/afile1_timestamp.json",
+        |"filePath":"gs://broad-dsp-monster-hca-dev-test-storage/inputs/FileMismatchErrorNoMetadata/metadata/analysis_file/afile1_timestamp.json",
         |"fileName":"afile1_timestamp.json",
         |"message":"File is present in descriptors/analysis_file but not in metadata/analysis_file."}
         |""".stripMargin
@@ -91,7 +91,7 @@ class HcaPipelineValidationSpec
     val expected =
       """
         |{"errorType":"FileMismatchError",
-        |"filePath":"gs://broad-dsp-monster-hca-dev-test/inputs/FileMismatchErrorNoDescriptors/descriptors/reference_file/rfile1_timestamp.json",
+        |"filePath":"gs://broad-dsp-monster-hca-dev-test-storage/inputs/FileMismatchErrorNoDescriptors/descriptors/reference_file/rfile1_timestamp.json",
         |"fileName":"rfile1_timestamp.json",
         |"message":"File is present in metadata/reference_file but not in descriptors/reference_file."}
         |""".stripMargin
@@ -104,7 +104,7 @@ class HcaPipelineValidationSpec
     val expected =
       """
         |{"errorType":"NoRegexPatternMatchError",
-        |"filePath":"gs://broad-dsp-monster-hca-dev-test/inputs/NoRegexPatternMatchErrorLinks/links/links1_timestamp_project_1.json",
+        |"filePath":"gs://broad-dsp-monster-hca-dev-test-storage/inputs/NoRegexPatternMatchErrorLinks/links/links1_timestamp_project_1.json",
         |"fileName":"links1_timestamp_project_1.json",
         |"message":"Error when finding links id, version, and project id from file."}
         |""".stripMargin
@@ -116,7 +116,7 @@ class HcaPipelineValidationSpec
     val expected =
       """
         |{"errorType":"NoRegexPatternMatchError",
-        |"filePath":"gs://broad-dsp-monster-hca-dev-test/inputs/NoRegexPatternMatchErrorMetadata/metadata/analysis_process/aprocess1timestamp.json",
+        |"filePath":"gs://broad-dsp-monster-hca-dev-test-storage/inputs/NoRegexPatternMatchErrorMetadata/metadata/analysis_process/aprocess1timestamp.json",
         |"fileName":"aprocess1timestamp.json",
         |"message":"Error when finding entity id and version from file name."}
         |""".stripMargin
@@ -129,7 +129,7 @@ class HcaPipelineValidationSpec
     val expected =
       """
         |{"errorType":"MissingPropertyError",
-        |"filePath":"gs://broad-dsp-monster-hca-dev-test/inputs/MissingPropertyErrorDescribedBy/metadata/analysis_protocol/aprotocol1_timestamp.json",
+        |"filePath":"gs://broad-dsp-monster-hca-dev-test-storage/inputs/MissingPropertyErrorDescribedBy/metadata/analysis_protocol/aprotocol1_timestamp.json",
         |"fileName":"aprotocol1_timestamp.json",
         |"message":"File has no describedBy property."}
         |""".stripMargin
@@ -141,7 +141,7 @@ class HcaPipelineValidationSpec
     val expected =
       """
         |{"errorType":"MissingPropertyError",
-        |"filePath":"gs://broad-dsp-monster-hca-dev-test/inputs/MissingPropertyErrorDescriptorsFilename/descriptors/analysis_file/afile1_timestamp.json",
+        |"filePath":"gs://broad-dsp-monster-hca-dev-test-storage/inputs/MissingPropertyErrorDescriptorsFilename/descriptors/analysis_file/afile1_timestamp.json",
         |"fileName":"afile1_timestamp.json",
         |"message":"Descriptor file has no file_name property."}
         |""".stripMargin
@@ -153,7 +153,7 @@ class HcaPipelineValidationSpec
     val expected =
       """
         |{"errorType":"MissingPropertyError",
-        |"filePath":"gs://broad-dsp-monster-hca-dev-test/inputs/MissingPropertyErrorDescriptorsChecksum/descriptors/analysis_file/afile1_timestamp.json",
+        |"filePath":"gs://broad-dsp-monster-hca-dev-test-storage/inputs/MissingPropertyErrorDescriptorsChecksum/descriptors/analysis_file/afile1_timestamp.json",
         |"fileName":"afile1_timestamp.json",
         |"message":"Descriptor file has no crc32c property."}
         |""".stripMargin
@@ -166,7 +166,7 @@ class HcaPipelineValidationSpec
     val expected =
       """
         |{"errorType":"SchemaValidationError",
-        |"filePath":"gs://broad-dsp-monster-hca-dev-test/inputs/SchemaValidationErrorMetadata/metadata/analysis_protocol/aprotocol1_timestamp.json",
+        |"filePath":"gs://broad-dsp-monster-hca-dev-test-storage/inputs/SchemaValidationErrorMetadata/metadata/analysis_protocol/aprotocol1_timestamp.json",
         |"fileName":"aprotocol1_timestamp.json",
         |"message":"Data in file does not conform to schema from https://schema.humancellatlas.org/type/protocol/analysis/9.1.0/analysis_protocol; #: required key [computational_method] not found"}
         |""".stripMargin
@@ -178,7 +178,7 @@ class HcaPipelineValidationSpec
     val expected =
       """
         |{"errorType":"SchemaValidationError",
-        |"filePath":"gs://broad-dsp-monster-hca-dev-test/inputs/SchemaValidationErrorLinks/links/links1_timestamp_project1.json",
+        |"filePath":"gs://broad-dsp-monster-hca-dev-test-storage/inputs/SchemaValidationErrorLinks/links/links1_timestamp_project1.json",
         |"fileName":"links1_timestamp_project1.json",
         |"message":"Data in file does not conform to schema from https://schema.humancellatlas.org/system/2.1.1/links; #: required key [schema_type] not found"}
         |""".stripMargin
@@ -190,7 +190,7 @@ class HcaPipelineValidationSpec
     val expected =
       """
         |{"errorType":"SchemaValidationError",
-        |"filePath":"gs://broad-dsp-monster-hca-dev-test/inputs/SchemaValidationErrorDescriptors/descriptors/reference_file/rfile1_timestamp.json",
+        |"filePath":"gs://broad-dsp-monster-hca-dev-test-storage/inputs/SchemaValidationErrorDescriptors/descriptors/reference_file/rfile1_timestamp.json",
         |"fileName":"rfile1_timestamp.json",
         |"message":"Data in file does not conform to schema from https://schema.humancellatlas.org/system/2.0.0/file_descriptor; #: required key [file_version] not found"}
         |""".stripMargin
