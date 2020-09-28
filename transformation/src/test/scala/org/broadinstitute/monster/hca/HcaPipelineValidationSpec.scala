@@ -31,7 +31,11 @@ class HcaPipelineValidationSpec
     ).waitUntilDone()
   }
 
-  def pipelineTest(inputPath: String, expectedErrorMessage: String): scalatest.Assertion = {
+  def pipelineTest(
+    inputPath: String,
+    expectedErrorMessage: String,
+    count: Int = 1
+  ): scalatest.Assertion = {
     val opts = PipelineOptionsFactory.fromArgs("--runner=DirectRunner").create()
     val result = runWithRealContext(opts)(ctx =>
       HcaPipelineBuilder.buildPipeline(
@@ -48,9 +52,11 @@ class HcaPipelineValidationSpec
     val src = Source.fromFile("../logs/errors.log")
     val lines = src.getLines.toList
     src.close()
-    lines.map(err => JsonParser.parseEncodedJson(err)).last shouldBe expectedErrorMsg
+    lines.map(err => JsonParser.parseEncodedJson(err)).takeRight(count) should contain(
+      expectedErrorMsg
+    )
     // make sure counter was incremented right number of times
-    result.counter(PostProcess.errorCount).attempted shouldBe 1
+    result.counter(PostProcess.errorCount).attempted shouldBe count
     // this should fail things, so check that it fails with the specific exception
     assertThrows[HcaFailException](PostProcess.postProcess(result))
   }
@@ -115,6 +121,43 @@ class HcaPipelineValidationSpec
         |"message":"Error when finding entity id and version from file name."}
         |""".stripMargin
     pipelineTest("NoRegexPatternMatchErrorMetadata", expected)
+  }
+
+  // MissingPropertyError cases
+  it should "fail with a MissingPropertyError if a file doesn't have the describedBy property" in {
+    // we expect file aprotocol1_timestamp.json to be missing the property of DescribedBy
+    val expected =
+      """
+        |{"errorType":"MissingPropertyError",
+        |"filePath":"gs://broad-dsp-monster-hca-dev-test/inputs/MissingPropertyErrorDescribedBy/metadata/analysis_protocol/aprotocol1_timestamp.json",
+        |"fileName":"aprotocol1_timestamp.json",
+        |"message":"File has no describedBy property."}
+        |""".stripMargin
+    pipelineTest("MissingPropertyErrorDescribedBy", expected)
+  }
+
+  it should "fail with a MissingPropertyError if a descriptor file doesn't have the filename property" in {
+    // we expect file afile1_timestamp.json to be missing the property of file_name
+    val expected =
+      """
+        |{"errorType":"MissingPropertyError",
+        |"filePath":"gs://broad-dsp-monster-hca-dev-test/inputs/MissingPropertyErrorDescriptorsFilename/descriptors/analysis_file/afile1_timestamp.json",
+        |"fileName":"afile1_timestamp.json",
+        |"message":"Descriptor file has no file_name property."}
+        |""".stripMargin
+    pipelineTest("MissingPropertyErrorDescriptorsFilename", expected, 2)
+  }
+
+  it should "fail with a MissingPropertyError if a descriptor file doesn't have the crc32c property" in {
+    // we expect file afile1_timestamp.json to be missing the property of crc32c
+    val expected =
+      """
+        |{"errorType":"MissingPropertyError",
+        |"filePath":"gs://broad-dsp-monster-hca-dev-test/inputs/MissingPropertyErrorDescriptorsChecksum/descriptors/analysis_file/afile1_timestamp.json",
+        |"fileName":"afile1_timestamp.json",
+        |"message":"Descriptor file has no crc32c property."}
+        |""".stripMargin
+    pipelineTest("MissingPropertyErrorDescriptorsChecksum", expected, 3)
   }
 
 }

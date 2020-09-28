@@ -206,8 +206,8 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
           Str("content") -> Str(encode(metadata)),
           Str("crc32c") -> descriptor.tryRead[Msg]("crc32c").getOrElse {
             MissingPropertyError(
-              s"$inputPrefix/metadata/$entityType/$fileName",
-              s"Descriptor for file $fileName has no crc32c property."
+              s"$inputPrefix/descriptors/$entityType/$fileName",
+              s"Descriptor file has no crc32c property."
             ).log
             Str("")
           },
@@ -251,38 +251,28 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     filename: String
   ): Option[(String, Msg)] = {
     val totalPath = s"$inputPrefix/descriptors/$entityType/$filename"
-    val targetPath = descriptor.tryRead[String]("file_name").getOrElse {
-      MissingPropertyError(totalPath, s"Descriptor file $filename has no file_name property.").log
-      ""
-    }
-    val sourcePath = s"$inputPrefix/data/$targetPath"
-    val contentHash = descriptor.tryRead[String]("crc32c").getOrElse {
-      MissingPropertyError(totalPath, s"Descriptor file $filename has no crc32c property.").log
-      ""
-    }
-
-    val matches = fileNamePattern
-      .findFirstMatchIn(targetPath)
-      .getOrElse(
-        NoRegexPatternMatchError(
-          totalPath,
-          "Could not parse file_name for file ingest request creation."
-        )
-      )
-
-    matches match {
-      case valid: Regex.Match =>
-        Some(
-          contentHash -> Obj(
-            Str("source_path") -> Str(sourcePath),
-            Str("target_path") -> Str(s"/$entityType/${valid.group(1)}")
-          )
-        )
-      case err: HcaError =>
-        err.log
+    val targetPath = descriptor
+      .tryRead[String]("file_name")
+      .fold[Option[String]] {
+        MissingPropertyError(totalPath, "Descriptor file has no file_name property.").log
         None
-    }
+      }(Some(_))
+      .map(tpath => tpath.substring(tpath.lastIndexOf("/") + 1))
+    val contentHash = descriptor
+      .tryRead[String]("crc32c")
+      .fold[Option[String]] {
+        MissingPropertyError(totalPath, s"Descriptor file has no crc32c property.").log
+        None
+      }(Some(_))
 
+    contentHash.flatMap { theHash =>
+      targetPath.map { tpath =>
+        theHash -> Obj(
+          Str("source_path") -> Str(s"$inputPrefix/data/$tpath"),
+          Str("target_path") -> Str(s"/$entityType/$tpath")
+        )
+      }
+    }
   }
 
   /**
@@ -399,15 +389,16 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
           generateFileIngestRequest(descriptor, entityType, inputPrefix, filename)
       }.distinctByKey.values.keyBy(request => request.read[String]("source_path"))
 
-      val fileIngestRequests = keyedIngestRequests.leftOuterJoin(files).flatMap {
-        case (filename, (_, None)) =>
-          FileMismatchError(
-            s"$filename",
-            s"File has a descriptors/$entityType and metadata/$entityType but doesn't actually exist under data/."
-          ).log
-          None
-        case (_, (request, Some(_))) => Some(request)
-      }
+      val fileIngestRequests =
+        keyedIngestRequests.leftOuterJoin(files).flatMap {
+          case (filename, (_, None)) =>
+            FileMismatchError(
+              filename,
+              s"File has a descriptors/$entityType and metadata/$entityType but doesn't actually exist under data/."
+            ).log
+            None
+          case (_, (request, Some(_))) => Some(request)
+        }
 
       StorageIO.writeJsonLists(
         fileIngestRequests,
@@ -487,7 +478,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
               .fold[Option[String]] {
                 MissingPropertyError(
                   s"$inputPrefix/$filename",
-                  s"File $filename has no describedBy property."
+                  "File has no describedBy property."
                 ).log
                 None
               }(Some(_)),
