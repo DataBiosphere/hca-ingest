@@ -160,4 +160,40 @@ class HcaPipelineValidationSpec
     pipelineTest("MissingPropertyErrorDescriptorsChecksum", expected, 3)
   }
 
+  // SchemaValidationError cases
+  it should "fail with a SchemaValidationError if a metadata file doesn't conform to its schema" in {
+    // we expect file aprotocol1_timestamp.json to be missing the required property of "computational_method"
+    val expected =
+      """
+        |{"errorType":"SchemaValidationError",
+        |"filePath":"gs://broad-dsp-monster-hca-dev-test/inputs/SchemaValidationErrorMetadata/metadata/analysis_protocol/aprotocol1_timestamp.json",
+        |"fileName":"aprotocol1_timestamp.json",
+        |"message":"Data in file does not conform to schema from https://schema.humancellatlas.org/type/protocol/analysis/9.1.0/analysis_protocol; #: required key [computational_method] not found"}
+        |""".stripMargin
+    pipelineTest("SchemaValidationErrorMetadata", expected)
+  }
+
+  it should "fail with a SchemaValidationError if a links file doesn't conform to its schema" in {
+    // we expect file links1_timestamp_project1.json to be missing the required property of "schema_type"
+    val expected =
+      """
+        |{"errorType":"SchemaValidationError",
+        |"filePath":"gs://broad-dsp-monster-hca-dev-test/inputs/SchemaValidationErrorLinks/links/links1_timestamp_project1.json",
+        |"fileName":"links1_timestamp_project1.json",
+        |"message":"Data in file does not conform to schema from https://schema.humancellatlas.org/system/2.1.1/links; #: required key [schema_type] not found"}
+        |""".stripMargin
+    pipelineTest("SchemaValidationErrorLinks", expected)
+  }
+
+  it should "fail with a SchemaValidationError if a descriptor file doesn't conform to its schema" in {
+    // we expect file rfile1_timestamp.json to be missing the required property of "file_version"
+    val expected =
+      """
+        |{"errorType":"SchemaValidationError",
+        |"filePath":"gs://broad-dsp-monster-hca-dev-test/inputs/SchemaValidationErrorDescriptors/descriptors/reference_file/rfile1_timestamp.json",
+        |"fileName":"rfile1_timestamp.json",
+        |"message":"Data in file does not conform to schema from https://schema.humancellatlas.org/system/2.0.0/file_descriptor; #: required key [file_version] not found"}
+        |""".stripMargin
+    pipelineTest("SchemaValidationErrorDescriptors", expected)
+  }
 }

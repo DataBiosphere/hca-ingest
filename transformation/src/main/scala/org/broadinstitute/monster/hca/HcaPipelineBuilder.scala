@@ -508,7 +508,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
                 Option(
                   SchemaValidationError(
                     errPath,
-                    s"Schema not loaded properly for schema at $url, file $filename"
+                    s"Schema not loaded properly for schema at $url"
                   )
                 )
               case Success(value) =>
@@ -518,7 +518,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
                     Option(
                       SchemaValidationError(
                         errPath,
-                        s"Unable to parse data into json for file $filename"
+                        "Unable to parse data into json for file"
                       )
                     )
                   // if everything is parsed/encoded/etc correctly, actually try to validate against schema here
@@ -530,14 +530,14 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
                         Option(
                           SchemaValidationError(
                             errPath,
-                            s"Data in file $filename does not conform to schema from $url; ${e.map(_.getMessage).toList.mkString(",")}"
+                            s"Data in file does not conform to schema from $url; ${e.map(_.getMessage).toList.mkString(",")}"
                           )
                         )
                     }
                 }
             }
           case None =>
-            Option(SchemaValidationError(errPath, s"No schema found at $url for file $filename"))
+            Option(SchemaValidationError(errPath, s"No schema found at $url"))
         }
     }
   }
