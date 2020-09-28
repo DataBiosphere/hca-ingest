@@ -225,26 +225,19 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     */
   def generateFileIngestRequest(
     descriptor: Msg,
-    entityType: String,
-    inputPrefix: String,
-    filename: String
-  ): Option[(String, Msg)] = {
-    val totalPath = s"$inputPrefix/descriptors/$entityType/$filename"
+    inputPrefix: String
+  ): (String, Msg) = {
     val targetPath = descriptor
-      .tryRead[String]("file_name")
-      .fold[Option[String]] {
-        MissingPropertyError(totalPath, "Descriptor file has no file_name property.").log
-        None
-      }(Some(_))
+      .read[String]("file_name")
     val contentHash = descriptor
       .read[String]("crc32c")
 
-    targetPath.map { tpath =>
-      contentHash -> Obj(
-        Str("source_path") -> Str(s"$inputPrefix/data/$tpath"),
-        Str("target_path") -> Str(s"/$contentHash/${tpath.substring(tpath.lastIndexOf("/") + 1)}")
+    contentHash -> Obj(
+      Str("source_path") -> Str(s"$inputPrefix/data/$targetPath"),
+      Str("target_path") -> Str(
+        s"/$contentHash/${targetPath.substring(targetPath.lastIndexOf("/") + 1)}"
       )
-    }
+    )
   }
 
   /**
@@ -299,6 +292,48 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     upack.transform(msg, StringRenderer()).toString
 
   /**
+    * @param messages Filenames and contents
+    * @param inputPrefix entire prefix to go before the file name for error logging
+    *  @param property the property in the JSON to check and filter on
+    * @return the filtered SCollection
+    */
+  def filterProperty(
+    messages: SCollection[(String, Msg)],
+    inputPrefix: String,
+    property: String
+  ): SCollection[(String, Msg)] = {
+    messages.withName(s"Filtering files in $inputPrefix for property: $property").filter {
+      case (filename, message) =>
+        message
+          .tryRead[String](property)
+          .fold {
+            MissingPropertyError(
+              s"$inputPrefix/$filename",
+              s"File has no $property property."
+            ).log
+            false
+          }(_ => true)
+    }
+  }
+
+  /**
+    * @param descriptors Filenames and contents of descriptor files
+    * @param inputPrefix The high-level input prefix, so the bucket and path before /descriptors
+    * @param entityType The type of entity, which for descriptors is limited to the file types
+    * @return The filtered SCollection
+    */
+  def filterDescriptors(
+    descriptors: SCollection[(String, Msg)],
+    inputPrefix: String,
+    entityType: String
+  ): SCollection[(String, Msg)] = {
+    val prefix = s"$inputPrefix/descriptors/$entityType"
+    val describedBy = filterProperty(descriptors, prefix, "describedBy")
+    val checksumed = filterProperty(describedBy, prefix, "crc32c")
+    filterProperty(checksumed, prefix, "file_name")
+  }
+
+  /**
     * Read, transform, and write a given entity type.
     *
     * @param context context of the main pipeline
@@ -327,18 +362,8 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         s"$inputPrefix/descriptors/$entityType/**.json",
         context
       )
-      val descriptorFilenameAndMsg = jsonToFilenameAndMsg(entityType)(descriptorFiles).filter {
-        case (filename, descriptor) =>
-          descriptor
-            .tryRead[String]("crc32c")
-            .fold {
-              MissingPropertyError(
-                s"$inputPrefix/descriptors/$entityType/$filename",
-                s"Descriptor file has no crc32c property."
-              ).log
-              false
-            }(_ => true)
-      }
+      val descriptorFilenameAndMsg =
+        filterDescriptors(jsonToFilenameAndMsg(entityType)(descriptorFiles), inputPrefix, entityType)
       val validatedDescriptors =
         validateJson(descriptorFilenameAndMsg, s"$inputPrefix/descriptors/$entityType")
       val processedFileMetadata = validatedFilenameAndMsg
@@ -367,9 +392,9 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         }
 
       // Generate file ingest requests from descriptors. Deduplicate by the content hash.
-      val keyedIngestRequests = validatedDescriptors.flatMap {
-        case (filename, descriptor) =>
-          generateFileIngestRequest(descriptor, entityType, inputPrefix, filename)
+      val keyedIngestRequests = validatedDescriptors.map {
+        case (_, descriptor) =>
+          generateFileIngestRequest(descriptor, inputPrefix)
       }.distinctByKey.values.keyBy(request => request.read[String]("source_path"))
 
       val fileIngestRequests =
@@ -435,6 +460,11 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     )
   }
 
+  /**
+    * @param filenamesAndMsg The filenames and messages to validate
+    * @param inputPrefix The entire prefix before the filename
+    * @return the original SCollection
+    */
   def validateJson(
     filenamesAndMsg: SCollection[(String, Msg)],
     inputPrefix: String
@@ -447,37 +477,28 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     filenamesAndMsg
   }
 
+  /**
+    * @param inputPrefix The entire prefix before the filename
+    * @param filenamesAndMsg The filenames and messages to validate
+    * @return A collection of possible errors
+    */
   def validateJsonInternal(inputPrefix: String)(
     filenamesAndMsg: SCollection[(String, Msg)]
   ): SCollection[Option[SchemaValidationError]] = {
-    // pull out the url for where the schema definition is for each file
-    val content = filenamesAndMsg
-      .withName("Validate: Schema Definition URL")
-      .map {
-        case (filename, msg) =>
-          (
-            msg
-              .tryRead[String]("describedBy")
-              .fold[Option[String]] {
-                MissingPropertyError(
-                  s"$inputPrefix/$filename",
-                  "File has no describedBy property."
-                ).log
-                None
-              }(Some(_)),
-            (filename, msg)
-          )
-      }
-      .collect { case (Some(url), rest) => (url, rest) }
+    val urlAndFilenameWithMsg = filterProperty(filenamesAndMsg, inputPrefix, "describedBy").map {
+      case (filename, msg) =>
+        (msg.read[String]("describedBy"), (filename, msg))
+    }
+
     // get the distinct urls (so as to minimize the number of get requests) and then get the schemas as strings
-    val schemas = content
+    val schemas = urlAndFilenameWithMsg
       .withName("Validate: Schema Content URL")
       .map(_._1)
       .distinct
       .withName("Validate: Schema Content")
       .map(url => (url, requests.get(url).text))
     // join the schemas to the data keyed by the schema url
-    val joined = content.leftOuterJoin(schemas)
+    val joined = urlAndFilenameWithMsg.leftOuterJoin(schemas)
     // go over each row
     joined.withName("Validate: Metadata files against schema definition").map {
       case (url, ((filename, data), schemaOption)) =>

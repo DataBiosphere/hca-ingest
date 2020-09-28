@@ -143,7 +143,7 @@ class HcaPipelineValidationSpec
         |{"errorType":"MissingPropertyError",
         |"filePath":"gs://broad-dsp-monster-hca-dev-test-storage/inputs/MissingPropertyErrorDescriptorsFilename/descriptors/analysis_file/afile1_timestamp.json",
         |"fileName":"afile1_timestamp.json",
-        |"message":"Descriptor file has no file_name property."}
+        |"message":"File has no file_name property."}
         |""".stripMargin
     pipelineTest("MissingPropertyErrorDescriptorsFilename", expected, 2)
   }
@@ -155,7 +155,7 @@ class HcaPipelineValidationSpec
         |{"errorType":"MissingPropertyError",
         |"filePath":"gs://broad-dsp-monster-hca-dev-test-storage/inputs/MissingPropertyErrorDescriptorsChecksum/descriptors/analysis_file/afile1_timestamp.json",
         |"fileName":"afile1_timestamp.json",
-        |"message":"Descriptor file has no crc32c property."}
+        |"message":"File has no crc32c property."}
         |""".stripMargin
     pipelineTest("MissingPropertyErrorDescriptorsChecksum", expected, 2)
   }

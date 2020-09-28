@@ -194,12 +194,10 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
                 | }
                 |""".stripMargin
     )
-    val Some((actualHash, actualOutput)) = HcaPipelineBuilder
+    val (actualHash, actualOutput) = HcaPipelineBuilder
       .generateFileIngestRequest(
         descriptor = exampleDescriptor,
-        entityType = "foo_file",
-        inputPrefix = "some/local/directory",
-        filename = "my_file_name"
+        inputPrefix = "some/local/directory"
       )
     val expectedOutput = JsonParser.parseEncodedJson(
       json =
