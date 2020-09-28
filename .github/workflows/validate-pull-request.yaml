@@ -8,6 +8,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        with:
+          project_id: ${{ secrets.DEV_PROJECT_ID }}
+          service_account_key: ${{ secrets.BASE64SERVICEACCOUNTKEY }}
+          export_default_credentials: true
       - uses: olafurpg/setup-scala@v7
         with:
           java-version: graalvm@20.0.0
