@@ -11,7 +11,7 @@ jobs:
       - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
         with:
           project_id: ${{ secrets.DEV_PROJECT_ID }}
-          service_account_key: ${{ secrets.BASE64SERVICEACCOUNTKEY }}
+          service_account_key: ${{ secrets.GCP_TEST_KEY }}
           export_default_credentials: true
       - uses: olafurpg/setup-scala@v7
         with:
