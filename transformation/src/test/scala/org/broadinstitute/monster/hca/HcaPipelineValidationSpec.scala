@@ -157,7 +157,7 @@ class HcaPipelineValidationSpec
         |"fileName":"afile1_timestamp.json",
         |"message":"Descriptor file has no crc32c property."}
         |""".stripMargin
-    pipelineTest("MissingPropertyErrorDescriptorsChecksum", expected, 3)
+    pipelineTest("MissingPropertyErrorDescriptorsChecksum", expected, 2)
   }
 
   // SchemaValidationError cases

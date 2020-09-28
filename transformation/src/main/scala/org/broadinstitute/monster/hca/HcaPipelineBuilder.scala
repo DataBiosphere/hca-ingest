@@ -110,7 +110,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       )
     }
     metadata.count
-      .map(c => if (c == 0) NoMatchWarning(s"$filePattern had $c matches").log)
+      .map(c => if (c == 0) NoMatchWarning(s"$filePattern had no matches").log)
     metadata
   }
 
@@ -189,13 +189,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
           Str(s"${entityType}_id") -> Str(entityId),
           Str("version") -> Str(entityVersion),
           Str("content") -> Str(encode(metadata)),
-          Str("crc32c") -> descriptor.tryRead[Msg]("crc32c").getOrElse {
-            MissingPropertyError(
-              s"$inputPrefix/descriptors/$entityType/$fileName",
-              s"Descriptor file has no crc32c property."
-            ).log
-            Str("")
-          },
+          Str("crc32c") -> descriptor.read[Msg]("crc32c"),
           Str("descriptor") -> Str(encode(descriptor))
         )
     }
@@ -243,19 +237,13 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         None
       }(Some(_))
     val contentHash = descriptor
-      .tryRead[String]("crc32c")
-      .fold[Option[String]] {
-        MissingPropertyError(totalPath, s"Descriptor file has no crc32c property.").log
-        None
-      }(Some(_))
+      .read[String]("crc32c")
 
-    contentHash.flatMap { theHash =>
-      targetPath.map { tpath =>
-        theHash -> Obj(
-          Str("source_path") -> Str(s"$inputPrefix/data/$tpath"),
-          Str("target_path") -> Str(s"/$theHash/${tpath.substring(tpath.lastIndexOf("/") + 1)}")
-        )
-      }
+    targetPath.map { tpath =>
+      contentHash -> Obj(
+        Str("source_path") -> Str(s"$inputPrefix/data/$tpath"),
+        Str("target_path") -> Str(s"/$contentHash/${tpath.substring(tpath.lastIndexOf("/") + 1)}")
+      )
     }
   }
 
@@ -339,7 +327,18 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         s"$inputPrefix/descriptors/$entityType/**.json",
         context
       )
-      val descriptorFilenameAndMsg = jsonToFilenameAndMsg(entityType)(descriptorFiles)
+      val descriptorFilenameAndMsg = jsonToFilenameAndMsg(entityType)(descriptorFiles).filter {
+        case (filename, descriptor) =>
+          descriptor
+            .tryRead[String]("crc32c")
+            .fold {
+              MissingPropertyError(
+                s"$inputPrefix/descriptors/$entityType/$filename",
+                s"Descriptor file has no crc32c property."
+              ).log
+              false
+            }(_ => true)
+      }
       val validatedDescriptors =
         validateJson(descriptorFilenameAndMsg, s"$inputPrefix/descriptors/$entityType")
       val processedFileMetadata = validatedFilenameAndMsg
