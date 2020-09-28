@@ -16,7 +16,6 @@ import org.slf4j.{Logger, LoggerFactory}
 import ujson.StringRenderer
 import upack.{Msg, Obj, Str}
 
-import scala.util.matching.Regex
 import scala.util.{Failure, Success}
 
 object HcaPipelineBuilder extends PipelineBuilder[Args] {
