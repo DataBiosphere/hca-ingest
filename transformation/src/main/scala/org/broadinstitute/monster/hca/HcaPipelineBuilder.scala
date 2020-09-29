@@ -8,51 +8,61 @@ import com.spotify.scio.values.SCollection
 import io.circe.parser._
 import io.circe.schema.Schema
 import org.apache.beam.sdk.io.FileIO.ReadableFile
-import org.apache.beam.sdk.io.fs.EmptyMatchTreatment
+import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, MatchResult}
 import org.apache.beam.sdk.io.{FileIO, ReadableFileCoder}
 import org.broadinstitute.monster.common.msg._
 import org.broadinstitute.monster.common.{PipelineBuilder, StorageIO}
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 import ujson.StringRenderer
 import upack.{Msg, Obj, Str}
 
-import scala.util.matching.Regex
 import scala.util.{Failure, Success}
 
 object HcaPipelineBuilder extends PipelineBuilder[Args] {
 
   override def buildPipeline(ctx: ScioContext, args: Args): Unit = {
+    // are all top level dirs present? If not, which ones are absent? raise warns
+    // are all the right entities under metadata and descriptors present? If not, which ones are absent? raise warns
+    // Is the count of metadata/{file_type} == descriptors/{file_type}? if not, raise warns
+    // Is the count of data/** == metadata/** == descriptors/**? if not, raise warns
+
+    // need to include the input prefix here so that a join can work later for validation
+    val dataFiles =
+      matchFiles(s"${args.inputPrefix}/data/**", ctx).keyBy(_.resourceId().getFilename).map {
+        case (filename, rest) => (s"${args.inputPrefix}/data/$filename", rest)
+      }
+
     val allMetadataEntities =
-      metadataEntities.map(_ -> false) ++ fileMetadataEntities.map(_ -> true)
+      expectedMetadataEntities.map(_ -> false) ++ expectedFileEntities.map(_ -> true)
     allMetadataEntities.foreach {
       case (entityType, isFileMetadata) =>
-        processMetadata(ctx, args.inputPrefix, args.outputPrefix, entityType, isFileMetadata)
+        processMetadata(
+          ctx,
+          args.inputPrefix,
+          args.outputPrefix,
+          entityType,
+          dataFiles,
+          isFileMetadata
+        )
     }
     processLinksMetadata(ctx, args.inputPrefix, args.outputPrefix)
     ()
   }
 
-  private val logger = LoggerFactory.getLogger(getClass)
+  implicit val logger: Logger = LoggerFactory.getLogger(getClass)
 
   implicit val coder: Coder[Msg] = Coder.beam(new UpackMsgCoder)
 
   implicit val readableFileCoder: Coder[ReadableFile] = Coder.beam(new ReadableFileCoder)
 
-  // format is: {entity_type}/{entity_id}_{version}.json,
-  // but filename returns just {entity_id}_{version}.json, so that is what we deal with.
-  val metadataPattern: Regex = "([^_]+)_(.+).json".r
-  // format is: {dir_path}/{file_id}_{file_version}_{file_name},
-  // but the dir_path seems to be optional
-  val fileDataPattern: Regex = "(.*\\/)?([^_^\\/]+)_([^_]+)_(.+)".r
-  // format is: {links_id}_{version}_{project_id}.json
-  // but the `project_id` identifies the project the subgraph is part of
-  // A subgraph is part of exactly one project. The importer must record an error if it
-  // detects more than one object with the same `links/{links_id}_{version}_` prefix.
-  val linksDataPattern: Regex = "([^_]+)_(.+)_([^_]+).json".r
-  // grab everything after the last "/"
-  val fileNamePattern: Regex = "([^/]+$)".r
+  val expectedTopLevelDirs = Set(
+    "data",
+    "descriptors",
+    "links",
+    "metadata"
+  )
 
-  val metadataEntities = Set(
+  val expectedMetadataEntities = Set(
     "aggregate_generation_protocol",
     "analysis_process",
     "analysis_protocol",
@@ -76,7 +86,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     "specimen_from_organism"
   )
 
-  val fileMetadataEntities = Set(
+  val expectedFileEntities = Set(
     "analysis_file",
     "image_file",
     "reference_file",
@@ -85,20 +95,35 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   )
 
   /**
-    * Given a pattern matching JSON, get the JSONs as ReadableFiles.
+    * Given a pattern match, get the file MatchResult.Metadata.
     *
-    * @param jsonPath the root path containing JSONs to be converted
-    * @param context context of the main V2F pipeline
+    * @param filePattern the root path containing files to be matched
+    * @param context context of the main pipeline
     */
-  def getReadableFiles(jsonPath: String, context: ScioContext): SCollection[FileIO.ReadableFile] =
-    context.wrap {
+  def matchFiles(filePattern: String, context: ScioContext): SCollection[MatchResult.Metadata] = {
+    val metadata = context.wrap {
       context.pipeline.apply(
         FileIO
           .`match`()
-          .filepattern(jsonPath)
+          .filepattern(filePattern)
           .withEmptyMatchTreatment(EmptyMatchTreatment.ALLOW_IF_WILDCARD)
       )
-    }.applyTransform[ReadableFile](FileIO.readMatches())
+    }
+    metadata.count
+      .map(c => if (c == 0) NoMatchWarning(s"$filePattern had no matches").log)
+    metadata
+  }
+
+  /**
+    * Given a pattern matching JSON, get the JSONs as ReadableFiles.
+    *
+    * @param jsonPath the root path containing JSONs to be converted
+    * @param context context of the main pipeline
+    */
+  def getReadableFiles(jsonPath: String, context: ScioContext): SCollection[FileIO.ReadableFile] = {
+    val metadata = matchFiles(jsonPath, context)
+    metadata.applyTransform[ReadableFile](FileIO.readMatches())
+  }
 
   /**
     * Given the SCollection of ReadableFiles that contains JSONs convert each JSON to a Msg and get its filename.
@@ -118,7 +143,6 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     }
 
   /**
-    *
     * Extract the necessary info from a metadata file and put it into a form that makes it easy to
     * pass in to the table format
     *
@@ -127,17 +151,22 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     * @param metadata the content of the metadata file in Msg format
     * @return a Msg object in the desired output format
     */
-  def transformMetadata(entityType: String, fileName: String, metadata: Msg): Msg = {
-    val (entityId, entityVersion) = getEntityIdAndVersion(fileName)
-    Obj(
-      Str(s"${entityType}_id") -> Str(entityId),
-      Str("version") -> Str(entityVersion),
-      Str("content") -> Str(encode(metadata))
-    )
-  }
+  def transformMetadata(
+    entityType: String,
+    fileName: String,
+    metadata: Msg,
+    inputPrefix: String
+  ): Option[Msg] =
+    getEntityIdAndVersion(fileName, inputPrefix, entityType).map {
+      case (entityId, entityVersion) =>
+        Obj(
+          Str(s"${entityType}_id") -> Str(entityId),
+          Str("version") -> Str(entityVersion),
+          Str("content") -> Str(encode(metadata))
+        )
+    }
 
   /**
-    *
     * Extract the necessary info from a file of file-related metadata and put it into a form that
     * makes it easy to pass in to the table format
     *
@@ -151,21 +180,21 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     entityType: String,
     fileName: String,
     metadata: Msg,
-    descriptor: Msg
-  ): Msg = {
-    val (entityId, entityVersion) = getEntityIdAndVersion(fileName)
-    // put values in the form we want
-    Obj(
-      Str(s"${entityType}_id") -> Str(entityId),
-      Str("version") -> Str(entityVersion),
-      Str("content") -> Str(encode(metadata)),
-      Str("crc32c") -> descriptor.read[Msg]("crc32c"),
-      Str("descriptor") -> Str(encode(descriptor))
-    )
-  }
+    descriptor: Msg,
+    inputPrefix: String
+  ): Option[Msg] =
+    getEntityIdAndVersion(fileName, inputPrefix, entityType).map {
+      case (entityId, entityVersion) =>
+        Obj(
+          Str(s"${entityType}_id") -> Str(entityId),
+          Str("version") -> Str(entityVersion),
+          Str("content") -> Str(encode(metadata)),
+          Str("crc32c") -> descriptor.read[Msg]("crc32c"),
+          Str("descriptor") -> Str(encode(descriptor))
+        )
+    }
 
   /**
-    *
     * Extract the necessary info from a file of table relationships and put it into a form that
     * makes it easy to pass in to the table format
     *
@@ -173,16 +202,20 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     * @param metadata the content of the metadata file in Msg format
     * @return a Msg object in the desired output format
     */
-  def transformLinksFileMetadata(fileName: String, metadata: Msg): Msg = {
-    val (linksId, linksVersion, projectId) = getLinksIdVersionAndProjectId(fileName)
-    // put values in the form we want
-    Obj(
-      Str("content") -> Str(encode(metadata)),
-      Str("links_id") -> Str(linksId),
-      Str("version") -> Str(linksVersion),
-      Str("project_id") -> Str(projectId)
-    )
-  }
+  def transformLinksFileMetadata(
+    fileName: String,
+    metadata: Msg,
+    inputPrefix: String
+  ): Option[Msg] =
+    getLinksIdVersionAndProjectId(fileName, inputPrefix).map {
+      case (linksId, linksVersion, projectId) =>
+        Obj(
+          Str("content") -> Str(encode(metadata)),
+          Str("links_id") -> Str(linksId),
+          Str("version") -> Str(linksVersion),
+          Str("project_id") -> Str(projectId)
+        )
+    }
 
   /**
     * Convert a file descriptor into a row in a bulk-file ingest request for the TDR.
@@ -192,19 +225,18 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     */
   def generateFileIngestRequest(
     descriptor: Msg,
-    entityType: String,
     inputPrefix: String
   ): (String, Msg) = {
-    val contentHash = descriptor.read[String]("crc32c")
-    val targetPath = descriptor.read[String]("file_name")
-    val sourcePath = s"$inputPrefix/data/$targetPath"
-    val matches = fileNamePattern
-      .findFirstMatchIn(targetPath)
-      .getOrElse(throw new Exception(s"Could not parse filename: $targetPath"))
+    val targetPath = descriptor
+      .read[String]("file_name")
+    val contentHash = descriptor
+      .read[String]("crc32c")
 
     contentHash -> Obj(
-      Str("source_path") -> Str(sourcePath),
-      Str("target_path") -> Str(s"/$entityType/${matches.group(1)}")
+      Str("source_path") -> Str(s"$inputPrefix/data/$targetPath"),
+      Str("target_path") -> Str(
+        s"/$contentHash/${targetPath.substring(targetPath.lastIndexOf("/") + 1)}"
+      )
     )
   }
 
@@ -214,36 +246,22 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     * @param fileName the raw filename of the metadata file
     * @return a tuple of the entity id and entity version
     */
-  def getEntityIdAndVersion(fileName: String): (String, String) = {
-    val matches = metadataPattern
-      .findFirstMatchIn(fileName)
-      .getOrElse(
-        throw new Exception(
-          s"transformMetadata: error when finding entity id and version from file named $fileName"
-        )
-      )
-    val entityId = matches.group(1)
-    val entityVersion = matches.group(2)
-    (entityId, entityVersion)
-  }
+  def getEntityIdAndVersion(
+    fileName: String,
+    inputPrefix: String,
+    entityType: String
+  ): Option[(String, String)] = {
+    val parts = fileName.stripSuffix(".json").split("_")
 
-  /**
-    * Extract the file id and file version from the name of a data file.
-    *
-    * @param fileName the raw filename of the data file
-    * @return a tuple of the file id and file version
-    */
-  def getFileIdAndVersion(fileName: String): (String, String) = {
-    val matches = fileDataPattern
-      .findFirstMatchIn(fileName)
-      .getOrElse(
-        throw new Exception(
-          s"transformMetadata: error when finding file id and version from file named $fileName"
-        )
-      )
-    val fileId = matches.group(2)
-    val fileVersion = matches.group(3)
-    (fileId, fileVersion)
+    if (parts.length != 2) {
+      NoRegexPatternMatchError(
+        s"$inputPrefix/metadata/$entityType/$fileName",
+        "Error when finding entity id and version from file name."
+      ).log
+      None
+    } else {
+      Some((parts(0), parts(1)))
+    }
   }
 
   /**
@@ -252,107 +270,67 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     * @param fileName the raw filename of the "links.json" file
     * @return a tuple of the links id, version, and project id
     */
-  def getLinksIdVersionAndProjectId(fileName: String): (String, String, String) = {
-    val matches = linksDataPattern
-      .findFirstMatchIn(fileName)
-      .getOrElse(
-        throw new Exception(
-          s"transformMetadata: error when finding links id, version, and project id from file named $fileName"
-        )
-      )
-    val linksId = matches.group(1)
-    val linksVersion = matches.group(2)
-    val projectId = matches.group(3)
-    (linksId, linksVersion, projectId)
+  def getLinksIdVersionAndProjectId(
+    fileName: String,
+    inputPrefix: String
+  ): Option[(String, String, String)] = {
+    val parts = fileName.stripSuffix(".json").split("_")
+
+    if (parts.length != 3) {
+      NoRegexPatternMatchError(
+        s"$inputPrefix/links/$fileName",
+        "Error when finding links id, version, and project id from file."
+      ).log
+      None
+    } else {
+      Some((parts(0), parts(1), parts(2)))
+    }
   }
 
   /** Convert a Msg to a JSON string. */
   def encode(msg: Msg): String =
     upack.transform(msg, StringRenderer()).toString
 
-  case class ValidateError(filepath: String, errorMessage: String) {
-
-    def log(): Unit = {
-      val filenameRegex = "[^/]*$".r // match everything that is not followed by a "/" (only the filename)
-      val filename = filenameRegex.findFirstIn(filepath).getOrElse("")
-      val errorLog = ujson.Obj(
-        "errorType" -> ujson.Str("SchemaValidationError"),
-        "filePath" -> ujson.Str(filepath),
-        "fileName" -> ujson.Str(filename),
-        "message" -> ujson.Str(errorMessage)
-      )
-      logger.error(errorLog.toString())
+  /**
+    * @param messages Filenames and contents
+    * @param inputPrefix entire prefix to go before the file name for error logging
+    *  @param property the property in the JSON to check and filter on
+    * @return the filtered SCollection
+    */
+  def filterProperty(
+    messages: SCollection[(String, Msg)],
+    inputPrefix: String,
+    property: String
+  ): SCollection[(String, Msg)] = {
+    messages.withName(s"Filtering files in $inputPrefix for property: $property").filter {
+      case (filename, message) =>
+        message
+          .tryRead[String](property)
+          .fold {
+            MissingPropertyError(
+              s"$inputPrefix/$filename",
+              s"File has no $property property."
+            ).log
+            false
+          }(_ => true)
     }
   }
 
-  def validateJson(filenamesAndMsg: SCollection[(String, Msg)]): SCollection[(String, Msg)] = {
-    validateJsonInternal(filenamesAndMsg).withName("Validate: Log Validation").map {
-      case Some(error) =>
-        error.log()
-        throw new RuntimeException(error.errorMessage)
-      case None =>
-    }
-    filenamesAndMsg
-  }
-
-  def validateJsonInternal(
-    filenamesAndMsg: SCollection[(String, Msg)]
-  ): SCollection[Option[ValidateError]] = {
-    // pull out the url for where the schema definition is for each file
-    val content = filenamesAndMsg.withName("Validate: Schema Definition URL").map {
-      case (filename, msg) => (msg.read[String]("describedBy"), (filename, msg))
-    }
-    // get the distinct urls (so as to minimize the number of get requests) and then get the schemas as strings
-    val schemas = content
-      .withName("Validate: Schema Content URL")
-      .map(_._1)
-      .distinct
-      .withName("Validate: Schema Content")
-      .map(url => (url, requests.get(url).text))
-    // join the schemas to the data keyed by the schema url
-    val joined = content.leftOuterJoin(schemas)
-    // go over each row
-    joined.withName("Validate: Metadata files against schema definition").map {
-      case (url, ((filename, data), schemaOption)) =>
-        // if there is nothing in the schemaOption, then something went wrong; if there is, try to validate
-        schemaOption match {
-          case Some(schema) => {
-            // if the schema is not able to load, throw an exception, otherwise try to use it to validate
-            Schema.loadFromString(schema) match {
-              case Failure(_) =>
-                Option(
-                  ValidateError(
-                    filename,
-                    s"Schema not loaded properly for schema at $url, file $filename"
-                  )
-                )
-              case Success(value) =>
-                // try to parse the actual data into a json format for validation
-                parse(encode(data)) match {
-                  case Left(_) =>
-                    Option(
-                      ValidateError(filename, s"Unable to parse data into json for file $filename")
-                    )
-                  // if everything is parsed/encoded/etc correctly, actually try to validate against schema here
-                  // if not valid, will return list of issues
-                  case Right(success) =>
-                    value.validate(success) match {
-                      case Validated.Valid(_) => None
-                      case Validated.Invalid(e) =>
-                        Option(
-                          ValidateError(
-                            filename,
-                            s"Data in file $filename does not conform to schema from $url; ${e.map(_.getMessage).toList.mkString(",")}"
-                          )
-                        )
-                    }
-                }
-            }
-          }
-          case None =>
-            Option(ValidateError(filename, s"No schema found at $url for file $filename"))
-        }
-    }
+  /**
+    * @param descriptors Filenames and contents of descriptor files
+    * @param inputPrefix The high-level input prefix, so the bucket and path before /descriptors
+    * @param entityType The type of entity, which for descriptors is limited to the file types
+    * @return The filtered SCollection
+    */
+  def filterDescriptors(
+    descriptors: SCollection[(String, Msg)],
+    inputPrefix: String,
+    entityType: String
+  ): SCollection[(String, Msg)] = {
+    val prefix = s"$inputPrefix/descriptors/$entityType"
+    val describedBy = filterProperty(descriptors, prefix, "describedBy")
+    val checksumed = filterProperty(describedBy, prefix, "crc32c")
+    filterProperty(checksumed, prefix, "file_name")
   }
 
   /**
@@ -368,13 +346,15 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     inputPrefix: String,
     outputPrefix: String,
     entityType: String,
+    files: SCollection[(String, MatchResult.Metadata)],
     isFileMetadata: Boolean = false
   ): ClosedTap[String] = {
     // get the readable files for the given input path
-    val metadataFiles = getReadableFiles(s"$inputPrefix/metadata/${entityType}/**.json", context)
+    val metadataFiles = getReadableFiles(s"$inputPrefix/metadata/$entityType/**.json", context)
     val metadataFilenameAndMsg = jsonToFilenameAndMsg(entityType)(metadataFiles)
 
-    val validatedFilenameAndMsg = validateJson(metadataFilenameAndMsg)
+    val validatedFilenameAndMsg =
+      validateJson(metadataFilenameAndMsg, s"$inputPrefix/metadata/$entityType")
 
     // for file metadata
     val processedMetadata = if (isFileMetadata) {
@@ -382,38 +362,72 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         s"$inputPrefix/descriptors/$entityType/**.json",
         context
       )
-      val descriptorFilenameAndMsg = jsonToFilenameAndMsg(entityType)(descriptorFiles)
+      val descriptorFilenameAndMsg =
+        filterDescriptors(jsonToFilenameAndMsg(entityType)(descriptorFiles), inputPrefix, entityType)
+      val validatedDescriptors =
+        validateJson(descriptorFilenameAndMsg, s"$inputPrefix/descriptors/$entityType")
       val processedFileMetadata = validatedFilenameAndMsg
-        .join(descriptorFilenameAndMsg)
+        .fullOuterJoin(validatedDescriptors)
         .withName(s"Pre-process $entityType metadata")
-        .map {
-          case (filename, (metadata, descriptor)) =>
-            transformFileMetadata(entityType, filename, metadata, descriptor)
+        .flatMap {
+          // file is present in metadata but not descriptors
+          case (filename, (Some(_), None)) =>
+            val err = FileMismatchError(
+              s"$inputPrefix/descriptors/$entityType/$filename",
+              s"File is present in metadata/$entityType but not in descriptors/$entityType."
+            )
+            err.log
+            None
+          // file is present in descriptors but not metadata
+          case (filename, (None, Some(_))) =>
+            val err = FileMismatchError(
+              s"$inputPrefix/metadata/$entityType/$filename",
+              s"File is present in descriptors/$entityType but not in metadata/$entityType."
+            )
+            err.log
+            None
+          // file is present in both, only valid case to continue on
+          case (filename, (Some(metadata), Some(descriptor))) =>
+            transformFileMetadata(entityType, filename, metadata, descriptor, inputPrefix)
         }
 
       // Generate file ingest requests from descriptors. Deduplicate by the content hash.
-      val fileIngestRequests = descriptorFilenameAndMsg.map {
-        case (_, descriptor) => generateFileIngestRequest(descriptor, entityType, inputPrefix)
-      }.distinctByKey.values
+      val keyedIngestRequests = validatedDescriptors.map {
+        case (_, descriptor) =>
+          generateFileIngestRequest(descriptor, inputPrefix)
+      }.distinctByKey.values.keyBy(request => request.read[String]("source_path"))
+
+      val fileIngestRequests =
+        keyedIngestRequests.leftOuterJoin(files).flatMap {
+          case (filename, (_, None)) =>
+            FileMismatchError(
+              filename,
+              s"File has a descriptors/$entityType and metadata/$entityType but doesn't actually exist under data/."
+            ).log
+            None
+          case (_, (request, Some(_))) => Some(request)
+        }
+
       StorageIO.writeJsonLists(
         fileIngestRequests,
         entityType,
-        s"${outputPrefix}/data-transfer-requests/${entityType}"
+        s"$outputPrefix/data-transfer-requests/$entityType"
       )
       processedFileMetadata
     } else {
       // for non-file metadata
       validatedFilenameAndMsg
         .withName(s"Pre-process $entityType metadata")
-        .map {
-          case (filename, metadata) => transformMetadata(entityType, filename, metadata)
+        .flatMap {
+          case (filename, metadata) =>
+            transformMetadata(entityType, filename, metadata, inputPrefix)
         }
     }
     // then write to storage
     StorageIO.writeJsonLists(
       processedMetadata,
       entityType,
-      s"${outputPrefix}/metadata/${entityType}"
+      s"$outputPrefix/metadata/$entityType"
     )
   }
 
@@ -429,20 +443,106 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     )
     val linksMetadataFilenameAndMsg = jsonToFilenameAndMsg("links")(readableFiles)
 
-    val validatedFilenameAndMsg = validateJson(linksMetadataFilenameAndMsg)
+    val validatedFilenameAndMsg = validateJson(linksMetadataFilenameAndMsg, s"$inputPrefix/links")
 
     // then convert json to msg and get the filename
     val processedData = validatedFilenameAndMsg
       .withName(s"Pre-process links metadata")
-      .map {
+      .flatMap {
         case (filename, metadata) =>
-          transformLinksFileMetadata(filename, metadata)
+          transformLinksFileMetadata(filename, metadata, inputPrefix)
       }
     // then write to storage
     StorageIO.writeJsonLists(
       processedData,
       "links",
-      s"${outputPrefix}/metadata/links"
+      s"$outputPrefix/metadata/links"
     )
+  }
+
+  /**
+    * @param filenamesAndMsg The filenames and messages to validate
+    * @param inputPrefix The entire prefix before the filename
+    * @return the original SCollection
+    */
+  def validateJson(
+    filenamesAndMsg: SCollection[(String, Msg)],
+    inputPrefix: String
+  ): SCollection[(String, Msg)] = {
+    validateJsonInternal(inputPrefix)(filenamesAndMsg).withName("Validate: Log Validation").map {
+      case Some(error) =>
+        error.log
+      case None =>
+    }
+    filenamesAndMsg
+  }
+
+  /**
+    * @param inputPrefix The entire prefix before the filename
+    * @param filenamesAndMsg The filenames and messages to validate
+    * @return A collection of possible errors
+    */
+  def validateJsonInternal(inputPrefix: String)(
+    filenamesAndMsg: SCollection[(String, Msg)]
+  ): SCollection[Option[SchemaValidationError]] = {
+    val urlAndFilenameWithMsg = filterProperty(filenamesAndMsg, inputPrefix, "describedBy").map {
+      case (filename, msg) =>
+        (msg.read[String]("describedBy"), (filename, msg))
+    }
+
+    // get the distinct urls (so as to minimize the number of get requests) and then get the schemas as strings
+    val schemas = urlAndFilenameWithMsg
+      .withName("Validate: Schema Content URL")
+      .map(_._1)
+      .distinct
+      .withName("Validate: Schema Content")
+      .map(url => (url, requests.get(url).text))
+    // join the schemas to the data keyed by the schema url
+    val joined = urlAndFilenameWithMsg.leftOuterJoin(schemas)
+    // go over each row
+    joined.withName("Validate: Metadata files against schema definition").map {
+      case (url, ((filename, data), schemaOption)) =>
+        val errPath = s"$inputPrefix/$filename"
+        // if there is nothing in the schemaOption, then something went wrong; if there is, try to validate
+        schemaOption match {
+          case Some(schema) =>
+            // if the schema is not able to load, log an error, otherwise try to use it to validate
+            Schema.loadFromString(schema) match {
+              case Failure(_) =>
+                Option(
+                  SchemaValidationError(
+                    errPath,
+                    s"Schema not loaded properly for schema at $url"
+                  )
+                )
+              case Success(value) =>
+                // try to parse the actual data into a json format for validation
+                parse(encode(data)) match {
+                  case Left(_) =>
+                    Option(
+                      SchemaValidationError(
+                        errPath,
+                        "Unable to parse data into json for file"
+                      )
+                    )
+                  // if everything is parsed/encoded/etc correctly, actually try to validate against schema here
+                  // if not valid, will return list of issues
+                  case Right(success) =>
+                    value.validate(success) match {
+                      case Validated.Valid(_) => None
+                      case Validated.Invalid(e) =>
+                        Option(
+                          SchemaValidationError(
+                            errPath,
+                            s"Data in file does not conform to schema from $url; ${e.map(_.getMessage).toList.mkString(",")}"
+                          )
+                        )
+                    }
+                }
+            }
+          case None =>
+            Option(SchemaValidationError(errPath, s"No schema found at $url"))
+        }
+    }
   }
 }

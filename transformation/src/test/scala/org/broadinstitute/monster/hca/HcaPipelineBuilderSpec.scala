@@ -6,20 +6,18 @@ import org.broadinstitute.monster.common.msg.{JsonParser, _}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class HcaPipelineBuilderSpec
-    extends AnyFlatSpec
-    with Matchers
-    with PipelineSpec
-    with PipelineCoders {
+class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec with PipelineCoders {
   behavior of "HcaPipelineBuilder"
 
   it should "transform basic metadata" in {
     val exampleFileContent = JsonParser.parseEncodedJson("""{"beep": "boop"}""")
-    val actualOutput = HcaPipelineBuilder.transformMetadata(
-      entityType = "entity_type",
-      fileName = "entityId_version.json",
-      metadata = exampleFileContent
-    )
+    val actualOutput = HcaPipelineBuilder
+      .transformMetadata(
+        entityType = "entity_type",
+        fileName = "entityId_version.json",
+        metadata = exampleFileContent,
+        inputPrefix = "prefix"
+      )
     val expectedOutput = JsonParser.parseEncodedJson(
       json = """
                | {
@@ -30,15 +28,17 @@ class HcaPipelineBuilderSpec
                |""".stripMargin
     )
 
-    actualOutput shouldBe expectedOutput
+    actualOutput shouldBe Some(expectedOutput)
   }
 
   it should "transform an empty metadata file" in {
-    val actualOutput = HcaPipelineBuilder.transformMetadata(
-      entityType = "entity_type",
-      fileName = "id_version.json",
-      metadata = JsonParser.parseEncodedJson("{}")
-    )
+    val actualOutput = HcaPipelineBuilder
+      .transformMetadata(
+        entityType = "entity_type",
+        fileName = "id_version.json",
+        metadata = JsonParser.parseEncodedJson("{}"),
+        inputPrefix = "prefix"
+      )
     val expectedOutput = JsonParser.parseEncodedJson(
       json = """
                | {
@@ -49,7 +49,7 @@ class HcaPipelineBuilderSpec
                |""".stripMargin
     )
 
-    actualOutput shouldBe expectedOutput
+    actualOutput shouldBe Some(expectedOutput)
   }
 
   it should "transform file metadata with no directory in the filename" in {
@@ -78,12 +78,14 @@ class HcaPipelineBuilderSpec
                |""".stripMargin
     )
 
-    val actualOutput = HcaPipelineBuilder.transformFileMetadata(
-      entityType = "some_file_entity_type",
-      fileName = "entity-id_entity-version.json",
-      metadata = exampleMetadataContent,
-      descriptor = exampleDescriptorContent
-    )
+    val actualOutput = HcaPipelineBuilder
+      .transformFileMetadata(
+        entityType = "some_file_entity_type",
+        fileName = "entity-id_entity-version.json",
+        metadata = exampleMetadataContent,
+        descriptor = exampleDescriptorContent,
+        inputPrefix = "prefix"
+      )
     val expectedOutput = JsonParser.parseEncodedJson(
       json =
         """
@@ -97,7 +99,7 @@ class HcaPipelineBuilderSpec
           |""".stripMargin
     )
 
-    actualOutput shouldBe expectedOutput
+    actualOutput shouldBe Some(expectedOutput)
   }
 
   it should "transform file metadata with a directory in the filename" in {
@@ -124,12 +126,14 @@ class HcaPipelineBuilderSpec
                |""".stripMargin
     )
 
-    val actualOutput = HcaPipelineBuilder.transformFileMetadata(
-      entityType = "some_type",
-      fileName = "123_456.json",
-      metadata = exampleMetadataContent,
-      descriptor = exampleDescriptorContent
-    )
+    val actualOutput = HcaPipelineBuilder
+      .transformFileMetadata(
+        entityType = "some_type",
+        fileName = "123_456.json",
+        metadata = exampleMetadataContent,
+        descriptor = exampleDescriptorContent,
+        inputPrefix = "prefix"
+      )
     val expectedOutput = JsonParser.parseEncodedJson(
       json =
         """
@@ -143,7 +147,7 @@ class HcaPipelineBuilderSpec
           |""".stripMargin
     )
 
-    actualOutput shouldBe expectedOutput
+    actualOutput shouldBe Some(expectedOutput)
   }
 
   it should "transform links.json file" in {
@@ -156,10 +160,12 @@ class HcaPipelineBuilderSpec
                | }
                |""".stripMargin
     )
-    val actualOutput = HcaPipelineBuilder.transformLinksFileMetadata(
-      fileName = "123_456_789.json",
-      metadata = exampleMetadataContent
-    )
+    val actualOutput = HcaPipelineBuilder
+      .transformLinksFileMetadata(
+        fileName = "123_456_789.json",
+        metadata = exampleMetadataContent,
+        inputPrefix = "prefix"
+      )
     val expectedOutput = JsonParser.parseEncodedJson(
       json =
         """
@@ -172,7 +178,7 @@ class HcaPipelineBuilderSpec
           |""".stripMargin
     )
 
-    actualOutput shouldBe expectedOutput
+    actualOutput shouldBe Some(expectedOutput)
   }
 
   it should "correctly generate file ingest requests" in {
@@ -188,17 +194,17 @@ class HcaPipelineBuilderSpec
                 | }
                 |""".stripMargin
     )
-    val (actualHash, actualOutput) = HcaPipelineBuilder.generateFileIngestRequest(
-      descriptor = exampleDescriptor,
-      entityType = "foo_file",
-      inputPrefix = "some/local/directory"
-    )
+    val (actualHash, actualOutput) = HcaPipelineBuilder
+      .generateFileIngestRequest(
+        descriptor = exampleDescriptor,
+        inputPrefix = "some/local/directory"
+      )
     val expectedOutput = JsonParser.parseEncodedJson(
       json =
         """
           | {
           |   "source_path": "some/local/directory/data/a-directory/sub_directory/file-id_file-version_filename.json",
-          |   "target_path": "/foo_file/file-id_file-version_filename.json"
+          |   "target_path": "/54321zyx/file-id_file-version_filename.json"
           | }
           |""".stripMargin
     )
@@ -243,7 +249,9 @@ class HcaPipelineBuilderSpec
 
     val exampleUrlAndFile = (exampleFileContent.read[String]("describedBy"), exampleFileContent)
 
-    runWithContext(sc => HcaPipelineBuilder.validateJson(sc.parallelize(Seq(exampleUrlAndFile))))
+    runWithContext(sc =>
+      HcaPipelineBuilder.validateJson(sc.parallelize(Seq(exampleUrlAndFile)), "prefix")
+    )
   }
 
   it should "validate json schemas and throw an exception if files are incorrectly formatted" in {
@@ -281,17 +289,17 @@ class HcaPipelineBuilderSpec
 
     val exampleFilenameAndMsg = ("sampleFileName.json", exampleFileContent)
 
-    runWithData(Seq(exampleFilenameAndMsg))(HcaPipelineBuilder.validateJsonInternal) shouldBe
-      Seq(
-        Some(
-          HcaPipelineBuilder.ValidateError(
-            exampleFilenameAndMsg._1,
-            "Data in file sampleFileName.json does not conform to schema " +
-              "from https://schema.humancellatlas.org/type/biomaterial/5.1.0/specimen_from_organism; " +
-              "#: required key [schema_type] not found"
-          )
-        )
+    runWithData(Seq(exampleFilenameAndMsg))(
+      HcaPipelineBuilder.validateJsonInternal("prefix")
+    ) should contain
+    Some(
+      SchemaValidationError(
+        s"prefix/${exampleFilenameAndMsg._1}",
+        "Data in file does not conform to schema " +
+          "from https://schema.humancellatlas.org/type/biomaterial/5.1.0/specimen_from_organism; " +
+          "#: required key [schema_type] not found"
       )
+    )
   }
 
   it should "not mutate the json when validating" in {
@@ -329,7 +337,7 @@ class HcaPipelineBuilderSpec
     )
 
     val exampleUrlAndFile = ("sampleFileName.json", exampleFileContent)
-    runWithData(Seq(exampleUrlAndFile))(HcaPipelineBuilder.validateJsonInternal) shouldBe
+    runWithData(Seq(exampleUrlAndFile))(HcaPipelineBuilder.validateJsonInternal("prefix")) shouldBe
       Seq(None)
   }
 }

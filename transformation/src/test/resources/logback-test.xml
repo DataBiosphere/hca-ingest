@@ -5,6 +5,17 @@
         </encoder>
     </appender>
 
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <append>false</append>
+        <file>../logs/errors.log</file>
+        <encoder>
+            <pattern>%msg%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+    </appender>
+
     <!-- Use debug level for our own messages so we can eyeball logs during testing. -->
     <logger name="org.broadinstitute" level="DEBUG" additivity="false">
         <appender-ref ref="STDOUT" />
@@ -12,9 +23,10 @@
 
     <logger name="org.broadinstitute" level="ERROR" additivity="false">
         <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE" />
     </logger>
 
-    <root level="INFO">
+    <logger name="org.broadinstitute" level="WARNING" additivity="false">
         <appender-ref ref="STDOUT" />
-    </root>
+    </logger>
 </configuration>
