@@ -27,7 +27,7 @@ spec:
           {{- $oldIdsPrefix := printf "%s/old-ids/%s" $stagingPrefix $table }}
             - name: diff-table
               templateRef:
-                name: {{ .Values.argoTemplates.diffBQTable.name }}
+                name: diff-hca-table
                 template: main
               arguments:
                 parameters:
@@ -49,42 +49,12 @@ spec:
                     value: {{ .Values.bigquery.jadeData.project }}
                   - name: jade-bq-dataset
                     value: {{ $dataRepoName | quote }}
-                  - name: upsert
-                    value: 'true'
                   - name: diff-full-history
-                    value: 'true'
+                    value: 'false'
                   {{- $shouldAppend := "{{tasks.diff-table.outputs.parameters.rows-to-append-count}} > 0" }}
-                  {{- $shouldDelete := "{{tasks.diff-table.outputs.parameters.ids-to-delete-count}} > 0" }}
-
-            - name: soft-delete-table
-              dependencies: [diff-table]
-              when: {{ $shouldDelete | quote }}
-              templateRef:
-                name: {{ .Values.argoTemplates.softDeleteTable.name }}
-                template: main
-              arguments:
-                parameters:
-                  - name: table-name
-                    value: {{ $table | quote}}
-                  - name: gcs-prefix
-                    value: {{ $oldIdsPrefix | quote }}
-                  - name: gcs-bucket
-                    value: {{ .Values.gcs.stagingBucketName }}
-                  {{- with .Values.repo }}
-                  - name: url
-                    value: {{ .url }}
-                  - name: dataset-id
-                    value: {{ $datasetId | quote }}
-                  - name: timeout
-                    value: {{ .pollTimeout }}
-                  - name: sa-secret
-                    value: {{ .accessKey.secretName }}
-                  - name: sa-secret-key
-                    value: {{ .accessKey.secretKey }}
-                  {{- end }}
 
             - name: ingest-table
-              dependencies: [diff-table, soft-delete-table]
+              dependencies: [diff-table]
               when: {{ $shouldAppend | quote }}
               templateRef:
                 name: {{ .Values.argoTemplates.ingestTable.name }}
