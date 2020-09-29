@@ -1,0 +1,140 @@
+{{- $schemaImage := printf "us.gcr.io/broad-dsp-gcr-public/hca-schema:latest" }}
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: diff-hca-table
+spec:
+  entrypoint: main
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - name: table-name
+          - name: gcs-bucket
+          - name: input-prefix
+          - name: old-ids-output-prefix
+          - name: new-rows-output-prefix
+          - name: staging-bq-project
+          - name: staging-bq-dataset
+          - name: jade-bq-project
+          - name: jade-bq-dataset
+          - name: diff-full-history
+      dag:
+        tasks:
+          # Build a join table containing new rows to append.
+          - name: join-staging-to-existing
+            template: join-staging-to-existing
+            arguments:
+              parameters:
+                - name: table-name
+                  value: '{{ "{{inputs.parameters.table-name}}" }}'
+                - name: gcs-bucket
+                  value: '{{ "{{inputs.parameters.gcs-bucket}}" }}'
+                - name: input-prefix
+                  value: '{{ "{{inputs.parameters.input-prefix}}" }}'
+                - name: staging-bq-project
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                - name: staging-bq-dataset
+                  value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
+                - name: jade-bq-project
+                  value: '{{ "{{inputs.parameters.jade-bq-project}}" }}'
+                - name: jade-bq-dataset
+                  value: '{{ "{{inputs.parameters.jade-bq-dataset}}" }}'
+                - name: use-raw-table
+                  value: '{{ "{{inputs.parameters.diff-full-history}}" }}'
+
+          # Export the values of new rows that should be appended.
+          - name: query-rows-to-append
+            dependencies: [join-staging-to-existing]
+            template: query-rows-to-append
+            arguments:
+              parameters:
+                - name: table-name
+                  value: '{{ "{{inputs.parameters.table-name}}" }}'
+                - name: join-table-name
+                  value: '{{ "{{tasks.join-staging-to-existing.outputs.result}}" }}'
+                - name: bq-project
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                - name: bq-dataset
+                  value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
+          - name: export-appends
+            dependencies: [query-rows-to-append]
+            templateRef:
+              name: {{ .Values.argoTemplates.exportBQTable.name }}
+              template: main
+            arguments:
+              parameters:
+                - name: bq-project
+                  value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+                - name: bq-dataset
+                  value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
+                - name: bq-table
+                  value: '{{ "{{tasks.query-rows-to-append.outputs.result}}" }}'
+                - name: output-format
+                  value: NEWLINE_DELIMITED_JSON
+                - name: gcs-bucket
+                  value: '{{ "{{inputs.parameters.gcs-bucket}}" }}'
+                - name: gcs-prefix
+                  value: '{{ "{{inputs.parameters.new-rows-output-prefix}}" }}'
+      outputs:
+        parameters:
+          - name: rows-to-append-count
+            valueFrom:
+              parameter: '{{ "{{tasks.export-appends.outputs.parameters.row-count}}" }}'
+          - name: join-table-name
+            valueFrom:
+              parameter: '{{ "{{tasks.join-staging-to-existing.outputs.result}}" }}'
+
+    - name: join-staging-to-existing
+      inputs:
+        parameters:
+          - name: table-name
+          - name: gcs-bucket
+          - name: input-prefix
+          - name: staging-bq-project
+          - name: staging-bq-dataset
+          - name: jade-bq-project
+          - name: jade-bq-dataset
+          - name: use-raw-table
+      script:
+        image: {{ $schemaImage }}
+        env:
+          - name: STAGING_PROJECT
+            value: '{{ "{{inputs.parameters.staging-bq-project}}" }}'
+          - name: STAGING_DATASET
+            value: '{{ "{{inputs.parameters.staging-bq-dataset}}" }}'
+          - name: JADE_PROJECT
+            value: '{{ "{{inputs.parameters.jade-bq-project}}" }}'
+          - name: JADE_DATASET
+            value: '{{ "{{inputs.parameters.jade-bq-dataset}}" }}'
+          - name: TABLE
+            value: '{{ "{{inputs.parameters.table-name}}" }}'
+          - name: GCS_PREFIX
+            value: '{{ "gs://{{inputs.parameters.gcs-bucket}}/{{inputs.parameters.input-prefix}}" }}'
+          - name: USE_RAW_TABLE
+            value: '{{ "{{inputs.parameters.use-raw-table}}" }}'
+        command: [bash]
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/diff-hca-table.sh") | indent 10 }}
+
+    - name: query-rows-to-append
+      inputs:
+        parameters:
+          - name: table-name
+          - name: join-table-name
+          - name: bq-project
+          - name: bq-dataset
+      script:
+        image: {{ $schemaImage }}
+        env:
+          - name: PROJECT
+            value: '{{ "{{inputs.parameters.bq-project}}" }}'
+          - name: DATASET
+            value: '{{ "{{inputs.parameters.bq-dataset}}" }}'
+          - name: INPUT_TABLE
+            value: '{{ "{{inputs.parameters.join-table-name}}" }}'
+          - name: TABLE
+            value: '{{ "{{inputs.parameters.table-name}}" }}'
+        command: [bash]
+        source: |
+        {{- include "argo.render-lines" (.Files.Lines "scripts/query-rows-to-append.sh") | indent 10 }}

@@ -31,15 +31,5 @@ lazy val `hca-orchestration-workflow` = project
   .enablePlugins(MonsterHelmPlugin)
   .settings(
     helmChartOrganization := "DataBiosphere",
-    helmChartRepository := "hca-ingest",
-    helmInjectVersionValues := { (baseValues, version) =>
-      val schemaVersionValues = Json.obj(
-        "argoTemplates" -> Json.obj(
-          "diffBQTable" -> Json.obj(
-            "schemaImageVersion" -> Json.fromString(version)
-          )
-        )
-      )
-      baseValues.deepMerge(schemaVersionValues)
-    }
+    helmChartRepository := "hca-ingest"
   )
