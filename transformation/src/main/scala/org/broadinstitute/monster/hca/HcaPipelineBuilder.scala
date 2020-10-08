@@ -291,46 +291,61 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   def encode(msg: Msg): String =
     upack.transform(msg, StringRenderer()).toString
 
+//  def filterProperty(
+//    messages: SCollection[(String, Msg)],
+//    inputPrefix: String,
+//    property: String
+//  ): SCollection[(String, Msg)] = {
+//    messages.withName(s"Filtering files in $inputPrefix for property: $property").filter {
+//      case (filename, message) =>
+//        message
+//          .tryRead[String](property)
+//          .fold {
+//            MissingPropertyError(
+//              s"$inputPrefix/$filename",
+//              s"File has no $property property."
+//            ).log
+//            false
+//          }(_ => true)
+//    }
+//  }
+
   /**
-    * @param messages Filenames and contents
+    * @param filename the filename to use if the property is missing
+    * @param msg the message body to check the property for
+    * @param property the property in the JSON to check and filter on
     * @param inputPrefix entire prefix to go before the file name for error logging
-    *  @param property the property in the JSON to check and filter on
-    * @return the filtered SCollection
+    * @return A boolean to use in a filter
     */
-  def filterProperty(
-    messages: SCollection[(String, Msg)],
-    inputPrefix: String,
-    property: String
-  ): SCollection[(String, Msg)] = {
-    messages.withName(s"Filtering files in $inputPrefix for property: $property").filter {
-      case (filename, message) =>
-        message
-          .tryRead[String](property)
-          .fold {
-            MissingPropertyError(
-              s"$inputPrefix/$filename",
-              s"File has no $property property."
-            ).log
-            false
-          }(_ => true)
-    }
+  def filterProperty(filename: String, msg: Msg, property: String, inputPrefix: String): Boolean = {
+    msg
+      .tryRead[String](property)
+      .fold {
+        MissingPropertyError(
+          s"$inputPrefix/$filename",
+          s"File has no $property property."
+        ).log
+        false
+      }(_ => true)
   }
 
   /**
-    * @param descriptors Filenames and contents of descriptor files
+    * @param descriptor Filename and content of a descriptor file
     * @param inputPrefix The high-level input prefix, so the bucket and path before /descriptors
     * @param entityType The type of entity, which for descriptors is limited to the file types
-    * @return The filtered SCollection
+    * @return A boolean to use in a filter
     */
-  def filterDescriptors(
-    descriptors: SCollection[(String, Msg)],
+  def filterDescriptor(
+    descriptor: (String, Msg),
     inputPrefix: String,
     entityType: String
-  ): SCollection[(String, Msg)] = {
+  ): Boolean = {
     val prefix = s"$inputPrefix/descriptors/$entityType"
-    val describedBy = filterProperty(descriptors, prefix, "describedBy")
-    val checksumed = filterProperty(describedBy, prefix, "crc32c")
-    filterProperty(checksumed, prefix, "file_name")
+    descriptor match {
+      case (filename, msg) =>
+        filterProperty(filename, msg, "crc32c", prefix) &&
+          filterProperty(filename, msg, "file_name", prefix)
+    }
   }
 
   /**
@@ -354,7 +369,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     val metadataFilenameAndMsg = jsonToFilenameAndMsg(entityType)(metadataFiles)
 
     val validatedFilenameAndMsg =
-      validateJson(metadataFilenameAndMsg, s"$inputPrefix/metadata/$entityType")
+      validateJson(s"$inputPrefix/metadata/$entityType")(metadataFilenameAndMsg)
 
     // for file metadata
     val processedMetadata = if (isFileMetadata) {
@@ -362,10 +377,10 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         s"$inputPrefix/descriptors/$entityType/**.json",
         context
       )
-      val descriptorFilenameAndMsg =
-        filterDescriptors(jsonToFilenameAndMsg(entityType)(descriptorFiles), inputPrefix, entityType)
+      val descriptorFilenameAndMsg = jsonToFilenameAndMsg(entityType)(descriptorFiles)
+        .filter(filterDescriptor(_, inputPrefix, entityType))
       val validatedDescriptors =
-        validateJson(descriptorFilenameAndMsg, s"$inputPrefix/descriptors/$entityType")
+        validateJson(s"$inputPrefix/descriptors/$entityType")(descriptorFilenameAndMsg)
       val processedFileMetadata = validatedFilenameAndMsg
         .fullOuterJoin(validatedDescriptors)
         .withName(s"Pre-process $entityType metadata")
@@ -443,7 +458,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     )
     val linksMetadataFilenameAndMsg = jsonToFilenameAndMsg("links")(readableFiles)
 
-    val validatedFilenameAndMsg = validateJson(linksMetadataFilenameAndMsg, s"$inputPrefix/links")
+    val validatedFilenameAndMsg = validateJson(s"$inputPrefix/links")(linksMetadataFilenameAndMsg)
 
     // then convert json to msg and get the filename
     val processedData = validatedFilenameAndMsg
@@ -460,32 +475,29 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     )
   }
 
-  /**
-    * @param filenamesAndMsg The filenames and messages to validate
-    * @param inputPrefix The entire prefix before the filename
-    * @return the original SCollection
-    */
-  def validateJson(
-    filenamesAndMsg: SCollection[(String, Msg)],
-    inputPrefix: String
-  ): SCollection[(String, Msg)] = {
-    validateJsonInternal(inputPrefix)(filenamesAndMsg).withName("Validate: Log Validation").map {
-      case Some(error) =>
-        error.log
-      case None =>
-    }
-    filenamesAndMsg
-  }
+//  def validateJson(
+//    filenamesAndMsg: SCollection[(String, Msg)],
+//    inputPrefix: String
+//  ): SCollection[(String, Msg)] = {
+//    validateJsonInternal(inputPrefix)(filenamesAndMsg).withName("Validate: Log Validation").map {
+//      case Some(error) =>
+//        error.log
+//      case None =>
+//    }
+//    filenamesAndMsg
+//  }
 
   /**
     * @param inputPrefix The entire prefix before the filename
     * @param filenamesAndMsg The filenames and messages to validate
     * @return A collection of possible errors
     */
-  def validateJsonInternal(inputPrefix: String)(
+  def validateJson(inputPrefix: String)(
     filenamesAndMsg: SCollection[(String, Msg)]
-  ): SCollection[Option[SchemaValidationError]] = {
-    val urlAndFilenameWithMsg = filterProperty(filenamesAndMsg, inputPrefix, "describedBy").map {
+  ): SCollection[(String, Msg)] = {
+    val urlAndFilenameWithMsg = filenamesAndMsg.filter {
+      case (filename, msg) => filterProperty(filename, msg, "describedBy", inputPrefix)
+    }.map {
       case (filename, msg) =>
         (msg.read[String]("describedBy"), (filename, msg))
     }
@@ -504,7 +516,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       case (url, ((filename, data), schemaOption)) =>
         val errPath = s"$inputPrefix/$filename"
         // if there is nothing in the schemaOption, then something went wrong; if there is, try to validate
-        schemaOption match {
+        val a = schemaOption match {
           case Some(schema) =>
             // if the schema is not able to load, log an error, otherwise try to use it to validate
             Schema.loadFromString(schema) match {
@@ -543,6 +555,8 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
           case None =>
             Option(SchemaValidationError(errPath, s"No schema found at $url"))
         }
+        a.foreach { err => err.log }
     }
+    filenamesAndMsg
   }
 }
