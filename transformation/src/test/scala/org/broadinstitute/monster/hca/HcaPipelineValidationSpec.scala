@@ -62,18 +62,6 @@ class HcaPipelineValidationSpec
   }
 
   // FileMismatchError cases
-  it should "fail with a FileMismatchError if the data file is missing" in {
-    // we expect file 40d994d9-de67-458f-82f2-db971e082724.loom to be missing
-    val expected =
-      """
-        |{"errorType":"FileMismatchError",
-        |"filePath":"gs://broad-dsp-monster-hca-dev-test-storage/inputs/FileMismatchErrorNoData/data/40d994d9-de67-458f-82f2-db971e082724.loom",
-        |"fileName":"40d994d9-de67-458f-82f2-db971e082724.loom",
-        |"message":"File has a descriptors/analysis_file and metadata/analysis_file but doesn't actually exist under data/."}
-        |""".stripMargin
-    pipelineTest("FileMismatchErrorNoData", expected)
-  }
-
   it should "fail with a FileMismatchError if the metadata file is missing" in {
     // we expect file afile1_timestamp.json to be missing
     val expected =
