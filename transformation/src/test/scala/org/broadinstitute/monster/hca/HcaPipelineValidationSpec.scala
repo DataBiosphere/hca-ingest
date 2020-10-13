@@ -1,7 +1,7 @@
 package org.broadinstitute.monster.hca
 
 import com.spotify.scio.testing.PipelineSpec
-import org.apache.beam.sdk.options.PipelineOptionsFactory
+import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.broadinstitute.monster.common.PipelineCoders
 import org.broadinstitute.monster.common.msg.JsonParser
 import org.scalatest
@@ -17,9 +17,10 @@ class HcaPipelineValidationSpec
     with PipelineCoders {
   behavior of "HcaPipeline"
 
+  val opts: PipelineOptions = PipelineOptionsFactory.fromArgs("--runner=DirectRunner").create()
+
   // Success case
   it should "succeed with valid inputs" in {
-    val opts = PipelineOptionsFactory.fromArgs("--runner=DirectRunner").create()
     runWithRealContext(opts)(ctx =>
       HcaPipelineBuilder.buildPipeline(
         ctx,
@@ -36,7 +37,6 @@ class HcaPipelineValidationSpec
     expectedErrorMessage: String,
     count: Int = 1
   ): scalatest.Assertion = {
-    val opts = PipelineOptionsFactory.fromArgs("--runner=DirectRunner").create()
     val result = runWithRealContext(opts)(ctx =>
       HcaPipelineBuilder.buildPipeline(
         ctx,
@@ -56,7 +56,10 @@ class HcaPipelineValidationSpec
       expectedErrorMsg
     )
     // make sure counter was incremented right number of times
-    result.counter(PostProcess.errorCount).attempted shouldBe count
+    result.allCounters.foreach {
+      case (name, errCount) =>
+        if (name.getName == "errorCount") errCount.attempted shouldBe count
+    }
     // this should fail things, so check that it fails with the specific exception
     assertThrows[HcaFailException](PostProcess.postProcess(result))
   }

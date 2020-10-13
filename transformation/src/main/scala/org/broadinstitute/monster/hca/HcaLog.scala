@@ -1,6 +1,6 @@
 package org.broadinstitute.monster.hca
 
-import org.broadinstitute.monster.hca.PostProcess.errorCount
+import com.spotify.scio.ScioMetrics.counter
 import org.slf4j.Logger
 import ujson.Obj
 
@@ -24,7 +24,7 @@ class HcaError(filepath: String, msg: String) extends HcaLog {
 
   def log(implicit logger: Logger): Unit = {
     logger.error(jsonMsg.toString())
-    errorCount.inc()
+    counter("main", "errorCount").inc()
   }
 
   // match everything that is not followed by a "/" (only the filename)

@@ -1,7 +1,7 @@
 package org.broadinstitute.monster.hca
 
 import cats.data.Validated
-import com.spotify.scio.ScioContext
+import com.spotify.scio.{ScioContext, ScioMetrics}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
@@ -25,6 +25,8 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     // are all the right entities under metadata and descriptors present? If not, which ones are absent? raise warns
     // Is the count of metadata/{file_type} == descriptors/{file_type}? if not, raise warns
     // Is the count of data/** == metadata/** == descriptors/**? if not, raise warns
+
+    ScioMetrics.counter("main", "errorCount")
 
     val allMetadataEntities =
       expectedMetadataEntities.map(_ -> false) ++ expectedFileEntities.map(_ -> true)
