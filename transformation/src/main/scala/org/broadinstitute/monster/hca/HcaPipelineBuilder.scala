@@ -12,6 +12,7 @@ import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, MatchResult}
 import org.apache.beam.sdk.io.{FileIO, ReadableFileCoder}
 import org.broadinstitute.monster.common.msg._
 import org.broadinstitute.monster.common.{PipelineBuilder, StorageIO}
+import org.broadinstitute.monster.hca.PostProcess.errCount
 import org.slf4j.{Logger, LoggerFactory}
 import ujson.StringRenderer
 import upack.{Msg, Obj, Str}
@@ -26,7 +27,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     // Is the count of metadata/{file_type} == descriptors/{file_type}? if not, raise warns
     // Is the count of data/** == metadata/** == descriptors/**? if not, raise warns
 
-    ScioMetrics.counter("main", "errorCount")
+    ScioMetrics.counter("main", errCount)
 
     val allMetadataEntities =
       expectedMetadataEntities.map(_ -> false) ++ expectedFileEntities.map(_ -> true)
@@ -466,7 +467,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
       case (url, ((filename, data), schemaOption)) =>
         val errPath = s"$inputPrefix/$filename"
         // if there is nothing in the schemaOption, then something went wrong; if there is, try to validate
-        val a = schemaOption match {
+        val outOption = schemaOption match {
           case Some(schema) =>
             // if the schema is not able to load, log an error, otherwise try to use it to validate
             Schema.loadFromString(schema) match {
@@ -505,7 +506,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
           case None =>
             Option(SchemaValidationError(errPath, s"No schema found at $url"))
         }
-        a.foreach { err => err.log }
+        outOption.foreach { _.log }
     }
     filenamesAndMsg
   }

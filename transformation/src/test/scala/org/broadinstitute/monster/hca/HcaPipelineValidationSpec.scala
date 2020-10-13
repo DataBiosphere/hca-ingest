@@ -4,6 +4,7 @@ import com.spotify.scio.testing.PipelineSpec
 import org.apache.beam.sdk.options.{PipelineOptions, PipelineOptionsFactory}
 import org.broadinstitute.monster.common.PipelineCoders
 import org.broadinstitute.monster.common.msg.JsonParser
+import org.broadinstitute.monster.hca.PostProcess.errCount
 import org.scalatest
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -57,8 +58,8 @@ class HcaPipelineValidationSpec
     )
     // make sure counter was incremented right number of times
     result.allCounters.foreach {
-      case (name, errCount) =>
-        if (name.getName == "errorCount") errCount.attempted shouldBe count
+      case (name, errorCount) =>
+        if (name.getName == errCount) errorCount.attempted shouldBe count
     }
     // this should fail things, so check that it fails with the specific exception
     assertThrows[HcaFailException](PostProcess.postProcess(result))
