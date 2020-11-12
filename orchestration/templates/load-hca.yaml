@@ -245,7 +245,7 @@ spec:
                 - name: load-tag
                   value: {{ printf "%s-%s" $loadTagPrefix $controlFileIndex | quote }}
                 - name: max-failures
-                  value: 0
+                  value: 10
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
           {{- $jobId := "{{tasks.submit.outputs.result}}" }}
