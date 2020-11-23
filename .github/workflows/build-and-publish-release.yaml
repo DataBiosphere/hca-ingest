@@ -15,7 +15,7 @@ jobs:
         run: |
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-      - uses: olafurpg/setup-scala@v7
+      - uses: olafurpg/setup-scala@v10
         with:
           java-version: graalvm@20.0.0
       - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
