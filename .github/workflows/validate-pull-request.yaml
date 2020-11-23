@@ -13,7 +13,7 @@ jobs:
           project_id: ${{ secrets.DEV_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_TEST_KEY }}
           export_default_credentials: true
-      - uses: olafurpg/setup-scala@v7
+      - uses: olafurpg/setup-scala@v10
         with:
           java-version: graalvm@20.0.0
       - name: Check formatting
