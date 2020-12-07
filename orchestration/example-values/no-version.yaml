@@ -16,7 +16,7 @@ dataflow:
   useFlexRS: false
 notification:
   onlyOnFailure: false
-  slackUrl:
+  oauthToken:
     secretName: aaaaa
     secretKey: bbbbb
 bigquery:
