@@ -50,7 +50,7 @@
       "type": "object",
       "properties": {
         "onlyOnFailure": { "type": "boolean" },
-        "slackUrl": {
+        "oauthToken": {
           "type": "object",
           "properties": {
             "secretName": { "type": "string" },
