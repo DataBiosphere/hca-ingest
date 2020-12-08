@@ -5,7 +5,7 @@ metadata:
   name: noop-flow
 spec:
   entrypoint: main
-  onExit: {{ if .Values.notification.onlyOnFailure }}send-slack-notification-if-failed{{ else }}send-slack-notification{{ end }}
+  onExit: send-slack-notification
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
   templates:
     - name: main
@@ -17,14 +17,6 @@ spec:
           limits:
             memory: 32Mi
             cpu: 100m
-    ##
-    ## Send a Slack notifcation if the workflow has failed.
-    ##
-    - name: send-slack-notification-if-failed
-      steps:
-        - - name: send-notification
-            template: send-slack-notification
-            when: {{ "{{workflow.status}} != Succeeded" | quote }}
     ## send a slack notification
     ## TBD: can this be a template ref
     - name: send-slack-notification
