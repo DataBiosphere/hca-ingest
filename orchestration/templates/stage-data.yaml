@@ -116,6 +116,7 @@ spec:
         command: [ curl ]
         args:
           - -XPOST
+          - -vvv
           - -H
           - 'Content-type: application/json'
           - -H
