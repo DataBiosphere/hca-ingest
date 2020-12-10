@@ -120,7 +120,7 @@ spec:
           - -H
           - 'Content-type: application/json'
           - -H
-          - 'Authorization: Bearer ${OAUTH_TOKEN}'
+          - 'Authorization: Bearer $(OAUTH_TOKEN)'
           - -d
-          - '{"text": "Workflow ${WORKFLOW_ID} entered state: ${WORKFLOW_STATE", "channel": "monster-ci"}'
+          - '{"text": "Workflow $(WORKFLOW_ID) entered state: $(WORKFLOW_STATE)", "channel": "monster-ci"}'
           - "https://slack.com/api/chat.postMessage"
