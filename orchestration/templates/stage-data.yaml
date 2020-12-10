@@ -4,7 +4,6 @@ metadata:
   name: stage-data
 spec:
   entrypoint: main
-  onExit: send-slack-notification
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
   templates:
     - name: main
