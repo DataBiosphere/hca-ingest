@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: notification-templates
+spec:
+  templates:
+    - name: send-slack-notification
+      container:
+        image: curlimages/curl:7.70.0
+        env:
+          - name: WORKFLOW_ID
+            value: {{ "{{workflow.name}}" | quote }}
+          - name: WORKFLOW_STATE
+            value: {{ "{{workflow.status}}" | quote }}
+          - name: OAUTH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.notification.oauthToken.secretName }}
+                key: {{ .Values.notification.oauthToken.secretKey }}
+        command: [ curl ]
+        args:
+          - -XPOST
+          - -vvv
+          - -H
+          - 'Content-type: application/json'
+          - -H
+          - 'Authorization: Bearer $(OAUTH_TOKEN)'
+          - -d
+          - '{"text": "Workflow $(WORKFLOW_ID) entered state: $(WORKFLOW_STATE)", "channel": "monster-ci"}'
+          - "https://slack.com/api/chat.postMessage"
