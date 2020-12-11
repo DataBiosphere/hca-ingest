@@ -231,3 +231,34 @@ class HcaUtils:
 
         dataset_id = self._hit_jade("enumerateDatasets", handle_response, query={"filter": self.dataset})
         return dataset_id
+
+    def submit_soft_delete(self, target_table: str, target_path: str) -> str:
+        """
+        Submit a soft delete request.
+        :param target_table: The table to apply soft deletion to.
+        :param target_path: The gs-path of the csv that contains the row ids to soft delete.
+        :return: The job id of the soft delete job.
+        """
+        dataset_id = self.get_dataset_id()
+
+        body = {
+            "deleteType": "soft",
+            "specType": "gcsFile",
+            "tables": [
+                {
+                    "gcsFileSpec": {
+                        "fileType": "csv",
+                        "path": target_path
+                    },
+                    "tableName": target_table
+                }
+            ]
+        }
+
+        def handle_response(response):
+            return response.json()["id"]
+
+        job_id = self._hit_jade("applyDatasetDataDeletion", handle_response, body=body, params={"id": dataset_id})
+
+        return job_id
+
