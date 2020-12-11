@@ -285,6 +285,30 @@ class HcaUtils:
         self.check_for_duplicates()
         self.check_for_null_file_refs()
 
+    def remove_duplicates(self):
+        """
+        Check and print the number of duplicates for each table in the dataset, then soft delete the problematic rows.
+        :return:
+        """
+        self._process_rows(self.get_all_table_names, self.get_duplicates)
+
+    def remove_null_file_refs(self):
+        """
+        Check and print the number of null file references for each table in the dataset, then soft delete the
+        problematic rows.
+        :return:
+        """
+        self._process_rows(self.get_file_table_names, self.get_null_filerefs)
+
+    def remove_all(self):
+        """
+        Check and print the number of duplicates and null file references for each table in the dataset, then soft
+        delete the problematic rows.
+        :return:
+        """
+        self.remove_duplicates()
+        self.remove_null_file_refs()
+
     def _process_rows(self, get_table_names, get_rids, soft_delete: bool = True):
         """
         Perform a check or soft deletion for duplicates or null file references.
