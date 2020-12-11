@@ -219,3 +219,15 @@ class HcaUtils:
             return handle_ok(response)
         else:
             raise HTTPError(f"Bad response, got code of: {response.status_code} with response body {response.text}")
+
+    def get_dataset_id(self) -> str:
+        """
+        Get the dataset ID of the provided dataset name.
+        :return: The dataset id.
+        """
+
+        def handle_response(response):
+            return response.json()["items"][0]["id"]
+
+        dataset_id = self._hit_jade("enumerateDatasets", handle_response, query={"filter": self.dataset})
+        return dataset_id
