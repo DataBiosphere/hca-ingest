@@ -262,3 +262,24 @@ class HcaUtils:
 
         return job_id
 
+    def _process_rows(self, get_table_names, get_rids, soft_delete: bool = True):
+        """
+        Perform a check or soft deletion for duplicates or null file references.
+        :param get_table_names: A function that returns a set of table names.
+        :param get_rids: A function that returns a set of row ids to soft delete.
+        :param soft_delete: A flag to indicate whether to just check and print, or to soft delete as well.
+        :return:
+        """
+        table_names = get_table_names()
+        for table_name in table_names:
+            rids_to_soft_delete = get_rids(table_name)
+            if rids_to_soft_delete:
+                print(f"{table_name} has {len(rids_to_soft_delete)} rows to soft delete")
+                if soft_delete:
+                    filename = self.create_csv(rids_to_soft_delete, table_name)
+                    file_path = self.put_csv_in_bucket(filename)
+                    job_id = self.submit_soft_delete(table_name, file_path)
+                    self.delete_csv(filename)
+                    print(f"Soft delete job for table {table_name} running, job id of: {job_id}")
+            else:
+                print(f"{table_name} has no rows to soft delete")
