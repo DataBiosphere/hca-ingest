@@ -1,9 +1,12 @@
 import csv
 from functools import lru_cache
 import os
+from requests.exceptions import HTTPError
 from typing import Set
+import urllib.parse
 
 import google.auth
+from google.auth.transport.requests import AuthorizedSession
 from google.cloud import bigquery, storage
 from requests_cache.core import CachedSession
 
@@ -28,9 +31,19 @@ class HcaUtils:
         self.bucket_project = bucket_projects[environment]
         self.bucket = f"broad-dsp-monster-hca-{environment}-staging-storage"
 
+        jade_urls = {"prod": "https://jade-terra.datarepo-prod.broadinstitute.org",
+                     "dev": "https://jade.datarepo-dev.broadinstitute.org"}
+        self.base_url = jade_urls[environment]
+
         # this is always prod for bigquery, storage, etc.
         gcp_creds, _ = google.auth.load_credentials_from_file("path/to/prod/credentials.json")
         self.gcp_creds = gcp_creds
+
+        # this depends on the Jade env to interact with
+        creds_path = {"prod": "path/to/prod/credentials.json",
+                      "dev": "path/to/dev/credentials.json"}
+        jade_creds, _ = google.auth.load_credentials_from_file(creds_path[environment])
+        self.jade_creds = jade_creds
 
     # bigquery interactions
     def get_all_table_names(self) -> Set[str]:
@@ -181,3 +194,28 @@ class HcaUtils:
             return my_map[endpoint]
         else:
             raise KeyError(f"Endpoint named {endpoint} not found!")
+
+    def _hit_jade(self, endpoint, handle_ok, body=None, params=None, query=None):
+        """
+        A generic function for hitting the Jade API.
+        :param endpoint: The endpoint to interact with.
+        :param handle_ok: A function that handles the response from the server if the response is a 2xx code.
+        :param body: An optional body for the API request if needed.
+        :param params: Optional endpoint parameters (not query filters) for the API request if needed.
+        :param query: Optional query parameters for the API request if needed.
+        :return: The result of running handle_ok on the server's response, or an HTTPError.
+        """
+        ep_info = self._get_endpoint(endpoint)
+        url = f"{self.base_url}{ep_info['path']}"
+
+        if params:
+            url = url.format(**params)
+        if query:
+            url = f"{url}/?{urllib.parse.urlencode(query)}"
+
+        response = AuthorizedSession(self.jade_creds).request(method=ep_info["method"], url=url, json=body)
+
+        if response.ok:
+            return handle_ok(response)
+        else:
+            raise HTTPError(f"Bad response, got code of: {response.status_code} with response body {response.text}")
