@@ -14,6 +14,11 @@ dataflow:
     minWorkers: 1
     maxWorkers: 2
   useFlexRS: false
+notification:
+  onlyOnFailure: false
+  oauthToken:
+    secretName: aaaaa
+    secretKey: bbbbb
 bigquery:
   stagingData:
     project: sp
