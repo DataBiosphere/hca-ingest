@@ -262,6 +262,29 @@ class HcaUtils:
 
         return job_id
 
+    # dataset-level checking and soft deleting
+    def check_for_duplicates(self):
+        """
+        Check and print the number of duplicates for each table in the dataset.
+        :return:
+        """
+        self._process_rows(self.get_all_table_names, self.get_duplicates, soft_delete=False)
+
+    def check_for_null_file_refs(self):
+        """
+        Check and print the number of null file references for each table in the dataset that has a `file_id` column.
+        :return:
+        """
+        self._process_rows(self.get_file_table_names, self.get_null_filerefs, soft_delete=False)
+
+    def check_for_all(self):
+        """
+        Check and print the number of duplicates and null file references in all tables in the dataset.
+        :return:
+        """
+        self.check_for_duplicates()
+        self.check_for_null_file_refs()
+
     def _process_rows(self, get_table_names, get_rids, soft_delete: bool = True):
         """
         Perform a check or soft deletion for duplicates or null file references.
