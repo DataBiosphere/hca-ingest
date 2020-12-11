@@ -1,3 +1,5 @@
+import csv
+import os
 from typing import Set
 
 from google.cloud import bigquery
@@ -13,6 +15,8 @@ class HcaUtils:
             self.project = project
 
         self.dataset = dataset
+
+        self.filename_template = f"sd-{project}-{dataset}-{{table}}.csv"
 
         self.bigquery_client = bigquery.Client(project=self.project)
 
@@ -95,3 +99,29 @@ class HcaUtils:
         """
         query_job = self.bigquery_client.query(query)
         return {row[0] for row in query_job}
+
+    # local csv interactions
+    def create_csv(self, row_ids: Set[str], target_table: str) -> str:
+        """
+        Create a csv locally with one column filled with row ids to soft delete.
+        :param row_ids: A set of row ids to soft delete.
+        :param target_table: The table that the row ids belong to.
+        :return: The filename of the created csv.
+        """
+        filename = self.filename_template.format(table=target_table)
+        with open(filename, mode="w") as soft_delete_file:
+            sd_writer = csv.writer(soft_delete_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
+
+            for rid in row_ids:
+                sd_writer.writerow([rid])
+
+        return filename
+
+    @staticmethod
+    def delete_csv(filename: str):
+        """
+        Remove the csv after it has been uploaded so that there isn't a deluge of csv files in the local directory.
+        :param filename: The filename of the file to delete.
+        :return:
+        """
+        os.remove(filename)
