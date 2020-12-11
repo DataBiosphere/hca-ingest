@@ -2,7 +2,8 @@ import csv
 import os
 from typing import Set
 
-from google.cloud import bigquery
+import google.auth
+from google.cloud import bigquery, storage
 
 
 class HcaUtils:
@@ -19,6 +20,15 @@ class HcaUtils:
         self.filename_template = f"sd-{project}-{dataset}-{{table}}.csv"
 
         self.bigquery_client = bigquery.Client(project=self.project)
+
+        bucket_projects = {"prod": "mystical-slate-284720",
+                           "dev": "broad-dsp-monster-hca-dev"}
+        self.bucket_project = bucket_projects[environment]
+        self.bucket = f"broad-dsp-monster-hca-{environment}-staging-storage"
+
+        # this is always prod for bigquery, storage, etc.
+        gcp_creds, _ = google.auth.load_credentials_from_file("path/to/prod/credentials.json")
+        self.gcp_creds = gcp_creds
 
     # bigquery interactions
     def get_all_table_names(self) -> Set[str]:
@@ -125,3 +135,20 @@ class HcaUtils:
         :return:
         """
         os.remove(filename)
+
+    # gcs (cloud storage) interactions
+    def put_csv_in_bucket(self, filename: str) -> str:
+        """
+        Puts a local file into a GCS bucket accessible by Jade.
+        :param filename: The filename of the file to upload.
+        :return: The gs-path of the uploaded file.
+        """
+        storage_client = storage.Client(project=self.bucket_project, credentials=self.gcp_creds)
+        bucket = storage_client.bucket(self.bucket)
+        blob = bucket.blob(filename)
+        blob.upload_from_filename(filename)
+
+        filepath = f"gs://{self.bucket}/{filename}"
+        print(f"Put a soft-delete file here: {filepath}")
+
+        return filepath
