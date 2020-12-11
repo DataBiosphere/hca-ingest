@@ -46,6 +46,21 @@
       "required": ["project", "region", "tmpBucketName",  "subnetName", "workerAccount",
         "workerMachineType", "autoscaling", "useFlexRS"]
     },
+    "notification": {
+      "type": "object",
+      "properties": {
+        "onlyOnFailure": { "type": "boolean" },
+        "oauthToken": {
+          "type": "object",
+          "properties": {
+            "secretName": { "type": "string" },
+            "secretKey": { "type": "string" }
+          },
+          "required": ["secretName", "secretKey"]
+        }
+      },
+      "required": ["oauthToken"]
+    },
     "bigquery": {
       "type": "object",
       "properties": {
