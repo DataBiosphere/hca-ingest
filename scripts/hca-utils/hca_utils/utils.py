@@ -1,9 +1,11 @@
 import csv
+from functools import lru_cache
 import os
 from typing import Set
 
 import google.auth
 from google.cloud import bigquery, storage
+from requests_cache.core import CachedSession
 
 
 class HcaUtils:
@@ -152,3 +154,30 @@ class HcaUtils:
         print(f"Put a soft-delete file here: {filepath}")
 
         return filepath
+
+    # jade interactions
+    @staticmethod
+    @lru_cache()
+    def _get_endpoint(endpoint: str):
+        """
+        Get relevant information, such as the HTTP method, the path, and parameters, for Jade API endpoints.
+        :param endpoint: The endpoint name to get information for.
+        :return: A dictionary containing the endpoint's method, path, and parameters.
+        """
+        url = "https://jade-terra.datarepo-prod.broadinstitute.org/v2/api-docs"
+        response = CachedSession().get(url=url)
+        paths = response.json()["paths"]
+
+        my_map = {}
+
+        for path, methods in paths.items():
+            for method, rest in methods.items():
+                if "parameters" in rest:
+                    params = [(param["name"], param["in"]) for param in rest["parameters"]]
+                else:
+                    params = []
+                my_map.update({rest["operationId"]: {"method": method.upper(), "path": path, "params": params}})
+        if endpoint in my_map:
+            return my_map[endpoint]
+        else:
+            raise KeyError(f"Endpoint named {endpoint} not found!")
