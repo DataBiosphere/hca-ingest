@@ -1,18 +1,13 @@
-# Kicks off the stage-data workflow in the hca-mvp namespace
-
 apiVersion: argoproj.io/v1alpha1
+kind: Workflow
 metadata:
-  # todo can namespace be parameterized?
   namespace: hca-mvp
-  # argo will auto gen a unique suffix when we use
-  # generateName rather than name
-  generateName: arh-test-stage-data-
+  generateName: stage-data-
 spec:
   entrypoint: main
   onExit: send-slack-notification
   arguments:
     parameters:
-      # the argo cli tool will yell if these are not supplied
       - name: source-bucket-name
       - name: source-bucket-prefix
       - name: staging-bucket-prefix
@@ -20,8 +15,8 @@ spec:
     - name: main
       templateRef:
         name: stage-data
-      template: main
-        inputs:
+        template: main
+      inputs:
         parameters:
           - name: source-bucket-name
           - name: source-bucket-prefix
