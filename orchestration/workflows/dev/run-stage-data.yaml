@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  namespace: hca-mvp
+  generateName: stage-data-
+spec:
+  entrypoint: main
+  onExit: send-slack-notification
+  arguments:
+    parameters:
+      - name: source-bucket-name
+      - name: source-bucket-prefix
+      - name: staging-bucket-prefix
+  templates:
+    - name: main
+      templateRef:
+        name: stage-data
+        template: main
+      inputs:
+        parameters:
+          - name: source-bucket-name
+          - name: source-bucket-prefix
+          - name: staging-bucket-prefix
+    - name: send-slack-notification
+      templateRef:
+        name: notification-templates
+        template: send-slack-notification
+  serviceAccountName: argo-runner
+  ttlStrategy:
+    secondsAfterSuccess: 86400
+    secondsAfterFailure: 604800
+  podGC:
+    strategy: OnPodSuccess
