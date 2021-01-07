@@ -168,14 +168,13 @@ class HcaUtils:
         return filepath
 
     # jade interactions
-    @staticmethod
-    def _get_endpoint(endpoint: str):
+    def _get_endpoint(self, endpoint: str):
         """
         Get relevant information, such as the HTTP method, the path, and parameters, for Jade API endpoints.
         :param endpoint: The endpoint name to get information for.
         :return: A dictionary containing the endpoint's method, path, and parameters.
         """
-        url = "https://jade-terra.datarepo-prod.broadinstitute.org/v2/api-docs"
+        url = f"{self.base_url}/v2/api-docs"
         response = CachedSession().get(url=url)
         paths = response.json()["paths"]
 
