@@ -188,9 +188,9 @@ class HcaUtils:
                 else:
                     params = []
                 my_map.update({rest["operationId"]: {"method": method.upper(), "path": path, "params": params}})
-        if endpoint in my_map:
+        try:
             return my_map[endpoint]
-        else:
+        except KeyError:
             raise KeyError(f"Endpoint named {endpoint} not found!")
 
     def _hit_jade(self, endpoint, handle_ok, body=None, params=None, query=None):
