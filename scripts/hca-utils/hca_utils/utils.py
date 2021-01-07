@@ -6,6 +6,7 @@ import urllib.parse
 
 import google.auth
 from google.auth.transport.requests import AuthorizedSession
+from google.oauth2.service_account import Credentials
 from google.cloud import bigquery, storage
 from requests_cache.core import CachedSession
 
@@ -35,8 +36,7 @@ class HcaUtils:
         self.base_url = jade_urls[environment]
 
         # this is always prod for bigquery, storage, etc.
-        gcp_creds, _ = google.auth.load_credentials_from_file("path/to/prod/credentials.json")
-        self.gcp_creds = gcp_creds
+        self.gcp_creds = Credentials.from_service_account_file("path/to/prod/credentials.json")
 
         # this depends on the Jade env to interact with
         creds_path = {"prod": "path/to/prod/credentials.json",
