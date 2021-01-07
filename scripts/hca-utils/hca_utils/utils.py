@@ -125,7 +125,7 @@ class HcaUtils:
         return {row[0] for row in query_job}
 
     # local csv interactions
-    def create_csv(self, row_ids: Set[str], target_table: str) -> str:
+    def create_row_id_csv(self, row_ids: Set[str], target_table: str) -> str:
         """
         Create a csv locally with one column filled with row ids to soft delete.
         :param row_ids: A set of row ids to soft delete.
@@ -321,7 +321,7 @@ class HcaUtils:
             if rids_to_soft_delete:
                 print(f"{table_name} has {len(rids_to_soft_delete)} rows to soft delete")
                 if soft_delete:
-                    filename = self.create_csv(rids_to_soft_delete, table_name)
+                    filename = self.create_row_id_csv(rids_to_soft_delete, table_name)
                     file_path = self.put_csv_in_bucket(filename)
                     job_id = self.submit_soft_delete(table_name, file_path)
                     self.delete_csv(filename)
