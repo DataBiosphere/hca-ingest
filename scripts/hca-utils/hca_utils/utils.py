@@ -176,21 +176,30 @@ class HcaUtils:
         :param endpoint: The endpoint name to get information for.
         :return: A dictionary containing the endpoint's method, path, and parameters.
         """
+        def create_map(paths):
+            result_map = {}
+            for path, methods in paths.items():
+                for method, rest in methods.items():
+                    result_map.update(parse_method(method, rest))
+            return result_map
+
+        def parse_method(method, rest):
+            return {rest["operationId"]: {"method": method.upper(), "path": path, "params": get_params(rest)}}
+
+        def get_params(rest):
+            out = []
+            if "parameters" in rest:
+                out = [(param["name"], param["in"]) for param in rest["parameters"]]
+            return out
+
         url = f"{self.base_url}/v2/api-docs"
         response = CachedSession().get(url=url)
         paths = response.json()["paths"]
 
-        my_map = {}
+        endpoint_map = create_map(paths)
 
-        for path, methods in paths.items():
-            for method, rest in methods.items():
-                if "parameters" in rest:
-                    params = [(param["name"], param["in"]) for param in rest["parameters"]]
-                else:
-                    params = []
-                my_map.update({rest["operationId"]: {"method": method.upper(), "path": path, "params": params}})
         try:
-            return my_map[endpoint]
+            return endpoint_map[endpoint]
         except KeyError:
             raise KeyError(f"Endpoint named {endpoint} not found!")
 
