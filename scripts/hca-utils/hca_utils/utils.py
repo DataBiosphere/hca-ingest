@@ -124,6 +124,9 @@ class HcaUtils:
         query_job = self.bigquery_client.query(query)
         return {row[0] for row in query_job}
 
+    def _format_filename(self, table: str):
+        return self.filename_template.format(table=table)
+
     # local csv interactions
     def create_row_id_csv(self, row_ids: Set[str], target_table: str) -> str:
         """
@@ -132,7 +135,7 @@ class HcaUtils:
         :param target_table: The table that the row ids belong to.
         :return: The filename of the created csv.
         """
-        filename = self.filename_template.format(table=target_table)
+        filename = self._format_filename(table=target_table)
         with open(filename, mode="w") as soft_delete_file:
             sd_writer = csv.writer(soft_delete_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
