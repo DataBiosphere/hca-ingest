@@ -1,5 +1,4 @@
 import csv
-from functools import lru_cache
 import os
 from requests.exceptions import HTTPError
 from typing import Set
@@ -170,7 +169,6 @@ class HcaUtils:
 
     # jade interactions
     @staticmethod
-    @lru_cache()
     def _get_endpoint(endpoint: str):
         """
         Get relevant information, such as the HTTP method, the path, and parameters, for Jade API endpoints.
