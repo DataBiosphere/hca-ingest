@@ -20,8 +20,10 @@ def run(arguments=None):
                         default='dev')
     parser.add_argument('-p', '--project', help="The Jade project to target, defaults to correct project for dev")
     parser.add_argument('-d', '--dataset', help="The Jade dataset to target")
-    parser.add_argument('-t', '--task', help="Just check for problems or perform a soft delete to address the problems",
-                        choices=['check', 'remove'], default='check')
+    parser.add_argument('-r', '--remove',
+                        help="Remove problematic rows. If flag not set, will only check for presence of problematic rows.",
+                        action="store_true")
+
     args = parser.parse_args(arguments)
 
     if not sys.argv[1:]:
@@ -29,7 +31,7 @@ def run(arguments=None):
 
     hca = HcaUtils(environment=args.env, project=args.project, dataset=args.dataset)
 
-    if args.task == "remove":
+    if args.remove:
         hca.remove_all()
     else:
         hca.check_for_all()
