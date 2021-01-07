@@ -136,8 +136,7 @@ class HcaUtils:
         with open(filename, mode="w") as soft_delete_file:
             sd_writer = csv.writer(soft_delete_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
-            for rid in row_ids:
-                sd_writer.writerow([rid])
+            sd_writer.writerows([[rid] for rid in row_ids])
 
         return filename
 
