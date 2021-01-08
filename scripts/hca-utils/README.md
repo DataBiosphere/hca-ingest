@@ -8,9 +8,7 @@ A Python CLI to help make sure we don't have null file references or duplicate r
 
 Before running it, you need to make sure your google application default credentials are all lined up.
 
-TODO write a helper script/instructions to get that going, but the tl;dr is to
-make sure you update the credentials paths in utils.py to point to valid application
-default credential JSON files.
+Do so by running `gcloud auth application-default login` and logging in with the appropriate account.
 
 Example run:
-`poetry run hca -e dev -p broad-jade-dev-data -d hca_dev_20201203`
+`poetry run hca -e dev -d hca_dev_20201203`
