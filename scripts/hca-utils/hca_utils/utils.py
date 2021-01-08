@@ -180,10 +180,10 @@ class HcaUtils:
             result_map = {}
             for path, methods in paths.items():
                 for method, rest in methods.items():
-                    result_map.update(parse_method(method, rest))
+                    result_map.update(parse_data(method, rest, path))
             return result_map
 
-        def parse_method(method, rest):
+        def parse_data(method, rest, path):
             return {rest["operationId"]: {"method": method.upper(), "path": path, "params": get_params(rest)}}
 
         def get_params(rest):
