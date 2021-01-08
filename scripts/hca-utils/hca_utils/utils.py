@@ -36,8 +36,10 @@ class HcaUtils:
                      "dev": "https://jade.datarepo-dev.broadinstitute.org"}
         self.base_url = jade_urls[environment]
 
-        # this is always prod for bigquery, storage, etc.
-        self.gcp_creds = Credentials.from_service_account_file("path/to/prod/credentials.json")
+        # use application default credentials to seamlessly work across monster devs
+        # assumes `gcloud auth application-default login` has been run
+        creds, _ = google.auth.default()
+        self.gcp_creds = creds
 
         # this depends on the Jade env to interact with
         creds_path = {"prod": "path/to/prod/credentials.json",
