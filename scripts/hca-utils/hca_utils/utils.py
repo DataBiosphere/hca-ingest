@@ -203,7 +203,7 @@ class HcaUtils:
         except KeyError:
             raise KeyError(f"Endpoint named {endpoint} not found!")
 
-    def _hit_jade(self, endpoint, handle_ok, body=None, params=None, query=None):
+    def _hit_jade(self, endpoint, body=None, params=None, query=None):
         """
         A generic function for hitting the Jade API.
         :param endpoint: The endpoint to interact with.
@@ -224,7 +224,7 @@ class HcaUtils:
         response = AuthorizedSession(self.jade_creds).request(method=ep_info["method"], url=url, json=body)
 
         if response.ok:
-            return handle_ok(response)
+            return response
         else:
             raise HTTPError(f"Bad response, got code of: {response.status_code} with response body {response.text}")
 
@@ -234,11 +234,8 @@ class HcaUtils:
         :return: The dataset id.
         """
 
-        def handle_response(response):
-            return response.json()["items"][0]["id"]
-
-        dataset_id = self._hit_jade("enumerateDatasets", handle_response, query={"filter": self.dataset})
-        return dataset_id
+        response = self._hit_jade("enumerateDatasets", query={"filter": self.dataset})
+        return response.json()["items"][0]["id"]
 
     def submit_soft_delete(self, target_table: str, target_path: str) -> str:
         """
@@ -263,12 +260,9 @@ class HcaUtils:
             ]
         }
 
-        def handle_response(response):
-            return response.json()["id"]
+        response = self._hit_jade("applyDatasetDataDeletion", body=body, params={"id": dataset_id})
 
-        job_id = self._hit_jade("applyDatasetDataDeletion", handle_response, body=body, params={"id": dataset_id})
-
-        return job_id
+        return response.json()["id"]
 
     # dataset-level checking and soft deleting
     def check_for_duplicates(self):
