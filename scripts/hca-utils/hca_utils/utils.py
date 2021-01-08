@@ -37,12 +37,6 @@ class HcaUtils:
         creds, _ = google.auth.default()
         self.gcp_creds = creds
 
-        # this depends on the Jade env to interact with
-        creds_path = {"prod": "path/to/prod/credentials.json",
-                      "dev": "path/to/dev/credentials.json"}
-        jade_creds, _ = google.auth.load_credentials_from_file(creds_path[environment])
-        self.jade_creds = jade_creds
-
     # bigquery interactions
     def get_all_table_names(self) -> Set[str]:
         """
@@ -219,7 +213,7 @@ class HcaUtils:
         if query:
             url = f"{url}/?{urllib.parse.urlencode(query)}"
 
-        response = AuthorizedSession(self.jade_creds).request(method=ep_info["method"], url=url, json=body)
+        response = AuthorizedSession(self.gcp_creds).request(method=ep_info["method"], url=url, json=body)
 
         if response.ok:
             return response
@@ -283,8 +277,10 @@ class HcaUtils:
         Check and print the number of duplicates and null file references in all tables in the dataset.
         :return:
         """
+        print("Processing...")
         self.process_duplicates()
         self.process_null_file_refs()
+        print("Finished.")
 
     def remove_all(self):
         """
@@ -306,7 +302,7 @@ class HcaUtils:
         table_names = get_table_names()
         for table_name in table_names:
             rids_to_process = get_rids(table_name)
-            if rids_to_process > 0:
+            if len(rids_to_process) > 0:
                 print(f"{table_name} has {len(rids_to_process)} rows to soft delete due to {issue}")
                 if soft_delete:
                     with tempfile.NamedTemporaryFile() as tf:
@@ -314,5 +310,3 @@ class HcaUtils:
                         remote_file_path = self.put_csv_in_bucket(local_filename=tf.name, target_table=table_name)
                         job_id = self.submit_soft_delete(table_name, remote_file_path)
                     print(f"Soft delete job for table {table_name} running, job id of: {job_id}")
-            else:
-                print(f"{table_name} has no rows to soft delete")
