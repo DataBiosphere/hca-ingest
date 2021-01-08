@@ -7,7 +7,6 @@ import urllib.parse
 
 import google.auth
 from google.auth.transport.requests import AuthorizedSession
-from google.oauth2.service_account import Credentials
 from google.cloud import bigquery, storage
 from requests_cache.core import CachedSession
 
@@ -16,10 +15,7 @@ class HcaUtils:
     def __init__(self, environment: str, project: str, dataset: str):
         self.environment = environment
 
-        if environment == "dev":
-            self.project = "broad-jade-dev-data"
-        else:
-            self.project = project
+        self.project = project
 
         self.dataset = dataset
 
