@@ -1,6 +1,7 @@
 import csv
 import os
 from requests.exceptions import HTTPError
+import tempfile
 from typing import Set
 import urllib.parse
 
@@ -128,20 +129,17 @@ class HcaUtils:
         return self.filename_template.format(table=table)
 
     # local csv interactions
-    def create_row_id_csv(self, row_ids: Set[str], target_table: str) -> str:
+    @staticmethod
+    def populate_row_id_csv(row_ids: Set[str], temp_file):
         """
         Create a csv locally with one column filled with row ids to soft delete.
         :param row_ids: A set of row ids to soft delete.
-        :param target_table: The table that the row ids belong to.
+        :param temp_file: a temporary file to pass in
         :return: The filename of the created csv.
         """
-        filename = self._format_filename(table=target_table)
-        with open(filename, mode="w") as soft_delete_file:
-            sd_writer = csv.writer(soft_delete_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        sd_writer = csv.writer(temp_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
-            sd_writer.writerows([[rid] for rid in row_ids])
-
-        return filename
+        sd_writer.writerows([[rid] for rid in row_ids])
 
     @staticmethod
     def delete_csv(filename: str):
@@ -153,18 +151,20 @@ class HcaUtils:
         os.remove(filename)
 
     # gcs (cloud storage) interactions
-    def put_csv_in_bucket(self, filename: str) -> str:
+    def put_csv_in_bucket(self, local_filename: str, target_table: str) -> str:
         """
         Puts a local file into a GCS bucket accessible by Jade.
-        :param filename: The filename of the file to upload.
+        :param local_filename: The filename of the file to upload.
+        :param target_table: The table name with which to fomrat the target filename.
         :return: The gs-path of the uploaded file.
         """
         storage_client = storage.Client(project=self.bucket_project, credentials=self.gcp_creds)
         bucket = storage_client.bucket(self.bucket)
-        blob = bucket.blob(filename)
-        blob.upload_from_filename(filename)
+        blob = bucket.blob(local_filename)
+        blob.upload_from_filename(local_filename)
+        target_filename = self._format_filename(table=target_table)
 
-        filepath = f"gs://{self.bucket}/{filename}"
+        filepath = f"gs://{self.bucket}/{target_filename}"
         print(f"Put a soft-delete file here: {filepath}")
 
         return filepath
@@ -328,13 +328,13 @@ class HcaUtils:
         table_names = get_table_names()
         for table_name in table_names:
             rids_to_soft_delete = get_rids(table_name)
-            if rids_to_soft_delete:
+            if rids_to_soft_delete > 0:
                 print(f"{table_name} has {len(rids_to_soft_delete)} rows to soft delete")
                 if soft_delete:
-                    filename = self.create_row_id_csv(rids_to_soft_delete, table_name)
-                    file_path = self.put_csv_in_bucket(filename)
-                    job_id = self.submit_soft_delete(table_name, file_path)
-                    self.delete_csv(filename)
+                    with tempfile.NamedTemporaryFile() as tf:
+                        self.populate_row_id_csv(rids_to_soft_delete, tf)
+                        remote_file_path = self.put_csv_in_bucket(local_filename=tf.name, target_table=table_name)
+                        job_id = self.submit_soft_delete(table_name, remote_file_path)
                     print(f"Soft delete job for table {table_name} running, job id of: {job_id}")
             else:
                 print(f"{table_name} has no rows to soft delete")
