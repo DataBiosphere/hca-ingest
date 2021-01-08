@@ -265,42 +265,28 @@ class HcaUtils:
         return response.json()["id"]
 
     # dataset-level checking and soft deleting
-    def check_for_duplicates(self):
+    def process_duplicates(self, soft_delete: bool = False):
         """
         Check and print the number of duplicates for each table in the dataset.
         :return:
         """
-        self._process_rows(self.get_all_table_names, self.get_duplicates, soft_delete=False)
+        self._process_rows(self.get_all_table_names, self.get_duplicates, soft_delete=soft_delete, issue="duplicate rows")
 
-    def check_for_null_file_refs(self):
+    def process_null_file_refs(self, soft_delete: bool = False):
         """
-        Check and print the number of null file references for each table in the dataset that has a `file_id` column.
+        Check/remove and print the number of null file references for each table in the dataset that has a `file_id`
+        column.
         :return:
         """
-        self._process_rows(self.get_file_table_names, self.get_null_filerefs, soft_delete=False)
+        self._process_rows(self.get_file_table_names, self.get_null_filerefs, soft_delete=soft_delete, issue="null file refs")
 
     def check_for_all(self):
         """
         Check and print the number of duplicates and null file references in all tables in the dataset.
         :return:
         """
-        self.check_for_duplicates()
-        self.check_for_null_file_refs()
-
-    def remove_duplicates(self):
-        """
-        Check and print the number of duplicates for each table in the dataset, then soft delete the problematic rows.
-        :return:
-        """
-        self._process_rows(self.get_all_table_names, self.get_duplicates)
-
-    def remove_null_file_refs(self):
-        """
-        Check and print the number of null file references for each table in the dataset, then soft delete the
-        problematic rows.
-        :return:
-        """
-        self._process_rows(self.get_file_table_names, self.get_null_filerefs)
+        self.process_duplicates()
+        self.process_null_file_refs()
 
     def remove_all(self):
         """
@@ -308,10 +294,10 @@ class HcaUtils:
         delete the problematic rows.
         :return:
         """
-        self.remove_duplicates()
-        self.remove_null_file_refs()
+        self.process_duplicates(soft_delete=True)
+        self.process_null_file_refs(soft_delete=True)
 
-    def _process_rows(self, get_table_names, get_rids, soft_delete: bool = True):
+    def _process_rows(self, get_table_names, get_rids, soft_delete: bool, issue: str):
         """
         Perform a check or soft deletion for duplicates or null file references.
         :param get_table_names: A function that returns a set of table names.
@@ -321,12 +307,12 @@ class HcaUtils:
         """
         table_names = get_table_names()
         for table_name in table_names:
-            rids_to_soft_delete = get_rids(table_name)
-            if rids_to_soft_delete > 0:
-                print(f"{table_name} has {len(rids_to_soft_delete)} rows to soft delete")
+            rids_to_process = get_rids(table_name)
+            if rids_to_process > 0:
+                print(f"{table_name} has {len(rids_to_process)} rows to soft delete due to {issue}")
                 if soft_delete:
                     with tempfile.NamedTemporaryFile() as tf:
-                        self.populate_row_id_csv(rids_to_soft_delete, tf)
+                        self.populate_row_id_csv(rids_to_process, tf)
                         remote_file_path = self.put_csv_in_bucket(local_filename=tf.name, target_table=table_name)
                         job_id = self.submit_soft_delete(table_name, remote_file_path)
                     print(f"Soft delete job for table {table_name} running, job id of: {job_id}")
