@@ -8,7 +8,8 @@ import time
     config_schema={"gcs_prefix": str}
 )
 def clear_staging_dir(context) -> Nothing:
-    context.log.info(f"--clear staging dir gcs_prefix={context.solid_config['gcs_prefix']}")
+    # TODO this is POC placeholder, we need to actually clear the staging dir
+    context.log.info(f"--clear_staging_dir gcs_prefix={context.solid_config['gcs_prefix']}")
 
 
 @solid(
@@ -18,19 +19,23 @@ def clear_staging_dir(context) -> Nothing:
         "source_bucket_prefix": str,
         "staging_bucket_prefix": str,
         "args": list,
-        "version": str
+        "version": str,
+        "timeout": int
     }
 )
 def pre_process_metadata(context) -> Nothing:
-    context.log.info(f"--pre-process metadata")
+    context.log.info(f"--pre_process_metadata")
     args = context.solid_config['args']
     image_name = f"us.gcr.io/broad-dsp-gcr-public/hca-transformation-pipeline:{context.solid_config['version']}"
-    job = dispatch_k8s_job("hca", image_name, "pre-process-metadata" , args, context)
+
+    job = dispatch_k8s_job("hca", image_name, "pre-process-metadata", args, context)
     context.log.info(f"job started: {job}")
+
     job_status = get_job_status(job.metadata.name, 'hca')
     context.log.info(f"Job status = {job_status}")
 
-    ## yuck
+    ## TODO: yuck
+    timeout_seconds = context.solid_config('timeout_seconds')
     start = time.time()
     while job_status.status.succeeded is None:
         context.log.info("Polling for success, none yet.")
@@ -39,7 +44,7 @@ def pre_process_metadata(context) -> Nothing:
         elapsed = time.time() - start
 
         job_status = get_job_status(job.metadata.name, 'hca')
-        if elapsed > 60:
+        if elapsed > timeout_seconds:
             # should check the job conditions payload instead
             context.log.error("Too much time elapsed, bailing out")
             raise Exception("too much time elapsed")
