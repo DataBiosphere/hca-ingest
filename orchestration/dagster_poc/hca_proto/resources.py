@@ -61,10 +61,6 @@ class DataflowBeamRunner:
         self.namespace = namespace
 
     def run(self, job_name, input_prefix, output_prefix, context):
-
-
-
-
         args = [
             '--runner=dataflow',
             f"--inputPrefix={input_prefix}",
