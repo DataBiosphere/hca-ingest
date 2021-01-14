@@ -4,6 +4,7 @@ import kubernetes
 from uuid import uuid4
 import subprocess
 import sys
+from dagster_k8s.client import DagsterKubernetesClient
 
 ONE_DAY_IN_SECONDS = 86400  # seconds
 POLLING_INTERVAL = 5  # seconds
@@ -14,6 +15,7 @@ POLLING_INTERVAL = 5  # seconds
     "temp_location": Field(StringSource),
     "subnet_name": Field(StringSource),
     "service_account": Field(StringSource),
+    "image_name": Field(StringSource),
     "image_version": Field(StringSource),
     "namespace": Field(StringSource)
 })
@@ -23,6 +25,7 @@ def dataflow_beam_runner(init_context):
         temp_location=init_context.resource_config['temp_location'],
         subnet_name=init_context.resource_config['subnet_name'],
         service_account=init_context.resource_config['service_account'],
+        image_name=init_context.resource_config['image_name'],
         image_version=init_context.resource_config['image_version'],
         namespace=init_context.resource_config['namespace']
     )
@@ -49,15 +52,20 @@ class LocalBeamRunner:
 
 
 class DataflowBeamRunner:
-    def __init__(self, project, temp_location, subnet_name, service_account, image_version, namespace):
+    def __init__(self, project, temp_location, subnet_name, service_account, image_name, image_version, namespace):
         self.project = project
         self.temp_location = temp_location
         self.subnet_name = subnet_name
         self.service_account = service_account
+        self.image_name = image_name
         self.image_version = image_version
         self.namespace = namespace
 
     def run(self, job_name, input_prefix, output_prefix, context):
+
+
+
+
         args = [
             '--runner=dataflow',
             f"--inputPrefix={input_prefix}",
@@ -74,26 +82,13 @@ class DataflowBeamRunner:
             f"--experiments=shuffle_mode=service"
         ]
 
-        image_name = f"us.gcr.io/broad-dsp-gcr-public/hca-transformation-pipeline:{self.image_version}"  # {context.solid_config['version']}"
+        image_name = f"{self.image_name}:{self.image_version}"  # {context.solid_config['version']}"
         job = self.dispatch_k8s_job(self.namespace, image_name, job_name, args, context)
-        context.log.info(f"job started: {job}")
+        context.log.info(f"job started")
 
-        job_status = self.get_job_status(job.metadata.name, self.namespace)
-        context.log.info(f"Job status = {job_status}")
-
-        ## TODO: yuck
-        timeout_seconds = ONE_DAY_IN_SECONDS
-        start = time.time()
-        while job_status.status.succeeded is None:
-            context.log.info("Polling for success, none yet.")
-            time.sleep(POLLING_INTERVAL)
-            elapsed = time.time() - start
-
-            job_status = self.get_job_status(job.metadata.name, self.namespace)
-            if elapsed > timeout_seconds:
-                # should check the job conditions payload instead
-                context.log.error("Too much time elapsed, bailing out")
-                raise Exception("too much time elapsed")
+        self.get_job_status(job.metadata.name, self.namespace)
+        client = DagsterKubernetesClient.production_client()
+        client.wait_for_job_success(job.metadata.name, self.namespace)
 
     @staticmethod
     def get_job_status(name, namespace):
