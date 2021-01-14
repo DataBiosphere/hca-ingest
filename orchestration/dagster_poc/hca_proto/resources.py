@@ -1,9 +1,8 @@
-from dagster import resource, StringSource, Field
-import time
-import kubernetes
-from uuid import uuid4
 import subprocess
-import sys
+from uuid import uuid4
+
+import kubernetes
+from dagster import resource, StringSource, Field
 from dagster_k8s.client import DagsterKubernetesClient
 
 ONE_DAY_IN_SECONDS = 86400  # seconds
