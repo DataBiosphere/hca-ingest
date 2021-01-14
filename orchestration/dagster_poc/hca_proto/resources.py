@@ -2,6 +2,8 @@ from dagster import resource, StringSource, Field
 import time
 import kubernetes
 from uuid import uuid4
+import subprocess
+import sys
 
 ONE_DAY_IN_SECONDS = 86400  # seconds
 POLLING_INTERVAL = 5  # seconds
@@ -26,18 +28,27 @@ def dataflow_beam_runner(init_context):
     )
 
 
-@resource
+@resource({
+    "working_dir": Field(StringSource)
+})
 def local_beam_runner(init_context):
-    return LocalBeamRunner()
+    return LocalBeamRunner(working_dir=init_context.resource_config["working_dir"])
 
 
 class LocalBeamRunner:
+    def __init__(self, working_dir):
+        self.working_dir = working_dir
+
     def run(self, job_name, input_prefix, output_prefix, context):
-        context.log.info("local beam runner")
+        context.log.info("Local beam runner")
+        subprocess.run(
+            ["sbt", f'hca-transformation-pipeline/run --inputPrefix={input_prefix} --outputPrefix={output_prefix}'],
+            check=True,
+            cwd=f"{self.working_dir}"
+        )
 
 
 class DataflowBeamRunner:
-
     def __init__(self, project, temp_location, subnet_name, service_account, image_version, namespace):
         self.project = project
         self.temp_location = temp_location
