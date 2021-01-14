@@ -16,6 +16,6 @@ The `pre_process_metadata` solid kicks off a k8s job. Make sure you have a k8s s
 
 ## TODOs
 - [ ] Figure out how to long poll k8s jobs in Dagster
-- [ ] Kickoff and run a dataflow job to completion.
+- [ * ] Kickoff and run a dataflow job to completion.
 - [ ] Exercise failure modes (job kickoff failure? dataflow failure? etc.)
 - [ ] Where should config live? (local, hca_dev, prod, etc.)
