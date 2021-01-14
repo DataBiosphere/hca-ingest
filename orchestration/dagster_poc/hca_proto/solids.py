@@ -1,13 +1,33 @@
 from dagster import solid, Nothing, InputDefinition, ExpectationResult, String
+import google.auth
+from google.cloud import storage
+
+
+STAGING_BUCKET_NAME = "staging_bucket_name"
+STAGING_BLOB_NAME = "staging_blob_name"
 
 
 @solid(
-    # config_schema={"gcs_prefix": str}
+    config_schema={
+        STAGING_BUCKET_NAME: str,
+        STAGING_BLOB_NAME: str
+    }
 )
 def clear_staging_dir(context) -> Nothing:
-    # TODO this is POC placeholder, we need to actually clear the staging dir
-    # context.log.info(f"--clear_staging_dir gcs_prefix={context.solid_config['gcs_prefix']}")
-    pass
+    bucket_name = context.solid_config[STAGING_BUCKET_NAME]
+    blob_name = context.solid_config[STAGING_BLOB_NAME]
+
+    credentials, project = google.auth.default()
+
+    storage_client = storage.Client(project=project, credentials=credentials)
+
+    blobs = storage_client.list_blobs(bucket_name, prefix=f"{blob_name}/")
+    dels = 0
+    for blob in blobs:
+        blob.delete()
+        dels += 1
+    context.log.debug(f"--clear_staging_dir found {dels} blobs to delete under {blob_name}")
+
 
 
 @solid(
