@@ -1,7 +1,6 @@
 import csv
 import os
 from requests.exceptions import HTTPError
-import tempfile
 from typing import Set
 import urllib.parse
 
@@ -133,28 +132,19 @@ class HcaUtils:
 
         sd_writer.writerows([[rid] for rid in row_ids])
 
-    @staticmethod
-    def delete_csv(filename: str):
-        """
-        Remove the csv after it has been uploaded so that there isn't a deluge of csv files in the local directory.
-        :param filename: The filename of the file to delete.
-        :return:
-        """
-        os.remove(filename)
-
     # gcs (cloud storage) interactions
-    def put_csv_in_bucket(self, local_filename: str, target_table: str) -> str:
+    def put_csv_in_bucket(self, local_file, target_table: str) -> str:
         """
         Puts a local file into a GCS bucket accessible by Jade.
-        :param local_filename: The filename of the file to upload.
-        :param target_table: The table name with which to fomrat the target filename.
+        :param local_file: The file to upload.
+        :param target_table: The table name with which to format the target filename.
         :return: The gs-path of the uploaded file.
         """
         storage_client = storage.Client(project=self.bucket_project, credentials=self.gcp_creds)
         bucket = storage_client.bucket(self.bucket)
-        blob = bucket.blob(local_filename)
-        blob.upload_from_filename(local_filename)
         target_filename = self._format_filename(table=target_table)
+        blob = bucket.blob(target_filename)
+        blob.upload_from_file(local_file)
 
         filepath = f"gs://{self.bucket}/{target_filename}"
         print(f"Put a soft-delete file here: {filepath}")
@@ -288,8 +278,10 @@ class HcaUtils:
         delete the problematic rows.
         :return:
         """
+        print("Processing, deleting as we find anything...")
         self.process_duplicates(soft_delete=True)
         self.process_null_file_refs(soft_delete=True)
+        print("Finished.")
 
     def _process_rows(self, get_table_names, get_rids, soft_delete: bool, issue: str):
         """
@@ -305,8 +297,16 @@ class HcaUtils:
             if len(rids_to_process) > 0:
                 print(f"{table_name} has {len(rids_to_process)} rows to soft delete due to {issue}")
                 if soft_delete:
-                    with tempfile.NamedTemporaryFile() as tf:
-                        self.populate_row_id_csv(rids_to_process, tf)
-                        remote_file_path = self.put_csv_in_bucket(local_filename=tf.name, target_table=table_name)
-                        job_id = self.submit_soft_delete(table_name, remote_file_path)
-                    print(f"Soft delete job for table {table_name} running, job id of: {job_id}")
+                    local_filename = f"{os.getcwd()}/{table_name}.csv"
+                    try:
+                        # create and populate file
+                        with open(local_filename, mode="w") as wf:
+                            self.populate_row_id_csv(rids_to_process, wf)
+                        # do processing
+                        with open(local_filename, mode="rb") as rf:
+                            remote_file_path = self.put_csv_in_bucket(local_file=rf, target_table=table_name)
+                            job_id = self.submit_soft_delete(table_name, remote_file_path)
+                            print(f"Soft delete job for table {table_name} running, job id of: {job_id}")
+                    finally:
+                        # delete file
+                        os.remove(local_filename)
