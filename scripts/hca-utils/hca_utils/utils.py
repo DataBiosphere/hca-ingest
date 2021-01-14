@@ -144,7 +144,7 @@ class HcaUtils:
         bucket = storage_client.bucket(self.bucket)
         target_filename = self._format_filename(table=target_table)
         blob = bucket.blob(target_filename)
-        blob.upload_from_file(local_file, rewind=True)
+        blob.upload_from_file(local_file)
 
         filepath = f"gs://{self.bucket}/{target_filename}"
         print(f"Put a soft-delete file here: {filepath}")
