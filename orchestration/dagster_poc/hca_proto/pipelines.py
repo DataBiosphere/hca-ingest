@@ -1,5 +1,5 @@
 from dagster import pipeline, repository, ModeDefinition
-from hca_proto.solids import clear_staging_dir, pre_process_metadata
+from hca_proto.solids import clear_staging_dir, pre_process_metadata, submit_file_ingest
 from hca_proto.resources import dataflow_beam_runner, local_beam_runner
 
 prod_mode = ModeDefinition(
@@ -21,7 +21,7 @@ dev_mode = ModeDefinition(
     mode_defs=[prod_mode, dev_mode]
 )
 def stage_data():
-    pre_process_metadata(clear_staging_dir())
+    submit_file_ingest(pre_process_metadata(clear_staging_dir()))
 
 
 @repository

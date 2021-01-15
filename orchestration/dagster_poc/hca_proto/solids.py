@@ -2,7 +2,7 @@ from dagster import solid, Nothing, InputDefinition, ExpectationResult, String
 import google.auth
 from google.auth.transport.requests import Request
 from google.cloud import storage
-from data_repo_client import ApiClient, Configuration, RepositoryApi
+from data_repo_client import ApiClient, Configuration, RepositoryApi, EnumerateDatasetModel
 
 STAGING_BUCKET_NAME = "staging_bucket_name"
 STAGING_BLOB_NAME = "staging_blob_name"
@@ -52,8 +52,8 @@ def pre_process_metadata(context) -> Nothing:
     context.resources.beam_runner.run("pre-process-metadata", input_prefix, output_prefix, context)
 
 
-@solid
-def submit_file_ingest(context):
+@solid(input_defs=[InputDefinition("start", Nothing)])
+def submit_file_ingest(context) -> Nothing:
     # get token for jade, assumes application default credentials work for specified environment
     credentials, _ = google.auth.default()
     auth_req = Request()
@@ -67,4 +67,6 @@ def submit_file_ingest(context):
 
     # submit file ingest (for now just enumerate datasets or something to prove interaction works)
     repoApi = RepositoryApi(api_client=client)
-    print(repoApi.enumerate_datasets())
+
+    datasets = repoApi.enumerate_datasets()
+    context.log.debug(f"Enumerate found {datasets.total} datasets in the repo")
