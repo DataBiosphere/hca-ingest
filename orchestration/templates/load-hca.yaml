@@ -375,7 +375,7 @@ spec:
                 - name: table
                   value: {{ $table | quote }}
                 - name: gcs-prefix
-                  value: {{ printf "%s/metadata" $stagingPrefix | quote }}
+                  value: {{ $stagingPrefix | quote }}
                 - name: bq-dataset
                   value: {{ $bqDataset | quote }}
                 - name: data-repo-name
@@ -442,9 +442,9 @@ spec:
         image: google/cloud-sdk:slim
         env:
           - name: GCS_PREFIX
-            value: {{ printf "gs://%s/%s/%s" .Values.gcs.stagingBucketName $gcsPrefix $table | quote }}
+            value: {{ printf "gs://%s/%s/metadata/%s" .Values.gcs.stagingBucketName $gcsPrefix $table | quote }}
           - name: GCS_DATA_DIR
-            value: {{ printf "gs://%s/%s/data/" .Values.gcs.stagingBucketName $stagingPrefix | quote }}
+            value: {{ printf "gs://%s/%s/data/" .Values.gcs.stagingBucketName $gcsPrefix | quote }}
           - name: TABLE
             value: {{ $table | quote }}
           - name: STAGING_PROJECT
