@@ -174,7 +174,7 @@ spec:
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: source-prefix
-                  value: {{ $totalSourcePrefix }}
+                  value: {{ $totalSourcePrefix | quote }}
 
     ##
     ## Diff the bulk file-load requests staged in GCS against the files already present in the repo.
