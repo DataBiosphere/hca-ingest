@@ -18,7 +18,7 @@ spec:
           - name: source-bucket-name
           {{- $sourceBucket := "{{inputs.parameters.source-bucket-name}}" }}
           - name: source-bucket-prefix
-          {{- $sourcePrefix := "{{inputs.parameters.source-bucket-prefix }}" }}
+          {{- $sourcePrefix := "{{inputs.parameters.source-bucket-prefix}}" }}
           # note that the second %s here does not have a slash before it because other places in the code
           # expect it in this manner =(
           {{- $totalSourcePrefix := printf "gs://%s%s" $sourceBucket $sourcePrefix }}
