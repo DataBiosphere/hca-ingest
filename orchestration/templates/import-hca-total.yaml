@@ -53,6 +53,6 @@ spec:
                 - name: staging-bucket-prefix
                   value: {{ $stagingPrefix | quote }}
                 - name: source-bucket-name
-                  value: { { $inputBucket | quote } }
+                  value: {{ $inputBucket | quote }}
                 - name: source-bucket-prefix
-                  value: { { $inputPrefix | quote } }
+                  value: {{ $inputPrefix | quote }}
