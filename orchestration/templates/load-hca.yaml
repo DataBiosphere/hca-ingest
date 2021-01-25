@@ -459,7 +459,7 @@ spec:
           - name: GCS_PREFIX
             value: {{ printf "gs://%s/%s/metadata/%s" .Values.gcs.stagingBucketName $stagingPrefix $table | quote }}
           - name: GCS_DATA_DIR
-            value: {{ printf "%s/data/" .Values.gcs.stagingBucketName $sourcePrefix | quote }}
+            value: {{ printf "%s/data/" $sourcePrefix | quote }}
           - name: TABLE
             value: {{ $table | quote }}
           - name: STAGING_PROJECT
