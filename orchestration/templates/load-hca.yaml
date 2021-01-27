@@ -15,6 +15,13 @@ spec:
             {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
           - name: staging-bucket-prefix
           {{- $stagingPrefix := "{{inputs.parameters.staging-bucket-prefix}}" }}
+          - name: source-bucket-name
+          {{- $sourceBucket := "{{inputs.parameters.source-bucket-name}}" }}
+          - name: source-bucket-prefix
+          {{- $sourcePrefix := "{{inputs.parameters.source-bucket-prefix}}" }}
+          # note that the second %s here does not have a slash before it because other places in the code
+          # expect it in this manner =(
+          {{- $totalSourcePrefix := printf "gs://%s%s" $sourceBucket $sourcePrefix }}
       # Limit the number of active processing "arms" at a time.
       # There may be multiple pods running within each arm.
       parallelism: {{ .Values.parallelism }}
@@ -166,6 +173,8 @@ spec:
                   value: {{ $dataRepoName | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
+                - name: source-prefix
+                  value: {{ $totalSourcePrefix | quote }}
 
     ##
     ## Diff the bulk file-load requests staged in GCS against the files already present in the repo.
@@ -366,6 +375,8 @@ spec:
           {{- $bqDataset := "{{inputs.parameters.bq-dataset}}" }}
           - name: data-repo-name
           - name: dataset-id
+          - name: source-prefix
+          {{- $sourcePrefix := "{{inputs.parameters.source-prefix}}" }}
       dag:
         tasks:
           - name: inject-file-ids
@@ -374,12 +385,14 @@ spec:
               parameters:
                 - name: table
                   value: {{ $table | quote }}
-                - name: gcs-prefix
-                  value: {{ printf "%s/metadata" $stagingPrefix | quote }}
+                - name: staging-prefix
+                  value: {{ $stagingPrefix | quote }}
                 - name: bq-dataset
                   value: {{ $bqDataset | quote }}
                 - name: data-repo-name
                   value: {{ $dataRepoName | quote }}
+                - name: source-prefix
+                  value: {{ $sourcePrefix | quote }}
           {{- $fileIdsTable := "{{tasks.inject-file-ids.outputs.result}}" }}
 
           {{- $metadataPrefix := printf "%s/file-metadata-with-ids/%s" $stagingPrefix $table }}
@@ -433,18 +446,20 @@ spec:
         parameters:
           - name: table
           {{- $table := "{{inputs.parameters.table}}" }}
-          - name: gcs-prefix
-          {{- $gcsPrefix := "{{inputs.parameters.gcs-prefix}}" }}
+          - name: staging-prefix
+          {{- $stagingPrefix := "{{inputs.parameters.staging-prefix}}" }}
           - name: bq-dataset
           {{- $bqDataset := "{{inputs.parameters.bq-dataset}}" }}
           - name: data-repo-name
+          - name: source-prefix
+          {{- $sourcePrefix := "{{inputs.parameters.source-prefix}}" }}
       script:
         image: google/cloud-sdk:slim
         env:
           - name: GCS_PREFIX
-            value: {{ printf "gs://%s/%s/%s" .Values.gcs.stagingBucketName $gcsPrefix $table | quote }}
+            value: {{ printf "gs://%s/%s/metadata/%s" .Values.gcs.stagingBucketName $stagingPrefix $table | quote }}
           - name: GCS_DATA_DIR
-            value: {{ printf "gs://%s/%s/data/" .Values.gcs.stagingBucketName $gcsPrefix | quote }}
+            value: {{ printf "%s/data/" $sourcePrefix | quote }}
           - name: TABLE
             value: {{ $table | quote }}
           - name: STAGING_PROJECT
