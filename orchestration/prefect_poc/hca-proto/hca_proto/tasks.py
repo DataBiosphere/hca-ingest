@@ -7,7 +7,7 @@ from prefect import task
 
 
 @task
-def clear_staging_area(bucket_name: str, blob_name: str):
+def clear_staging_area(bucket_name, blob_name):
     credentials, project = google.auth.default()
 
     storage_client = storage.Client(project=project, credentials=credentials)
@@ -21,8 +21,9 @@ def clear_staging_area(bucket_name: str, blob_name: str):
 
 
 # show ability to run container in k8s
+@task
 def run_dataflow_job():
-    pass
+    return 1
 
 
 @task
