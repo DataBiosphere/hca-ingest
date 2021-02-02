@@ -17,7 +17,7 @@ def clear_staging_area(bucket_name, blob_name):
     for count, blob in enumerate(blobs):
         blob.delete()
     logger = prefect.context.get("logger")
-    logger.debug(f"--clear_staging_dir found {count} blobs to delete under {blob_name}")
+    logger.info(f"--clear_staging_dir found {count} blobs to delete under {blob_name}")
 
 
 # show ability to run container in k8s
@@ -45,14 +45,27 @@ def enumerate_jade_datasets():
     datasets = repoApi.enumerate_datasets()
 
     logger = prefect.context.get("logger")
-    logger.debug(f"Enumerate found {datasets.total} datasets in the repo")
+    logger.info(f"Enumerate found {datasets.total} datasets in the repo")
 
 
 # show ability to fan out
+@task
 def dummy_fan_out():
-    pass
+    return [1, 2, 3]
 
 
+@task
+def dummy_transform(x):
+    return x + 1
+
+
+@task
 # show ability to fan back in
-def dummy_fan_in():
-    pass
+def dummy_fan_in(y):
+    return sum(y)
+
+
+@task
+def dummy_load(z):
+    logger = prefect.context.get("logger")
+    logger.info(z)
