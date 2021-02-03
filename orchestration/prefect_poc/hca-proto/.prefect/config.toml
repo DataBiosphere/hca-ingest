@@ -1,0 +1,10 @@
+environment = "dev"
+user = "${environments.${environment}.user}"
+
+[environments]
+
+    [environments.dev]
+        user = "test"
+
+    [environments.prod]
+        user = "admin"
