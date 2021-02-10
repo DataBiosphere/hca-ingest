@@ -389,7 +389,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
           generateFileIngestRequest(descriptor, inputPrefix)
       }.distinctByKey.values
 
-      StorageIO.writeJsonLists(
+      StorageIO.writeJsonListsGeneric(
         fileIngestRequests,
         entityType,
         s"$outputPrefix/data-transfer-requests/$entityType"
@@ -405,7 +405,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         }
     }
     // then write to storage
-    StorageIO.writeJsonLists(
+    StorageIO.writeJsonListsGeneric(
       processedMetadata,
       entityType,
       s"$outputPrefix/metadata/$entityType"
@@ -434,7 +434,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
           transformLinksFileMetadata(filename, metadata, inputPrefix)
       }
     // then write to storage
-    StorageIO.writeJsonLists(
+    StorageIO.writeJsonListsGeneric(
       processedData,
       "links",
       s"$outputPrefix/metadata/links"

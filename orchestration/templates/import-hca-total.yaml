@@ -52,3 +52,7 @@ spec:
                   value: {{ $datasetId | quote }}
                 - name: staging-bucket-prefix
                   value: {{ $stagingPrefix | quote }}
+                - name: source-bucket-name
+                  value: {{ $inputBucket | quote }}
+                - name: source-bucket-prefix
+                  value: {{ $inputPrefix | quote }}

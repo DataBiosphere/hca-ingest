@@ -22,7 +22,8 @@ declare -ra BQ_QUERY=(
 1>&2 ${BQ_QUERY[@]} "SELECT S.${TABLE}_id, S.version, J.file_id, S.content, S.descriptor
   FROM ${TABLE} S LEFT JOIN \`${JADE_PROJECT}.${JADE_DATASET}.datarepo_load_history\` J
   ON J.state = 'succeeded'
-  AND JSON_EXTRACT_SCALAR(S.descriptor, '$.crc32c') = J.checksum_crc32c"
+  AND JSON_EXTRACT_SCALAR(S.descriptor, '$.crc32c') = J.checksum_crc32c
+  AND '${GCS_DATA_DIR}' || JSON_EXTRACT_SCALAR(S.descriptor, '$.file_name') = J.source_name"
 
 # Echo the output table name to Argo can slurp it into a parameter.
 echo ${TARGET_TABLE}
