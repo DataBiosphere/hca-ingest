@@ -1,11 +1,11 @@
 from dagster import solid, Nothing, InputDefinition, ExpectationResult, String
 import google.auth
+from google.auth.transport.requests import Request
 from google.cloud import storage
-
+from data_repo_client import ApiClient, Configuration, RepositoryApi, EnumerateDatasetModel
 
 STAGING_BUCKET_NAME = "staging_bucket_name"
 STAGING_BLOB_NAME = "staging_blob_name"
-
 
 @solid(
     config_schema={
@@ -50,3 +50,23 @@ def pre_process_metadata(context) -> Nothing:
         description="Check that input prefix differs from output prefix"
     )
     context.resources.beam_runner.run("pre-process-metadata", input_prefix, output_prefix, context)
+
+
+@solid(input_defs=[InputDefinition("start", Nothing)])
+def submit_file_ingest(context) -> Nothing:
+    # get token for jade, assumes application default credentials work for specified environment
+    credentials, _ = google.auth.default()
+    auth_req = Request()
+    credentials.refresh(auth_req)
+
+    # create API client
+    config = Configuration(host="https://jade.datarepo-dev.broadinstitute.org/")
+    config.access_token = credentials.token
+    client = ApiClient(configuration=config)
+    client.client_side_validation = False
+
+    # submit file ingest (for now just enumerate datasets or something to prove interaction works)
+    repoApi = RepositoryApi(api_client=client)
+
+    datasets = repoApi.enumerate_datasets()
+    context.log.debug(f"Enumerate found {datasets.total} datasets in the repo")
