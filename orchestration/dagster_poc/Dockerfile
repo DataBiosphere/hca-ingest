@@ -7,7 +7,7 @@ RUN \
 # Cron
        apt-get update -yqq \
     && apt-get install -yqq cron \
-# Dagster
+# Dagster TODO convert this to poetry
     && pip install \
         dagster==${DAGSTER_VERSION} \
         dagster-postgres==${DAGSTER_VERSION} \
@@ -15,6 +15,10 @@ RUN \
         dagster-aws==${DAGSTER_VERSION} \
         dagster-k8s==${DAGSTER_VERSION} \
         dagster-celery-k8s==${DAGSTER_VERSION} \
+        google-cloud-bigquery==2.4.0 \
+        google-cloud-storage==1.33.0 \
+        requests-cache==0.5.2 \
+        data-repo-client==1.0.194.post5 \
 # Cleanup
     &&  rm -rf /var \
     &&  rm -rf /root/.cache  \
