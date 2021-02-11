@@ -34,5 +34,5 @@ def stage_data():
 
 
 @repository
-def hca_proto():
+def hca_prototype():
     return [stage_data]
