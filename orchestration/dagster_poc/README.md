@@ -22,11 +22,12 @@ using `pip`, there is a TODO to move that to `poetry`.
 * The `helmfile` located in `/ops/helmfiles/dagster/helmfile.yaml` controls the configuration of the Dagster
 deployment. This is how we enumerate the "deployables"; right now we have a single deployable that is the
   monster-dagster image built by the above referenced image.
-* The dagster deployment is configured to always pull the `latest` tag for this image. 
+* The dagster deployment is configured to always pull a specific tag for this image.
   To deploy updated dagster pipeline code:
   * Make sure you are configured to push to the `hca-dev` GCR.
-  * `docker build . --build-arg DAGSTER_VERSION=0.10.4 -t us.gcr.io/broad-dsp-monster-hca-dev/monster-dagster`
-  * `docker push`
+  * Build a docker image, tagging with the current git SHA: `SHORTHASH="$(git rev-parse --short HEAD)" docker build . --build-arg DAGSTER_VERSION=0.10.4 -t us.gcr.io/broad-dsp-monster-hca-dev/monster-dagster:$SHORTHASH`
+  * `SHORTHASH="$(git rev-parse --short HEAD)" docker push  us.gcr.io/broad-dsp-monster-hca-dev/monster-dagster:$SHORTHASH`
+  * Run `helmfile` against the new sha as well to update GKE: `SHORTHASH="$(git rev-parse --short HEAD)" helmfile apply" 
   * GKE should pick up the updated image and deploy
 
 You must port forward to be able to access the `dagit` UI: `kubectl port-forward --namespace dagster svc/monster-dagit 8080:80`
