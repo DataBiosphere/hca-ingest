@@ -1,8 +1,4 @@
 from dagster import solid, Nothing, InputDefinition, ExpectationResult, String
-import google.auth
-from google.auth.transport.requests import Request
-from google.cloud import storage
-from data_repo_client import ApiClient, Configuration, RepositoryApi, EnumerateDatasetModel
 
 STAGING_BUCKET_NAME = "staging_bucket_name"
 STAGING_BLOB_NAME = "staging_blob_name"
@@ -11,17 +7,14 @@ STAGING_BLOB_NAME = "staging_blob_name"
     config_schema={
         STAGING_BUCKET_NAME: str,
         STAGING_BLOB_NAME: str
-    }
+    },
+    required_resource_keys={"storage_client"}
 )
 def clear_staging_dir(context) -> Nothing:
     bucket_name = context.solid_config[STAGING_BUCKET_NAME]
     blob_name = context.solid_config[STAGING_BLOB_NAME]
 
-    credentials, project = google.auth.default()
-
-    storage_client = storage.Client(project=project, credentials=credentials)
-
-    blobs = storage_client.list_blobs(bucket_name, prefix=f"{blob_name}/")
+    blobs = context.resources.storage_client.list_blobs(bucket_name, prefix=f"{blob_name}/")
     dels = 0
     for blob in blobs:
         blob.delete()
@@ -52,21 +45,10 @@ def pre_process_metadata(context) -> Nothing:
     context.resources.beam_runner.run("pre-process-metadata", input_prefix, output_prefix, context)
 
 
-@solid(input_defs=[InputDefinition("start", Nothing)])
+@solid(
+    input_defs=[InputDefinition("start", Nothing)],
+    required_resource_keys={"data_repo_client"}
+)
 def submit_file_ingest(context) -> Nothing:
-    # get token for jade, assumes application default credentials work for specified environment
-    credentials, _ = google.auth.default()
-    auth_req = Request()
-    credentials.refresh(auth_req)
-
-    # create API client
-    config = Configuration(host="https://jade.datarepo-dev.broadinstitute.org/")
-    config.access_token = credentials.token
-    client = ApiClient(configuration=config)
-    client.client_side_validation = False
-
-    # submit file ingest (for now just enumerate datasets or something to prove interaction works)
-    repoApi = RepositoryApi(api_client=client)
-
-    datasets = repoApi.enumerate_datasets()
+    datasets = context.resources.data_repo_client.enumerate_datasets()
     context.log.debug(f"Enumerate found {datasets.total} datasets in the repo")

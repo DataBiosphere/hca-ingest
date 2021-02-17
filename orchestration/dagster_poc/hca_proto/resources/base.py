@@ -4,6 +4,11 @@ from uuid import uuid4
 import kubernetes
 from dagster import resource, StringSource, Field
 from dagster_k8s.client import DagsterKubernetesClient
+from google.cloud import storage
+from google.auth.transport.requests import Request
+from data_repo_client import ApiClient, Configuration, RepositoryApi
+import google.auth
+
 
 ONE_DAY_IN_SECONDS = 86400  # seconds
 POLLING_INTERVAL = 5  # seconds
@@ -131,3 +136,28 @@ class DataflowBeamRunner:
         context.log.info(f"Job created. status='%s'" % str(api_response.status))
 
         return api_response
+
+
+@resource
+def google_storage_client(init_context):
+    credentials, project = google.auth.default()
+
+    return storage.Client(project=project, credentials=credentials)
+
+
+@resource
+def jade_data_repo_client(init_context):
+    # get token for jade, assumes application default credentials work for specified environment
+    credentials, _ = google.auth.default()
+    auth_req = Request()
+    credentials.refresh(auth_req)
+
+    # create API client
+    config = Configuration(host="https://jade.datarepo-dev.broadinstitute.org/")
+    config.access_token = credentials.token
+    client = ApiClient(configuration=config)
+    client.client_side_validation = False
+
+    # submit file ingest (for now just enumerate datasets or something to prove interaction works)
+    return RepositoryApi(api_client=client)
+
