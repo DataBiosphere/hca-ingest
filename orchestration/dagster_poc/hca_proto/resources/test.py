@@ -16,9 +16,14 @@ def noop_data_repo_client(init_context):
 
 @resource
 def local_storage_client(init_context):
-    class LocalStorageClient():
+    class MockBlob:
+        def delete(self):
+            pass
+
+    class LocalStorageClient:
         def list_blobs(self, bucket_name, prefix):
-            return []
+            for i in range(0, 10):
+                yield MockBlob()
 
     return LocalStorageClient()
 

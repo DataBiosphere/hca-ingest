@@ -3,7 +3,6 @@ from hca_proto.resources.base import dataflow_beam_runner, local_beam_runner, go
     jade_data_repo_client
 from hca_proto.resources.test import test_beam_runner, local_storage_client, noop_data_repo_client
 
-
 prod_mode = ModeDefinition(
     name="prod",
     resource_defs={
@@ -14,7 +13,7 @@ prod_mode = ModeDefinition(
 )
 
 dev_mode = ModeDefinition(
-    name="dev",
+    name="local",
     resource_defs={
         "beam_runner": local_beam_runner,
         "storage_client": google_storage_client,
@@ -30,4 +29,3 @@ test_mode = ModeDefinition(
         "data_repo_client": noop_data_repo_client
     }
 )
-

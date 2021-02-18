@@ -3,6 +3,7 @@ from dagster import solid, Nothing, InputDefinition, ExpectationResult, String
 STAGING_BUCKET_NAME = "staging_bucket_name"
 STAGING_BLOB_NAME = "staging_blob_name"
 
+
 @solid(
     config_schema={
         STAGING_BUCKET_NAME: str,
@@ -10,7 +11,7 @@ STAGING_BLOB_NAME = "staging_blob_name"
     },
     required_resource_keys={"storage_client"}
 )
-def clear_staging_dir(context) -> Nothing:
+def clear_staging_dir(context) -> int:
     bucket_name = context.solid_config[STAGING_BUCKET_NAME]
     blob_name = context.solid_config[STAGING_BLOB_NAME]
 
@@ -20,7 +21,7 @@ def clear_staging_dir(context) -> Nothing:
         blob.delete()
         dels += 1
     context.log.debug(f"--clear_staging_dir found {dels} blobs to delete under {blob_name}")
-
+    return dels
 
 
 @solid(
