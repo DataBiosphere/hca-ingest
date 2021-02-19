@@ -2,7 +2,7 @@ solids:
   clear_staging_dir:
     config:
       staging_bucket_name: example_staging_bucket_name
-      staging_blob_name: example_staging_blob_name
+      staging_prefix_name: example_staging_prefix_name
   pre_process_metadata:
     config:
       input_prefix: example_input_prefix

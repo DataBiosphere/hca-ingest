@@ -26,6 +26,7 @@ class LocalBeamRunner:
 
     def run(self, job_name, input_prefix, output_prefix, context):
         context.log.info("Local beam runner")
+        # TODO this is hardcoded to the HCA transformation pipeline for now
         subprocess.run(
             ["sbt", f'hca-transformation-pipeline/run --inputPrefix={input_prefix} --outputPrefix={output_prefix}'],
             check=True,

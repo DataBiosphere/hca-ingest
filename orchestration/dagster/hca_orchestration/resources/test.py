@@ -22,7 +22,7 @@ def local_storage_client(init_context):
 
     class LocalStorageClient:
         def list_blobs(self, bucket_name, prefix):
-            for i in range(0, 10):
+            for _ in range(0, 10):
                 yield MockBlob()
 
     return LocalStorageClient()
