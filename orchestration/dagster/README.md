@@ -1,18 +1,18 @@
-# POC Notes
+# Notes
 
-This is a proof-of-concept demonstrating how Dagster might be introduced
+This is an initial introduction of [Dagster](https://dagster.io)
 into our codebase for workflow orchestration. This document captures notes, 
 todos and anything else we bump into as we test out this technology.
 
 ## Running
 We're using poetry:
-* from the `dagster_poc` dir, run `poetry install`
-* Run dagit and our toy pipeline via `poetry run dagit  -f hca_proto/pipelines.py`
+* from the `dagster` dir, run `poetry install`
+* Run dagit and our toy pipeline via `poetry run dagit  -f hca_orchestration/pipelines.py`
 
-The `stage_data` pipeline is being build to mimic our current HCA `stage_data` pipeline.
+The `stage_data` pipeline is being built to mimic our current HCA `stage_data` pipeline.
 
-The `pre_process_metadata` solid kicks off a k8s job. Make sure you have a k8s setup locally
-(via Docker), and that you have an `hca` namespace setup.
+The `pre_process_metadata` solid kicks off a Beam job, either locally or in GCP depending
+on which Dagster mode you're running in. 
 
 ## Deployment notes
 These are WIP steps + notes to getting code deployed.

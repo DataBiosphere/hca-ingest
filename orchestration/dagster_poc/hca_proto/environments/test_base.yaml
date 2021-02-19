@@ -1,9 +1,0 @@
-solids:
-  clear_staging_dir:
-    config:
-      staging_bucket_name: example_staging_bucket_name
-      staging_blob_name: example_staging_blob_name
-  pre_process_metadata:
-    config:
-      input_prefix: example_input_prefix
-      output_prefix: example_output_prefix
