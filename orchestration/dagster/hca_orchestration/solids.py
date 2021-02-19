@@ -59,7 +59,7 @@ def pre_process_metadata(context) -> Nothing:
 )
 def submit_file_ingest(context) -> Nothing:
     """
-    This will submits a dataset for ingestion to the data repo
+    This will submit a dataset for ingestion to the data repo
     TODO This is a noop for now
     """
     datasets = context.resources.data_repo_client.enumerate_datasets()
