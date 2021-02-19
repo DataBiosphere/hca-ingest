@@ -83,6 +83,7 @@ spec:
           {{- with .Values.dataflow }}
           - --project={{ .project }}
           - --region={{ .region }}
+          - --jobName=hca-stage-metadata-{{ $stagingPrefix }}
           - --tempLocation=gs://{{ .tmpBucketName }}/dataflow
           - --subnetwork=regions/{{ .region }}/subnetworks/{{ .subnetName }}
           - --serviceAccount={{ .workerAccount }}
