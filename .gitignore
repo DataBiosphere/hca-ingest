@@ -7,3 +7,5 @@ project/metals.sbt
 Chart.lock
 charts/
 logs/errors.log
+__pycache__
+poetry.lock
