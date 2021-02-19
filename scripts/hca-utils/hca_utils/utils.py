@@ -1,5 +1,6 @@
 import csv
 import os
+import logging
 from requests.exceptions import HTTPError
 from typing import Set
 import urllib.parse
@@ -11,6 +12,8 @@ from requests_cache.core import CachedSession
 
 
 class HcaUtils:
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
     def __init__(self, environment: str, project: str, dataset: str):
         self.environment = environment
 
@@ -147,7 +150,7 @@ class HcaUtils:
         blob.upload_from_file(local_file)
 
         filepath = f"gs://{self.bucket}/{target_filename}"
-        print(f"Put a soft-delete file here: {filepath}")
+        logging.info(f"Put a soft-delete file here: {filepath}")
 
         return filepath
 
@@ -267,10 +270,10 @@ class HcaUtils:
         Check and print the number of duplicates and null file references in all tables in the dataset.
         :return:
         """
-        print("Processing...")
+        logging.info("Processing...")
         self.process_duplicates()
         self.process_null_file_refs()
-        print("Finished.")
+        logging.info("Finished.")
 
     def remove_all(self):
         """
@@ -278,10 +281,10 @@ class HcaUtils:
         delete the problematic rows.
         :return:
         """
-        print("Processing, deleting as we find anything...")
+        logging.info("Processing, deleting as we find anything...")
         self.process_duplicates(soft_delete=True)
         self.process_null_file_refs(soft_delete=True)
-        print("Finished.")
+        logging.info("Finished.")
 
     def _process_rows(self, get_table_names, get_rids, soft_delete: bool, issue: str):
         """
@@ -295,7 +298,7 @@ class HcaUtils:
         for table_name in table_names:
             rids_to_process = get_rids(table_name)
             if len(rids_to_process) > 0:
-                print(f"{table_name} has {len(rids_to_process)} rows to soft delete due to {issue}")
+                logging.info(f"{table_name} has {len(rids_to_process)} rows to soft delete due to {issue}")
                 if soft_delete:
                     local_filename = f"{os.getcwd()}/{table_name}.csv"
                     try:
@@ -306,7 +309,7 @@ class HcaUtils:
                         with open(local_filename, mode="rb") as rf:
                             remote_file_path = self.put_csv_in_bucket(local_file=rf, target_table=table_name)
                             job_id = self.submit_soft_delete(table_name, remote_file_path)
-                            print(f"Soft delete job for table {table_name} running, job id of: {job_id}")
+                            logging.info(f"Soft delete job for table {table_name} running, job id of: {job_id}")
                     finally:
                         # delete file
                         os.remove(local_filename)
