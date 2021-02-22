@@ -45,11 +45,6 @@ def pre_process_metadata(context) -> Nothing:
     input_prefix = context.solid_config["input_prefix"]
     output_prefix = context.solid_config["output_prefix"]
 
-    yield ExpectationResult(
-        success=(input_prefix != output_prefix),
-        label="input_prefix_ne_output_prefix",
-        description="Check that input prefix differs from output prefix"
-    )
     context.resources.beam_runner.run("pre-process-metadata", input_prefix, output_prefix, context)
 
 
