@@ -83,7 +83,7 @@ To push metadata into the TDR, we follow a common pattern per-table:
 The templates used to run these steps are generic, and abstracted across ingest projects.
 We had to make two additions to these templates to support the HCA use-case:
 1. To support importing from multiple transient staging areas, none of which contain the entirety
-   of HCA metdata, we added the ability to compute an "upsert" diff instead of a full diff, only
+   of HCA metadata, we added the ability to compute an "upsert" diff instead of a full diff, only
    producing soft-delete IDs for updates
 2. To prevent re-ingestion of soft-deleted rows, we added the ability to diff against the "raw"
    TDR table instead of the live view
