@@ -1,4 +1,4 @@
-from dagster import solid, Nothing, InputDefinition, ExpectationResult, String
+from dagster import solid, Nothing, InputDefinition, String
 
 STAGING_BUCKET_NAME = "staging_bucket_name"
 STAGING_PREFIX_NAME = "staging_prefix_name"
