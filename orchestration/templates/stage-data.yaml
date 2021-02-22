@@ -28,17 +28,9 @@ spec:
                 - name: gcs-prefix
                   value: {{ $stagingPrefix | quote }}
 
-          # escape the staging prefix to be valid for use in the dataflow job name
-          - name: kebabify-staging-prefix
-            template: kebabify-string
-            arguments:
-              parameters:
-                - name: unkebabed-string
-                  value: {{ $stagingPrefix | quote }}
-
           # Pre-process the metadata found in a source bucket
           - name: pre-process-metadata
-            dependencies: [clear-staging-dir, kebabify-staging-prefix]
+            dependencies: [clear-staging-dir]
             template: run-dataflow
             arguments:
               parameters:
@@ -48,25 +40,8 @@ spec:
                   value: {{ $inputPrefix | quote }}
                 - name: staging-bucket-prefix
                   value: {{ $stagingPrefix | quote }}
-                - name: kebab-escaped-staging-bucket-prefix
-                  value: {{ `"{{tasks.kebabify-staging-prefix.outputs.result}}"` }}
 
           {{- $datasetName := printf "%s_%s" .Values.bigquery.stagingData.datasetPrefix $stagingPrefix }}
-
-    ##
-    ## Escape a string to kebab case (alphanumeric + dashes) for use in dataflow job names
-    ##
-    - name: kebabify-string
-      inputs:
-        parameters:
-          name: unkebabed-string
-          {{- $unkebabedString := "{{inputs.parameters.unkebabed-string}}" }}
-      script:
-        image: debian:9.4
-        command: [bash]
-        # first replacement replaces any non-alphanumeric characters with dashes, sed removes any trailing dashes
-        source: |
-          unkebabed="{{ $unkebabedString }}"; echo "${unkebabed//[^a-zA-Z0-9]/-}" | sed -E "s/-+$//"
 
     ##
     ## Delete all the files under a prefix in GCS.
@@ -97,8 +72,6 @@ spec:
           {{- $sourcePrefix := "{{inputs.parameters.source-bucket-prefix}}" }}
           - name: staging-bucket-prefix
           {{- $stagingPrefix := "{{inputs.parameters.staging-bucket-prefix}}" }}
-          - name: kebab-escaped-staging-bucket-prefix
-          {{- $kebabStagingPrefix := "{{inputs.parameters.kebab-escaped-staging-bucket-prefix}}" }}
       container:
         {{- $version := default "latest" .Chart.AppVersion }}
         image: us.gcr.io/broad-dsp-gcr-public/hca-transformation-pipeline:{{ $version }}
@@ -110,7 +83,7 @@ spec:
           {{- with .Values.dataflow }}
           - --project={{ .project }}
           - --region={{ .region }}
-          - --jobName=hca-stage-metadata-{{ $kebabStagingPrefix }}
+          - --jobName=hca-stage-metadata-{{- regexReplaceAll "[^-a-z0-9]+" $stagingPrefix "-" -}}
           - --tempLocation=gs://{{ .tmpBucketName }}/dataflow
           - --subnetwork=regions/{{ .region }}/subnetworks/{{ .subnetName }}
           - --serviceAccount={{ .workerAccount }}
