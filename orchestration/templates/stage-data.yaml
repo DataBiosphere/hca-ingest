@@ -59,7 +59,7 @@ spec:
     - name: kebabify-string
       inputs:
         parameters:
-          name: unkebabed-string
+          - name: unkebabed-string
           {{- $unkebabedString := "{{inputs.parameters.unkebabed-string}}" }}
       script:
         image: debian:9.4
