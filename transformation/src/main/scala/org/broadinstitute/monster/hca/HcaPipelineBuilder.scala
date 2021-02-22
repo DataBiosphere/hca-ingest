@@ -225,13 +225,13 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   ): (String, Msg) = {
     val targetPath = descriptor
       .read[String]("file_name")
-    val contentHash = descriptor
-      .read[String]("crc32c")
+    val contentId = descriptor
+      .read[String]("file_id")
 
-    contentHash -> Obj(
+    contentId -> Obj(
       Str("source_path") -> Str(s"$inputPrefix/data/$targetPath"),
       Str("target_path") -> Str(
-        s"/$contentHash/${targetPath.substring(targetPath.lastIndexOf("/") + 1)}"
+        s"/$contentId/${targetPath.substring(targetPath.lastIndexOf("/") + 1)}"
       )
     )
   }

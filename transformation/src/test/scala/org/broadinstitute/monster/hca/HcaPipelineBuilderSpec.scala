@@ -182,19 +182,19 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
   }
 
   it should "correctly generate file ingest requests" in {
-    val exampleHash = "54321zyx"
+    val exampleId = "my-file-id"
     val exampleDescriptor = JsonParser.parseEncodedJson(
       json = s"""
                 | {
                 |    "file_name": "a-directory/sub_directory/file-id_file-version_filename.json",
-                |    "file_id": "my-file-id",
+                |    "file_id": "$exampleId",
                 |    "file_version": "my-file-version",
-                |    "crc32c": "$exampleHash",
+                |    "crc32c": "54321zyx",
                 |    "schema_type": "file_descriptor"
                 | }
                 |""".stripMargin
     )
-    val (actualHash, actualOutput) = HcaPipelineBuilder
+    val (actualId, actualOutput) = HcaPipelineBuilder
       .generateFileIngestRequest(
         descriptor = exampleDescriptor,
         inputPrefix = "some/local/directory"
@@ -204,12 +204,12 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
         """
           | {
           |   "source_path": "some/local/directory/data/a-directory/sub_directory/file-id_file-version_filename.json",
-          |   "target_path": "/54321zyx/file-id_file-version_filename.json"
+          |   "target_path": "/my-file-id/file-id_file-version_filename.json"
           | }
           |""".stripMargin
     )
 
-    actualHash shouldBe exampleHash
+    actualId shouldBe exampleId
     actualOutput shouldBe expectedOutput
   }
 
