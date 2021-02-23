@@ -7,6 +7,8 @@ repositories:
 
 # helm releases to be deployed
 releases:
+  # sets up a pod security policy for the given service account
+  # (required by our org's broader security policy)
   - name: monster-psp    # release name
     namespace: dagster   # target namespace
     chart: datarepo-helm/serviceaccount-psp   # chart name
