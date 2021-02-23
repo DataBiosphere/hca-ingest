@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "dagster_poc"
+name = "dagster_orchestration"
 version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
