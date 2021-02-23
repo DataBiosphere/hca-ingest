@@ -1,4 +1,5 @@
 from dagster import solid, Nothing, InputDefinition, String
+from hca_utils.utils import HcaUtils
 
 STAGING_BUCKET_NAME = "staging_bucket_name"
 STAGING_PREFIX_NAME = "staging_prefix_name"
@@ -59,3 +60,16 @@ def submit_file_ingest(context) -> Nothing:
     """
     datasets = context.resources.data_repo_client.enumerate_datasets()
     context.log.debug(f"Enumerate found {datasets.total} datasets in the repo")
+
+
+@solid(
+    input_defs=[InputDefinition(name="google_project_name", dagster_type=str),
+                InputDefinition(name="dataset_name", dagster_type=str)]
+)
+def post_import_validate(context, google_project_name, dataset_name) -> Nothing:
+    """
+    TODO docstring
+    """
+    # TODO derive env from mode? might need to add some no-op thing for test
+    validator = HcaUtils("dev", google_project_name, dataset_name)
+    validator.check_for_all()
