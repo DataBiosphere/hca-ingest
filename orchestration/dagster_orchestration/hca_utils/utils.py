@@ -1,6 +1,7 @@
 import csv
 import os
 import logging
+from requests import Session
 from requests.exceptions import HTTPError
 from typing import Set
 import urllib.parse
@@ -8,7 +9,7 @@ import urllib.parse
 import google.auth
 from google.auth.transport.requests import AuthorizedSession
 from google.cloud import bigquery, storage
-from requests_cache.core import CachedSession
+# from requests_cache.core import CachedSession
 
 
 class HcaUtils:
@@ -178,7 +179,7 @@ class HcaUtils:
             return out
 
         url = f"{self.base_url}/v2/api-docs"
-        response = CachedSession().get(url=url)
+        response = Session().get(url=url)
         paths = response.json()["paths"]
 
         endpoint_map = create_map(paths)
