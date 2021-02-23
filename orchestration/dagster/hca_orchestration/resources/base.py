@@ -86,7 +86,7 @@ class DataflowBeamRunner:
         job = self.dispatch_k8s_job(self.namespace, image_name, job_name, args, context)
         context.log.info(f"Dataflow job started")
 
-        self.get_job_status(job.metadata.name, self.namespace)
+        DataflowBeamRunner.get_job_status(job.metadata.name, self.namespace)
         client = DagsterKubernetesClient.production_client()
         client.wait_for_job_success(job.metadata.name, self.namespace)
 
