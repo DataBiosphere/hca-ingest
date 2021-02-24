@@ -63,7 +63,7 @@ def submit_file_ingest(context) -> Nothing:
 
 
 @solid(
-    config_schema={"gcp_env": Field(str, is_required=False, default_value="dev")},
+    config_schema={"gcp_env": String},
     input_defs=[InputDefinition(name="google_project_name", dagster_type=str),
                 InputDefinition(name="dataset_name", dagster_type=str)]
 )
