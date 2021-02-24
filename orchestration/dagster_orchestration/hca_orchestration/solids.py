@@ -1,4 +1,4 @@
-from dagster import solid, Nothing, InputDefinition, String
+from dagster import solid, Nothing, InputDefinition, String, Field
 from hca_utils.utils import HcaUtils
 
 STAGING_BUCKET_NAME = "staging_bucket_name"
@@ -63,13 +63,13 @@ def submit_file_ingest(context) -> Nothing:
 
 
 @solid(
+    config_schema={"gcp_env": Field(str, is_required=False, default_value="dev")},
     input_defs=[InputDefinition(name="google_project_name", dagster_type=str),
                 InputDefinition(name="dataset_name", dagster_type=str)]
 )
 def post_import_validate(context, google_project_name, dataset_name) -> Nothing:
     """
-    TODO docstring
+    Checks if the target dataset has any rows with duplicate IDs or null file references.
     """
-    # TODO derive env from mode? might need to add some no-op thing for test
-    validator = HcaUtils("dev", google_project_name, dataset_name)
+    validator = HcaUtils(context.solid_config["gcp_env"], google_project_name, dataset_name)
     validator.check_for_all()
