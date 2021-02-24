@@ -11,9 +11,6 @@ from google.auth.transport.requests import AuthorizedSession
 from google.cloud import bigquery, storage
 
 
-# from requests_cache.core import CachedSession
-
-
 class HcaUtils:
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
