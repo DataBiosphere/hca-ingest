@@ -322,5 +322,5 @@ class HcaUtils:
                     finally:
                         # delete file
                         os.remove(local_filename)
-                problem_count += rids_to_process
+                problem_count += len(rids_to_process)
         return problem_count
