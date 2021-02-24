@@ -9,6 +9,8 @@ import urllib.parse
 import google.auth
 from google.auth.transport.requests import AuthorizedSession
 from google.cloud import bigquery, storage
+
+
 # from requests_cache.core import CachedSession
 
 
@@ -162,6 +164,7 @@ class HcaUtils:
         :param endpoint: The endpoint name to get information for.
         :return: A dictionary containing the endpoint's method, path, and parameters.
         """
+
         def create_map(paths):
             result_map = {}
             for path, methods in paths.items():
@@ -256,7 +259,8 @@ class HcaUtils:
         Check and print the number of duplicates for each table in the dataset.
         :return:
         """
-        self._process_rows(self.get_all_table_names, self.get_duplicates, soft_delete=soft_delete, issue="duplicate rows")
+        return self._process_rows(self.get_all_table_names, self.get_duplicates, soft_delete=soft_delete,
+                                  issue="duplicate rows")
 
     def process_null_file_refs(self, soft_delete: bool = False):
         """
@@ -264,7 +268,8 @@ class HcaUtils:
         column.
         :return:
         """
-        self._process_rows(self.get_file_table_names, self.get_null_filerefs, soft_delete=soft_delete, issue="null file refs")
+        return self._process_rows(self.get_file_table_names, self.get_null_filerefs, soft_delete=soft_delete,
+                                  issue="null file refs")
 
     def check_for_all(self):
         """
@@ -272,9 +277,10 @@ class HcaUtils:
         :return:
         """
         logging.info("Processing...")
-        self.process_duplicates()
-        self.process_null_file_refs()
+        duplicate_count = self.process_duplicates()
+        null_file_ref_count = self.process_null_file_refs()
         logging.info("Finished.")
+        return duplicate_count + null_file_ref_count
 
     def remove_all(self):
         """
@@ -283,11 +289,12 @@ class HcaUtils:
         :return:
         """
         logging.info("Processing, deleting as we find anything...")
-        self.process_duplicates(soft_delete=True)
-        self.process_null_file_refs(soft_delete=True)
+        duplicate_count = self.process_duplicates(soft_delete=True)
+        null_file_ref_count = self.process_null_file_refs(soft_delete=True)
         logging.info("Finished.")
+        return duplicate_count + null_file_ref_count
 
-    def _process_rows(self, get_table_names, get_rids, soft_delete: bool, issue: str):
+    def _process_rows(self, get_table_names, get_rids, soft_delete: bool, issue: str) -> int:
         """
         Perform a check or soft deletion for duplicates or null file references.
         :param get_table_names: A function that returns a set of table names.
@@ -295,6 +302,7 @@ class HcaUtils:
         :param soft_delete: A flag to indicate whether to just check and print, or to soft delete as well.
         :return:
         """
+        problem_count = 0
         table_names = get_table_names()
         for table_name in table_names:
             rids_to_process = get_rids(table_name)
@@ -314,3 +322,5 @@ class HcaUtils:
                     finally:
                         # delete file
                         os.remove(local_filename)
+                problem_count += rids_to_process
+        return problem_count

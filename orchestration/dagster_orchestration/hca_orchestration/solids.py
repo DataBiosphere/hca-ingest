@@ -67,9 +67,9 @@ def submit_file_ingest(context) -> Nothing:
     input_defs=[InputDefinition(name="google_project_name", dagster_type=str),
                 InputDefinition(name="dataset_name", dagster_type=str)]
 )
-def post_import_validate(context, google_project_name, dataset_name) -> Nothing:
+def post_import_validate(context, google_project_name, dataset_name) -> int:
     """
     Checks if the target dataset has any rows with duplicate IDs or null file references.
     """
     validator = HcaUtils(context.solid_config["gcp_env"], google_project_name, dataset_name)
-    validator.check_for_all()
+    return validator.check_for_all()

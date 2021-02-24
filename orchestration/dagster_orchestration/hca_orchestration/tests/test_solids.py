@@ -10,5 +10,7 @@ class SolidsTestCase(unittest.TestCase):
         """
         TODO
         """
-        result = execute_solid(post_import_validate, input_values={"google_project_name": "broad-jade-dev-data", "dataset_name": "hca_dev_20201217_test4"})
+        result = execute_solid(post_import_validate, input_values={"google_project_name": "broad-jade-dev-data",
+                                                                   "dataset_name": "hca_dev_20201217_test4"})
         self.assertTrue(result.success)
+        self.assertEqual(0, result.output_value())
