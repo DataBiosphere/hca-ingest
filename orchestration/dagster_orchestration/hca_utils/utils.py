@@ -1,3 +1,4 @@
+from collections import namedtuple
 import csv
 import os
 import logging
@@ -9,6 +10,9 @@ import urllib.parse
 import google.auth
 from google.auth.transport.requests import AuthorizedSession
 from google.cloud import bigquery, storage
+
+
+ProblemCount = namedtuple("ProblemCount", ["duplicates", "null_file_refs"])
 
 
 class HcaUtils:
@@ -277,7 +281,7 @@ class HcaUtils:
         duplicate_count = self.process_duplicates()
         null_file_ref_count = self.process_null_file_refs()
         logging.info("Finished.")
-        return duplicate_count + null_file_ref_count
+        return ProblemCount(duplicates=duplicate_count, null_file_refs=null_file_ref_count)
 
     def remove_all(self):
         """
@@ -289,7 +293,7 @@ class HcaUtils:
         duplicate_count = self.process_duplicates(soft_delete=True)
         null_file_ref_count = self.process_null_file_refs(soft_delete=True)
         logging.info("Finished.")
-        return duplicate_count + null_file_ref_count
+        return ProblemCount(duplicates=duplicate_count, null_file_refs=null_file_ref_count)
 
     def _process_rows(self, get_table_names, get_rids, soft_delete: bool, issue: str) -> int:
         """

@@ -1,8 +1,14 @@
-from dagster import solid, Nothing, InputDefinition, String, Field
-from hca_utils.utils import HcaUtils
+from dagster import solid, Nothing, InputDefinition, String, DagsterType
+from hca_utils.utils import HcaUtils, ProblemCount
 
 STAGING_BUCKET_NAME = "staging_bucket_name"
 STAGING_PREFIX_NAME = "staging_prefix_name"
+
+DagsterProblemCount = DagsterType(
+    name="DagsterProblemCount",
+    type_check_fn=lambda _, value: isinstance(value, ProblemCount),
+    description="A simple named tuple to represent the different types of issues present from the post process validation.",
+)
 
 
 @solid(
@@ -67,7 +73,7 @@ def submit_file_ingest(context) -> Nothing:
     input_defs=[InputDefinition(name="google_project_name", dagster_type=str),
                 InputDefinition(name="dataset_name", dagster_type=str)]
 )
-def post_import_validate(context, google_project_name, dataset_name) -> int:
+def post_import_validate(context, google_project_name, dataset_name) -> DagsterProblemCount:
     """
     Checks if the target dataset has any rows with duplicate IDs or null file references.
     """
