@@ -25,6 +25,8 @@ def hca_orchestrationtype():
     return [stage_data]
 
 
-@pipeline
+@pipeline(
+    mode_defs=[prod_mode, local_mode, test_mode]
+)
 def validate_egress():
     post_import_validate()
