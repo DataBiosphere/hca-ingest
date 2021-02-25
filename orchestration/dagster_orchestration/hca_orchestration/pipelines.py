@@ -1,7 +1,7 @@
 from dagster import pipeline, repository
 
 from hca_orchestration.resources.modes import prod_mode, local_mode, test_mode
-from hca_orchestration.solids import clear_staging_dir, pre_process_metadata, submit_file_ingest
+from hca_orchestration.solids import clear_staging_dir, pre_process_metadata, submit_file_ingest, post_import_validate
 
 
 @pipeline(
@@ -23,3 +23,8 @@ def stage_data():
 @repository
 def hca_orchestrationtype():
     return [stage_data]
+
+
+@pipeline
+def validate_egress():
+    post_import_validate()
