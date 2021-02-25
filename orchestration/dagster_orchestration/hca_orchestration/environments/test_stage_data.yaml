@@ -7,9 +7,3 @@ solids:
     inputs:
       input_prefix: example_input_prefix
       output_prefix: example_output_prefix
-  post_import_validate:
-    inputs:
-      google_project_name: fake-google-project
-      dataset_name: hca_aeiou
-    config:
-      gcp_env: test

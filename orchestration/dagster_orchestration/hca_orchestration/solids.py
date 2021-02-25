@@ -1,4 +1,4 @@
-from dagster import solid, Nothing, String, DagsterType
+from dagster import solid, InputDefinition, Nothing, String, DagsterType
 from hca_utils.utils import HcaUtils, ProblemCount
 
 DagsterProblemCount = DagsterType(
@@ -27,7 +27,12 @@ def clear_staging_dir(context, staging_bucket_name: str, staging_prefix_name: st
 
 
 @solid(
-    required_resource_keys={"beam_runner"}
+    required_resource_keys={"beam_runner"},
+    input_defs=[
+        InputDefinition("start", Nothing),
+        InputDefinition("input_prefix", String),
+        InputDefinition("output_prefix", String),
+    ]
 )
 def pre_process_metadata(context, input_prefix: str, output_prefix: str) -> Nothing:
     """
@@ -39,7 +44,9 @@ def pre_process_metadata(context, input_prefix: str, output_prefix: str) -> Noth
 
 
 @solid(
-    required_resource_keys={"data_repo_client"}
+    required_resource_keys={"data_repo_client"},
+    input_defs=[
+        InputDefinition("start", Nothing)]
 )
 def submit_file_ingest(context) -> Nothing:
     """

@@ -8,7 +8,7 @@ from hca_orchestration.solids import clear_staging_dir, pre_process_metadata, su
     mode_defs=[prod_mode, local_mode, test_mode]
 )
 def stage_data():
-    middle = pre_process_metadata(clear_staging_dir())
+    middle = pre_process_metadata(start=clear_staging_dir())
     entities = ["analysis_file", "analysis_process", "analysis_protocol"]
 
     outs = []
