@@ -27,10 +27,19 @@ class SolidsTestCase(unittest.TestCase):
         mock_file_table_names.return_value = fake_file_table_names
         mock_null_filerefs.return_value = fake_null_fileref_ids
 
-        result = execute_solid(post_import_validate,
-                               input_values={"google_project_name": "fakeproj",
-                                             "dataset_name": "fakedataset"},
-                               run_config={"solids": {"post_import_validate": {"config": {"gcp_env": "dev"}}}})
+        solid_config = {
+            "solids": {
+                "post_import_validate": {
+                    "config": {
+                        "gcp_env": "dev",
+                        "google_project_name": "fakeproj",
+                        "dataset_name": "fakedataset",
+                    }
+                }
+            }
+        }
+
+        result = execute_solid(post_import_validate, run_config=solid_config)
         self.assertTrue(result.success)
         expected_duplicate_issues = len(fake_table_names) * len(fake_duplicate_ids)
         expected_file_ref_issues = len(fake_file_table_names) * len(fake_null_fileref_ids)

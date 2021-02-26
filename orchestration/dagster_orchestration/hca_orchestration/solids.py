@@ -9,13 +9,20 @@ DagsterProblemCount = DagsterType(
 
 
 @solid(
-    required_resource_keys={"storage_client"}
+    required_resource_keys={"storage_client"},
+    config_schema={
+        "staging_bucket_name": String,
+        "staging_prefix_name": String,
+    },
 )
-def clear_staging_dir(context, staging_bucket_name: str, staging_prefix_name: str) -> int:
+def clear_staging_dir(context) -> int:
     """
     Given a staging bucket + prefix, deletes all blobs present at that path
     :return: Number of deletions
     """
+
+    staging_bucket_name = context.solid_config["staging_bucket_name"]
+    staging_prefix_name = context.solid_config["staging_prefix_name"]
 
     blobs = context.resources.storage_client.list_blobs(staging_bucket_name, prefix=f"{staging_prefix_name}/")
     deletions_count = 0
@@ -28,25 +35,29 @@ def clear_staging_dir(context, staging_bucket_name: str, staging_prefix_name: st
 
 @solid(
     required_resource_keys={"beam_runner"},
-    input_defs=[
-        InputDefinition("start", Nothing),
-        InputDefinition("input_prefix", String),
-        InputDefinition("output_prefix", String),
-    ]
+    config_schema={
+        "input_prefix": String,
+        "output_prefix": String,
+    },
+    input_defs=[InputDefinition("start", Nothing)],
 )
-def pre_process_metadata(context, input_prefix: str, output_prefix: str) -> Nothing:
+def pre_process_metadata(context) -> Nothing:
     """
     Runs the Beam hca transformation pipeline flow over the given input prefix
     """
     context.log.info("--pre_process_metadata")
 
-    context.resources.beam_runner.run("pre-process-metadata", input_prefix, output_prefix, context)
+    context.resources.beam_runner.run(
+        "pre-process-metadata",
+        context.solid_config["input_prefix"],
+        context.solid_config["output_prefix"],
+        context
+    )
 
 
 @solid(
     required_resource_keys={"data_repo_client"},
-    input_defs=[
-        InputDefinition("start", Nothing)]
+    input_defs=[InputDefinition("start", Nothing)]
 )
 def submit_file_ingest(context) -> Nothing:
     """
@@ -58,11 +69,15 @@ def submit_file_ingest(context) -> Nothing:
 
 
 @solid(
-    config_schema={"gcp_env": String}
+    config_schema={
+        "gcp_env": String,
+        "google_project_name": String,
+        "dataset_name": String,
+    }
 )
-def post_import_validate(context, google_project_name: str, dataset_name: str) -> DagsterProblemCount:
+def post_import_validate(context) -> DagsterProblemCount:
     """
     Checks if the target dataset has any rows with duplicate IDs or null file references.
     """
-    validator = HcaUtils(context.solid_config["gcp_env"], google_project_name, dataset_name)
+    validator = HcaUtils(context.solid_config["gcp_env"], context.solid_config["google_project_name"], context.solid_config["dataset_name"])
     return validator.check_for_all()

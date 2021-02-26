@@ -1,7 +1,6 @@
 solids:
   post_import_validate:
-    inputs:
-      google_project_name: fake-google-project
-      dataset_name: hca_aeiou
     config:
       gcp_env: dev
+      google_project_name: fake-google-project
+      dataset_name: hca_aeiou
