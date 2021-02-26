@@ -258,7 +258,7 @@ class HcaUtils:
     def process_duplicates(self, soft_delete: bool = False):
         """
         Check and print the number of duplicates for each table in the dataset.
-        :return:
+        :return: Number of duplicate rows to soft delete
         """
         return self._process_rows(self.get_all_table_names, self.get_duplicates, soft_delete=soft_delete,
                                   issue="duplicate rows")
@@ -267,7 +267,7 @@ class HcaUtils:
         """
         Check/remove and print the number of null file references for each table in the dataset that has a `file_id`
         column.
-        :return:
+        :return: Number of rows with null file refs to soft delete
         """
         return self._process_rows(self.get_file_table_names, self.get_null_filerefs, soft_delete=soft_delete,
                                   issue="null file refs")
@@ -275,7 +275,7 @@ class HcaUtils:
     def check_for_all(self):
         """
         Check and print the number of duplicates and null file references in all tables in the dataset.
-        :return:
+        :return: A named tuple with the counts of rows to soft delete
         """
         logging.info("Processing...")
         duplicate_count = self.process_duplicates()
@@ -287,7 +287,7 @@ class HcaUtils:
         """
         Check and print the number of duplicates and null file references for each table in the dataset, then soft
         delete the problematic rows.
-        :return:
+        :return: A named tuple with the counts of rows to soft delete
         """
         logging.info("Processing, deleting as we find anything...")
         duplicate_count = self.process_duplicates(soft_delete=True)
@@ -301,7 +301,7 @@ class HcaUtils:
         :param get_table_names: A function that returns a set of table names.
         :param get_rids: A function that returns a set of row ids to soft delete.
         :param soft_delete: A flag to indicate whether to just check and print, or to soft delete as well.
-        :return:
+        :return: The number of rows to soft delete
         """
         problem_count = 0
         table_names = get_table_names()
