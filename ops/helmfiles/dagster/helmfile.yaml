@@ -20,6 +20,7 @@ releases:
     namespace: dagster   # target namespace
     chart: dagster/dagster   # chart name
     missingFileHandler: Warn
+    version: ~0.10.7
     values:
       - rbacEnabled: true
       - postgresql:
