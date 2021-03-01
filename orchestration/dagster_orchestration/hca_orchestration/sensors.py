@@ -46,6 +46,7 @@ def postvalidate_on_import_complete(_):
                     "solids": {
                         "post_import_validate": {
                             "config": {
+                                "gcp_env": os.environ.get("HCA_GCP_ENV"),
                                 "google_project_name": os.environ.get("HCA_GOOGLE_PROJECT"),
                                 "dataset_name": workflow_params['data-repo-name'].removeprefix("datarepo_"),
                             }

@@ -7,3 +7,4 @@ data:
   # including the dagit ui server and any pipeline executors
   HCA_ARGO_URL: https://hca-argo.monster-prod.broadinstitute.org/
   HCA_GOOGLE_PROJECT: aaaaa
+  HCA_GCP_ENV: prod
