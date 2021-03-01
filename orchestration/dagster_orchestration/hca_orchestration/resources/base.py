@@ -161,7 +161,7 @@ def google_storage_client(init_context):
 def jade_data_repo_client(init_context):
     # create API client
     config = Configuration(host=init_context.resource_config["api_url"])
-    config.access_token = default_google_access_token
+    config.access_token = default_google_access_token()
     client = ApiClient(configuration=config)
     client.client_side_validation = False
 
