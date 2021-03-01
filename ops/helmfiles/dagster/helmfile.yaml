@@ -26,6 +26,9 @@ releases:
           serviceAccount:
             enabled: true
             name: monster-dagster
+      - dagit:
+          envConfigMaps:
+            - name: hca-dagster-{{ env "ENV" }}-config
       - userDeployments:
           # "user code" we deploy to dagster; these are dagster repositories of pipelines
           enabled: true
@@ -39,5 +42,17 @@ releases:
                 - "-f"
                 - "/hca_orchestration/pipelines.py"
               port: 3030
+              envConfigMaps:
+                - name: hca-dagster-{{ env "ENV" }}-config
+      - runLauncher:
+          config:
+            # k8s run launcher is the default, we'll need to change this bit if we switch to a
+            # different run launcher
+            k8sRunLauncher:
+              envConfigMaps:
+                - name: hca-dagster-{{ env "ENV" }}-config
+      - dagsterDaemon:
+          envConfigMaps:
+            - name: hca-dagster-{{ env "ENV" }}-config
 
 
