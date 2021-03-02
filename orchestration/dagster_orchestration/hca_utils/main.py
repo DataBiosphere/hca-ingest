@@ -29,7 +29,6 @@ def get_api_client(host: str):
     client = ApiClient(configuration=config)
     client.client_side_validation = False
 
-    # submit file ingest (for now just enumerate datasets or something to prove interaction works)
     return RepositoryApi(api_client=client)
 
 
