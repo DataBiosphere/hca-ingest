@@ -79,5 +79,6 @@ def post_import_validate(context) -> DagsterProblemCount:
     """
     Checks if the target dataset has any rows with duplicate IDs or null file references.
     """
-    validator = HcaUtils(context.solid_config["gcp_env"], context.solid_config["google_project_name"], context.solid_config["dataset_name"])
+    validator = HcaUtils(context.solid_config["gcp_env"], context.solid_config["google_project_name"],
+                         context.solid_config["dataset_name"], context.resources.data_repo_client)
     return validator.check_for_all()
