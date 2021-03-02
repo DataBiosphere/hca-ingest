@@ -175,17 +175,18 @@ class HcaUtils:
         """
         dataset_id = self.get_dataset_id()
 
-        req = DataDeletionRequest(delete_type="soft", spec_type="gcsFile", tables=[
-            {
-                "gcsFileSpec": {
-                    "fileType": "csv",
-                    "path": target_path
-                },
-                "tableName": target_table
-            }
-        ])
-
-        response = self.data_repo_client.apply_dataset_data_deletion(id=dataset_id, data_deletion_request=req)
+        response = self.data_repo_client.apply_dataset_data_deletion(id=dataset_id,
+                                                                     data_deletion_request=DataDeletionRequest(
+                                                                         delete_type="soft", spec_type="gcsFile",
+                                                                         tables=[
+                                                                             {
+                                                                                 "gcsFileSpec": {
+                                                                                     "fileType": "csv",
+                                                                                     "path": target_path
+                                                                                 },
+                                                                                 "tableName": target_table
+                                                                             }
+                                                                         ]))
 
         return response.json()["id"]
 

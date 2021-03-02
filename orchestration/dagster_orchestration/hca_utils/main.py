@@ -17,7 +17,7 @@ class DefaultHelpParser(argparse.ArgumentParser):
         sys.exit(2)
 
 
-def get_api_client(host: str):
+def get_api_client(host: str) -> RepositoryApi:
     # get token for jade, assumes application default credentials work for specified environment
     credentials, _ = google.auth.default()
     auth_req = Request()
