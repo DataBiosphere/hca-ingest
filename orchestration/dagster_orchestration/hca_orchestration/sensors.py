@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 from typing import List
 
@@ -5,6 +6,10 @@ from dagster import sensor, RunRequest, SkipReason
 
 from hca_orchestration.contrib.argo_workflows import ArgoArchivedWorkflowsClientMixin, ExtendedArgoWorkflow
 from hca_orchestration.resources.base import default_google_access_token
+
+
+# boundary before which we don't care about any workflows in argo
+ARGO_EPOCH = datetime(2021, 3, 1)
 
 
 class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClientMixin):
@@ -15,6 +20,7 @@ class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClientMixin):
             in self.list_archived_workflows()
             if workflow.metadata.name.startswith("import-hca-total")
             and workflow.status.phase == 'Succeeded'
+            and workflow.status.finished_at > ARGO_EPOCH
         ]
 
     def generate_run_request(self, workflow: ExtendedArgoWorkflow) -> RunRequest:
