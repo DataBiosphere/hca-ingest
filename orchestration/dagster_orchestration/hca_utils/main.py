@@ -7,6 +7,7 @@ from google.auth.transport.requests import Request
 
 from hca_utils import __version__ as hca_utils_version
 from .utils import HcaUtils
+from hca_orchestration.base import default_google_access_token
 
 
 class DefaultHelpParser(argparse.ArgumentParser):
@@ -18,13 +19,10 @@ class DefaultHelpParser(argparse.ArgumentParser):
 
 
 def get_api_client(host: str) -> RepositoryApi:
-    # get token for jade, assumes application default credentials work for specified environment
-    credentials, _ = google.auth.default()
-    credentials.refresh(Request())
 
     # create API client
     config = Configuration(host=host)
-    config.access_token = credentials.token
+    config.access_token = default_google_access_token()
     client = ApiClient(configuration=config)
     client.client_side_validation = False
 
