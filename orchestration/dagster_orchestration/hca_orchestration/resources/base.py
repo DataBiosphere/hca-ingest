@@ -16,8 +16,7 @@ POLLING_INTERVAL = 5  # seconds
 def default_google_access_token():
     # get token for google-based auth use, assumes application default credentials work for specified environment
     credentials, _ = google.auth.default()
-    auth_req = Request()
-    credentials.refresh(auth_req)
+    credentials.refresh(Request())
 
     return credentials.token
 
