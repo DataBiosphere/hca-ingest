@@ -2,15 +2,11 @@ from collections import namedtuple
 import csv
 import os
 import logging
-from requests import Session
-from requests.exceptions import HTTPError
 from typing import Set
-import urllib.parse
 
+from data_repo_client import RepositoryApi, DataDeletionRequest
 import google.auth
-from google.auth.transport.requests import AuthorizedSession
 from google.cloud import bigquery, storage
-
 
 ProblemCount = namedtuple("ProblemCount", ["duplicates", "null_file_refs"])
 
@@ -18,12 +14,14 @@ ProblemCount = namedtuple("ProblemCount", ["duplicates", "null_file_refs"])
 class HcaUtils:
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-    def __init__(self, environment: str, project: str, dataset: str):
+    def __init__(self, environment: str, project: str, dataset: str, data_repo_client: RepositoryApi):
         self.environment = environment
 
         self.project = project
 
         self.dataset = dataset
+
+        self.data_repo_client = data_repo_client
 
         self.filename_template = f"sd-{project}-{dataset}-{{table}}.csv"
 
@@ -159,72 +157,13 @@ class HcaUtils:
         return filepath
 
     # jade interactions
-    def _get_endpoint(self, endpoint: str):
-        """
-        Get relevant information, such as the HTTP method, the path, and parameters, for Jade API endpoints.
-        :param endpoint: The endpoint name to get information for.
-        :return: A dictionary containing the endpoint's method, path, and parameters.
-        """
-
-        def create_map(paths):
-            result_map = {}
-            for path, methods in paths.items():
-                for method, rest in methods.items():
-                    result_map.update(parse_data(method, rest, path))
-            return result_map
-
-        def parse_data(method, rest, path):
-            return {rest["operationId"]: {"method": method.upper(), "path": path, "params": get_params(rest)}}
-
-        def get_params(rest):
-            out = []
-            if "parameters" in rest:
-                out = [(param["name"], param["in"]) for param in rest["parameters"]]
-            return out
-
-        url = f"{self.base_url}/v2/api-docs"
-        response = Session().get(url=url)
-        paths = response.json()["paths"]
-
-        endpoint_map = create_map(paths)
-
-        try:
-            return endpoint_map[endpoint]
-        except KeyError:
-            raise KeyError(f"Endpoint named {endpoint} not found!")
-
-    def _hit_jade(self, endpoint, body=None, params=None, query=None):
-        """
-        A generic function for hitting the Jade API.
-        :param endpoint: The endpoint to interact with.
-        :param handle_ok: A function that handles the response from the server if the response is a 2xx code.
-        :param body: An optional body for the API request if needed.
-        :param params: Optional endpoint parameters (not query filters) for the API request if needed.
-        :param query: Optional query parameters for the API request if needed.
-        :return: The result of running handle_ok on the server's response, or an HTTPError.
-        """
-        ep_info = self._get_endpoint(endpoint)
-        url = f"{self.base_url}{ep_info['path']}"
-
-        if params:
-            url = url.format(**params)
-        if query:
-            url = f"{url}/?{urllib.parse.urlencode(query)}"
-
-        response = AuthorizedSession(self.gcp_creds).request(method=ep_info["method"], url=url, json=body)
-
-        if response.ok:
-            return response
-        else:
-            raise HTTPError(f"Bad response, got code of: {response.status_code} with response body {response.text}")
-
     def get_dataset_id(self) -> str:
         """
         Get the dataset ID of the provided dataset name.
         :return: The dataset id.
         """
 
-        response = self._hit_jade("enumerateDatasets", query={"filter": self.dataset})
+        response = self.data_repo_client.enumerate_datasets(filter=self.dataset)
         return response.json()["items"][0]["id"]
 
     def submit_soft_delete(self, target_table: str, target_path: str) -> str:
@@ -236,21 +175,19 @@ class HcaUtils:
         """
         dataset_id = self.get_dataset_id()
 
-        body = {
-            "deleteType": "soft",
-            "specType": "gcsFile",
-            "tables": [
-                {
-                    "gcsFileSpec": {
-                        "fileType": "csv",
-                        "path": target_path
-                    },
-                    "tableName": target_table
-                }
-            ]
-        }
-
-        response = self._hit_jade("applyDatasetDataDeletion", body=body, params={"id": dataset_id})
+        response = self.data_repo_client.apply_dataset_data_deletion(
+            id=dataset_id,
+            data_deletion_request=DataDeletionRequest(
+                delete_type="soft", spec_type="gcsFile",
+                tables=[
+                    {
+                        "gcsFileSpec": {
+                            "fileType": "csv",
+                            "path": target_path
+                        },
+                        "tableName": target_table
+                    }
+                ]))
 
         return response.json()["id"]
 

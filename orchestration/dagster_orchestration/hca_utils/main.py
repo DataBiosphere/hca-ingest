@@ -1,6 +1,10 @@
 import sys
 import argparse
 
+from data_repo_client import ApiClient, Configuration, RepositoryApi
+import google.auth
+from google.auth.transport.requests import Request
+
 from hca_utils import __version__ as hca_utils_version
 from .utils import HcaUtils
 
@@ -11,6 +15,20 @@ class DefaultHelpParser(argparse.ArgumentParser):
         sys.stderr.write(f'error: {message}\n')
         self.print_help()
         sys.exit(2)
+
+
+def get_api_client(host: str) -> RepositoryApi:
+    # get token for jade, assumes application default credentials work for specified environment
+    credentials, _ = google.auth.default()
+    credentials.refresh(Request())
+
+    # create API client
+    config = Configuration(host=host)
+    config.access_token = credentials.token
+    client = ApiClient(configuration=config)
+    client.client_side_validation = False
+
+    return RepositoryApi(api_client=client)
 
 
 def run(arguments=None):
@@ -30,13 +48,16 @@ def run(arguments=None):
         if args.project:
             parser.error("Do not specify a project when the environment is dev, there is only one project.")
         project = "broad-jade-dev-data"
+        host = "https://jade.datarepo-dev.broadinstitute.org/"
     else:
         project = args.project
+        host = "https://jade-terra.datarepo-prod.broadinstitute.org/"
 
     if not sys.argv[1:]:
         parser.error("No commands or arguments provided!")
 
-    hca = HcaUtils(environment=args.env, project=project, dataset=args.dataset)
+    hca = HcaUtils(environment=args.env, project=project, dataset=args.dataset,
+                   data_repo_client=get_api_client(host=host))
 
     if args.remove:
         hca.remove_all()
