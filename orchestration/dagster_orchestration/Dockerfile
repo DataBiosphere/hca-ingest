@@ -19,6 +19,7 @@ RUN \
         google-cloud-storage==1.33.0 \
         requests-cache==0.5.2 \
         data-repo-client==1.0.194.post5 \
+        argo-workflows==5.0.0 \
 # Cleanup
     &&  rm -rf /var \
     &&  rm -rf /root/.cache  \

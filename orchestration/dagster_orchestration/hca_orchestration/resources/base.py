@@ -13,6 +13,14 @@ ONE_DAY_IN_SECONDS = 86400  # seconds
 POLLING_INTERVAL = 5  # seconds
 
 
+def default_google_access_token():
+    # get token for google-based auth use, assumes application default credentials work for specified environment
+    credentials, _ = google.auth.default()
+    credentials.refresh(Request())
+
+    return credentials.token
+
+
 @resource({
     "working_dir": Field(StringSource)
 })
@@ -71,20 +79,20 @@ class DataflowBeamRunner:
             f"--inputPrefix={input_prefix}",
             f"--outputPrefix={output_prefix}",
             f"--project={self.project}",
-            f"--region=us-central1",
+            "--region=us-central1",
             f"--tempLocation={self.temp_location}",
             f"--subnetwork=regions/us-central1/subnetworks/{self.subnet_name}",
             f"--serviceAccount={self.service_account}",
-            f"--workerMachineType=n1-standard-4",
-            f"--autoscalingAlgorithm=THROUGHPUT_BASED",
-            f"--numWorkers=4",
-            f"--maxNumWorkers=16",
-            f"--experiments=shuffle_mode=service"
+            "--workerMachineType=n1-standard-4",
+            "--autoscalingAlgorithm=THROUGHPUT_BASED",
+            "--numWorkers=4",
+            "--maxNumWorkers=16",
+            "--experiments=shuffle_mode=service"
         ]
 
         image_name = f"{self.image_name}:{self.image_version}"  # {context.solid_config['version']}"
         job = self.dispatch_k8s_job(self.namespace, image_name, job_name, args, context)
-        context.log.info(f"Dataflow job started")
+        context.log.info("Dataflow job started")
 
         DataflowBeamRunner.get_job_status(job.metadata.name, self.namespace)
         client = DagsterKubernetesClient.production_client()
@@ -134,7 +142,7 @@ class DataflowBeamRunner:
         api_response = batch_v1.create_namespaced_job(
             body=job,
             namespace=namespace)
-        context.log.info(f"Job created. status='%s'" % str(api_response.status))
+        context.log.info(f"Job created. status='{str(api_response.status)}'")
 
         return api_response
 
@@ -150,14 +158,9 @@ def google_storage_client(init_context):
     "api_url": Field(StringSource)
 })
 def jade_data_repo_client(init_context):
-    # get token for jade, assumes application default credentials work for specified environment
-    credentials, _ = google.auth.default()
-    auth_req = Request()
-    credentials.refresh(auth_req)
-
     # create API client
     config = Configuration(host=init_context.resource_config["api_url"])
-    config.access_token = credentials.token
+    config.access_token = default_google_access_token()
     client = ApiClient(configuration=config)
     client.client_side_validation = False
 
