@@ -45,4 +45,4 @@ jobs:
         with:
           context: ./orchestration/dagster_orchestration
           push: true
-          tags: us.gcr.io/broad-dsp-monster-hca-dev/monster-dagster:latest
+          tags: us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:latest
