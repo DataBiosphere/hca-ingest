@@ -35,7 +35,7 @@ releases:
           deployments:
             - name: "monster-hca-ingest"
               image:
-                repository: "us.gcr.io/broad-dsp-monster-hca-dev/monster-dagster"
+                repository: "us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster"
                 tag: {{ env "GIT_SHORTHASH" }}
                 pullPolicy: Always
               dagsterApiGrpcArgs:
