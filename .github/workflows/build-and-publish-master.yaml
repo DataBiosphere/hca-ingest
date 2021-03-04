@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - master
-      - arh-poetry-docker-dspdc-1574
 jobs:
   master-ci:
     runs-on: ubuntu-latest
