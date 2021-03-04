@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - master
-      - arh-poetry-docker-dspdc-1574
 jobs:
   master-ci:
     runs-on: ubuntu-latest
@@ -40,7 +39,7 @@ jobs:
         run: gcloud auth configure-docker --quiet us.gcr.io
       - name: Push Scala Dataflow Docker image
         run: sbt publish
-      - name: Push Dagster User Code image
+      - name: Push Dagster User Code Docker image
         uses: docker/build-push-action@v2
         with:
           context: ./orchestration/dagster_orchestration
