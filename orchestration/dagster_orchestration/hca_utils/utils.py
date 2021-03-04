@@ -24,6 +24,13 @@ class HcaUtils:
 
         self.data_repo_client = data_repo_client
 
+        data_repo_profile_ids = {
+            "dev": "390e7a85-d47f-4531-b612-165fc977d3bd",
+            "prod": "db61c343-6dfe-4d14-84e9-60ddf97ea73f"
+        }
+
+        self.data_repo_profile_id = data_repo_profile_ids[environment]
+
         self.filename_template = f"sd-{project}-{dataset}-{{table}}.csv"
 
         self.bigquery_client = bigquery.Client(project=self.project)
@@ -199,13 +206,18 @@ class HcaUtils:
             optional_qualifier = f"_{optional_qualifier}"
         snapshot_name = f"{self.dataset}___{date_stamp}{optional_qualifier}"
 
+        reader_list = {
+            "dev": ["hca-snapshot-readers@dev.test.firecloud.org"],
+            "prod": ["hca-snapshot-readers@firecloud.org"]
+        }
+
         response = self.data_repo_client.create_snapshot(
             snapshot=SnapshotRequestModel(
                 name=snapshot_name,
-                profile_id="",  # TODO switches on env
+                profile_id=self.data_repo_profile_id,
                 description=f"Create snapshot {snapshot_name}",
                 contents=[SnapshotRequestContentsModel(dataset_name=self.dataset, mode="byFullView")],
-                readers=[]  # TODO switches on env
+                readers=reader_list[self.environment]
             )
         )
 
