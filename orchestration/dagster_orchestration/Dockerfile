@@ -14,8 +14,7 @@ ENV PYTHONFAULTHANDLER=1 \
 RUN pip install "poetry==$POETRY_VERSION"
 
 # ==> Add Dagster layer
-RUN apt-get update -yqq \
-    && apt-get install -yqq cron
+RUN apt-get update -yqq
 
 COPY pyproject.toml /
 
