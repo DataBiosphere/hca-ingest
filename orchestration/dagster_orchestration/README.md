@@ -24,6 +24,6 @@ deployment. This is how we enumerate the "deployables"; right now we have a sing
   monster-dagster image built by the above referenced image.
 * The dagster deployment is configured to always pull a specific tag for this image.
   On merge to master and after CI passes, a new image will be pushed to GCR tagged with the current SHA of `master`.
-  * Run `helmfile` against the new sha as well to update GKE: `ENV=dev GIT_SHORTHASH="$(git rev-parse --short HEAD)" helmfile apply"
+  * Run `helmfile` against the new sha as well to update GKE: `ENV=dev GIT_SHORTHASH="<the hash that was pushed to GCR>" helmfile apply"
   * GKE should pick up the updated image and deploy
 You must port forward to be able to access the `dagit` UI in our HCA GCP project: `kubectl port-forward --namespace dagster svc/monster-dagit 8080:80`
