@@ -1,10 +1,11 @@
 from collections import namedtuple
 import csv
-import os
+from datetime import datetime
 import logging
-from typing import Set
+import os
+from typing import Optional, Set
 
-from data_repo_client import RepositoryApi, DataDeletionRequest
+from data_repo_client import RepositoryApi, DataDeletionRequest, SnapshotRequestModel, SnapshotRequestContentsModel
 import google.auth
 from google.cloud import bigquery, storage
 
@@ -188,6 +189,25 @@ class HcaUtils:
                         "tableName": target_table
                     }
                 ]))
+
+        return response.json()["id"]
+
+    def submit_snapshot_request(self, optional_qualifier: Optional[str] = None) -> str:
+        date_stamp = str(datetime.today().date()).replace("-", "")
+        if optional_qualifier:
+            # prepend an underscore if this string is present
+            optional_qualifier = f"_{optional_qualifier}"
+        snapshot_name = f"{self.dataset}___{date_stamp}{optional_qualifier}"
+
+        response = self.data_repo_client.create_snapshot(
+            snapshot=SnapshotRequestModel(
+                name=snapshot_name,
+                profile_id="",  # TODO switches on env
+                description=f"Create snapshot {snapshot_name}",
+                contents=[SnapshotRequestContentsModel(dataset_name=self.dataset, mode="byFullView")],
+                readers=[]  # TODO switches on env
+            )
+        )
 
         return response.json()["id"]
 
