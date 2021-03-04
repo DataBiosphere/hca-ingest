@@ -43,7 +43,7 @@ def run(arguments=None):
                               action="store_true")
 
     parser_snapshot = subparsers.add_parser("snapshot", help="Command to create a snapshot for an HCA release")
-    parser_check.add_argument("-d", "--dataset", help="The Jade dataset to target", required=True)
+    parser_snapshot.add_argument("-d", "--dataset", help="The Jade dataset to target", required=True)
     parser_snapshot.add_argument("-q", "--qualifier", help="Optional qualifier to append to the snapshot name")
 
     args = parser.parse_args(arguments)
