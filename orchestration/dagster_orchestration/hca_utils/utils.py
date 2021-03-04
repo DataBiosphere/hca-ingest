@@ -15,7 +15,7 @@ ProblemCount = namedtuple("ProblemCount", ["duplicates", "null_file_refs"])
 class HcaUtils:
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-    def __init__(self, environment: str, project: str, dataset: str, data_repo_client: RepositoryApi):
+    def __init__(self, environment: str, project: Optional[str], dataset: str, data_repo_client: RepositoryApi):
         self.environment = environment
 
         self.project = project
@@ -33,7 +33,8 @@ class HcaUtils:
 
         self.filename_template = f"sd-{project}-{dataset}-{{table}}.csv"
 
-        self.bigquery_client = bigquery.Client(project=self.project)
+        if self.project:
+            self.bigquery_client = bigquery.Client(project=self.project)
 
         bucket_projects = {"prod": "mystical-slate-284720",
                            "dev": "broad-dsp-monster-hca-dev"}
@@ -221,7 +222,9 @@ class HcaUtils:
             )
         )
 
-        return response.json()["id"]
+        job_id = response.json()["id"]
+        logging.info(f"Snapshot creation job id: {job_id}")
+        return job_id
 
     # dataset-level checking and soft deleting
     def process_duplicates(self, soft_delete: bool = False):
