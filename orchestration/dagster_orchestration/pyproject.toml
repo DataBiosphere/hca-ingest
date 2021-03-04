@@ -22,5 +22,5 @@ pytest = "^6.2.1"
 checks = "hca_utils.main:run"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core=^1.1.5"]
 build-backend = "poetry.core.masonry.api"
