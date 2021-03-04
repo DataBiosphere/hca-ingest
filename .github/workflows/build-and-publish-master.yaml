@@ -20,15 +20,15 @@ jobs:
       - uses: olafurpg/setup-scala@v10
         with:
           java-version: graalvm@20.0.0
-      - name: Check formatting
+      - name: Check Scala formatting
         run: sbt scalafmtCheckAll
-      - name: Compile
+      - name: Scala Compile
         run: sbt Compile/compile Test/compile IntegrationTest/compile
-      - name: Test
+      - name: Scala Test
         run: sbt "set ThisBuild/coverageEnabled := true" test IntegrationTest/test coverageAggregate
       - name: DataflowCheck
         run: sbt "hca-transformation-pipeline/run --inputPrefix=gs://broad-dsp-monster-hca-dev-test-storage/inputs/Success --outputPrefix=gs://broad-dsp-monster-hca-dev-test-storage/outputs-to-overwrite --runner=DataflowRunner --project=broad-dsp-monster-hca-dev --region=us-central1 --tempLocation=gs://broad-dsp-monster-hca-dev-temp-storage/dataflow"
-      - name: Publish coverage
+      - name: Publish Scala coverage
         uses: codecov/codecov-action@v1
       - uses: google-github-actions/setup-gcloud@v0.2.1
         name: Setup gcloud for pushing Docker images
