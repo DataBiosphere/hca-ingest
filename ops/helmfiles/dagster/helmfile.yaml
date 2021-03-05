@@ -35,7 +35,7 @@ releases:
             # so that env vars get propagated to it correctly
             - name: "monster-hca-ingest"
               image:
-                repository: "us.gcr.io/broad-dsp-monster-hca-dev/monster-dagster"
+                repository: "us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster"
                 tag: {{ requiredEnv "GIT_SHORTHASH" }}
                 pullPolicy: Always
               dagsterApiGrpcArgs:

@@ -23,10 +23,7 @@ using `pip`, there is a TODO to move that to `poetry`.
 deployment. This is how we enumerate the "deployables"; right now we have a single deployable that is the
   monster-dagster image built by the above referenced image.
 * The dagster deployment is configured to always pull a specific tag for this image.
-  To deploy updated dagster pipeline code:
-  * Make sure you are configured to push to the `hca-dev` GCR.
-  * Build a docker image, tagging with the current git SHA: `GIT_SHORTHASH="$(git rev-parse --short HEAD)" && docker build . --build-arg DAGSTER_VERSION=0.10.4 -t us.gcr.io/broad-dsp-monster-hca-dev/monster-dagster:$GIT_SHORTHASH`
-  * `GIT_SHORTHASH="$(git rev-parse --short HEAD)" && docker push  us.gcr.io/broad-dsp-monster-hca-dev/monster-dagster:$GIT_SHORTHASH`
-  * Run `helmfile` against the new sha as well to update GKE: `ENV=dev GIT_SHORTHASH="$(git rev-parse --short HEAD)" helmfile apply"
+  On merge to master and after CI passes, a new image will be pushed to GCR tagged with the current SHA of `master`.
+  * Run `helmfile` against the new sha as well to update GKE: `ENV=dev GIT_SHORTHASH="<the hash that was pushed to GCR>" helmfile apply"
   * GKE should pick up the updated image and deploy
 You must port forward to be able to access the `dagit` UI in our HCA GCP project: `kubectl port-forward --namespace dagster svc/monster-dagit 8080:80`
