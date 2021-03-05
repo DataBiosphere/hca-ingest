@@ -1,10 +1,15 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: hca-dagster-prod-config
-data:
+env: &envConfig
   # all of these key-value pairs get injected as environment variables into the containers running dagster,
   # including the dagit ui server and any pipeline executors
   HCA_ARGO_URL: https://hca-argo.monster-prod.broadinstitute.org/
   HCA_GOOGLE_PROJECT: broad-dsp-monster-hca-prod
   HCA_GCP_ENV: prod
+
+dagit:
+  env: *envConfig
+userDeployments:
+  deployments:
+    - name: "monster-hca-ingest"
+      env:  *envConfig
+dagsterDaemon:
+  env: *envConfig
