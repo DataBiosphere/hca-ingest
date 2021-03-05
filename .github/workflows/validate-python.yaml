@@ -23,5 +23,7 @@ jobs:
       uses: snok/install-poetry@v1.1.1
     - name: Install dependencies
       run: poetry install
-    - name: Test
-      run: ./test.sh
+      working-directory: {{ env.GITHUB_WORKSPACE }}/orchestration/dagster_orchestration
+    - name: Run Python tests
+      run: poetry run pytest
+      working-directory: {{ env.GITHUB_WORKSPACE }}/orchestration/dagster_orchestration
