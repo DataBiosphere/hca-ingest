@@ -21,20 +21,17 @@ jobs:
         python-version: 3.9
     - name: Install Poetry
       uses: snok/install-poetry@v1.1.1
-    # - name: Cache dependencies
-    #   uses: actions/cache@v2
-    #   env:
-    #     cache-name: cache-poetry
-    #   with:
-    #     # npm cache files are stored in `~/.npm` on Linux/macOS
-    #     path: ~/.npm
-    #     key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-    #     restore-keys: |
-    #       ${{ runner.os }}-build-${{ env.cache-name }}-
-    #       ${{ runner.os }}-build-
-    #       ${{ runner.os }}-
-    - name: reveal your secrets
-      run: poetry config --list
+    - name: Cache dependencies
+      uses: actions/cache@v2
+      env:
+        cache-name: cache-poetry
+      with:
+        path: ~/.cache/pypoetry
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('${{ github.workspace }}/orchestration/dagster_orchestration/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-build-${{ env.cache-name }}-
+          ${{ runner.os }}-build-
+          ${{ runner.os }}-
     - name: Install dependencies
       run: poetry install
       working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration

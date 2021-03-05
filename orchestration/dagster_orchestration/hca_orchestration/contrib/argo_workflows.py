@@ -32,7 +32,11 @@ class ArgoArchivedWorkflowsClientMixin:
     def list_archived_workflows(self) -> Generator[V1alpha1Workflow, None, None]:
         return self._pull_paginated_results(self.client().list_archived_workflows)
 
-    def _pull_paginated_results(self, api_function: Callable[[Optional[str]], V1alpha1WorkflowList]) -> Generator[V1alpha1Workflow, None, None]:
+    def _pull_paginated_results(self,
+                                api_function: Callable[
+                                    [Optional[str]],
+                                    V1alpha1WorkflowList
+                                ]) -> Generator[V1alpha1Workflow, None, None]:
         results = api_function()
 
         for result in results.items:

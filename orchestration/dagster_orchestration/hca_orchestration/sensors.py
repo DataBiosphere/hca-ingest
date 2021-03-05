@@ -36,7 +36,8 @@ class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClientMixin):
                         "config": {
                             "gcp_env": os.environ.get("HCA_GCP_ENV"),
                             "google_project_name": os.environ.get("HCA_GOOGLE_PROJECT"),
-                            "dataset_name": inflated_workflow.params_dict()['data-repo-name'].removeprefix("datarepo_"),
+                            "dataset_name": inflated_workflow.params_dict()['data-repo-name']
+                                                             .removeprefix("datarepo_"),
                         }
                     }
                 },
@@ -54,7 +55,9 @@ class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClientMixin):
 # TODO use execution context to avoid re-scanning old workflows
 @sensor(pipeline_name="validate_egress", mode="prod")
 def postvalidate_on_import_complete(_):
-    sensor = ArgoHcaImportCompletionSensor(argo_url=os.environ.get("HCA_ARGO_URL"), access_token=default_google_access_token())
+    sensor = ArgoHcaImportCompletionSensor(
+        argo_url=os.environ.get("HCA_ARGO_URL"),
+        access_token=default_google_access_token())
 
     workflows = sensor.successful_hca_import_workflows()
 

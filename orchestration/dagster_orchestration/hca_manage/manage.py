@@ -76,9 +76,17 @@ class HcaManage:
         :return: A set of table names.
         """
         query = f"""
-        WITH fileRefTables AS (SELECT * FROM `{self.project}.datarepo_{self.dataset}.INFORMATION_SCHEMA.COLUMNS` WHERE column_name = "file_id"),
-        desiredViews AS (SELECT * FROM `{self.project}.datarepo_{self.dataset}.INFORMATION_SCHEMA.TABLES` WHERE table_type = "VIEW")
-        SELECT desiredViews.table_name FROM fileRefTables JOIN desiredViews ON fileRefTables.table_name = desiredViews.table_name
+        WITH fileRefTables AS (
+            SELECT *
+            FROM `{self.project}.datarepo_{self.dataset}.INFORMATION_SCHEMA.COLUMNS`
+            WHERE column_name = "file_id"),
+        desiredViews AS (
+            SELECT * FROM `{self.project}.datarepo_{self.dataset}.INFORMATION_SCHEMA.TABLES`
+            WHERE table_type = "VIEW")
+        SELECT desiredViews.table_name
+        FROM fileRefTables
+        JOIN desiredViews
+          ON fileRefTables.table_name = desiredViews.table_name
         """
 
         return self._hit_bigquery(query)
@@ -95,22 +103,43 @@ class HcaManage:
         # rid -> row_id, fid -> file_id, v -> version
 
         # allRows:          the row ids, file ids, and versions of all rows in the target table
-        # latestFids:       For all file ids that occur more than once, get the file id and the largest (latest) version
+        # latestFids:       For all file ids that occur more than once, get the file id and the largest (latest)
+        #                   version
         # ridsOfAllFids:    The row ids, file ids, and versions of all file ids present in latestFids; in other words,
         #                   the (row id, file id, version) for every file id that has duplicates
         # ridsOfLatestFids: The row ids, file ids, and versions of all file ids present in latestFids but ONLY the
         #                   latest version rows (so a subset of ridsOfAllFids).
-        # Final query:      Get the row ids from ridsOfAllFids but exclude the row ids from ridsOfLatestFids, leaving us
-        #                   with the row ids of all non-latest version file ids. These are the rows to soft delete.
+        # Final query:      Get the row ids from ridsOfAllFids but exclude the row ids from ridsOfLatestFids, leaving
+        #                   us with the row ids of all non-latest version file ids. These are the rows to soft delete.
 
         # Note: The EXCEPT DISTINCT SELECT at the end grabs all row ids of rows that AREN'T the latest version.
         # The final subquery here is in case there are multiple rows with the same version.
         query = f"""
-        WITH allRows AS (SELECT datarepo_row_id AS rid, {target_table}_id AS fid, version AS v FROM {sql_table}),
-        latestFids AS (SELECT DISTINCT fid, MAX(v) AS maxv FROM allRows GROUP BY fid HAVING COUNT(1) > 1),
-        ridsOfAllFids AS (SELECT t.rid AS rid, f.fid, t.v FROM latestFids f JOIN allRows t ON t.fid = f.fid),
-        ridsOfLatestFids AS (SELECT t.rid AS rid, f.fid, f.maxv FROM latestFids f JOIN ridsOfAllFids t ON t.fid = f.fid AND t.v = f.maxv)
-        SELECT rid FROM ridsOfAllFids EXCEPT DISTINCT SELECT rid FROM (SELECT MAX(rid) AS rid, fid FROM ridsOfLatestFids GROUP BY fid)
+        WITH allRows AS (
+            SELECT datarepo_row_id AS rid, {target_table}_id AS fid, version AS v
+            FROM {sql_table}),
+        latestFids AS (
+            SELECT DISTINCT fid, MAX(v) AS maxv
+            FROM allRows
+            GROUP BY fid
+            HAVING COUNT(1) > 1),
+        ridsOfAllFids AS (
+            SELECT t.rid AS rid, f.fid, t.v
+            FROM latestFids f
+            JOIN allRows t
+              ON t.fid = f.fid),
+        ridsOfLatestFids AS (
+            SELECT t.rid AS rid, f.fid, f.maxv
+            FROM latestFids f
+            JOIN ridsOfAllFids t
+              ON t.fid = f.fid AND t.v = f.maxv)
+        SELECT rid
+        FROM ridsOfAllFids
+        EXCEPT DISTINCT SELECT rid
+                        FROM (
+                            SELECT MAX(rid) AS rid, fid
+                            FROM ridsOfLatestFids
+                            GROUP BY fid)
         """
 
         return self._hit_bigquery(query)
