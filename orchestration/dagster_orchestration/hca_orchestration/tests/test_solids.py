@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 
 from dagster import execute_solid
 
+from hca_orchestration.resources.modes import test_mode
 from hca_orchestration.solids import post_import_validate
 
 
@@ -39,7 +40,7 @@ class SolidsTestCase(unittest.TestCase):
             }
         }
 
-        result = execute_solid(post_import_validate, run_config=solid_config)
+        result = execute_solid(post_import_validate, run_config=solid_config, mode_def=test_mode)
         self.assertTrue(result.success)
         expected_duplicate_issues = len(fake_table_names) * len(fake_duplicate_ids)
         expected_file_ref_issues = len(fake_file_table_names) * len(fake_null_fileref_ids)
