@@ -9,7 +9,7 @@ on:
       - master
 
 jobs:
-  python-lint:
+  python-validation:
     runs-on: ubuntu-latest
     env:
       ENV: test
@@ -21,6 +21,8 @@ jobs:
         python-version: 3.9
     - name: Install Poetry
       uses: snok/install-poetry@v1.1.1
+    - name: test
+      run: which poetry
     - name: Install dependencies
       run: poetry install
       working-directory: ${{ env.GITHUB_WORKSPACE }}/orchestration/dagster_orchestration
