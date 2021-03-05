@@ -40,7 +40,7 @@ releases:
                 pullPolicy: Always
               dagsterApiGrpcArgs:
                 - "-f"
-                - "/hca_orchestration/pipelines.py"
+                - "/hca_orchestration/repositories.py"
               port: 3030
 
 

@@ -1,7 +1,7 @@
 from dagster import repository
 
-from .sensors import postvalidate_on_import_complete
-from .pipelines import stage_data, validate_egress
+from hca_orchestration.sensors import postvalidate_on_import_complete
+from hca_orchestration.pipelines import stage_data, validate_egress
 
 
 @repository
