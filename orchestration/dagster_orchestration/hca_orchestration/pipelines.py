@@ -20,11 +20,6 @@ def stage_data():
     final(outs)
 
 
-@repository
-def hca_orchestrationtype():
-    return [stage_data]
-
-
 @pipeline(
     mode_defs=[prod_mode, local_mode, test_mode]
 )

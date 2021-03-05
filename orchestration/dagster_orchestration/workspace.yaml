@@ -1,4 +1,4 @@
 # Defines where to find our code for tooling like Dagit
 # https://docs.dagster.io/overview/repositories-workspaces/workspaces
 load_from:
-  - python_file: hca_orchestration/pipelines.py
+  - python_file: hca_orchestration/repositories.py
