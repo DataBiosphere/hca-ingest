@@ -51,7 +51,7 @@ class HcaManage:
         }[environment]
 
     # lazy initializer
-    def bigquery_client(self) -> bigquery.Client:
+    def bigquery_client(self) -> bigquery.client.Client:
         if not self._bigquery_client:
             self._bigquery_client = bigquery.Client(project=self.project)
 
