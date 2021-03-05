@@ -31,6 +31,8 @@ releases:
           # "user code" we deploy to dagster; these are dagster repositories of pipelines
           enabled: true
           deployments:
+            # if you add a new deployment here, make sure it's also reflected in the env files (environment/*.yaml)
+            # so that env vars get propagated to it correctly
             - name: "monster-hca-ingest"
               image:
                 repository: "us.gcr.io/broad-dsp-monster-hca-dev/monster-dagster"
