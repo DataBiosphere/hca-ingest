@@ -23,7 +23,10 @@ jobs:
       uses: snok/install-poetry@v1.1.1
     - name: Install dependencies
       run: poetry install
-      working-directory: {{ env.GITHUB_WORKSPACE }}/orchestration/dagster_orchestration
+      working-directory: ${{ env.GITHUB_WORKSPACE }}/orchestration/dagster_orchestration
+    - name: Run linter
+      run: flake8
+      working-directory: ${{ env.GITHUB_WORKSPACE }}/orchestration/dagster_orchestration
     - name: Run Python tests
       run: poetry run pytest
-      working-directory: {{ env.GITHUB_WORKSPACE }}/orchestration/dagster_orchestration
+      working-directory: ${{ env.GITHUB_WORKSPACE }}/orchestration/dagster_orchestration
