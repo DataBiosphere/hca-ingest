@@ -21,14 +21,12 @@ releases:
     chart: dagster/dagster   # chart name
     missingFileHandler: Warn
     values:
+      - environment/{{ requiredEnv "ENV" }}.yaml
       - rbacEnabled: true
       - postgresql:
           serviceAccount:
             enabled: true
             name: monster-dagster
-      - dagit:
-          envConfigMaps:
-            - name: hca-dagster-{{ env "ENV" }}-config
       - userDeployments:
           # "user code" we deploy to dagster; these are dagster repositories of pipelines
           enabled: true
@@ -36,23 +34,11 @@ releases:
             - name: "monster-hca-ingest"
               image:
                 repository: "us.gcr.io/broad-dsp-monster-hca-dev/monster-dagster"
-                tag: {{ env "GIT_SHORTHASH" }}
+                tag: {{ requiredEnv "GIT_SHORTHASH" }}
                 pullPolicy: Always
               dagsterApiGrpcArgs:
                 - "-f"
                 - "/hca_orchestration/pipelines.py"
               port: 3030
-              envConfigMaps:
-                - name: hca-dagster-{{ env "ENV" }}-config
-      - runLauncher:
-          config:
-            # k8s run launcher is the default, we'll need to change this bit if we switch to a
-            # different run launcher
-            k8sRunLauncher:
-              envConfigMaps:
-                - name: hca-dagster-{{ env "ENV" }}-config
-      - dagsterDaemon:
-          envConfigMaps:
-            - name: hca-dagster-{{ env "ENV" }}-config
 
 
