@@ -39,11 +39,15 @@ class HcaManage:
         jade_urls = {"prod": "https://jade-terra.datarepo-prod.broadinstitute.org",
                      "dev": "https://jade.datarepo-dev.broadinstitute.org"}
         self.base_url = jade_urls[environment]
+        self._gcp_creds = None
 
+    def gcp_creds(self):
         # use application default credentials to seamlessly work across monster devs
         # assumes `gcloud auth application-default login` has been run
-        creds, _ = google.auth.default()
-        self.gcp_creds = creds
+        if not self._gcp_creds:
+            self._gcp_creds, _ = google.auth.default()
+
+        return self._gcp_creds
 
         self.reader_list = {
             "dev": ["hca-snapshot-readers@dev.test.firecloud.org"],
