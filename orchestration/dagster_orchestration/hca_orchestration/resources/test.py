@@ -21,7 +21,7 @@ def local_storage_client(init_context):
             pass
 
     class LocalStorageClient:
-        def list_blobs(self, bucket_name, prefix):
+        def list_blobs(self, bucket_name: str, prefix: str):
             for _ in range(0, 10):
                 yield MockBlob()
 
