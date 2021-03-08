@@ -1,11 +1,5 @@
 name: DO NOT MERGE shove up the current commit to gcloud for testing
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
+on: push
 jobs:
   master-ci:
     runs-on: ubuntu-latest
