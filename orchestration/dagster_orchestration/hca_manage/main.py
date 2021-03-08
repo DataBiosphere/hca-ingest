@@ -3,7 +3,7 @@ import argparse
 
 from data_repo_client import ApiClient, Configuration, RepositoryApi
 
-from hca_manage import __version__ as hca_utils_version
+from hca_manage import __version__ as hca_manage_version
 from .manage import HcaManage
 from hca_orchestration.resources.base import default_google_access_token
 
@@ -27,8 +27,8 @@ def get_api_client(host: str) -> RepositoryApi:
 
 
 def run(arguments=None):
-    parser = DefaultHelpParser(description="A simple HcaUtils CLI.")
-    parser.add_argument("-V", "--version", action="version", version="%(prog)s " + hca_utils_version)
+    parser = DefaultHelpParser(description="A simple HCA Management CLI.")
+    parser.add_argument("-V", "--version", action="version", version="%(prog)s " + hca_manage_version)
     parser.add_argument("-e", "--env", help="The Jade environment to target, defaults to dev", choices=["dev", "prod"],
                         required=True)
     subparsers = parser.add_subparsers(dest='command')
