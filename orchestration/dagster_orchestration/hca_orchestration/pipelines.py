@@ -1,4 +1,4 @@
-from dagster import pipeline, repository
+from dagster import pipeline
 
 from hca_orchestration.resources.modes import prod_mode, local_mode, test_mode
 from hca_orchestration.solids import clear_staging_dir, pre_process_metadata, submit_file_ingest, post_import_validate
@@ -18,11 +18,6 @@ def stage_data():
 
     final = submit_file_ingest.alias("final")
     final(outs)
-
-
-@repository
-def hca_orchestrationtype():
-    return [stage_data]
 
 
 @pipeline(
