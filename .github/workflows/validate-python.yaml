@@ -35,9 +35,12 @@ jobs:
     - name: Install dependencies
       run: poetry install
       working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
-    - name: Run linter
+    - name: Enforce coding style guide
       run: poetry run flake8
       working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
-    - name: Run Python tests
+    - name: Check static types
+      run: poetry run mypy
+      working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
+    - name: Run test suite
       run: poetry run pytest
       working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration

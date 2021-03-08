@@ -71,7 +71,7 @@ class TestArgoHcaImportCompletionSensor(unittest.TestCase):
             }),
         ]
 
-        with patch('hca_orchestration.contrib.argo_workflows.ArgoArchivedWorkflowsClientMixin.list_archived_workflows',
+        with patch('hca_orchestration.contrib.argo_workflows.ArgoArchivedWorkflowsClient.list_archived_workflows',
                    return_value=generator(archived_workflows)):
             workflows = list(
                 ArgoHcaImportCompletionSensor(
@@ -95,7 +95,7 @@ class TestArgoHcaImportCompletionSensor(unittest.TestCase):
             }),
         ]
 
-        with patch('hca_orchestration.contrib.argo_workflows.ArgoArchivedWorkflowsClientMixin.list_archived_workflows',
+        with patch('hca_orchestration.contrib.argo_workflows.ArgoArchivedWorkflowsClient.list_archived_workflows',
                    return_value=generator(archived_workflows)):
             workflows = list(
                 ArgoHcaImportCompletionSensor(
@@ -121,7 +121,7 @@ class TestArgoHcaImportCompletionSensor(unittest.TestCase):
             }),
         ]
 
-        with patch('hca_orchestration.contrib.argo_workflows.ArgoArchivedWorkflowsClientMixin.list_archived_workflows',
+        with patch('hca_orchestration.contrib.argo_workflows.ArgoArchivedWorkflowsClient.list_archived_workflows',
                    return_value=generator(archived_workflows)):
             workflows = list(
                 ArgoHcaImportCompletionSensor(

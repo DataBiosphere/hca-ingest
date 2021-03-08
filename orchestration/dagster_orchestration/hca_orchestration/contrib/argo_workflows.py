@@ -1,10 +1,11 @@
 from __future__ import annotations  # this lets us annotate functions in class C that return an instance of C
 
-from typing import Any, Callable, Dict, Generator, Optional
+from typing import Any, Dict, Generator, Optional
+from typing_extensions import Protocol
 
 from argo.workflows.client import ApiClient as ArgoApiClient,\
-                                  ArchivedWorkflowServiceApi,\
-                                  Configuration as ArgoConfiguration
+    ArchivedWorkflowServiceApi,\
+    Configuration as ArgoConfiguration
 from argo.workflows.client.models import V1alpha1Workflow, V1alpha1WorkflowList
 
 
@@ -16,9 +17,17 @@ def generate_argo_archived_workflows_client(host_url: str, access_token: str) ->
             header_value=f"Bearer {access_token}"))
 
 
-class ArgoArchivedWorkflowsClientMixin:
-    def __init__(self, *args, argo_url: str, access_token: str, **kwargs):
-        super().__init__(*args, **kwargs)
+class ArgoFetchListOperation(Protocol):
+    def __call__(
+        self,
+        *args: Any,
+        list_option_continue: Optional[str] = None,
+        **kwargs: Any
+    ) -> V1alpha1WorkflowList: ...
+
+
+class ArgoArchivedWorkflowsClient:
+    def __init__(self, argo_url: str, access_token: str):
         self.argo_url = argo_url
         self.access_token = access_token
         self._client = None
@@ -32,11 +41,10 @@ class ArgoArchivedWorkflowsClientMixin:
     def list_archived_workflows(self) -> Generator[V1alpha1Workflow, None, None]:
         return self._pull_paginated_results(self.client().list_archived_workflows)
 
-    def _pull_paginated_results(self,
-                                api_function: Callable[
-                                    [Optional[str]],
-                                    V1alpha1WorkflowList
-                                ]) -> Generator[V1alpha1Workflow, None, None]:
+    def get_archived_workflow(self, uid: str) -> V1alpha1Workflow:
+        return self.client().get_archived_workflow(uid)
+
+    def _pull_paginated_results(self, api_function: ArgoFetchListOperation) -> Generator[V1alpha1Workflow, None, None]:
         results = api_function()
 
         for result in results.items:
@@ -49,15 +57,15 @@ class ArgoArchivedWorkflowsClientMixin:
                 yield result
 
 
-class ExtendedArgoWorkflow(ArgoArchivedWorkflowsClientMixin):
-    def __init__(self, workflow: V1alpha1Workflow, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+class ExtendedArgoWorkflow:
+    def __init__(self, workflow: V1alpha1Workflow, argo_url: str, access_token: str):
         self._workflow = workflow
         self._inflated = False
+        self.client = ArgoArchivedWorkflowsClient(argo_url, access_token)
 
     def inflate(self) -> ExtendedArgoWorkflow:
         if not self._inflated:
-            self._workflow = self.client().get_archived_workflow(self.metadata.uid)
+            self._workflow = self.client.get_archived_workflow(self.metadata.uid)
             self._inflated = True
 
         return self

@@ -6,15 +6,15 @@ from dateutil.tz import tzlocal
 
 from dagster import sensor, RunRequest, SkipReason
 
-from hca_orchestration.contrib.argo_workflows import ArgoArchivedWorkflowsClientMixin, ExtendedArgoWorkflow
+from hca_orchestration.contrib.argo_workflows import ArgoArchivedWorkflowsClient, ExtendedArgoWorkflow
 from hca_orchestration.resources.base import default_google_access_token
 
 
 # boundary before which we don't care about any workflows in argo
-ARGO_EPOCH = datetime(2021, 3, 15, tzinfo=tzlocal())
+ARGO_EPOCH: datetime = datetime(2021, 3, 15, tzinfo=tzlocal())
 
 
-class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClientMixin):
+class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClient):
     def successful_hca_import_workflows(self) -> List[ExtendedArgoWorkflow]:
         return [
             ExtendedArgoWorkflow(workflow, argo_url=self.argo_url, access_token=self.access_token)

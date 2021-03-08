@@ -1,7 +1,7 @@
 from dagster import solid, InputDefinition, Nothing, String, DagsterType
 from hca_manage.manage import HcaManage, ProblemCount
 
-DagsterProblemCount = DagsterType(
+DagsterProblemCount: DagsterType = DagsterType(
     name="DagsterProblemCount",
     type_check_fn=lambda _, value: isinstance(value, ProblemCount),
     description="A simple named tuple to represent the different types of issues "
