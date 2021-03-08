@@ -1,5 +1,5 @@
 from dagster import solid, InputDefinition, Nothing, String, DagsterType
-from hca_utils.utils import HcaUtils, ProblemCount
+from hca_manage.manage import HcaManage, ProblemCount
 
 DagsterProblemCount = DagsterType(
     name="DagsterProblemCount",
@@ -79,7 +79,7 @@ def post_import_validate(context) -> DagsterProblemCount:
     """
     Checks if the target dataset has any rows with duplicate IDs or null file references.
     """
-    validator = HcaUtils(
+    validator = HcaManage(
         context.solid_config["gcp_env"],
         context.solid_config["google_project_name"],
         context.solid_config["dataset_name"],

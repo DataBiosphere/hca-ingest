@@ -3,8 +3,8 @@ import argparse
 
 from data_repo_client import ApiClient, Configuration, RepositoryApi
 
-from hca_utils import __version__ as hca_utils_version
-from .utils import HcaUtils
+from hca_manage import __version__ as hca_utils_version
+from .manage import HcaManage
 from hca_orchestration.resources.base import default_google_access_token
 
 
@@ -69,10 +69,10 @@ def check_data(args, host, parser):
     if not sys.argv[1:]:
         parser.error("No commands or arguments provided!")
 
-    hca = HcaUtils(environment=args.env,
-                   project=project,
-                   dataset=args.dataset,
-                   data_repo_client=get_api_client(host=host))
+    hca = HcaManage(environment=args.env,
+                    project=project,
+                    dataset=args.dataset,
+                    data_repo_client=get_api_client(host=host))
 
     if args.remove:
         hca.remove_all()
@@ -81,8 +81,8 @@ def check_data(args, host, parser):
 
 
 def create_snapshot(args, host):
-    hca = HcaUtils(environment=args.env,
-                   project=None,
-                   dataset=args.dataset,
-                   data_repo_client=get_api_client(host=host))
+    hca = HcaManage(environment=args.env,
+                    project=None,
+                    dataset=args.dataset,
+                    data_repo_client=get_api_client(host=host))
     hca.submit_snapshot_request(optional_qualifier=args.qualifier)
