@@ -222,7 +222,7 @@ class HcaUtils:
             )
         )
 
-        job_id = response.json()["id"]
+        job_id = response.id
         logging.info(f"Snapshot creation job id: {job_id}")
         return job_id
 

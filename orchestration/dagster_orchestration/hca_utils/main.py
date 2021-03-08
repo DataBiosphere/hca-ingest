@@ -54,7 +54,7 @@ def run(arguments=None):
 
     if args.command == "check":
         check_data(args, host, parser)
-    elif args.snapshot:
+    elif args.command == "snapshot":
         create_snapshot(args, host)
 
 
