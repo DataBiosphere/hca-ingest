@@ -173,7 +173,7 @@ class HcaManage:
         """
 
         response = self.data_repo_client.enumerate_datasets(filter=self.dataset)
-        return response.json()["items"][0]["id"]
+        return response.items[0].id
 
     def submit_soft_delete(self, target_table: str, target_path: str) -> str:
         """
@@ -198,7 +198,7 @@ class HcaManage:
                     }
                 ]))
 
-        return response.json()["id"]
+        return response.id
 
     def submit_snapshot_request(self, optional_qualifier: Optional[str] = None) -> str:
         date_stamp = str(datetime.today().date()).replace("-", "")
@@ -212,14 +212,18 @@ class HcaManage:
             "prod": ["hca-snapshot-readers@firecloud.org"]
         }
 
-        response = self.data_repo_client.create_snapshot(
-            snapshot=SnapshotRequestModel(
+        snapshot_request = SnapshotRequestModel(
                 name=snapshot_name,
                 profile_id=self.data_repo_profile_id,
                 description=f"Create snapshot {snapshot_name}",
                 contents=[SnapshotRequestContentsModel(dataset_name=self.dataset, mode="byFullView")],
                 readers=reader_list[self.environment]
             )
+
+        logging.info(snapshot_request)
+
+        response = self.data_repo_client.create_snapshot(
+            snapshot=snapshot_request
         )
 
         job_id = response.id
