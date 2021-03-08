@@ -27,6 +27,8 @@ releases:
           serviceAccount:
             enabled: true
             name: monster-dagster
+      - runLauncher:
+          type: CeleryK8sRunLauncher
       - userDeployments:
           # "user code" we deploy to dagster; these are dagster repositories of pipelines
           enabled: true

@@ -13,6 +13,7 @@ dagster-k8s = "^0.10.5"
 data-repo-client = "^1.0.194.post5"
 argo-workflows = "^5.0.0"
 dagster-postgres = "^0.10.9"
+dagster-celery-k8s = "^0.10.9"
 
 [tool.poetry.dev-dependencies]
 pdbpp = "^0.10.2"
