@@ -1,4 +1,4 @@
-name: Master Validation and Release
+name: DO NOT MERGE shove up the current commit to gcloud for testing
 on:
   push:
     branches:
@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      # - name: Fetch tag history
-      #   run: git fetch --tags
+      - name: Fetch tag history
+        run: git fetch --tags
       # - uses: google-github-actions/setup-gcloud@v0.2.1
       #   name: Setup gcloud for Dataflow tests
       #   with:
