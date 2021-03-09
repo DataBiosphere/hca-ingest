@@ -7,13 +7,5 @@ env: &envConfig
 
 dagit:
   env: *envConfig
-userDeployments:
-  deployments:
-    - name: "monster-hca-ingest"
-      env: *envConfig
 dagsterDaemon:
   env: *envConfig
-runLauncher:
-  config:
-    celeryK8sRunLauncher:
-      env: *envConfig

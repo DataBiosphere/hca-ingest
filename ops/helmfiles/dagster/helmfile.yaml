@@ -28,13 +28,17 @@ releases:
             enabled: true
             name: monster-dagster
       - runLauncher:
-          type: CeleryK8sRunLauncher
+          config:
+            k8sRunLauncher:
+              envConfigMaps:
+                # the k8s run launcher doesn't allow us to directly set a list of env vars, so we just
+                # point it at the env config map the daemon generates as a workaround. this will be the
+                # same set of custom env vars as every other component of the system.
+                - name: monster-dagster-daemon-env
       - userDeployments:
           # "user code" we deploy to dagster; these are dagster repositories of pipelines
           enabled: true
           deployments:
-            # if you add a new deployment here, make sure it's also reflected in the env files (environment/*.yaml)
-            # so that env vars get propagated to it correctly
             - name: "monster-hca-ingest"
               image:
                 repository: "us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster"
@@ -44,5 +48,7 @@ releases:
                 - "-f"
                 - "/hca_orchestration/repositories.py"
               port: 3030
-
-
+              envConfigMaps:
+                # we can't use values.yaml to insert env vars into deployments, since overwriting lists
+                # doesn't work in helmfiles. instead, like above, we just tell it to use the daemon's config map.
+                - name: monster-dagster-daemon-env
