@@ -7,7 +7,7 @@ from google.auth.transport.requests import Request
 
 from hca_utils import __version__ as hca_utils_version
 from .utils import HcaUtils
-from hca_orchestration.base import default_google_access_token
+from hca_orchestration.sensors import default_google_access_token
 
 
 class DefaultHelpParser(argparse.ArgumentParser):
