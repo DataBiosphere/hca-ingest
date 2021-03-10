@@ -245,7 +245,17 @@ class HcaManage:
         return response.id
 
     def delete_dataset(self, dataset_name: Optional[str] = None, dataset_id: Optional[str] = None):
-        pass
+        if dataset_name and not dataset_id:
+            response = self.data_repo_client.enumerate_snapshots(filter=dataset_name)
+            dataset_id = response.items[0].id
+        elif dataset_id and not dataset_name:
+            pass  # let dataset_id argument pass through
+        else:
+            # can't have both/neither provided
+            raise ValueError("You must provide either dataset_name or dataset_id, and cannot provide neither/both.")
+        response = self.data_repo_client.delete_dataset(dataset_id)
+        logging.info(f"Dataset deletion job id: {response.id}")
+        return response.id
 
     # dataset-level checking and soft deleting
     def process_duplicates(self, soft_delete: bool = False):
