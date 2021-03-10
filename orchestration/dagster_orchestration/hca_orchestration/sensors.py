@@ -45,7 +45,7 @@ class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClientMixin):
 
 
 # TODO use execution context to avoid re-scanning old workflows
-@sensor(pipeline_name="validate_egress")
+@sensor(pipeline_name="validate_egress", mode="prod")
 def postvalidate_on_import_complete(_):
     sensor = ArgoHcaImportCompletionSensor(argo_url=os.environ.get("HCA_ARGO_URL"), access_token=default_google_access_token())
 
