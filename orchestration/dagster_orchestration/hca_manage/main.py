@@ -42,6 +42,7 @@ def run(arguments=None):
                         required=True)
     subparsers = parser.add_subparsers(dest='command')
 
+    # validation checks
     parser_check = subparsers.add_parser("check",
                                          help="Command to check HCA datasets for duplicates and null file references")
     # only allow if env is prod
@@ -51,6 +52,7 @@ def run(arguments=None):
                               help="Remove problematic rows. If flag not set, will only check for presence of problematic rows",
                               action="store_true")
 
+    # snapshot management
     parser_snapshot = subparsers.add_parser("snapshot", help="Command to manage snapshots")
     snapshot_flags = parser_snapshot.add_mutually_exclusive_group(required=True)
     snapshot_flags.add_argument("-c", "--create", help="Flag to indicate snapshot creation", action="store_true")
@@ -62,6 +64,7 @@ def run(arguments=None):
     snapshot_create_args.add_argument("-d", "--dataset", help="The Jade dataset to target")
     snapshot_create_args.add_argument("-q", "--qualifier", help="Optional qualifier to append to the snapshot name")
 
+    # dataset management
     parser_dataset = subparsers.add_parser("dataset", help="Command to manage datasets")
     dataset_flags = parser_dataset.add_mutually_exclusive_group(required=True)
     dataset_flags.add_argument("-r", "--remove", help="Flag to indicate dataset deletion", action="store_true")
