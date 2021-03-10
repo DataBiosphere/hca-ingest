@@ -134,7 +134,7 @@ class HcaManage:
         :param query: The SQL query to run.
         :return: A set of whatever the query is asking for (assumes that we're only asking for a single column).
         """
-        query_job = self.bigquery_client.query(query)
+        query_job = self.bigquery_client().query(query)
         return {row[0] for row in query_job}
 
     def _format_filename(self, table: str):
@@ -230,6 +230,12 @@ class HcaManage:
 
         logging.info(f"Snapshot creation job id: {response.id}")
         return response.id
+
+    def delete_snapshot(self, snapshot_name: Optional[str] = None, snapshot_id: Optional[str] = None):
+        pass
+
+    def delete_dataset(self, dataset_name: Optional[str] = None, dataset_id: Optional[str] = None):
+        pass
 
     # dataset-level checking and soft deleting
     def process_duplicates(self, soft_delete: bool = False):
