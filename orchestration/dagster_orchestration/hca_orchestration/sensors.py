@@ -39,7 +39,8 @@ class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClientMixin):
                             "dataset_name": inflated_workflow.params_dict()['data-repo-name'].removeprefix("datarepo_"),
                         }
                     }
-                }
+                },
+                "resources": {}  # no resources used in the pipeline, so we don't pass in any config
             }
         )
 
