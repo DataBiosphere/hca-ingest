@@ -8,8 +8,14 @@ from .manage import HcaManage
 from hca_orchestration.resources.base import default_google_access_token
 
 
-prod_host = "https://jade-terra.datarepo-prod.broadinstitute.org/"
-dev_host = "https://jade.datarepo-dev.broadinstitute.org/"
+data_repo_host = {
+    "dev": "https://jade.datarepo-dev.broadinstitute.org/",
+    "prod": "https://jade-terra.datarepo-prod.broadinstitute.org/"
+}
+data_repo_profile_ids = {
+        "dev": "390e7a85-d47f-4531-b612-165fc977d3bd",
+        "prod": "db61c343-6dfe-4d14-84e9-60ddf97ea73f"
+    }
 
 
 class DefaultHelpParser(argparse.ArgumentParser):
@@ -52,9 +58,7 @@ def run(arguments=None):
 
     args = parser.parse_args(arguments)
 
-    host = prod_host
-    if args.env == "dev":
-        host = dev_host
+    host = data_repo_host[args.env]
 
     if args.command == "check":
         check_data(args, host, parser)
@@ -85,13 +89,10 @@ def check_data(args, host, parser):
 
 
 def create_snapshot(args, host):
-    data_repo_profile_id = {
-        "dev": "390e7a85-d47f-4531-b612-165fc977d3bd",
-        "prod": "db61c343-6dfe-4d14-84e9-60ddf97ea73f"
-    }[args.env]
+    profile_id = data_repo_profile_ids[args.env]
     hca = HcaManage(environment=args.env,
                     project=None,
                     dataset=args.dataset,
-                    data_repo_profile_id=data_repo_profile_id,
+                    data_repo_profile_id=profile_id,
                     data_repo_client=get_api_client(host=host))
     hca.submit_snapshot_request(optional_qualifier=args.qualifier)
