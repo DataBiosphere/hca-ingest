@@ -2,6 +2,8 @@ from datetime import datetime
 import os
 from typing import List
 
+from dateutil.tz import tzlocal
+
 from dagster import sensor, RunRequest, SkipReason
 
 from hca_orchestration.contrib.argo_workflows import ArgoArchivedWorkflowsClientMixin, ExtendedArgoWorkflow
@@ -9,7 +11,7 @@ from hca_orchestration.resources.base import default_google_access_token
 
 
 # boundary before which we don't care about any workflows in argo
-ARGO_EPOCH = datetime(2021, 3, 1)
+ARGO_EPOCH = datetime(2021, 3, 1, tzinfo=tzlocal())
 
 
 class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClientMixin):
