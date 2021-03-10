@@ -232,7 +232,17 @@ class HcaManage:
         return response.id
 
     def delete_snapshot(self, snapshot_name: Optional[str] = None, snapshot_id: Optional[str] = None):
-        pass
+        if snapshot_name and not snapshot_id:
+            response = self.data_repo_client.enumerate_snapshots(filter=snapshot_name)
+            snapshot_id = response.items[0].id
+        elif snapshot_id and not snapshot_name:
+            pass  # let snapshot_id argument pass through
+        else:
+            # can't have both/neither provided
+            raise ValueError("You must provide either snapshot_name or snapshot_id, and cannot provide neither/both.")
+        response = self.data_repo_client.delete_snapshot(snapshot_id)
+        logging.info(f"Snapshot deletion job id: {response.id}")
+        return response.id
 
     def delete_dataset(self, dataset_name: Optional[str] = None, dataset_id: Optional[str] = None):
         pass
