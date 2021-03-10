@@ -39,7 +39,7 @@ class ArgoArchivedWorkflowsClientMixin:
             yield result
 
         while results.metadata._continue:
-            results = api_function(list_option_continue=results.metadata._continue)
+            results = api_function(list_options_continue=results.metadata._continue)
 
             for result in results.items:
                 yield result
