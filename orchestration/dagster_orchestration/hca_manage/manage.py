@@ -1,20 +1,22 @@
 from collections import namedtuple
 import csv
-import os
+from datetime import datetime
 import logging
-from typing import Set
+import os
+from typing import Optional, Set
 
-from data_repo_client import RepositoryApi, DataDeletionRequest
+from data_repo_client import RepositoryApi, DataDeletionRequest, SnapshotRequestModel, SnapshotRequestContentsModel
 import google.auth
 from google.cloud import bigquery, storage
 
 ProblemCount = namedtuple("ProblemCount", ["duplicates", "null_file_refs"])
 
 
-class HcaUtils:
+class HcaManage:
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-    def __init__(self, environment: str, project: str, dataset: str, data_repo_client: RepositoryApi):
+    def __init__(self, environment: str, dataset: str, data_repo_client: RepositoryApi, project: Optional[str] = None,
+                 data_repo_profile_id: Optional[str] = None):
         self.environment = environment
 
         self.project = project
@@ -23,9 +25,11 @@ class HcaUtils:
 
         self.data_repo_client = data_repo_client
 
+        self.data_repo_profile_id = data_repo_profile_id
+
         self.filename_template = f"sd-{project}-{dataset}-{{table}}.csv"
 
-        self.bigquery_client = bigquery.Client(project=self.project)
+        self._bigquery_client = None
 
         bucket_projects = {"prod": "mystical-slate-284720",
                            "dev": "broad-dsp-monster-hca-dev"}
@@ -40,6 +44,18 @@ class HcaUtils:
         # assumes `gcloud auth application-default login` has been run
         creds, _ = google.auth.default()
         self.gcp_creds = creds
+
+        self.reader_list = {
+            "dev": ["hca-snapshot-readers@dev.test.firecloud.org"],
+            "prod": ["hca-snapshot-readers@firecloud.org"]
+        }[environment]
+
+    # lazy initializer
+    def bigquery_client(self) -> bigquery.Client:
+        if not self._bigquery_client:
+            self._bigquery_client = bigquery.Client(project=self.project)
+
+        return self._bigquery_client
 
     # bigquery interactions
     def get_all_table_names(self) -> Set[str]:
@@ -164,7 +180,7 @@ class HcaUtils:
         """
 
         response = self.data_repo_client.enumerate_datasets(filter=self.dataset)
-        return response.json()["items"][0]["id"]
+        return response.items[0].id
 
     def submit_soft_delete(self, target_table: str, target_path: str) -> str:
         """
@@ -189,7 +205,31 @@ class HcaUtils:
                     }
                 ]))
 
-        return response.json()["id"]
+        return response.id
+
+    def submit_snapshot_request(self, qualifier: Optional[str] = None) -> str:
+        date_stamp = str(datetime.today().date()).replace("-", "")
+        if qualifier:
+            # prepend an underscore if this string is present
+            qualifier = f"_{qualifier}"
+        snapshot_name = f"{self.dataset}___{date_stamp}{qualifier}"
+
+        snapshot_request = SnapshotRequestModel(
+            name=snapshot_name,
+            profile_id=self.data_repo_profile_id,
+            description=f"Create snapshot {snapshot_name}",
+            contents=[SnapshotRequestContentsModel(dataset_name=self.dataset, mode="byFullView")],
+            readers=self.reader_list
+        )
+
+        logging.info(snapshot_request)
+
+        response = self.data_repo_client.create_snapshot(
+            snapshot=snapshot_request
+        )
+
+        logging.info(f"Snapshot creation job id: {response.id}")
+        return response.id
 
     # dataset-level checking and soft deleting
     def process_duplicates(self, soft_delete: bool = False):

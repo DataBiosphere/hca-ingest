@@ -36,10 +36,10 @@ class PipelinesTestCase(unittest.TestCase):
 
         self.assertTrue(result.success)
 
-    @patch("hca_utils.utils.HcaUtils.get_null_filerefs")
-    @patch("hca_utils.utils.HcaUtils.get_file_table_names")
-    @patch("hca_utils.utils.HcaUtils.get_duplicates")
-    @patch("hca_utils.utils.HcaUtils.get_all_table_names")
+    @patch("hca_manage.manage.HcaManage.get_null_filerefs")
+    @patch("hca_manage.manage.HcaManage.get_file_table_names")
+    @patch("hca_manage.manage.HcaManage.get_duplicates")
+    @patch("hca_manage.manage.HcaManage.get_all_table_names")
     def test_validate_egress(self, *mocks):
         """
         currently validate_egress is just a thin wrapper around

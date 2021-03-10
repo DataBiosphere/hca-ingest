@@ -7,10 +7,10 @@ from hca_orchestration.solids import post_import_validate
 
 
 class SolidsTestCase(unittest.TestCase):
-    @patch("hca_utils.utils.HcaUtils.get_null_filerefs")
-    @patch("hca_utils.utils.HcaUtils.get_file_table_names")
-    @patch("hca_utils.utils.HcaUtils.get_duplicates")
-    @patch("hca_utils.utils.HcaUtils.get_all_table_names")
+    @patch("hca_manage.manage.HcaManage.get_null_filerefs")
+    @patch("hca_manage.manage.HcaManage.get_file_table_names")
+    @patch("hca_manage.manage.HcaManage.get_duplicates")
+    @patch("hca_manage.manage.HcaManage.get_all_table_names")
     def test_post_import_validate(self, mock_all_table_names: Mock, mock_duplicates: Mock, mock_file_table_names: Mock,
                                   mock_null_filerefs: Mock):
         """
