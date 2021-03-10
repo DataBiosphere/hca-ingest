@@ -59,7 +59,7 @@ def run(arguments=None):
     snapshot_delete_args.add_argument("-n", "--snapshot_name", help="Name of snapshot to delete.")
     snapshot_delete_args.add_argument("-i", "--snapshot_id", help="ID of snapshot to delete.")
     snapshot_create_args = parser_snapshot.add_argument_group()
-    snapshot_create_args.add_argument("-d", "--dataset", help="The Jade dataset to target", required=True)
+    snapshot_create_args.add_argument("-d", "--dataset", help="The Jade dataset to target")
     snapshot_create_args.add_argument("-q", "--qualifier", help="Optional qualifier to append to the snapshot name")
 
     parser_dataset = subparsers.add_parser("dataset", help="Command to manage datasets")
@@ -80,6 +80,9 @@ def run(arguments=None):
             create_snapshot(args, host)
         elif args.remove:
             remove_snapshot(args, host)
+    elif args.command == "dataset":
+        if args.remove:
+            remove_dataset(args, host)
 
 
 def check_data(args, host, parser):
