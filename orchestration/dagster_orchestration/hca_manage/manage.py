@@ -46,6 +46,11 @@ class HcaManage:
         creds, _ = google.auth.default()
         self.gcp_creds = creds
 
+        self.reader_list = {
+            "dev": ["hca-snapshot-readers@dev.test.firecloud.org"],
+            "prod": ["hca-snapshot-readers@firecloud.org"]
+        }[environment]
+
     # bigquery interactions
     def get_all_table_names(self) -> Set[str]:
         """
@@ -203,17 +208,12 @@ class HcaManage:
             qualifier = f"_{qualifier}"
         snapshot_name = f"{self.dataset}___{date_stamp}{qualifier}"
 
-        reader_list = {
-            "dev": ["hca-snapshot-readers@dev.test.firecloud.org"],
-            "prod": ["hca-snapshot-readers@firecloud.org"]
-        }
-
         snapshot_request = SnapshotRequestModel(
             name=snapshot_name,
             profile_id=self.data_repo_profile_id,
             description=f"Create snapshot {snapshot_name}",
             contents=[SnapshotRequestContentsModel(dataset_name=self.dataset, mode="byFullView")],
-            readers=reader_list[self.environment]
+            readers=self.reader_list
         )
 
         logging.info(snapshot_request)
