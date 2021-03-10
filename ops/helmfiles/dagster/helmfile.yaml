@@ -42,7 +42,7 @@ releases:
             - name: "monster-hca-ingest"
               image:
                 repository: "us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster"
-                tag: {{ requiredEnv "GIT_SHORTHASH" }}
+                tag: {{ requiredEnv "GIT_SHORTHASH" | quote }}
                 pullPolicy: Always
               dagsterApiGrpcArgs:
                 - "-f"
