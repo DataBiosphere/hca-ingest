@@ -228,9 +228,8 @@ class HcaManage:
             snapshot=snapshot_request
         )
 
-        job_id = response.id
-        logging.info(f"Snapshot creation job id: {job_id}")
-        return job_id
+        logging.info(f"Snapshot creation job id: {response.id}")
+        return response.id
 
     # dataset-level checking and soft deleting
     def process_duplicates(self, soft_delete: bool = False):
