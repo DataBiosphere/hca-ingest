@@ -8,6 +8,10 @@ from .manage import HcaManage
 from hca_orchestration.resources.base import default_google_access_token
 
 
+prod_host = "https://jade-terra.datarepo-prod.broadinstitute.org/"
+dev_host = "https://jade.datarepo-dev.broadinstitute.org/"
+
+
 class DefaultHelpParser(argparse.ArgumentParser):
     def error(self, message):
         """Print help message by default."""
@@ -48,9 +52,9 @@ def run(arguments=None):
 
     args = parser.parse_args(arguments)
 
-    host = "https://jade-terra.datarepo-prod.broadinstitute.org/"
+    host = prod_host
     if args.env == "dev":
-        host = "https://jade.datarepo-dev.broadinstitute.org/"
+        host = dev_host
 
     if args.command == "check":
         check_data(args, host, parser)
