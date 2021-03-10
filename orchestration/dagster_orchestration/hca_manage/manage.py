@@ -29,8 +29,7 @@ class HcaManage:
 
         self.filename_template = f"sd-{project}-{dataset}-{{table}}.csv"
 
-        if self.project:
-            self.bigquery_client = bigquery.Client(project=self.project)
+        self._bigquery_client = None
 
         bucket_projects = {"prod": "mystical-slate-284720",
                            "dev": "broad-dsp-monster-hca-dev"}
@@ -50,6 +49,13 @@ class HcaManage:
             "dev": ["hca-snapshot-readers@dev.test.firecloud.org"],
             "prod": ["hca-snapshot-readers@firecloud.org"]
         }[environment]
+
+    # lazy initializer
+    def bigquery_client(self) -> bigquery.Client:
+        if not self._bigquery_client:
+            self._bigquery_client = bigquery.Client(project=self.project)
+
+        return self._bigquery_client
 
     # bigquery interactions
     def get_all_table_names(self) -> Set[str]:
