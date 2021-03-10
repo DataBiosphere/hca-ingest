@@ -91,7 +91,6 @@ def check_data(args, host, parser):
 def create_snapshot(args, host):
     profile_id = data_repo_profile_ids[args.env]
     hca = HcaManage(environment=args.env,
-                    project=None,
                     dataset=args.dataset,
                     data_repo_profile_id=profile_id,
                     data_repo_client=get_api_client(host=host))

@@ -15,7 +15,7 @@ ProblemCount = namedtuple("ProblemCount", ["duplicates", "null_file_refs"])
 class HcaManage:
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-    def __init__(self, environment: str, project: Optional[str], dataset: str, data_repo_client: RepositoryApi,
+    def __init__(self, environment: str, dataset: str, data_repo_client: RepositoryApi, project: Optional[str] = None,
                  data_repo_profile_id: Optional[str] = None):
         self.environment = environment
 
