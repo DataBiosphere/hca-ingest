@@ -94,4 +94,4 @@ def create_snapshot(args, host):
                     dataset=args.dataset,
                     data_repo_profile_id=profile_id,
                     data_repo_client=get_api_client(host=host))
-    hca.submit_snapshot_request(optional_qualifier=args.qualifier)
+    hca.submit_snapshot_request(qualifier=args.qualifier)

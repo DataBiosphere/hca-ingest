@@ -196,12 +196,12 @@ class HcaManage:
 
         return response.id
 
-    def submit_snapshot_request(self, optional_qualifier: Optional[str] = None) -> str:
+    def submit_snapshot_request(self, qualifier: Optional[str] = None) -> str:
         date_stamp = str(datetime.today().date()).replace("-", "")
-        if optional_qualifier:
+        if qualifier:
             # prepend an underscore if this string is present
-            optional_qualifier = f"_{optional_qualifier}"
-        snapshot_name = f"{self.dataset}___{date_stamp}{optional_qualifier}"
+            qualifier = f"_{qualifier}"
+        snapshot_name = f"{self.dataset}___{date_stamp}{qualifier}"
 
         reader_list = {
             "dev": ["hca-snapshot-readers@dev.test.firecloud.org"],
