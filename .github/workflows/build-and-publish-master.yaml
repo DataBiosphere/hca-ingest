@@ -1,5 +1,8 @@
-name: DO NOT MERGE shove up the current commit to gcloud for testing
-on: push
+name: Master Validation and Release
+on:
+  push:
+    branches:
+      - master
 jobs:
   master-ci:
     runs-on: ubuntu-latest
@@ -7,25 +10,25 @@ jobs:
       - uses: actions/checkout@v2
       - name: Fetch tag history
         run: git fetch --tags
-      # - uses: google-github-actions/setup-gcloud@v0.2.1
-      #   name: Setup gcloud for Dataflow tests
-      #   with:
-      #     project_id: ${{ secrets.DEV_PROJECT_ID }}
-      #     service_account_key: ${{ secrets.GCP_TEST_KEY }}
-      #     export_default_credentials: true
-      # - uses: olafurpg/setup-scala@v10
-      #   with:
-      #     java-version: graalvm@20.0.0
-      # - name: Check Scala formatting
-      #   run: sbt scalafmtCheckAll
-      # - name: Scala Compile
-      #   run: sbt Compile/compile Test/compile IntegrationTest/compile
-      # - name: Scala Test
-      #   run: sbt "set ThisBuild/coverageEnabled := true" test IntegrationTest/test coverageAggregate
-      # - name: DataflowCheck
-      #   run: sbt "hca-transformation-pipeline/run --inputPrefix=gs://broad-dsp-monster-hca-dev-test-storage/inputs/Success --outputPrefix=gs://broad-dsp-monster-hca-dev-test-storage/outputs-to-overwrite --runner=DataflowRunner --project=broad-dsp-monster-hca-dev --region=us-central1 --tempLocation=gs://broad-dsp-monster-hca-dev-temp-storage/dataflow"
-      # - name: Publish Scala coverage
-      #   uses: codecov/codecov-action@v1
+      - uses: google-github-actions/setup-gcloud@v0.2.1
+        name: Setup gcloud for Dataflow tests
+        with:
+          project_id: ${{ secrets.DEV_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_TEST_KEY }}
+          export_default_credentials: true
+      - uses: olafurpg/setup-scala@v10
+        with:
+          java-version: graalvm@20.0.0
+      - name: Check Scala formatting
+        run: sbt scalafmtCheckAll
+      - name: Scala Compile
+        run: sbt Compile/compile Test/compile IntegrationTest/compile
+      - name: Scala Test
+        run: sbt "set ThisBuild/coverageEnabled := true" test IntegrationTest/test coverageAggregate
+      - name: DataflowCheck
+        run: sbt "hca-transformation-pipeline/run --inputPrefix=gs://broad-dsp-monster-hca-dev-test-storage/inputs/Success --outputPrefix=gs://broad-dsp-monster-hca-dev-test-storage/outputs-to-overwrite --runner=DataflowRunner --project=broad-dsp-monster-hca-dev --region=us-central1 --tempLocation=gs://broad-dsp-monster-hca-dev-temp-storage/dataflow"
+      - name: Publish Scala coverage
+        uses: codecov/codecov-action@v1
       - uses: google-github-actions/setup-gcloud@v0.2.1
         name: Setup gcloud for pushing Docker images
         with:
@@ -34,8 +37,8 @@ jobs:
           export_default_credentials: true
       - name: Setup GCR auth
         run: gcloud auth configure-docker --quiet us.gcr.io
-      # - name: Push Scala Dataflow Docker image
-      #   run: sbt publish
+      - name: Push Scala Dataflow Docker image
+        run: sbt publish
       - name: Get artifact slug
         id: get-artifact-slug
         run: 'echo ::set-output name=slug::$(git rev-parse --short "$GITHUB_SHA")'
