@@ -246,7 +246,7 @@ class HcaManage:
 
     def delete_dataset(self, dataset_name: Optional[str] = None, dataset_id: Optional[str] = None):
         if dataset_name and not dataset_id:
-            response = self.data_repo_client.enumerate_snapshots(filter=dataset_name)
+            response = self.data_repo_client.enumerate_datasets(filter=dataset_name)
             dataset_id = response.items[0].id
         elif dataset_id and not dataset_name:
             pass  # let dataset_id argument pass through
