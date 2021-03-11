@@ -7,15 +7,14 @@ from hca_manage import __version__ as hca_manage_version
 from .manage import HcaManage
 from hca_orchestration.resources.base import default_google_access_token
 
-
 data_repo_host = {
     "dev": "https://jade.datarepo-dev.broadinstitute.org/",
     "prod": "https://jade-terra.datarepo-prod.broadinstitute.org/"
 }
 data_repo_profile_ids = {
-        "dev": "390e7a85-d47f-4531-b612-165fc977d3bd",
-        "prod": "db61c343-6dfe-4d14-84e9-60ddf97ea73f"
-    }
+    "dev": "390e7a85-d47f-4531-b612-165fc977d3bd",
+    "prod": "db61c343-6dfe-4d14-84e9-60ddf97ea73f"
+}
 
 
 class DefaultHelpParser(argparse.ArgumentParser):
@@ -43,18 +42,35 @@ def run(arguments=None):
                         required=True)
     subparsers = parser.add_subparsers(dest='command')
 
+    # validation checks
     parser_check = subparsers.add_parser("check",
                                          help="Command to check HCA datasets for duplicates and null file references")
     # only allow if env is prod
     parser_check.add_argument("-p", "--project", help="The Jade project to target, defaults to correct project for dev")
     parser_check.add_argument("-d", "--dataset", help="The Jade dataset to target", required=True)
     parser_check.add_argument("-r", "--remove",
-                              help="Remove problematic rows. If flag not set, will only check for presence of problematic rows.",
+                              help="Remove problematic rows. If flag not set, will only check for presence of problematic rows",
                               action="store_true")
 
-    parser_snapshot = subparsers.add_parser("snapshot", help="Command to create a snapshot for an HCA release")
-    parser_snapshot.add_argument("-d", "--dataset", help="The Jade dataset to target", required=True)
-    parser_snapshot.add_argument("-q", "--qualifier", help="Optional qualifier to append to the snapshot name")
+    # snapshot management
+    parser_snapshot = subparsers.add_parser("snapshot", help="Command to manage snapshots")
+    snapshot_flags = parser_snapshot.add_mutually_exclusive_group(required=True)
+    snapshot_flags.add_argument("-c", "--create", help="Flag to indicate snapshot creation", action="store_true")
+    snapshot_flags.add_argument("-r", "--remove", help="Flag to indicate snapshot deletion", action="store_true")
+    snapshot_delete_args = parser_snapshot.add_mutually_exclusive_group(required=True)
+    snapshot_delete_args.add_argument("-n", "--snapshot_name", help="Name of snapshot to delete.")
+    snapshot_delete_args.add_argument("-i", "--snapshot_id", help="ID of snapshot to delete.")
+    snapshot_create_args = parser_snapshot.add_argument_group()
+    snapshot_create_args.add_argument("-d", "--dataset", help="The Jade dataset to target")
+    snapshot_create_args.add_argument("-q", "--qualifier", help="Optional qualifier to append to the snapshot name")
+
+    # dataset management
+    parser_dataset = subparsers.add_parser("dataset", help="Command to manage datasets")
+    dataset_flags = parser_dataset.add_mutually_exclusive_group(required=True)
+    dataset_flags.add_argument("-r", "--remove", help="Flag to indicate dataset deletion", action="store_true")
+    dataset_delete_args = parser_dataset.add_mutually_exclusive_group(required=True)
+    dataset_delete_args.add_argument("-n", "--dataset_name", help="Name of dataset to delete.")
+    dataset_delete_args.add_argument("-i", "--dataset_id", help="ID of dataset to delete.")
 
     args = parser.parse_args(arguments)
 
@@ -63,7 +79,19 @@ def run(arguments=None):
     if args.command == "check":
         check_data(args, host, parser)
     elif args.command == "snapshot":
-        create_snapshot(args, host)
+        if args.create:
+            create_snapshot(args, host)
+        elif args.remove:
+            if query_yes_no("Are you sure?"):
+                remove_snapshot(args, host)
+            else:
+                print("No deletes attempted.")
+    elif args.command == "dataset":
+        if args.remove:
+            if query_yes_no("Are you sure?"):
+                remove_dataset(args, host)
+            else:
+                print("No deletes attempted.")
 
 
 def check_data(args, host, parser):
@@ -90,8 +118,52 @@ def check_data(args, host, parser):
 
 def create_snapshot(args, host):
     profile_id = data_repo_profile_ids[args.env]
-    hca = HcaManage(environment=args.env,
-                    dataset=args.dataset,
-                    data_repo_profile_id=profile_id,
-                    data_repo_client=get_api_client(host=host))
-    hca.submit_snapshot_request(qualifier=args.qualifier)
+    hca = HcaManage(
+        environment=args.env,
+        dataset=args.dataset,
+        data_repo_profile_id=profile_id,
+        data_repo_client=get_api_client(host=host))
+    return hca.submit_snapshot_request(qualifier=args.qualifier)
+
+
+def remove_snapshot(args, host):
+    hca = HcaManage(environment=args.env, data_repo_client=get_api_client(host=host))
+    return hca.delete_snapshot(snapshot_name=args.snapshot_name, snapshot_id=args.snapshot_id)
+
+
+def remove_dataset(args, host):
+    hca = HcaManage(environment=args.env, data_repo_client=get_api_client(host=host))
+    return hca.delete_dataset(dataset_name=args.dataset_name, dataset_id=args.dataset_id)
+
+
+def query_yes_no(question, default="no"):
+    """Ask a yes/no question via raw_input() and return their answer.
+
+    "question" is a string that is presented to the user.
+    "default" is the presumed answer if the user just hits <Enter>.
+        It must be "yes" (the default), "no" or None (meaning
+        an answer is required of the user).
+
+    The "answer" return value is True for "yes" or False for "no".
+    """
+    valid = {"yes": True, "y": True, "ye": True,
+             "no": False, "n": False}
+    if default is None:
+        prompt = " [y/n] "
+    elif default == "yes":
+        prompt = " [Y/n] "
+    elif default == "no":
+        prompt = " [y/N] "
+    else:
+        raise ValueError(f"invalid default answer: '{default}'")
+
+    while True:
+        sys.stdout.write(question + prompt)
+        choice = input().lower()
+        if default is not None and choice == '':
+            return valid[default]
+        elif choice in valid:
+            return valid[choice]
+        else:
+            sys.stdout.write("Please respond with 'yes' or 'no' "
+                             "(or 'y' or 'n').\n")

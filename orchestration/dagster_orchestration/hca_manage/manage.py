@@ -15,8 +15,8 @@ ProblemCount = namedtuple("ProblemCount", ["duplicates", "null_file_refs"])
 class HcaManage:
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-    def __init__(self, environment: str, dataset: str, data_repo_client: RepositoryApi, project: Optional[str] = None,
-                 data_repo_profile_id: Optional[str] = None):
+    def __init__(self, environment: str, data_repo_client: RepositoryApi, project: Optional[str] = None,
+                 dataset: Optional[str] = None, data_repo_profile_id: Optional[str] = None):
         self.environment = environment
 
         self.project = project
@@ -134,7 +134,7 @@ class HcaManage:
         :param query: The SQL query to run.
         :return: A set of whatever the query is asking for (assumes that we're only asking for a single column).
         """
-        query_job = self.bigquery_client.query(query)
+        query_job = self.bigquery_client().query(query)
         return {row[0] for row in query_job}
 
     def _format_filename(self, table: str):
@@ -229,6 +229,38 @@ class HcaManage:
         )
 
         logging.info(f"Snapshot creation job id: {response.id}")
+        return response.id
+
+    def delete_snapshot(self, snapshot_name: Optional[str] = None, snapshot_id: Optional[str] = None):
+        if snapshot_name and not snapshot_id:
+            response = self.data_repo_client.enumerate_snapshots(filter=snapshot_name)
+            try:
+                snapshot_id = response.items[0].id
+            except IndexError:
+                raise ValueError("The provided snapshot name returned no results.")
+        elif snapshot_id and not snapshot_name:
+            pass  # let snapshot_id argument pass through
+        else:
+            # can't have both/neither provided
+            raise ValueError("You must provide either snapshot_name or snapshot_id, and cannot provide neither/both.")
+        response = self.data_repo_client.delete_snapshot(snapshot_id)
+        logging.info(f"Snapshot deletion job id: {response.id}")
+        return response.id
+
+    def delete_dataset(self, dataset_name: Optional[str] = None, dataset_id: Optional[str] = None):
+        if dataset_name and not dataset_id:
+            response = self.data_repo_client.enumerate_datasets(filter=dataset_name)
+            try:
+                dataset_id = response.items[0].id
+            except IndexError:
+                raise ValueError("The provided snapshot name returned no results.")
+        elif dataset_id and not dataset_name:
+            pass  # let dataset_id argument pass through
+        else:
+            # can't have both/neither provided
+            raise ValueError("You must provide either dataset_name or dataset_id, and cannot provide neither/both.")
+        response = self.data_repo_client.delete_dataset(dataset_id)
+        logging.info(f"Dataset deletion job id: {response.id}")
         return response.id
 
     # dataset-level checking and soft deleting

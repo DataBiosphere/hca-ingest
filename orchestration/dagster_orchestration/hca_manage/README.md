@@ -18,5 +18,8 @@ To actually remove things, add the remove `-r` flag after:
 
 Be very sure and careful when adding the remove flag.
 
-For snapshot creation:
-`poetry run manage -e dev snapshot -d hca_dev_20201203 -q mytest1`
+Example of snapshot creation:
+`poetry run manage -e dev snapshot -c -d hca_dev_20201203 -q mytest1`
+
+Example of dataset removal:
+`poetry run manage - dev dataset -r -n myfakedataset`
