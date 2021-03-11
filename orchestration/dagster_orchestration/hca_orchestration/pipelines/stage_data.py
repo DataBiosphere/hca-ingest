@@ -1,14 +1,10 @@
-"""
-Collection of Dagster modes that allow us to vary pipeline behavior between
-environments.
+from dagster import ModeDefinition, pipeline
 
-(see https://docs.dagster.io/overview/modes-resources-presets/modes-resources for more details)
-"""
-
-from dagster import ModeDefinition
+from hca_orchestration.solids import clear_staging_dir, pre_process_metadata, submit_file_ingest
 from hca_orchestration.resources.base import dataflow_beam_runner, local_beam_runner, google_storage_client, \
     jade_data_repo_client
 from hca_orchestration.resources.test import test_beam_runner, local_storage_client, noop_data_repo_client
+
 
 prod_mode = ModeDefinition(
     name="prod",
@@ -29,10 +25,26 @@ local_mode = ModeDefinition(
 )
 
 test_mode = ModeDefinition(
-    name='test',
+    name="test",
     resource_defs={
         "beam_runner": test_beam_runner,
         "storage_client": local_storage_client,
         "data_repo_client": noop_data_repo_client
     }
 )
+
+
+@pipeline(
+    mode_defs=[prod_mode, local_mode, test_mode]
+)
+def stage_data():
+    middle = pre_process_metadata(start=clear_staging_dir())
+    entities = ["analysis_file", "analysis_process", "analysis_protocol"]
+
+    outs = []
+    for e in entities:
+        submit = submit_file_ingest.alias(e)
+        outs.append(submit(middle))
+
+    final = submit_file_ingest.alias("final")
+    final(outs)

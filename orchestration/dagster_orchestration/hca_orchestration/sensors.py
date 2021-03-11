@@ -40,23 +40,10 @@ class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClientMixin):
                         }
                     }
                 },
-                # dagster requires config settings for all resources in the pipeline, even if they're unused,
-                # so we pass in dummy values here
                 "resources": {
-                    "beam_runner": {
-                        "config": {
-                            "project": '',
-                            "temp_location": '',
-                            "subnet_name": '',
-                            "service_account": '',
-                            "image_name": '',
-                            "image_version": '',
-                            "namespace": ''
-                        }
-                    },
                     "data_repo_client": {
                         "config": {
-                            "api_url": ''
+                            "api_url": "https://jade.datarepo-dev.broadinstitute.org"
                         }
                     }
                 }
