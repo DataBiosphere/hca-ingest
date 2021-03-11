@@ -44,16 +44,20 @@ class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClientMixin):
                 # so we pass in dummy values here
                 "resources": {
                     "beam_runner": {
-                        "project": '',
-                        "temp_location": '',
-                        "subnet_name": '',
-                        "service_account": '',
-                        "image_name": '',
-                        "image_version": '',
-                        "namespace": ''
+                        "config": {
+                            "project": '',
+                            "temp_location": '',
+                            "subnet_name": '',
+                            "service_account": '',
+                            "image_name": '',
+                            "image_version": '',
+                            "namespace": ''
+                        }
                     },
                     "data_repo_client": {
-                        "api_url": ''
+                        "config": {
+                            "api_url": ''
+                        }
                     }
                 }
             }
