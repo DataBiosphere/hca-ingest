@@ -82,10 +82,16 @@ def run(arguments=None):
         if args.create:
             create_snapshot(args, host)
         elif args.remove:
-            remove_snapshot(args, host)
+            if query_yes_no("Are you sure?"):
+                remove_snapshot(args, host)
+            else:
+                print("No deletes attempted.")
     elif args.command == "dataset":
         if args.remove:
-            remove_dataset(args, host)
+            if query_yes_no("Are you sure?"):
+                remove_dataset(args, host)
+            else:
+                print("No deletes attempted.")
 
 
 def check_data(args, host, parser):
@@ -128,3 +134,36 @@ def remove_snapshot(args, host):
 def remove_dataset(args, host):
     hca = HcaManage(environment=args.env, data_repo_client=get_api_client(host=host))
     return hca.delete_dataset(dataset_name=args.dataset_name, dataset_id=args.dataset_id)
+
+
+def query_yes_no(question, default="no"):
+    """Ask a yes/no question via raw_input() and return their answer.
+
+    "question" is a string that is presented to the user.
+    "default" is the presumed answer if the user just hits <Enter>.
+        It must be "yes" (the default), "no" or None (meaning
+        an answer is required of the user).
+
+    The "answer" return value is True for "yes" or False for "no".
+    """
+    valid = {"yes": True, "y": True, "ye": True,
+             "no": False, "n": False}
+    if default is None:
+        prompt = " [y/n] "
+    elif default == "yes":
+        prompt = " [Y/n] "
+    elif default == "no":
+        prompt = " [y/N] "
+    else:
+        raise ValueError(f"invalid default answer: '{default}'")
+
+    while True:
+        sys.stdout.write(question + prompt)
+        choice = input().lower()
+        if default is not None and choice == '':
+            return valid[default]
+        elif choice in valid:
+            return valid[choice]
+        else:
+            sys.stdout.write("Please respond with 'yes' or 'no' "
+                             "(or 'y' or 'n').\n")
