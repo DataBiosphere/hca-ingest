@@ -40,7 +40,22 @@ class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClientMixin):
                         }
                     }
                 },
-                "resources": {}  # no resources used in the pipeline, so we don't pass in any config
+                # dagster requires config settings for all resources in the pipeline, even if they're unused,
+                # so we pass in dummy values here
+                "resources": {
+                    "beam_runner": {
+                        "project": '',
+                        "temp_location": '',
+                        "subnet_name": '',
+                        "service_account": '',
+                        "image_name": '',
+                        "image_version": '',
+                        "namespace": ''
+                    },
+                    "data_repo_client": {
+                        "api_url": ''
+                    }
+                }
             }
         )
 
