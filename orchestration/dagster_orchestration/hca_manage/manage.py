@@ -234,7 +234,10 @@ class HcaManage:
     def delete_snapshot(self, snapshot_name: Optional[str] = None, snapshot_id: Optional[str] = None):
         if snapshot_name and not snapshot_id:
             response = self.data_repo_client.enumerate_snapshots(filter=snapshot_name)
-            snapshot_id = response.items[0].id
+            try:
+                snapshot_id = response.items[0].id
+            except IndexError:
+                raise ValueError("The provided snapshot name returned no results.")
         elif snapshot_id and not snapshot_name:
             pass  # let snapshot_id argument pass through
         else:
@@ -247,7 +250,10 @@ class HcaManage:
     def delete_dataset(self, dataset_name: Optional[str] = None, dataset_id: Optional[str] = None):
         if dataset_name and not dataset_id:
             response = self.data_repo_client.enumerate_datasets(filter=dataset_name)
-            dataset_id = response.items[0].id
+            try:
+                dataset_id = response.items[0].id
+            except IndexError:
+                raise ValueError("The provided snapshot name returned no results.")
         elif dataset_id and not dataset_name:
             pass  # let dataset_id argument pass through
         else:
