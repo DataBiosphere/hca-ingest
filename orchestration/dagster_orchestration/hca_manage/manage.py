@@ -39,6 +39,12 @@ class HcaManage:
         jade_urls = {"prod": "https://jade-terra.datarepo-prod.broadinstitute.org",
                      "dev": "https://jade.datarepo-dev.broadinstitute.org"}
         self.base_url = jade_urls[environment]
+
+        self.reader_list = {
+            "dev": ["hca-snapshot-readers@dev.test.firecloud.org"],
+            "prod": ["hca-snapshot-readers@firecloud.org"]
+        }[environment]
+
         self._gcp_creds = None
 
     def gcp_creds(self):
@@ -48,11 +54,6 @@ class HcaManage:
             self._gcp_creds, _ = google.auth.default()
 
         return self._gcp_creds
-
-        self.reader_list = {
-            "dev": ["hca-snapshot-readers@dev.test.firecloud.org"],
-            "prod": ["hca-snapshot-readers@firecloud.org"]
-        }[environment]
 
     # lazy initializer
     def bigquery_client(self) -> bigquery.client.Client:
@@ -161,7 +162,7 @@ class HcaManage:
 
         return self._hit_bigquery(query)
 
-    def _hit_bigquery(self, query):
+    def _hit_bigquery(self, query: str) -> Set[str]:
         """
         Helper function to consistently interact with biqquery while reusing the same client.
         :param query: The SQL query to run.
@@ -213,7 +214,7 @@ class HcaManage:
         """
 
         response = self.data_repo_client.enumerate_datasets(filter=self.dataset)
-        return response.items[0].id
+        return response.items[0].id  # type: ignore # data repo client has no type hints, since it's auto-generated
 
     def submit_soft_delete(self, target_table: str, target_path: str) -> str:
         """
@@ -238,7 +239,7 @@ class HcaManage:
                     }
                 ]))
 
-        return response.id
+        return response.id  # type: ignore # data repo client has no type hints, since it's auto-generated
 
     def submit_snapshot_request(self, qualifier: Optional[str] = None) -> str:
         date_stamp = str(datetime.today().date()).replace("-", "")
@@ -262,7 +263,7 @@ class HcaManage:
         )
 
         logging.info(f"Snapshot creation job id: {response.id}")
-        return response.id
+        return response.id  # type: ignore # data repo client has no type hints, since it's auto-generated
 
     def delete_snapshot(self, snapshot_name: Optional[str] = None, snapshot_id: Optional[str] = None):
         if snapshot_name and not snapshot_id:
@@ -292,9 +293,9 @@ class HcaManage:
         else:
             # can't have both/neither provided
             raise ValueError("You must provide either dataset_name or dataset_id, and cannot provide neither/both.")
-        response = self.data_repo_client.delete_dataset(dataset_id)
-        logging.info(f"Dataset deletion job id: {response.id}")
-        return response.id
+        delete_response = self.data_repo_client.delete_dataset(dataset_id)
+        logging.info(f"Dataset deletion job id: {delete_response.id}")
+        return delete_response.id
 
     # dataset-level checking and soft deleting
     def process_duplicates(self, soft_delete: bool = False):
