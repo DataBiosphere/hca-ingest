@@ -33,17 +33,18 @@ jobs:
           ${{ runner.os }}-build-
           ${{ runner.os }}-
     - name: Install dependencies
+      id: dependencies
       run: poetry install
       working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
     - name: Enforce coding style guide
       run: poetry run flake8
       working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
-      if: true
+      if: always() && steps.dependencies.outcome == 'success' # run all three checks, even if a prior check fails
     - name: Check static types
       run: poetry run mypy
       working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
-      if: true
+      if: always() && steps.dependencies.outcome == 'success' # run all three checks, even if a prior check fails
     - name: Run test suite
       run: poetry run pytest
       working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
-      if: true
+      if: always() && steps.dependencies.outcome == 'success' # run all three checks, even if a prior check fails
