@@ -2,6 +2,8 @@ from datetime import datetime
 import os
 from typing import List
 
+from dateutil.tz import tzlocal
+
 from dagster import sensor, RunRequest, SkipReason
 
 from hca_orchestration.contrib.argo_workflows import ArgoArchivedWorkflowsClientMixin, ExtendedArgoWorkflow
@@ -9,7 +11,7 @@ from hca_orchestration.resources.base import default_google_access_token
 
 
 # boundary before which we don't care about any workflows in argo
-ARGO_EPOCH = datetime(2021, 3, 1)
+ARGO_EPOCH = datetime(2021, 3, 15, tzinfo=tzlocal())
 
 
 class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClientMixin):
@@ -37,13 +39,20 @@ class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClientMixin):
                             "dataset_name": inflated_workflow.params_dict()['data-repo-name'].removeprefix("datarepo_"),
                         }
                     }
+                },
+                "resources": {
+                    "data_repo_client": {
+                        "config": {
+                            "api_url": os.environ.get("DATA_REPO_URL")
+                        }
+                    }
                 }
             }
         )
 
 
 # TODO use execution context to avoid re-scanning old workflows
-@sensor(pipeline_name="validate_egress")
+@sensor(pipeline_name="validate_egress", mode="prod")
 def postvalidate_on_import_complete(_):
     sensor = ArgoHcaImportCompletionSensor(argo_url=os.environ.get("HCA_ARGO_URL"), access_token=default_google_access_token())
 

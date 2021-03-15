@@ -69,6 +69,7 @@ def submit_file_ingest(context) -> Nothing:
 
 
 @solid(
+    required_resource_keys={"data_repo_client"},
     config_schema={
         "gcp_env": String,
         "google_project_name": String,
