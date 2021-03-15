@@ -7,7 +7,7 @@ from dateutil.tz import tzlocal
 from dagster import sensor, RunRequest, SkipReason
 
 from hca_orchestration.contrib.argo_workflows import ArgoArchivedWorkflowsClient, ExtendedArgoWorkflow
-from hca_orchestration.resources.base import default_google_access_token
+from hca_orchestration.contrib.google import default_google_access_token
 
 
 # boundary before which we don't care about any workflows in argo
@@ -28,23 +28,37 @@ class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClient):
     def generate_run_request(self, workflow: ExtendedArgoWorkflow) -> RunRequest:
         inflated_workflow = workflow.inflate()
 
+        validation_config = {
+            "gcp_env": os.environ.get("HCA_GCP_ENV"),
+            "dataset_name": inflated_workflow.params_dict()['data-repo-name'].removeprefix("datarepo_"),
+        }
+
         return RunRequest(
             run_key=inflated_workflow.metadata.name,
             run_config={
                 "solids": {
                     "post_import_validate": {
                         "config": {
-                            "gcp_env": os.environ.get("HCA_GCP_ENV"),
+                            **validation_config,
                             "google_project_name": os.environ.get("HCA_GOOGLE_PROJECT"),
-                            "dataset_name": inflated_workflow.params_dict()['data-repo-name']
-                                                             .removeprefix("datarepo_"),
+                        }
+                    },
+                    "notify_slack_of_egress_validation_results": {
+                        "config": {
+                            **validation_config,
+                            "channel": "#monster-ci",
                         }
                     }
                 },
                 "resources": {
                     "data_repo_client": {
                         "config": {
-                            "api_url": os.environ.get("DATA_REPO_URL")
+                            "api_url": os.environ.get("DATA_REPO_URL"),
+                        }
+                    },
+                    "slack": {
+                        "config": {
+                            "token": os.environ.get("SLACK_TOKEN"),
                         }
                     }
                 }

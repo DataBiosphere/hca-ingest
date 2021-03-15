@@ -1,66 +1,10 @@
 import subprocess
 from uuid import uuid4
 
-import kubernetes
 from dagster import resource, StringSource, Field
 from dagster_k8s.client import DagsterKubernetesClient
-from google.cloud import storage
-from google.auth.transport.requests import Request
-import google.auth
-from data_repo_client import ApiClient, Configuration, RepositoryApi
 
-ONE_DAY_IN_SECONDS = 86400  # seconds
-POLLING_INTERVAL = 5  # seconds
-
-
-def default_google_access_token():
-    # get token for google-based auth use, assumes application default credentials work for specified environment
-    credentials, _ = google.auth.default()
-    credentials.refresh(Request())
-
-    return credentials.token
-
-
-@resource({
-    "working_dir": Field(StringSource)
-})
-def local_beam_runner(init_context):
-    return LocalBeamRunner(working_dir=init_context.resource_config["working_dir"])
-
-
-class LocalBeamRunner:
-    def __init__(self, working_dir):
-        self.working_dir = working_dir
-
-    def run(self, job_name, input_prefix, output_prefix, context):
-        context.log.info("Local beam runner")
-        # TODO this is hardcoded to the HCA transformation pipeline for now
-        subprocess.run(
-            ["sbt", f'hca-transformation-pipeline/run --inputPrefix={input_prefix} --outputPrefix={output_prefix}'],
-            check=True,
-            cwd=f"{self.working_dir}"
-        )
-
-
-@resource({
-    "project": Field(StringSource),
-    "temp_location": Field(StringSource),
-    "subnet_name": Field(StringSource),
-    "service_account": Field(StringSource),
-    "image_name": Field(StringSource),
-    "image_version": Field(StringSource),
-    "namespace": Field(StringSource)
-})
-def dataflow_beam_runner(init_context):
-    return DataflowBeamRunner(
-        project=init_context.resource_config['project'],
-        temp_location=init_context.resource_config['temp_location'],
-        subnet_name=init_context.resource_config['subnet_name'],
-        service_account=init_context.resource_config['service_account'],
-        image_name=init_context.resource_config['image_name'],
-        image_version=init_context.resource_config['image_version'],
-        namespace=init_context.resource_config['namespace']
-    )
+import kubernetes
 
 
 class DataflowBeamRunner:
@@ -147,22 +91,52 @@ class DataflowBeamRunner:
         return api_response
 
 
-@resource
-def google_storage_client(init_context):
-    credentials, project = google.auth.default()
+@resource({
+    "project": Field(StringSource),
+    "temp_location": Field(StringSource),
+    "subnet_name": Field(StringSource),
+    "service_account": Field(StringSource),
+    "image_name": Field(StringSource),
+    "image_version": Field(StringSource),
+    "namespace": Field(StringSource)
+})
+def dataflow_beam_runner(init_context):
+    return DataflowBeamRunner(
+        project=init_context.resource_config['project'],
+        temp_location=init_context.resource_config['temp_location'],
+        subnet_name=init_context.resource_config['subnet_name'],
+        service_account=init_context.resource_config['service_account'],
+        image_name=init_context.resource_config['image_name'],
+        image_version=init_context.resource_config['image_version'],
+        namespace=init_context.resource_config['namespace']
+    )
 
-    return storage.Client(project=project, credentials=credentials)
+
+class LocalBeamRunner:
+    def __init__(self, working_dir):
+        self.working_dir = working_dir
+
+    def run(self, job_name, input_prefix, output_prefix, context):
+        context.log.info("Local beam runner")
+        # TODO this is hardcoded to the HCA transformation pipeline for now
+        subprocess.run(
+            ["sbt", f'hca-transformation-pipeline/run --inputPrefix={input_prefix} --outputPrefix={output_prefix}'],
+            check=True,
+            cwd=f"{self.working_dir}"
+        )
 
 
 @resource({
-    "api_url": Field(StringSource)
+    "working_dir": Field(StringSource)
 })
-def jade_data_repo_client(init_context):
-    # create API client
-    config = Configuration(host=init_context.resource_config["api_url"])
-    config.access_token = default_google_access_token()
-    client = ApiClient(configuration=config)
-    client.client_side_validation = False
+def local_beam_runner(init_context):
+    return LocalBeamRunner(working_dir=init_context.resource_config["working_dir"])
 
-    # submit file ingest (for now just enumerate datasets or something to prove interaction works)
-    return RepositoryApi(api_client=client)
+
+@resource
+def test_beam_runner(init_context):
+    class TestBeamRunner():
+        def run(self, job_name, input_prefix, output_prefix, context):
+            return None
+
+    return TestBeamRunner()
