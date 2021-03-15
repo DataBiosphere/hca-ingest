@@ -11,7 +11,7 @@ from hca_orchestration.resources.base import default_google_access_token
 
 
 # boundary before which we don't care about any workflows in argo
-ARGO_EPOCH = datetime(2021, 3, 1, tzinfo=tzlocal())
+ARGO_EPOCH = datetime(2021, 3, 15, tzinfo=tzlocal())
 
 
 class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClientMixin):
