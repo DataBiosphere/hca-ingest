@@ -3,14 +3,15 @@ from unittest.mock import Mock, patch
 
 from dagster import execute_solid
 
+from hca_orchestration.pipelines.validate_egress import test_mode
 from hca_orchestration.solids import post_import_validate
 
 
 class SolidsTestCase(unittest.TestCase):
-    @patch("hca_manage.manage.HcaManage.get_null_filerefs")
-    @patch("hca_manage.manage.HcaManage.get_file_table_names")
-    @patch("hca_manage.manage.HcaManage.get_duplicates")
-    @patch("hca_manage.manage.HcaManage.get_all_table_names")
+    @patch("hca_manage.manage.HcaManage.get_null_filerefs", return_value=set())
+    @patch("hca_manage.manage.HcaManage.get_file_table_names", return_value=set())
+    @patch("hca_manage.manage.HcaManage.get_duplicates", return_value=set())
+    @patch("hca_manage.manage.HcaManage.get_all_table_names", return_value=set())
     def test_post_import_validate(self, mock_all_table_names: Mock, mock_duplicates: Mock, mock_file_table_names: Mock,
                                   mock_null_filerefs: Mock):
         """
@@ -39,7 +40,7 @@ class SolidsTestCase(unittest.TestCase):
             }
         }
 
-        result = execute_solid(post_import_validate, run_config=solid_config)
+        result = execute_solid(post_import_validate, run_config=solid_config, mode_def=test_mode)
         self.assertTrue(result.success)
         expected_duplicate_issues = len(fake_table_names) * len(fake_duplicate_ids)
         expected_file_ref_issues = len(fake_file_table_names) * len(fake_null_fileref_ids)

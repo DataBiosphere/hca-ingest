@@ -4,9 +4,15 @@ This is an initial introduction of [Dagster](https://dagster.io)
 into our codebase for workflow orchestration. This document captures notes,
 todos and anything else we bump into as we test out this technology.
 
+## Setting up your dev environment
+* Make sure you have [Poetry](https://python-poetry.org/docs/#installation) installed.
+* From the `dagster_orchestration` dir, run `poetry install` to install all dependencies.
+* Run `poetry run pre-commit install` to install a hook that will automatically lint your code whenever you create a commit.
+	* If the hook blocks you from creating a commit, you can just run `git commit` again, unless it reports any linting errors it wasn't able to fix.
+
 ## Running
-We're using poetry:
-* from the `dagster` dir, run `poetry install`
+Once you have your environment set up:
+
 * Run dagit and our toy pipeline via `poetry run dagit  -f hca_orchestration/pipelines.py`
 
 The `stage_data` pipeline is being built to mimic our current HCA `stage_data` pipeline.

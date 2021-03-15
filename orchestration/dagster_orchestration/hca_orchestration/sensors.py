@@ -6,15 +6,15 @@ from dateutil.tz import tzlocal
 
 from dagster import sensor, RunRequest, SkipReason
 
-from hca_orchestration.contrib.argo_workflows import ArgoArchivedWorkflowsClientMixin, ExtendedArgoWorkflow
+from hca_orchestration.contrib.argo_workflows import ArgoArchivedWorkflowsClient, ExtendedArgoWorkflow
 from hca_orchestration.resources.base import default_google_access_token
 
 
 # boundary before which we don't care about any workflows in argo
-ARGO_EPOCH = datetime(2021, 3, 15, tzinfo=tzlocal())
+ARGO_EPOCH: datetime = datetime(2021, 3, 15, tzinfo=tzlocal())
 
 
-class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClientMixin):
+class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClient):
     def successful_hca_import_workflows(self) -> List[ExtendedArgoWorkflow]:
         return [
             ExtendedArgoWorkflow(workflow, argo_url=self.argo_url, access_token=self.access_token)
@@ -36,7 +36,8 @@ class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClientMixin):
                         "config": {
                             "gcp_env": os.environ.get("HCA_GCP_ENV"),
                             "google_project_name": os.environ.get("HCA_GOOGLE_PROJECT"),
-                            "dataset_name": inflated_workflow.params_dict()['data-repo-name'].removeprefix("datarepo_"),
+                            "dataset_name": inflated_workflow.params_dict()['data-repo-name']
+                                                             .removeprefix("datarepo_"),
                         }
                     }
                 },
@@ -54,7 +55,9 @@ class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClientMixin):
 # TODO use execution context to avoid re-scanning old workflows
 @sensor(pipeline_name="validate_egress", mode="prod")
 def postvalidate_on_import_complete(_):
-    sensor = ArgoHcaImportCompletionSensor(argo_url=os.environ.get("HCA_ARGO_URL"), access_token=default_google_access_token())
+    sensor = ArgoHcaImportCompletionSensor(
+        argo_url=os.environ.get("HCA_ARGO_URL"),
+        access_token=default_google_access_token())
 
     workflows = sensor.successful_hca_import_workflows()
 

@@ -40,18 +40,23 @@ class HcaManage:
                      "dev": "https://jade.datarepo-dev.broadinstitute.org"}
         self.base_url = jade_urls[environment]
 
-        # use application default credentials to seamlessly work across monster devs
-        # assumes `gcloud auth application-default login` has been run
-        creds, _ = google.auth.default()
-        self.gcp_creds = creds
-
         self.reader_list = {
             "dev": ["hca-snapshot-readers@dev.test.firecloud.org"],
             "prod": ["hca-snapshot-readers@firecloud.org"]
         }[environment]
 
+        self._gcp_creds = None
+
+    def gcp_creds(self):
+        # use application default credentials to seamlessly work across monster devs
+        # assumes `gcloud auth application-default login` has been run
+        if not self._gcp_creds:
+            self._gcp_creds, _ = google.auth.default()
+
+        return self._gcp_creds
+
     # lazy initializer
-    def bigquery_client(self) -> bigquery.Client:
+    def bigquery_client(self) -> bigquery.client.Client:
         if not self._bigquery_client:
             self._bigquery_client = bigquery.Client(project=self.project)
 
@@ -76,9 +81,17 @@ class HcaManage:
         :return: A set of table names.
         """
         query = f"""
-        WITH fileRefTables AS (SELECT * FROM `{self.project}.datarepo_{self.dataset}.INFORMATION_SCHEMA.COLUMNS` WHERE column_name = "file_id"),
-        desiredViews AS (SELECT * FROM `{self.project}.datarepo_{self.dataset}.INFORMATION_SCHEMA.TABLES` WHERE table_type = "VIEW")
-        SELECT desiredViews.table_name FROM fileRefTables JOIN desiredViews ON fileRefTables.table_name = desiredViews.table_name
+        WITH fileRefTables AS (
+            SELECT *
+            FROM `{self.project}.datarepo_{self.dataset}.INFORMATION_SCHEMA.COLUMNS`
+            WHERE column_name = "file_id"),
+        desiredViews AS (
+            SELECT * FROM `{self.project}.datarepo_{self.dataset}.INFORMATION_SCHEMA.TABLES`
+            WHERE table_type = "VIEW")
+        SELECT desiredViews.table_name
+        FROM fileRefTables
+        JOIN desiredViews
+          ON fileRefTables.table_name = desiredViews.table_name
         """
 
         return self._hit_bigquery(query)
@@ -95,22 +108,43 @@ class HcaManage:
         # rid -> row_id, fid -> file_id, v -> version
 
         # allRows:          the row ids, file ids, and versions of all rows in the target table
-        # latestFids:       For all file ids that occur more than once, get the file id and the largest (latest) version
+        # latestFids:       For all file ids that occur more than once, get the file id and the largest (latest)
+        #                   version
         # ridsOfAllFids:    The row ids, file ids, and versions of all file ids present in latestFids; in other words,
         #                   the (row id, file id, version) for every file id that has duplicates
         # ridsOfLatestFids: The row ids, file ids, and versions of all file ids present in latestFids but ONLY the
         #                   latest version rows (so a subset of ridsOfAllFids).
-        # Final query:      Get the row ids from ridsOfAllFids but exclude the row ids from ridsOfLatestFids, leaving us
-        #                   with the row ids of all non-latest version file ids. These are the rows to soft delete.
+        # Final query:      Get the row ids from ridsOfAllFids but exclude the row ids from ridsOfLatestFids, leaving
+        #                   us with the row ids of all non-latest version file ids. These are the rows to soft delete.
 
         # Note: The EXCEPT DISTINCT SELECT at the end grabs all row ids of rows that AREN'T the latest version.
         # The final subquery here is in case there are multiple rows with the same version.
         query = f"""
-        WITH allRows AS (SELECT datarepo_row_id AS rid, {target_table}_id AS fid, version AS v FROM {sql_table}),
-        latestFids AS (SELECT DISTINCT fid, MAX(v) AS maxv FROM allRows GROUP BY fid HAVING COUNT(1) > 1),
-        ridsOfAllFids AS (SELECT t.rid AS rid, f.fid, t.v FROM latestFids f JOIN allRows t ON t.fid = f.fid),
-        ridsOfLatestFids AS (SELECT t.rid AS rid, f.fid, f.maxv FROM latestFids f JOIN ridsOfAllFids t ON t.fid = f.fid AND t.v = f.maxv)
-        SELECT rid FROM ridsOfAllFids EXCEPT DISTINCT SELECT rid FROM (SELECT MAX(rid) AS rid, fid FROM ridsOfLatestFids GROUP BY fid)
+        WITH allRows AS (
+            SELECT datarepo_row_id AS rid, {target_table}_id AS fid, version AS v
+            FROM {sql_table}),
+        latestFids AS (
+            SELECT DISTINCT fid, MAX(v) AS maxv
+            FROM allRows
+            GROUP BY fid
+            HAVING COUNT(1) > 1),
+        ridsOfAllFids AS (
+            SELECT t.rid AS rid, f.fid, t.v
+            FROM latestFids f
+            JOIN allRows t
+              ON t.fid = f.fid),
+        ridsOfLatestFids AS (
+            SELECT t.rid AS rid, f.fid, f.maxv
+            FROM latestFids f
+            JOIN ridsOfAllFids t
+              ON t.fid = f.fid AND t.v = f.maxv)
+        SELECT rid
+        FROM ridsOfAllFids
+        EXCEPT DISTINCT SELECT rid
+                        FROM (
+                            SELECT MAX(rid) AS rid, fid
+                            FROM ridsOfLatestFids
+                            GROUP BY fid)
         """
 
         return self._hit_bigquery(query)
@@ -128,7 +162,7 @@ class HcaManage:
 
         return self._hit_bigquery(query)
 
-    def _hit_bigquery(self, query):
+    def _hit_bigquery(self, query: str) -> Set[str]:
         """
         Helper function to consistently interact with biqquery while reusing the same client.
         :param query: The SQL query to run.
@@ -180,7 +214,7 @@ class HcaManage:
         """
 
         response = self.data_repo_client.enumerate_datasets(filter=self.dataset)
-        return response.items[0].id
+        return response.items[0].id  # type: ignore # data repo client has no type hints, since it's auto-generated
 
     def submit_soft_delete(self, target_table: str, target_path: str) -> str:
         """
@@ -205,7 +239,7 @@ class HcaManage:
                     }
                 ]))
 
-        return response.id
+        return response.id  # type: ignore # data repo client has no type hints, since it's auto-generated
 
     def submit_snapshot_request(self, qualifier: Optional[str] = None) -> str:
         date_stamp = str(datetime.today().date()).replace("-", "")
@@ -229,7 +263,7 @@ class HcaManage:
         )
 
         logging.info(f"Snapshot creation job id: {response.id}")
-        return response.id
+        return response.id  # type: ignore # data repo client has no type hints, since it's auto-generated
 
     def delete_snapshot(self, snapshot_name: Optional[str] = None, snapshot_id: Optional[str] = None):
         if snapshot_name and not snapshot_id:
@@ -259,9 +293,9 @@ class HcaManage:
         else:
             # can't have both/neither provided
             raise ValueError("You must provide either dataset_name or dataset_id, and cannot provide neither/both.")
-        response = self.data_repo_client.delete_dataset(dataset_id)
-        logging.info(f"Dataset deletion job id: {response.id}")
-        return response.id
+        delete_response = self.data_repo_client.delete_dataset(dataset_id)
+        logging.info(f"Dataset deletion job id: {delete_response.id}")
+        return delete_response.id
 
     # dataset-level checking and soft deleting
     def process_duplicates(self, soft_delete: bool = False):

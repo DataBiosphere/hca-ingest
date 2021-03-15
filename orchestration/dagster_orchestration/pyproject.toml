@@ -19,6 +19,10 @@ python-dateutil = "^2.8.1"
 pdbpp = "^0.10.2"
 pytest = "^6.2.1"
 dagit = "^0.10.5"
+flake8 = "^3.8.4"
+autopep8 = "^1.5.5"
+pre-commit = "^2.11.0"
+mypy = "^0.812"
 
 [tool.poetry.scripts]
 manage = "hca_manage.main:run"

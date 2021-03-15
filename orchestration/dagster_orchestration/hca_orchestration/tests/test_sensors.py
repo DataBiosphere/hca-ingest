@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch
 
 from datetime import datetime
+from dateutil.tz import tzlocal
 from collections.abc import Iterable
 from typing import Generator, TypeVar
 
@@ -24,7 +25,7 @@ def generator(iterable: Iterable[T]) -> Generator[T, None, None]:
 
 # the argo workflows api produces this abominable nested set of classes for each workflow,
 # so we build one from simple params here to keep our tests lean
-def mock_argo_workflow(name, uid, status, finished_at=datetime.now(), params={}):
+def mock_argo_workflow(name, uid, status, finished_at=datetime.now(tz=tzlocal()), params={}):
     return V1alpha1Workflow(
         metadata=V1ObjectMeta(
             name=name,
@@ -71,8 +72,14 @@ class TestArgoHcaImportCompletionSensor(unittest.TestCase):
             }),
         ]
 
-        with patch('hca_orchestration.contrib.argo_workflows.ArgoArchivedWorkflowsClientMixin.list_archived_workflows', return_value=generator(archived_workflows)):
-            workflows = list(ArgoHcaImportCompletionSensor(argo_url='https://nonexistentsite.test', access_token='token').successful_hca_import_workflows())
+        with patch('hca_orchestration.contrib.argo_workflows.ArgoArchivedWorkflowsClient.list_archived_workflows',
+                   return_value=generator(archived_workflows)):
+            workflows = list(
+                ArgoHcaImportCompletionSensor(
+                    argo_url='https://nonexistentsite.test',
+                    access_token='token'
+                ).successful_hca_import_workflows()
+            )
 
             self.assertNotIn(extend_workflow(archived_workflows[0]), workflows)
             self.assertIn(extend_workflow(archived_workflows[1]), workflows)
@@ -89,8 +96,14 @@ class TestArgoHcaImportCompletionSensor(unittest.TestCase):
             }),
         ]
 
-        with patch('hca_orchestration.contrib.argo_workflows.ArgoArchivedWorkflowsClientMixin.list_archived_workflows', return_value=generator(archived_workflows)):
-            workflows = list(ArgoHcaImportCompletionSensor(argo_url='https://nonexistentsite.test', access_token='token').successful_hca_import_workflows())
+        with patch('hca_orchestration.contrib.argo_workflows.ArgoArchivedWorkflowsClient.list_archived_workflows',
+                   return_value=generator(archived_workflows)):
+            workflows = list(
+                ArgoHcaImportCompletionSensor(
+                    argo_url='https://nonexistentsite.test',
+                    access_token='token'
+                ).successful_hca_import_workflows()
+            )
 
             self.assertIn(extend_workflow(archived_workflows[0]), workflows)
             self.assertNotIn(extend_workflow(archived_workflows[1]), workflows)
@@ -98,19 +111,37 @@ class TestArgoHcaImportCompletionSensor(unittest.TestCase):
 
     def test_successful_hca_import_workflows_ignores_workflows_finished_before_epoch(self):
         archived_workflows = [
-            mock_argo_workflow('import-hca-total-defg', 'abc123uid', 'Succeeded', datetime(2021, 3, 3), {
-                'data-repo-name': 'datarepo_dataset0'
-            }),
-            mock_argo_workflow('import-hca-total-abcd', 'abc234uid', 'Succeeded', datetime(2021, 3, 5), {
-                'data-repo-name': 'datarepo_dataset1'
-            }),
-            mock_argo_workflow('import-hca-total-cdef', 'abc345uid', 'Succeeded', datetime(2020, 2, 27), {
-                'data-repo-name': 'datarepo_dataset2'
-            }),
+            mock_argo_workflow(
+                'import-hca-total-defg',
+                'abc123uid',
+                'Succeeded',
+                datetime(2021, 3, 17, tzinfo=tzlocal()),
+                {'data-repo-name': 'datarepo_dataset0'},
+            ),
+            mock_argo_workflow(
+                'import-hca-total-abcd',
+                'abc234uid',
+                'Succeeded',
+                datetime(2021, 3, 16, tzinfo=tzlocal()),
+                {'data-repo-name': 'datarepo_dataset1'},
+            ),
+            mock_argo_workflow(
+                'import-hca-total-cdef',
+                'abc345uid',
+                'Succeeded',
+                datetime(2020, 2, 27, tzinfo=tzlocal()),
+                {'data-repo-name': 'datarepo_dataset2'},
+            ),
         ]
 
-        with patch('hca_orchestration.contrib.argo_workflows.ArgoArchivedWorkflowsClientMixin.list_archived_workflows', return_value=generator(archived_workflows)):
-            workflows = list(ArgoHcaImportCompletionSensor(argo_url='https://nonexistentsite.test', access_token='token').successful_hca_import_workflows())
+        with patch('hca_orchestration.contrib.argo_workflows.ArgoArchivedWorkflowsClient.list_archived_workflows',
+                   return_value=generator(archived_workflows)):
+            workflows = list(
+                ArgoHcaImportCompletionSensor(
+                    argo_url='https://nonexistentsite.test',
+                    access_token='token'
+                ).successful_hca_import_workflows()
+            )
 
             self.assertIn(extend_workflow(archived_workflows[0]), workflows)
             self.assertIn(extend_workflow(archived_workflows[1]), workflows)
@@ -118,7 +149,12 @@ class TestArgoHcaImportCompletionSensor(unittest.TestCase):
 
     def test_generate_run_request_uses_workflow_name_for_run_key(self):
         sensor = ArgoHcaImportCompletionSensor(argo_url='https://nonexistentsite.test', access_token='token')
-        workflow = extend_workflow(mock_argo_workflow('import-hca-total-defg', 'abc123uid', 'Succeeded', params={'data-repo-name': 'datarepo_snatasnet'}))
+        workflow = extend_workflow(mock_argo_workflow(
+            'import-hca-total-defg',
+            'abc123uid',
+            'Succeeded',
+            params={'data-repo-name': 'datarepo_snatasnet'}
+        ))
         with patch('hca_orchestration.contrib.argo_workflows.ExtendedArgoWorkflow.inflate', return_value=workflow):
             req = sensor.generate_run_request(workflow)
 
@@ -126,14 +162,25 @@ class TestArgoHcaImportCompletionSensor(unittest.TestCase):
 
     def test_generate_run_request_inflates_workflow(self):
         sensor = ArgoHcaImportCompletionSensor(argo_url='https://nonexistentsite.test', access_token='token')
-        workflow = extend_workflow(mock_argo_workflow('import-hca-total-defg', 'abc123uid', 'Succeeded', params={'data-repo-name': 'datarepo_snatasnet'}))
-        with patch('hca_orchestration.contrib.argo_workflows.ExtendedArgoWorkflow.inflate', return_value=workflow) as mocked_inflate:
+        workflow = extend_workflow(mock_argo_workflow(
+            'import-hca-total-defg',
+            'abc123uid',
+            'Succeeded',
+            params={'data-repo-name': 'datarepo_snatasnet'}
+        ))
+        with patch('hca_orchestration.contrib.argo_workflows.ExtendedArgoWorkflow.inflate',
+                   return_value=workflow) as mocked_inflate:
             sensor.generate_run_request(workflow)
             mocked_inflate.assert_called_once()
 
     def test_generate_run_request_provides_correct_pipeline_params(self):
         sensor = ArgoHcaImportCompletionSensor(argo_url='https://nonexistentsite.test', access_token='token')
-        workflow = extend_workflow(mock_argo_workflow('import-hca-total-defg', 'abc123uid', 'Succeeded', params={'data-repo-name': 'datarepo_snatasnet'}))
+        workflow = extend_workflow(mock_argo_workflow(
+            'import-hca-total-defg',
+            'abc123uid',
+            'Succeeded',
+            params={'data-repo-name': 'datarepo_snatasnet'}
+        ))
         with patch('hca_orchestration.contrib.argo_workflows.ExtendedArgoWorkflow.inflate', return_value=workflow):
             req = sensor.generate_run_request(workflow)
             self.assertEqual(req.run_config['solids']['post_import_validate']['config']['dataset_name'], 'snatasnet')

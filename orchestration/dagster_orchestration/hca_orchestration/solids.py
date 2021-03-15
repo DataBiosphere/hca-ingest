@@ -1,10 +1,19 @@
 from dagster import solid, InputDefinition, Nothing, String, DagsterType
+
 from hca_manage.manage import HcaManage, ProblemCount
 
-DagsterProblemCount = DagsterType(
+from typing import Any
+
+
+def problem_count_typecheck(_, value: Any) -> bool:
+    return isinstance(value, ProblemCount)
+
+
+DagsterProblemCount: DagsterType = DagsterType(
     name="DagsterProblemCount",
-    type_check_fn=lambda _, value: isinstance(value, ProblemCount),
-    description="A simple named tuple to represent the different types of issues present from the post process validation.",
+    type_check_fn=problem_count_typecheck,
+    description="A simple named tuple to represent the different types of issues "
+                "present from the post process validation.",
 )
 
 
