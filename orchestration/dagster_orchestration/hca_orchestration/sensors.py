@@ -43,7 +43,7 @@ class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClientMixin):
                 "resources": {
                     "data_repo_client": {
                         "config": {
-                            "api_url": "https://jade.datarepo-dev.broadinstitute.org"
+                            "api_url": os.environ.get("DATA_REPO_URL")
                         }
                     }
                 }
