@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch
 
 from datetime import datetime
+from dateutil.tz import tzlocal
 from collections.abc import Iterable
 from typing import Generator, TypeVar
 
@@ -24,7 +25,7 @@ def generator(iterable: Iterable[T]) -> Generator[T, None, None]:
 
 # the argo workflows api produces this abominable nested set of classes for each workflow,
 # so we build one from simple params here to keep our tests lean
-def mock_argo_workflow(name, uid, status, finished_at=datetime.now(), params={}):
+def mock_argo_workflow(name, uid, status, finished_at=datetime.now(tz=tzlocal()), params={}):
     return V1alpha1Workflow(
         metadata=V1ObjectMeta(
             name=name,
@@ -110,15 +111,27 @@ class TestArgoHcaImportCompletionSensor(unittest.TestCase):
 
     def test_successful_hca_import_workflows_ignores_workflows_finished_before_epoch(self):
         archived_workflows = [
-            mock_argo_workflow('import-hca-total-defg', 'abc123uid', 'Succeeded', datetime(2021, 3, 3), {
-                'data-repo-name': 'datarepo_dataset0'
-            }),
-            mock_argo_workflow('import-hca-total-abcd', 'abc234uid', 'Succeeded', datetime(2021, 3, 5), {
-                'data-repo-name': 'datarepo_dataset1'
-            }),
-            mock_argo_workflow('import-hca-total-cdef', 'abc345uid', 'Succeeded', datetime(2020, 2, 27), {
-                'data-repo-name': 'datarepo_dataset2'
-            }),
+            mock_argo_workflow(
+                'import-hca-total-defg',
+                'abc123uid',
+                'Succeeded',
+                datetime(2021, 3, 17, tzinfo=tzlocal()),
+                {'data-repo-name': 'datarepo_dataset0'},
+            ),
+            mock_argo_workflow(
+                'import-hca-total-abcd',
+                'abc234uid',
+                'Succeeded',
+                datetime(2021, 3, 16, tzinfo=tzlocal()),
+                {'data-repo-name': 'datarepo_dataset1'},
+            ),
+            mock_argo_workflow(
+                'import-hca-total-cdef',
+                'abc345uid',
+                'Succeeded',
+                datetime(2020, 2, 27, tzinfo=tzlocal()),
+                {'data-repo-name': 'datarepo_dataset2'},
+            ),
         ]
 
         with patch('hca_orchestration.contrib.argo_workflows.ArgoArchivedWorkflowsClient.list_archived_workflows',

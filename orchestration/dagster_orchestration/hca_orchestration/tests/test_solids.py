@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 from dagster import execute_solid
 
-from hca_orchestration.resources.modes import test_mode
+from hca_orchestration.pipelines.validate_egress import test_mode
 from hca_orchestration.solids import post_import_validate
 
 
