@@ -34,7 +34,7 @@ def get_api_client(host: str) -> RepositoryApi:
 
     return RepositoryApi(api_client=client)
 
-# longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong
+
 def run(arguments=None):
     parser = DefaultHelpParser(description="A simple HCA Management CLI.")
     parser.add_argument("-V", "--version", action="version", version="%(prog)s " + hca_manage_version)
