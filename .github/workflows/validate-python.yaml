@@ -38,9 +38,12 @@ jobs:
     - name: Enforce coding style guide
       run: poetry run flake8
       working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
+      if: true
     - name: Check static types
       run: poetry run mypy
       working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
+      if: true
     - name: Run test suite
       run: poetry run pytest
       working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
+      if: true
