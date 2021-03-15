@@ -49,7 +49,8 @@ def run(arguments=None):
     parser_check.add_argument("-p", "--project", help="The Jade project to target, defaults to correct project for dev")
     parser_check.add_argument("-d", "--dataset", help="The Jade dataset to target", required=True)
     parser_check.add_argument("-r", "--remove",
-                              help="Remove problematic rows. If flag not set, will only check for presence of problematic rows",
+                              help="Remove problematic rows. If flag not set, "
+                                   "will only check for presence of problematic rows",
                               action="store_true")
 
     # snapshot management

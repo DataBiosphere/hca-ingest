@@ -17,11 +17,14 @@ def generate_argo_archived_workflows_client(host_url: str, access_token: str) ->
             header_value=f"Bearer {access_token}"))
 
 
+# protocols let us set up complex type constraints on function arguments.
+# this is a useful alternative when referencing functions from third-party libraries that aren't
+# properly type annotated.
 class ArgoFetchListOperation(Protocol):
     def __call__(
         self,
         *args: Any,
-        list_option_continue: Optional[str] = None,
+        list_options_continue: Optional[str] = None,
         **kwargs: Any
     ) -> V1alpha1WorkflowList: ...
 
