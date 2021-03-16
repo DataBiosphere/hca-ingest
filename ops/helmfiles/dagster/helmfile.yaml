@@ -16,6 +16,16 @@ releases:
     values:
       - serviceAccount:
           name: monster-dagster
+  - name: monster-secrets
+    namespace: dagster
+    chart: datarepo-helm/create-secret-manager-secret
+    missingFileHandler: Warn
+    values:
+      - secretName: monster-dagster-secrets
+        vals:
+          - kubeSecretKey: SLACK_TOKEN
+            path: secret/dsde/monster/{{ requiredEnv "ENV" }}/ingest/hca/dagster
+            vaultKey: slack-token
   - name: monster    # release name
     namespace: dagster   # target namespace
     chart: dagster/dagster   # chart name
@@ -35,6 +45,9 @@ releases:
                 # point it at the env config map the daemon generates as a workaround. this will be the
                 # same set of custom env vars as every other component of the system.
                 - name: monster-dagster-daemon-env
+      - dagit:
+        envSecrets:
+          - name: monster-dagster-secrets
       - userDeployments:
           # "user code" we deploy to dagster; these are dagster repositories of pipelines
           enabled: true
@@ -52,3 +65,5 @@ releases:
                 # we can't use values.yaml to insert env vars into deployments, since overwriting lists
                 # doesn't work in helmfiles. instead, like above, we just tell it to use the daemon's config map.
                 - name: monster-dagster-daemon-env
+              envSecrets:
+                - name: monster-dagster-secrets
