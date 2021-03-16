@@ -61,22 +61,26 @@ def post_import_validate(config):
         "channel": String,
     }
 )
-def base_notify_slack_of_egress_validation_results(context, validation_results) -> Nothing:
+def base_notify_slack_of_egress_validation_results(context, validation_results) -> str:
     gcp_env = context.solid_config["gcp_env"]
     dataset_name = context.solid_config["dataset_name"]
 
     if validation_results.duplicates > 0 or validation_results.null_file_refs > 0:
         message_lines = [
-            f"Problems identified in post-validation for {gcp_env} dataset {dataset_name}:",
-            "Duplicate lines found: " + validation_results.duplicates,
-            "Null file references found: " + validation_results.null_file_refs,
+            f"Problems identified in post-validation for HCA {gcp_env} dataset {dataset_name}:",
+            "Duplicate lines found: " + str(validation_results.duplicates),
+            "Null file references found: " + str(validation_results.null_file_refs),
         ]
     else:
-        message_lines = [f"{gcp_env} dataset {dataset_name} has passed post-validation."]
+        message_lines = [f"HCA {gcp_env} dataset {dataset_name} has passed post-validation."]
+
+    message = "\n".join(message_lines)
 
     context.resources.slack.chat_postMessage(
         channel=context.solid_config["channel"],
-        text="\n".join(message_lines))
+        text=message)
+
+    return message
 
 
 @configured(base_notify_slack_of_egress_validation_results, {"dataset_name": String})
