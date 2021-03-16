@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 from dagster import execute_solid
 
 from hca_orchestration.pipelines.validate_egress import test_mode
-from hca_orchestration.solids import post_import_validate
+from hca_orchestration.solids.validate_egress import base_post_import_validate
 
 
 class SolidsTestCase(unittest.TestCase):
@@ -30,7 +30,7 @@ class SolidsTestCase(unittest.TestCase):
 
         solid_config = {
             "solids": {
-                "post_import_validate": {
+                "base_post_import_validate": {
                     "config": {
                         "gcp_env": "dev",
                         "google_project_name": "fakeproj",
@@ -40,7 +40,7 @@ class SolidsTestCase(unittest.TestCase):
             }
         }
 
-        result = execute_solid(post_import_validate, run_config=solid_config, mode_def=test_mode)
+        result = execute_solid(base_post_import_validate, run_config=solid_config, mode_def=test_mode)
         self.assertTrue(result.success)
         expected_duplicate_issues = len(fake_table_names) * len(fake_duplicate_ids)
         expected_file_ref_issues = len(fake_file_table_names) * len(fake_null_fileref_ids)

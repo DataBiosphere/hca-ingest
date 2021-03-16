@@ -1,4 +1,7 @@
-from dagster import resource
+import os
+
+from dagster import configured, resource, String
+from dagster_slack import slack_resource
 
 
 class ConsoleSlackClient:
@@ -12,3 +15,11 @@ class ConsoleSlackClient:
 @resource
 def console_slack_client(init_context):
     return ConsoleSlackClient(init_context)
+
+
+@configured(slack_resource, {"token": String})
+def live_slack_client(config):
+    return {
+        "channel": os.environ.get("SLACK_NOTIFICATIONS_CHANNEL"),
+        **config,
+    }

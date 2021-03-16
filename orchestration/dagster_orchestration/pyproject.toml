@@ -25,6 +25,7 @@ flake8 = "^3.8.4"
 autopep8 = "^1.5.5"
 pre-commit = "^2.11.0"
 mypy = "^0.812"
+pytest-dotenv = "^0.5.2"
 
 [tool.poetry.scripts]
 manage = "hca_manage.main:run"

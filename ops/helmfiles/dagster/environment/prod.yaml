@@ -5,6 +5,7 @@ env: &envConfig
   DATA_REPO_URL: https://jade-terra.datarepo-prod.broadinstitute.org/
   HCA_GOOGLE_PROJECT: broad-dsp-monster-hca-prod
   HCA_GCP_ENV: prod
+  SLACK_NOTIFICATIONS_CHANNEL: "#monster-ci"
 
 dagit:
   env: *envConfig

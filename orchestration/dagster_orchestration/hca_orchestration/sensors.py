@@ -28,10 +28,7 @@ class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClient):
     def generate_run_request(self, workflow: ExtendedArgoWorkflow) -> RunRequest:
         inflated_workflow = workflow.inflate()
 
-        validation_config = {
-            "gcp_env": os.environ.get("HCA_GCP_ENV"),
-            "dataset_name": inflated_workflow.params_dict()['data-repo-name'].removeprefix("datarepo_"),
-        }
+        dataset_name = inflated_workflow.params_dict()['data-repo-name'].removeprefix("datarepo_")
 
         return RunRequest(
             run_key=inflated_workflow.metadata.name,
@@ -39,26 +36,12 @@ class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClient):
                 "solids": {
                     "post_import_validate": {
                         "config": {
-                            **validation_config,
-                            "google_project_name": os.environ.get("HCA_GOOGLE_PROJECT"),
+                            "dataset_name": dataset_name
                         }
                     },
                     "notify_slack_of_egress_validation_results": {
                         "config": {
-                            **validation_config,
-                            "channel": "#monster-ci",
-                        }
-                    }
-                },
-                "resources": {
-                    "data_repo_client": {
-                        "config": {
-                            "api_url": os.environ.get("DATA_REPO_URL"),
-                        }
-                    },
-                    "slack": {
-                        "config": {
-                            "token": os.environ.get("SLACK_TOKEN"),
+                            "dataset_name": dataset_name
                         }
                     }
                 }

@@ -21,11 +21,13 @@ releases:
     chart: datarepo-helm/create-secret-manager-secret
     missingFileHandler: Warn
     values:
-      - secretName: monster-dagster-secrets
-        vals:
-          - kubeSecretKey: SLACK_TOKEN
-            path: secret/dsde/monster/{{ requiredEnv "ENV" }}/ingest/hca/dagster
-            vaultKey: slack-token
+      - secrets:
+        - secretName: monster-dagster-secrets
+          nameSpace: ""
+          vals:
+            - kubeSecretKey: SLACK_TOKEN
+              path: secret/dsde/monster/{{ requiredEnv "ENV" }}/ingest/hca/dagster
+              vaultKey: slack-token
   - name: monster    # release name
     namespace: dagster   # target namespace
     chart: dagster/dagster   # chart name
@@ -46,8 +48,8 @@ releases:
                 # same set of custom env vars as every other component of the system.
                 - name: monster-dagster-daemon-env
       - dagit:
-        envSecrets:
-          - name: monster-dagster-secrets
+          envSecrets:
+            - name: monster-dagster-secrets
       - userDeployments:
           # "user code" we deploy to dagster; these are dagster repositories of pipelines
           enabled: true
