@@ -1,4 +1,6 @@
+from dataclasses import dataclass
 import subprocess
+from typing import Any, List
 from uuid import uuid4
 
 from dagster import resource, StringSource, Field
@@ -7,17 +9,23 @@ from dagster_k8s.client import DagsterKubernetesClient
 import kubernetes
 
 
+@dataclass
 class DataflowBeamRunner:
-    def __init__(self, project, temp_location, subnet_name, service_account, image_name, image_version, namespace):
-        self.project = project
-        self.temp_location = temp_location
-        self.subnet_name = subnet_name
-        self.service_account = service_account
-        self.image_name = image_name
-        self.image_version = image_version
-        self.namespace = namespace
+    project: str
+    temp_location: str
+    subnet_name: str
+    service_account: str
+    image_name: str
+    image_version: str
+    namespace: str
 
-    def run(self, job_name, input_prefix, output_prefix, context):
+    def run(
+        self,
+        job_name: str,
+        input_prefix: str,
+        output_prefix: str,
+        context: Any
+    ) -> None:
         args = [
             '--runner=dataflow',
             f"--inputPrefix={input_prefix}",
@@ -43,12 +51,12 @@ class DataflowBeamRunner:
         client.wait_for_job_success(job.metadata.name, self.namespace)
 
     @staticmethod
-    def get_job_status(name, namespace):
+    def get_job_status(name: str, namespace: str) -> str:
         client = kubernetes.client.BatchV1Api()
         return client.read_namespaced_job_status(name, namespace)
 
     @staticmethod
-    def dispatch_k8s_job(namespace, image_name, job_name_prefix, args, context):
+    def dispatch_k8s_job(namespace: str, image_name: str, job_name_prefix: str, args: List[str], context):
         # we will need to poll the pod/job status on creation
         kubernetes.config.load_kube_config()
 
@@ -112,11 +120,11 @@ def dataflow_beam_runner(init_context):
     )
 
 
+@dataclass
 class LocalBeamRunner:
-    def __init__(self, working_dir):
-        self.working_dir = working_dir
+    working_dir: str
 
-    def run(self, job_name, input_prefix, output_prefix, context):
+    def run(self, job_name: str, input_prefix: str, output_prefix: str, context) -> None:
         context.log.info("Local beam runner")
         # TODO this is hardcoded to the HCA transformation pipeline for now
         subprocess.run(
@@ -135,8 +143,8 @@ def local_beam_runner(init_context):
 
 @resource
 def test_beam_runner(init_context):
-    class TestBeamRunner():
-        def run(self, job_name, input_prefix, output_prefix, context):
+    class TestBeamRunner:
+        def run(self, job_name: str, input_prefix: str, output_prefix: str, context):
             return None
 
     return TestBeamRunner()

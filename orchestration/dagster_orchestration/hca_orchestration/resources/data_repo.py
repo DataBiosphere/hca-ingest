@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import os
 
 from dagster import configured, resource, StringSource, Field
@@ -30,10 +31,10 @@ def jade_data_repo_client(config):
 
 @resource
 def noop_data_repo_client(init_context):
-    class NoopDataRepoClient():
-        class NoopResult():
-            def __init__(self, total):
-                self.total = total
+    class NoopDataRepoClient:
+        @dataclass
+        class NoopResult:
+            total: int
 
         def enumerate_datasets(self):
             return NoopDataRepoClient.NoopResult(5)
