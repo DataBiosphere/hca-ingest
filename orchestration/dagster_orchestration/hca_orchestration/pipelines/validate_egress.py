@@ -1,6 +1,7 @@
 from dagster import ModeDefinition, pipeline
 
-from hca_orchestration.resources import jade_data_repo_client, noop_data_repo_client, console_slack_client, live_slack_client
+from hca_orchestration.resources import jade_data_repo_client, noop_data_repo_client, console_slack_client,\
+    live_slack_client
 from hca_orchestration.solids.validate_egress import post_import_validate, notify_slack_of_egress_validation_results
 
 

@@ -53,7 +53,7 @@ class DataflowBeamRunner:
     @staticmethod
     def get_job_status(name: str, namespace: str) -> str:
         client = kubernetes.client.BatchV1Api()
-        return client.read_namespaced_job_status(name, namespace)
+        return client.read_namespaced_job_status(name, namespace)  # type: ignore # (un-annotated library)
 
     @staticmethod
     def dispatch_k8s_job(namespace: str, image_name: str, job_name_prefix: str, args: List[str], context):

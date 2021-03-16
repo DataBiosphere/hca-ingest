@@ -1,7 +1,7 @@
 import os
 from typing import Any
 
-from dagster import configured, solid, InputDefinition, Nothing, String, DagsterType
+from dagster import configured, solid, InputDefinition, String, DagsterType
 
 from hca_manage.manage import HcaManage, ProblemCount
 
