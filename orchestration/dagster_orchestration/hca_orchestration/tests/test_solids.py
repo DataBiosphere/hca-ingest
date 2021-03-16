@@ -78,19 +78,17 @@ class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
                 }
             )
 
-            slack_message_sender.assert_called_once_with(
-                channel="choonel",
-                text=StringContaining("Problems identified in post-validation for HCA dev dataset fakedataset")
-            )
+            expected_lines = [
+                "Problems identified in post-validation for HCA dev dataset fakedataset",
+                "Duplicate lines found: 3",
+                "Null file references found: 2",
+            ]
 
-            slack_message_sender.assert_called_once_with(
-                channel="choonel",
-                text=StringContaining("Duplicate lines found: 3")
-            )
-            slack_message_sender.assert_called_once_with(
-                channel="choonel",
-                text=StringContaining("Null file references found: 2")
-            )
+            for expected_line in expected_lines:
+                slack_message_sender.assert_called_once_with(
+                    channel="choonel",
+                    text=StringContaining(expected_line)
+                )
 
         self.assertTrue(result.success)
 

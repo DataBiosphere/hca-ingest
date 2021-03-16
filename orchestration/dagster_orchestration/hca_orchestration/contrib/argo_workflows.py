@@ -41,7 +41,7 @@ class ArgoArchivedWorkflowsClient:
         return generate_argo_archived_workflows_client(self.argo_url, self.access_token)
 
     def list_archived_workflows(self) -> Generator[V1alpha1Workflow, None, None]:
-        return self._pull_paginated_results(self.client().list_archived_workflows)
+        return self._pull_paginated_results(self.client.list_archived_workflows)
 
     def get_archived_workflow(self, uid: str) -> V1alpha1Workflow:
         return self.client.get_archived_workflow(uid)

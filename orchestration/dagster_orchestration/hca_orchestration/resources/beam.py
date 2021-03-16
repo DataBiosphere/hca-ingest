@@ -130,7 +130,7 @@ class LocalBeamRunner:
         subprocess.run(
             ["sbt", f'hca-transformation-pipeline/run --inputPrefix={input_prefix} --outputPrefix={output_prefix}'],
             check=True,
-            cwd=f"{self.working_dir}"
+            cwd=self.working_dir
         )
 
 
