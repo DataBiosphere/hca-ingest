@@ -1,4 +1,5 @@
 from dagster import solid, InputDefinition, Nothing, String
+from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
 
 @solid(
@@ -8,7 +9,7 @@ from dagster import solid, InputDefinition, Nothing, String
         "staging_prefix_name": String,
     },
 )
-def clear_staging_dir(context) -> int:
+def clear_staging_dir(context: AbstractComputeExecutionContext) -> int:
     """
     Given a staging bucket + prefix, deletes all blobs present at that path
     :return: Number of deletions
@@ -34,7 +35,7 @@ def clear_staging_dir(context) -> int:
     },
     input_defs=[InputDefinition("start", Nothing)],
 )
-def pre_process_metadata(context) -> Nothing:
+def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
     """
     Runs the Beam hca transformation pipeline flow over the given input prefix
     """
@@ -52,7 +53,7 @@ def pre_process_metadata(context) -> Nothing:
     required_resource_keys={"data_repo_client"},
     input_defs=[InputDefinition("start", Nothing)]
 )
-def submit_file_ingest(context) -> Nothing:
+def submit_file_ingest(context: AbstractComputeExecutionContext) -> Nothing:
     """
     This will submit a dataset for ingestion to the data repo
     TODO This is a noop for now

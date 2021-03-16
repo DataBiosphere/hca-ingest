@@ -23,7 +23,7 @@ releases:
     values:
       - secrets:
         - secretName: monster-dagster-secrets
-          nameSpace: ""
+          nameSpace: dagster
           vals:
             - kubeSecretKey: SLACK_TOKEN
               path: secret/dsde/monster/{{ requiredEnv "ENV" }}/ingest/hca/dagster

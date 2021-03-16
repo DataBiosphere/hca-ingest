@@ -2,6 +2,7 @@ import os
 from typing import Any
 
 from dagster import configured, solid, InputDefinition, String, DagsterType
+from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
 from hca_manage.manage import HcaManage, ProblemCount
 
@@ -31,7 +32,7 @@ POST_VALIDATION_SETTINGS_SCHEMA = {
         "google_project_name": String,
     }
 )
-def base_post_import_validate(context) -> DagsterProblemCount:
+def base_post_import_validate(context: AbstractComputeExecutionContext) -> DagsterProblemCount:
     """
     Checks if the target dataset has any rows with duplicate IDs or null file references.
     """
@@ -61,7 +62,10 @@ def post_import_validate(config):
         "channel": String,
     }
 )
-def base_notify_slack_of_egress_validation_results(context, validation_results) -> str:
+def base_notify_slack_of_egress_validation_results(
+    context: AbstractComputeExecutionContext,
+    validation_results: ProblemCount,
+) -> str:
     gcp_env = context.solid_config["gcp_env"]
     dataset_name = context.solid_config["dataset_name"]
 
