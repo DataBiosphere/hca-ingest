@@ -91,7 +91,7 @@ def post_import_validate(context) -> DagsterProblemCount:
     """
     validator = HcaManage(
         context.solid_config["gcp_env"],
+        context.resources.data_repo_client,
         context.solid_config["google_project_name"],
-        context.solid_config["dataset_name"],
-        context.resources.data_repo_client)
+        context.solid_config["dataset_name"])
     return validator.check_for_all()
