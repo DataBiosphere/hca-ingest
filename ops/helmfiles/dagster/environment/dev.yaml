@@ -4,6 +4,7 @@ env: &envConfig
   HCA_ARGO_URL: https://hca-argo.monster-dev.broadinstitute.org/
   DATA_REPO_URL: https://jade.datarepo-dev.broadinstitute.org/
   HCA_GOOGLE_PROJECT: broad-dsp-monster-hca-dev
+  DATA_REPO_GOOGLE_PROJECT: broad-jade-dev-data
   HCA_GCP_ENV: dev
   SLACK_NOTIFICATIONS_CHANNEL: "#monster-ci"
 

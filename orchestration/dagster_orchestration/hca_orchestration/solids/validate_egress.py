@@ -49,7 +49,7 @@ def base_post_import_validate(context: AbstractComputeExecutionContext) -> Dagst
 def post_import_validate(config):
     return {
         'gcp_env': os.environ.get("HCA_GCP_ENV"),
-        'google_project_name': os.environ.get("HCA_GOOGLE_PROJECT"),
+        'google_project_name': os.environ.get("DATA_REPO_GOOGLE_PROJECT"),
         **config,
     }
 
