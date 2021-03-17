@@ -21,6 +21,5 @@ def console_slack_client(init_context: InitResourceContext):
 @configured(slack_resource)
 def live_slack_client(_config):
     return {
-        "channel": os.environ.get("SLACK_NOTIFICATIONS_CHANNEL"),
         "token": os.environ.get("SLACK_TOKEN"),
     }
