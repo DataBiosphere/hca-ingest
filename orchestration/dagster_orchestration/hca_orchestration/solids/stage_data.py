@@ -1,13 +1,18 @@
+import re
+
 from dagster import solid, InputDefinition, Nothing, String
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
 
+STAGING_BUCKET_CONFIG = {
+    "staging_bucket_name": String,
+    "staging_prefix_name": String,
+}
+
+
 @solid(
     required_resource_keys={"storage_client"},
-    config_schema={
-        "staging_bucket_name": String,
-        "staging_prefix_name": String,
-    },
+    config_schema=STAGING_BUCKET_CONFIG,
 )
 def clear_staging_dir(context: AbstractComputeExecutionContext) -> int:
     """
@@ -30,8 +35,8 @@ def clear_staging_dir(context: AbstractComputeExecutionContext) -> int:
 @solid(
     required_resource_keys={"beam_runner"},
     config_schema={
+        **STAGING_BUCKET_CONFIG,
         "input_prefix": String,
-        "output_prefix": String,
     },
     input_defs=[InputDefinition("start", Nothing)],
 )
@@ -41,11 +46,12 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
     """
     context.log.info("--pre_process_metadata")
 
+    kebabified_output_prefix = re.sub(r"[^A-Za-z0-9]", "-",  context.solid_config['staging_prefix_name'])
+
     context.resources.beam_runner.run(
-        "pre-process-metadata",
+        f"hca-stage-metadata-{kebabified_output_prefix}",
         context.solid_config["input_prefix"],
-        context.solid_config["output_prefix"],
-        context
+        f'gs://{context.solid_config["staging_bucket_name"]}/{context.solid_config["staging_prefix_name"]}'
     )
 
 

@@ -1,10 +1,9 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import subprocess
 from typing import List
 from uuid import uuid4
 
-from dagster import resource, StringSource, Field
-from dagster.core.execution.context.compute import AbstractComputeExecutionContext
+from dagster import DagsterLogManager, Field, IntSource, resource, StringSource
 from dagster.core.execution.context.init import InitResourceContext
 from dagster_k8s.client import DagsterKubernetesClient
 
@@ -12,54 +11,74 @@ import kubernetes
 from kubernetes.client.models.v1_job import V1Job
 
 
+# separating out config for the cloud dataflow pipeline to make
+# the giant mess of parameters here a little easier to parse
+@dataclass
+class DataflowCloudConfig:
+    project: str
+    service_account: str
+    subnet_name: str
+    region: str
+    worker_machine_type: str
+    starting_workers: int
+    max_workers: int
+
+    subnetwork: str = field(init=False)
+
+    def __post_init__(self):
+        self.subnetwork = '/'.join([
+            'regions',
+            self.cloud_config.region,
+            'subnetworks',
+            self.cloud_config.subnet_name,
+        ])
+
+
 @dataclass
 class DataflowBeamRunner:
-    project: str
+    cloud_config: DataflowCloudConfig
     temp_location: str
-    subnet_name: str
-    service_account: str
     image_name: str
     image_version: str
     namespace: str
+    logger: DagsterLogManager
 
     def run(
         self,
         job_name: str,
         input_prefix: str,
-        output_prefix: str,
-        context: AbstractComputeExecutionContext
+        output_prefix: str
     ) -> None:
+        args_dict = {
+            'runner': 'dataflow',
+            'inputPrefix': input_prefix,
+            'outputPrefix': output_prefix,
+            'project': self.cloud_config.project,
+            'region': self.cloud_config.region,
+            'tempLocation': self.temp_location,
+            'subnetwork': self.cloud_config.subnetwork,
+            'serviceAccount': self.cloud_config.service_account,
+            'workerMachineType': self.cloud_config.worker_machine_type,
+            'autoscalingAlgorithm': 'THROUGHPUT_BASED',
+            'numWorkers': str(self.cloud_config.starting_workers),
+            'maxNumWorkers': str(self.cloud_config.max_workers),
+            'experiments': 'shuffle_mode=service',
+        }
+
         args = [
-            '--runner=dataflow',
-            f"--inputPrefix={input_prefix}",
-            f"--outputPrefix={output_prefix}",
-            f"--project={self.project}",
-            "--region=us-central1",
-            f"--tempLocation={self.temp_location}",
-            f"--subnetwork=regions/us-central1/subnetworks/{self.subnet_name}",
-            f"--serviceAccount={self.service_account}",
-            "--workerMachineType=n1-standard-4",
-            "--autoscalingAlgorithm=THROUGHPUT_BASED",
-            "--numWorkers=4",
-            "--maxNumWorkers=16",
-            "--experiments=shuffle_mode=service"
+            f'--{field_name}={value}'
+            for field_name, value
+            in args_dict.items()
         ]
 
         image_name = f"{self.image_name}:{self.image_version}"  # {context.solid_config['version']}"
-        job = self.dispatch_k8s_job(self.namespace, image_name, job_name, args, context)
-        context.log.info("Dataflow job started")
+        job = self.dispatch_k8s_job(image_name, job_name, args)
+        self.logger.info("Dataflow job started")
 
-        DataflowBeamRunner.get_job_status(job.metadata.name, self.namespace)
         client = DagsterKubernetesClient.production_client()
         client.wait_for_job_success(job.metadata.name, self.namespace)
 
-    @staticmethod
-    def get_job_status(name: str, namespace: str) -> str:
-        client = kubernetes.client.BatchV1Api()
-        return client.read_namespaced_job_status(name, namespace)  # type: ignore # (un-annotated library)
-
-    @staticmethod
-    def dispatch_k8s_job(namespace: str, image_name: str, job_name_prefix: str, args: List[str], context) -> V1Job:
+    def dispatch_k8s_job(self, image_name: str, job_name_prefix: str, args: List[str]) -> V1Job:
         # we will need to poll the pod/job status on creation
         kubernetes.config.load_kube_config()
 
@@ -96,8 +115,8 @@ class DataflowBeamRunner:
         batch_v1 = kubernetes.client.BatchV1Api()
         api_response = batch_v1.create_namespaced_job(
             body=job,
-            namespace=namespace)
-        context.log.info(f"Job created. status='{str(api_response.status)}'")
+            namespace=self.namespace)
+        self.logger.info(f"Job created. status='{str(api_response.status)}'")
 
         return api_response
 
@@ -106,35 +125,47 @@ class DataflowBeamRunner:
     "project": Field(StringSource),
     "temp_location": Field(StringSource),
     "subnet_name": Field(StringSource),
+    "region": Field(StringSource),
+    "worker_machine_type": Field(StringSource),
+    "starting_workers": Field(IntSource),
+    "max_workers": Field(IntSource),
     "service_account": Field(StringSource),
     "image_name": Field(StringSource),
     "image_version": Field(StringSource),
     "namespace": Field(StringSource)
 })
 def dataflow_beam_runner(init_context: InitResourceContext):
-    return DataflowBeamRunner(
+    cloud_config = DataflowCloudConfig(
         project=init_context.resource_config['project'],
-        temp_location=init_context.resource_config['temp_location'],
-        subnet_name=init_context.resource_config['subnet_name'],
         service_account=init_context.resource_config['service_account'],
+        subnet_name=init_context.resource_config['subnet_name'],
+        region=init_context.resource_config['region'],
+        worker_machine_type=init_context.resource_config['worker_machine_type'],
+        starting_workers=init_context.resource_config['starting_workers'],
+        max_workers=init_context.resource_config['max_workers'],
+    )
+    return DataflowBeamRunner(
+        cloud_config=cloud_config,
+        temp_location=init_context.resource_config['temp_location'],
         image_name=init_context.resource_config['image_name'],
         image_version=init_context.resource_config['image_version'],
-        namespace=init_context.resource_config['namespace']
+        namespace=init_context.resource_config['namespace'],
+        logger=init_context.log_manager,
     )
 
 
 @dataclass
 class LocalBeamRunner:
     working_dir: str
+    logger: DagsterLogManager
 
     def run(
         self,
         job_name: str,
         input_prefix: str,
-        output_prefix: str,
-        context: AbstractComputeExecutionContext
+        output_prefix: str
     ) -> None:
-        context.log.info("Local beam runner")
+        self.logger.info("Local beam runner")
         # TODO this is hardcoded to the HCA transformation pipeline for now
         subprocess.run(
             ["sbt", f'hca-transformation-pipeline/run --inputPrefix={input_prefix} --outputPrefix={output_prefix}'],
@@ -147,13 +178,16 @@ class LocalBeamRunner:
     "working_dir": Field(StringSource)
 })
 def local_beam_runner(init_context: InitResourceContext):
-    return LocalBeamRunner(working_dir=init_context.resource_config["working_dir"])
+    return LocalBeamRunner(
+        working_dir=init_context.resource_config["working_dir"],
+        logger=init_context.log_manager,
+    )
 
 
 @resource
 def test_beam_runner(init_context: InitResourceContext):
     class TestBeamRunner:
-        def run(self, job_name: str, input_prefix: str, output_prefix: str, context: InitResourceContext):
+        def run(self, job_name: str, input_prefix: str, output_prefix: str):
             return None
 
     return TestBeamRunner()
