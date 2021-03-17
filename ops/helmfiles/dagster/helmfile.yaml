@@ -47,6 +47,8 @@ releases:
                 # point it at the env config map the daemon generates as a workaround. this will be the
                 # same set of custom env vars as every other component of the system.
                 - name: monster-dagster-daemon-env
+              envSecrets:
+                - name: monster-dagster-secrets
       - dagit:
           envSecrets:
             - name: monster-dagster-secrets
@@ -69,3 +71,6 @@ releases:
                 - name: monster-dagster-daemon-env
               envSecrets:
                 - name: monster-dagster-secrets
+      - dagsterDaemon:
+          envSecrets:
+            - name: monster-dagster-secrets

@@ -166,7 +166,7 @@ class HcaManage:
         :param query: The SQL query to run.
         :return: A set of whatever the query is asking for (assumes that we're only asking for a single column).
         """
-        query_job = self.bigquery_client().query(query)
+        query_job = self.bigquery_client.query(query)
         return {row[0] for row in query_job}
 
     def _format_filename(self, table: str):
