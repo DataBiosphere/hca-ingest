@@ -24,7 +24,7 @@ def base_jade_data_repo_client(init_context: InitResourceContext):
 
 
 @configured(base_jade_data_repo_client)
-def jade_data_repo_client(config):
+def jade_data_repo_client(_config):
     return {
         'api_url': os.environ.get('DATA_REPO_URL'),
     }
