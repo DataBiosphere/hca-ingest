@@ -1,20 +1,5 @@
-from dagster import solid, InputDefinition, Nothing, String, DagsterType
-
-from hca_manage.manage import HcaManage, ProblemCount
-
-from typing import Any
-
-
-def problem_count_typecheck(_, value: Any) -> bool:
-    return isinstance(value, ProblemCount)
-
-
-DagsterProblemCount: DagsterType = DagsterType(
-    name="DagsterProblemCount",
-    type_check_fn=problem_count_typecheck,
-    description="A simple named tuple to represent the different types of issues "
-                "present from the post process validation.",
-)
+from dagster import solid, InputDefinition, Nothing, String
+from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
 
 @solid(
@@ -24,7 +9,7 @@ DagsterProblemCount: DagsterType = DagsterType(
         "staging_prefix_name": String,
     },
 )
-def clear_staging_dir(context) -> int:
+def clear_staging_dir(context: AbstractComputeExecutionContext) -> int:
     """
     Given a staging bucket + prefix, deletes all blobs present at that path
     :return: Number of deletions
@@ -50,7 +35,7 @@ def clear_staging_dir(context) -> int:
     },
     input_defs=[InputDefinition("start", Nothing)],
 )
-def pre_process_metadata(context) -> Nothing:
+def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
     """
     Runs the Beam hca transformation pipeline flow over the given input prefix
     """
@@ -68,30 +53,10 @@ def pre_process_metadata(context) -> Nothing:
     required_resource_keys={"data_repo_client"},
     input_defs=[InputDefinition("start", Nothing)]
 )
-def submit_file_ingest(context) -> Nothing:
+def submit_file_ingest(context: AbstractComputeExecutionContext) -> Nothing:
     """
     This will submit a dataset for ingestion to the data repo
     TODO This is a noop for now
     """
     datasets = context.resources.data_repo_client.enumerate_datasets()
     context.log.debug(f"Enumerate found {datasets.total} datasets in the repo")
-
-
-@solid(
-    required_resource_keys={"data_repo_client"},
-    config_schema={
-        "gcp_env": String,
-        "google_project_name": String,
-        "dataset_name": String,
-    }
-)
-def post_import_validate(context) -> DagsterProblemCount:
-    """
-    Checks if the target dataset has any rows with duplicate IDs or null file references.
-    """
-    validator = HcaManage(
-        context.solid_config["gcp_env"],
-        context.resources.data_repo_client,
-        context.solid_config["google_project_name"],
-        context.solid_config["dataset_name"])
-    return validator.check_for_all()

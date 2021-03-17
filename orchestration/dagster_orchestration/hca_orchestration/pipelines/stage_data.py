@@ -1,9 +1,8 @@
 from dagster import ModeDefinition, pipeline
 
-from hca_orchestration.solids import clear_staging_dir, pre_process_metadata, submit_file_ingest
-from hca_orchestration.resources.base import dataflow_beam_runner, local_beam_runner, google_storage_client, \
-    jade_data_repo_client
-from hca_orchestration.resources.test import test_beam_runner, local_storage_client, noop_data_repo_client
+from hca_orchestration.solids.stage_data import clear_staging_dir, pre_process_metadata, submit_file_ingest
+from hca_orchestration.resources import dataflow_beam_runner, local_beam_runner, google_storage_client, \
+    jade_data_repo_client, test_beam_runner, local_storage_client, noop_data_repo_client
 
 
 prod_mode = ModeDefinition(

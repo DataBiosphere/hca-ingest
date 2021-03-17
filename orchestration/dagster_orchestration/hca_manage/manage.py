@@ -1,66 +1,64 @@
 from collections import namedtuple
 import csv
+from dataclasses import dataclass, field
 from datetime import datetime
 import logging
 import os
 from typing import Optional, Set
 
+from cached_property import cached_property
 from data_repo_client import RepositoryApi, DataDeletionRequest, SnapshotRequestModel, SnapshotRequestContentsModel
 import google.auth
 from google.cloud import bigquery, storage
 
 ProblemCount = namedtuple("ProblemCount", ["duplicates", "null_file_refs"])
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+
+@dataclass
 class HcaManage:
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    environment: str
+    data_repo_client: RepositoryApi
+    project: Optional[str] = None
+    dataset: Optional[str] = None
+    data_repo_profile_id: Optional[str] = None
 
-    def __init__(self, environment: str, data_repo_client: RepositoryApi, project: Optional[str] = None,
-                 dataset: Optional[str] = None, data_repo_profile_id: Optional[str] = None):
-        self.environment = environment
+    # fields calculated from other fields
+    filename_template: str = field(init=False)
+    bucket_project: str = field(init=False)
+    bucket: str = field(init=False)
+    base_url: str = field(init=False)
+    reader_list: str = field(init=False)
 
-        self.project = project
-
-        self.dataset = dataset
-
-        self.data_repo_client = data_repo_client
-
-        self.data_repo_profile_id = data_repo_profile_id
-
-        self.filename_template = f"sd-{project}-{dataset}-{{table}}.csv"
-
-        self._bigquery_client = None
+    def __post_init__(self):
+        self.filename_template = f"sd-{self.project}-{self.dataset}-{{table}}.csv"
 
         bucket_projects = {"prod": "mystical-slate-284720",
                            "dev": "broad-dsp-monster-hca-dev"}
-        self.bucket_project = bucket_projects[environment]
-        self.bucket = f"broad-dsp-monster-hca-{environment}-staging-storage"
+        self.bucket_project = bucket_projects[self.environment]
+        self.bucket = f"broad-dsp-monster-hca-{self.environment}-staging-storage"
 
         jade_urls = {"prod": "https://jade-terra.datarepo-prod.broadinstitute.org",
                      "dev": "https://jade.datarepo-dev.broadinstitute.org"}
-        self.base_url = jade_urls[environment]
+        self.base_url = jade_urls[self.environment]
 
         self.reader_list = {
             "dev": ["hca-snapshot-readers@dev.test.firecloud.org"],
             "prod": ["hca-snapshot-readers@firecloud.org"]
-        }[environment]
+        }[self.environment]
 
-        self._gcp_creds = None
+    @cached_property
+    def bigquery_client(self) -> bigquery.client.Client:
+        return bigquery.Client(project=self.project)
 
+    @cached_property
     def gcp_creds(self):
         # use application default credentials to seamlessly work across monster devs
         # assumes `gcloud auth application-default login` has been run
-        if not self._gcp_creds:
-            self._gcp_creds, _ = google.auth.default()
+        creds, _ = google.auth.default()
 
-        return self._gcp_creds
-
-    # lazy initializer
-    def bigquery_client(self) -> bigquery.client.Client:
-        if not self._bigquery_client:
-            self._bigquery_client = bigquery.Client(project=self.project)
-
-        return self._bigquery_client
+        return creds
 
     # bigquery interactions
     def get_all_table_names(self) -> Set[str]:

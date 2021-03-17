@@ -1,5 +1,7 @@
 from __future__ import annotations  # this lets us annotate functions in class C that return an instance of C
 
+from cached_property import cached_property
+from dataclasses import dataclass
 from typing import Any, Dict, Generator, Optional
 from typing_extensions import Protocol
 
@@ -29,23 +31,20 @@ class ArgoFetchListOperation(Protocol):
     ) -> V1alpha1WorkflowList: ...
 
 
+@dataclass
 class ArgoArchivedWorkflowsClient:
-    def __init__(self, argo_url: str, access_token: str):
-        self.argo_url = argo_url
-        self.access_token = access_token
-        self._client = None
+    argo_url: str
+    access_token: str
 
+    @cached_property
     def client(self) -> ArchivedWorkflowServiceApi:
-        if not self._client:
-            self._client = generate_argo_archived_workflows_client(self.argo_url, self.access_token)
-
-        return self._client
+        return generate_argo_archived_workflows_client(self.argo_url, self.access_token)
 
     def list_archived_workflows(self) -> Generator[V1alpha1Workflow, None, None]:
-        return self._pull_paginated_results(self.client().list_archived_workflows)
+        return self._pull_paginated_results(self.client.list_archived_workflows)
 
     def get_archived_workflow(self, uid: str) -> V1alpha1Workflow:
-        return self.client().get_archived_workflow(uid)
+        return self.client.get_archived_workflow(uid)
 
     def _pull_paginated_results(self, api_function: ArgoFetchListOperation) -> Generator[V1alpha1Workflow, None, None]:
         results = api_function()

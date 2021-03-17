@@ -5,6 +5,7 @@ env: &envConfig
   DATA_REPO_URL: https://jade.datarepo-dev.broadinstitute.org/
   HCA_GOOGLE_PROJECT: broad-dsp-monster-hca-dev
   HCA_GCP_ENV: dev
+  SLACK_NOTIFICATIONS_CHANNEL: "#monster-ci"
 
 dagit:
   env: *envConfig

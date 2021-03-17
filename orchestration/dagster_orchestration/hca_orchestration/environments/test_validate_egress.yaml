@@ -1,6 +1,8 @@
 solids:
   post_import_validate:
     config:
-      gcp_env: dev
-      google_project_name: fake-google-project
       dataset_name: hca_aeiou
+  notify_slack_of_egress_validation_results:
+    config:
+      dataset_name: hca_aeiou
+
