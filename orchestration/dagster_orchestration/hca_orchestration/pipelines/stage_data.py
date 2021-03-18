@@ -1,6 +1,6 @@
 from dagster import ModeDefinition, pipeline
 
-from hca_orchestration.solids.stage_data import clear_staging_dir, pre_process_metadata, submit_file_ingest
+from hca_orchestration.solids.stage_data import clear_staging_dir, pre_process_metadata
 from hca_orchestration.resources import dataflow_beam_runner, local_beam_runner, google_storage_client, \
     jade_data_repo_client, test_beam_runner, local_storage_client, noop_data_repo_client
 
@@ -37,13 +37,4 @@ test_mode = ModeDefinition(
     mode_defs=[prod_mode, local_mode, test_mode]
 )
 def stage_data():
-    middle = pre_process_metadata(start=clear_staging_dir())
-    entities = ["analysis_file", "analysis_process", "analysis_protocol"]
-
-    outs = []
-    for e in entities:
-        submit = submit_file_ingest.alias(e)
-        outs.append(submit(middle))
-
-    final = submit_file_ingest.alias("final")
-    final(outs)
+    pre_process_metadata(start=clear_staging_dir())

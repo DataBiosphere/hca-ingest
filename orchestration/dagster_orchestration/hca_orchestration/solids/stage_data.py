@@ -28,7 +28,7 @@ def clear_staging_dir(context: AbstractComputeExecutionContext) -> int:
     for blob in blobs:
         blob.delete()
         deletions_count += 1
-    context.log.debug(f"--clear_staging_dir found {deletions_count} blobs to delete under {staging_prefix_name}")
+    context.log.debug(f"--clear_staging_dir deleted {deletions_count} blobs under {staging_prefix_name}")
     return deletions_count
 
 
@@ -57,16 +57,3 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
         input_prefix=context.solid_config["input_prefix"],
         output_prefix=f'gs://{bucket_name}/{prefix_name}'
     )
-
-
-@solid(
-    required_resource_keys={"data_repo_client"},
-    input_defs=[InputDefinition("start", Nothing)]
-)
-def submit_file_ingest(context: AbstractComputeExecutionContext) -> Nothing:
-    """
-    This will submit a dataset for ingestion to the data repo
-    TODO This is a noop for now
-    """
-    datasets = context.resources.data_repo_client.enumerate_datasets()
-    context.log.debug(f"Enumerate found {datasets.total} datasets in the repo")

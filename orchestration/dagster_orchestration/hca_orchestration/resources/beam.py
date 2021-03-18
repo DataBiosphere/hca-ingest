@@ -49,7 +49,7 @@ class DataflowBeamRunner:
         self,
         job_name: str,
         input_prefix: str,
-        output_prefix: str
+        output_prefix: str,
     ) -> None:
         args_dict = {
             'runner': 'dataflow',
@@ -137,7 +137,7 @@ class DataflowBeamRunner:
     "temp_bucket": Field(StringSource),
     "image_name": Field(StringSource),
     "image_version": Field(StringSource),
-    "namespace": Field(StringSource)
+    "namespace": Field(StringSource),
 })
 def base_dataflow_beam_runner(init_context: InitResourceContext):
     cloud_config = DataflowCloudConfig(
@@ -182,15 +182,15 @@ def dataflow_beam_runner(config):
 @dataclass
 class LocalBeamRunner:
     working_dir: str
+    logger: DagsterLogManager
     # TODO this is hardcoded to the HCA transformation pipeline for now
     target_class: str = 'hca-transformation-pipeline'
-    logger: DagsterLogManager
 
     def run(
         self,
         job_name: str,
         input_prefix: str,
-        output_prefix: str
+        output_prefix: str,
     ) -> None:
         self.logger.info("Local beam runner")
         subprocess.run(
