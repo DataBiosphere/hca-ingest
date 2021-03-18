@@ -5,8 +5,9 @@ env: &envConfig
   DATA_REPO_URL: https://jade-terra.datarepo-prod.broadinstitute.org/
   HCA_GOOGLE_PROJECT: broad-dsp-monster-hca-prod
   DATA_REPO_GOOGLE_PROJECT: broad-datarepo-terra-prod-hca2
+  HCA_TEMP_STORAGE_BUCKET: broad-dsp-monster-hca-prod-temp-storage
+  HCA_DATAFLOW_SERVICE_ACCOUNT: hca-dataflow-runner@broad-dsp-monster-hca-prod.iam.gserviceaccount.com
   HCA_GCP_ENV: prod
-  SLACK_NOTIFICATIONS_CHANNEL: "#monster-ci"
 
 dagit:
   env: *envConfig

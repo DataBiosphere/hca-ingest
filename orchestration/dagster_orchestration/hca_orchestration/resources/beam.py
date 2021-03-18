@@ -3,7 +3,7 @@ import subprocess
 from typing import List
 from uuid import uuid4
 
-from dagster import DagsterLogManager, Field, IntSource, resource, StringSource
+from dagster import configured, DagsterLogManager, Field, IntSource, resource, StringSource
 from dagster.core.execution.context.init import InitResourceContext
 from dagster_k8s.client import DagsterKubernetesClient
 
@@ -23,6 +23,7 @@ class DataflowCloudConfig:
     starting_workers: int
     max_workers: int
 
+    # fields computed from provided params
     subnetwork: str = field(init=False)
 
     def __post_init__(self):
@@ -37,7 +38,8 @@ class DataflowCloudConfig:
 @dataclass
 class DataflowBeamRunner:
     cloud_config: DataflowCloudConfig
-    temp_location: str
+    kubernetes_service_account: str
+    temp_bucket: str
     image_name: str
     image_version: str
     namespace: str
@@ -55,7 +57,7 @@ class DataflowBeamRunner:
             'outputPrefix': output_prefix,
             'project': self.cloud_config.project,
             'region': self.cloud_config.region,
-            'tempLocation': self.temp_location,
+            'tempLocation': f'gs://{self.temp_bucket}/dataflow',
             'subnetwork': self.cloud_config.subnetwork,
             'serviceAccount': self.cloud_config.service_account,
             'workerMachineType': self.cloud_config.worker_machine_type,
@@ -65,6 +67,7 @@ class DataflowBeamRunner:
             'experiments': 'shuffle_mode=service',
         }
 
+        # process the args dict into dataflow flags
         args = [
             f'--{field_name}={value}'
             for field_name, value
@@ -96,7 +99,7 @@ class DataflowBeamRunner:
             spec=kubernetes.client.V1PodSpec(
                 restart_policy="Never",
                 containers=[job_container],
-                service_account_name="argo-runner"
+                service_account_name=self.kubernetes_service_account,
             ),
         )
 
@@ -104,18 +107,19 @@ class DataflowBeamRunner:
             api_version="batch/v1",
             kind="Job",
             metadata=kubernetes.client.V1ObjectMeta(
-                name=job_name
+                name=job_name,
             ),
             spec=kubernetes.client.V1JobSpec(
                 template=template,
                 backoff_limit=2,
-                ttl_seconds_after_finished=86400
+                ttl_seconds_after_finished=86400,  # one day
             ),
         )
         batch_v1 = kubernetes.client.BatchV1Api()
         api_response = batch_v1.create_namespaced_job(
             body=job,
-            namespace=self.namespace)
+            namespace=self.namespace,
+        )
         self.logger.info(f"Job created. status='{str(api_response.status)}'")
 
         return api_response
@@ -123,18 +127,19 @@ class DataflowBeamRunner:
 
 @resource({
     "project": Field(StringSource),
-    "temp_location": Field(StringSource),
     "subnet_name": Field(StringSource),
     "region": Field(StringSource),
     "worker_machine_type": Field(StringSource),
     "starting_workers": Field(IntSource),
     "max_workers": Field(IntSource),
     "service_account": Field(StringSource),
+    "kubernetes_service_account": Field(StringSource),
+    "temp_bucket": Field(StringSource),
     "image_name": Field(StringSource),
     "image_version": Field(StringSource),
     "namespace": Field(StringSource)
 })
-def dataflow_beam_runner(init_context: InitResourceContext):
+def base_dataflow_beam_runner(init_context: InitResourceContext):
     cloud_config = DataflowCloudConfig(
         project=init_context.resource_config['project'],
         service_account=init_context.resource_config['service_account'],
@@ -146,7 +151,8 @@ def dataflow_beam_runner(init_context: InitResourceContext):
     )
     return DataflowBeamRunner(
         cloud_config=cloud_config,
-        temp_location=init_context.resource_config['temp_location'],
+        kubernetes_service_account=init_context.resource_config['kubernetes_service_account'],
+        temp_bucket=init_context.resource_config['temp_bucket'],
         image_name=init_context.resource_config['image_name'],
         image_version=init_context.resource_config['image_version'],
         namespace=init_context.resource_config['namespace'],
@@ -154,9 +160,30 @@ def dataflow_beam_runner(init_context: InitResourceContext):
     )
 
 
+@configured(base_dataflow_beam_runner)
+def dataflow_beam_runner(config):
+    return {
+        'temp_bucket': {'env': 'HCA_TEMP_STORAGE_BUCKET'},
+        'image_name': {'env': 'TRANSFORM_PIPELINE_IMAGE'},
+        'image_version': {'env': 'TRANSFORM_PIPELINE_IMAGE_VERSION'},
+        'service_account': {'env': 'HCA_DATAFLOW_SERVICE_ACCOUNT'},
+        'kubernetes_service_account': {'env': 'HCA_KUBERNETES_SERVICE_ACCOUNT'},
+        'project': {'env': 'HCA_GOOGLE_PROJECT'},
+        'subnet_name': {'env': 'DATAFLOW_SUBNET_NAME'},
+        'region': {'env': 'GCLOUD_REGION'},
+        'worker_machine_type': {'env': 'DATAFLOW_WORKER_MACHINE_TYPE'},
+        'starting_workers': {'env': 'DATAFLOW_STARTING_WORKERS'},
+        'max_workers': {'env': 'DATAFLOW_MAX_WORKERS'},
+        'namespace': {'env': 'KUBERNETES_NAMESPACE'},
+        **config,
+    }
+
+
 @dataclass
 class LocalBeamRunner:
     working_dir: str
+    # TODO this is hardcoded to the HCA transformation pipeline for now
+    target_class: str = 'hca-transformation-pipeline'
     logger: DagsterLogManager
 
     def run(
@@ -166,9 +193,8 @@ class LocalBeamRunner:
         output_prefix: str
     ) -> None:
         self.logger.info("Local beam runner")
-        # TODO this is hardcoded to the HCA transformation pipeline for now
         subprocess.run(
-            ["sbt", f'hca-transformation-pipeline/run --inputPrefix={input_prefix} --outputPrefix={output_prefix}'],
+            ["sbt", f'{self.target_class}/run --inputPrefix={input_prefix} --outputPrefix={output_prefix}'],
             check=True,
             cwd=self.working_dir
         )
@@ -188,6 +214,7 @@ def local_beam_runner(init_context: InitResourceContext):
 def test_beam_runner(init_context: InitResourceContext):
     class TestBeamRunner:
         def run(self, job_name: str, input_prefix: str, output_prefix: str):
+            # no thoughts, head empty
             return None
 
     return TestBeamRunner()

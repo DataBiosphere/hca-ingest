@@ -46,12 +46,16 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
     """
     context.log.info("--pre_process_metadata")
 
-    kebabified_output_prefix = re.sub(r"[^A-Za-z0-9]", "-",  context.solid_config['staging_prefix_name'])
+    # not strictly required, but makes the ensuing lines a lot shorter
+    bucket_name = context.solid_config['staging_bucket_name']
+    prefix_name = context.solid_config['staging_prefix_name']
+
+    kebabified_output_prefix = re.sub(r"[^A-Za-z0-9]", "-",  prefix_name)
 
     context.resources.beam_runner.run(
-        f"hca-stage-metadata-{kebabified_output_prefix}",
-        context.solid_config["input_prefix"],
-        f'gs://{context.solid_config["staging_bucket_name"]}/{context.solid_config["staging_prefix_name"]}'
+        job_name=f"hca-stage-metadata-{kebabified_output_prefix}",
+        input_prefix=context.solid_config["input_prefix"],
+        output_prefix=f'gs://{bucket_name}/{prefix_name}'
     )
 
 

@@ -1,4 +1,3 @@
-import os
 from typing import Any
 
 from dagster import configured, DagsterType, InputDefinition, solid, String, StringSource
@@ -59,7 +58,7 @@ def post_import_validate(config):
     input_defs=[InputDefinition("validation_results", DagsterProblemCount)],
     config_schema={
         **POST_VALIDATION_SETTINGS_SCHEMA,
-        "channel": String,
+        "channel": StringSource,
     }
 )
 def base_notify_slack_of_egress_validation_results(
@@ -90,7 +89,7 @@ def base_notify_slack_of_egress_validation_results(
 @configured(base_notify_slack_of_egress_validation_results, {"dataset_name": String})
 def notify_slack_of_egress_validation_results(config):
     return {
-        'gcp_env': os.environ.get("HCA_GCP_ENV"),
-        'channel': os.environ.get("SLACK_NOTIFICATIONS_CHANNEL"),
+        'gcp_env': {'env': 'HCA_GCP_ENV'},
+        'channel': {'env': 'SLACK_NOTIFICATIONS_CHANNEL'},
         **config,
     }
