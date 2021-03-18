@@ -29,9 +29,9 @@ class DataflowCloudConfig:
     def __post_init__(self):
         self.subnetwork = '/'.join([
             'regions',
-            self.cloud_config.region,
+            self.region,
             'subnetworks',
-            self.cloud_config.subnet_name,
+            self.subnet_name,
         ])
 
 

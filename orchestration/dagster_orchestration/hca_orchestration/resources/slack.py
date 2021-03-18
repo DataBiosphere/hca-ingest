@@ -19,5 +19,5 @@ def console_slack_client(init_context: InitResourceContext):
 @configured(slack_resource)
 def live_slack_client(_config):
     return {
-        'token': {'env': "SLACK_TOKEN"},
+        'token': {'env': 'SLACK_TOKEN'},
     }
