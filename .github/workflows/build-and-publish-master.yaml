@@ -50,7 +50,7 @@ jobs:
           GITHUB_SHA: ${{github.sha}}
         run: >
           sbt "hca-transformation-pipeline/run
-                 --inputPrefix=gs://broad-dsp-monster-hca-dev-test-storage/integration/ebi_small/ebi_test
+                 --inputPrefix=gs://broad-dsp-monster-hca-dev-test-storage/integration/ebi_small/test_data
                  --outputPrefix=gs://broad-dsp-monster-hca-dev-temp-storage/integration/output_${GITHUB_SHA}
                  --runner=DataflowRunner
                  --project=broad-dsp-monster-hca-dev
@@ -63,7 +63,7 @@ jobs:
         env:
           GITHUB_SHA: ${{github.sha}}
         run: >
-          poetry run python diff_dirs.py -p broad-dsp-monster-hca-dev -sb broad-dsp-monster-hca-dev-test-storage -sp integration/ebi_small/expected -tb broad-dsp-monster-hca-dev-temp-storage -tp "integration/output_${GITHUB_SHA}"
+          poetry run python diff_dirs.py -p broad-dsp-monster-hca-dev -sb broad-dsp-monster-hca-dev-test-storage -sp integration/ebi_small/expected_output -tb broad-dsp-monster-hca-dev-temp-storage -tp "integration/output_${GITHUB_SHA}"
         working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration/hca_manage
       - name: Publish Scala coverage
         uses: codecov/codecov-action@v1
