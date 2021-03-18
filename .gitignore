@@ -9,3 +9,4 @@ charts/
 logs/errors.log
 __pycache__
 poetry.lock
+.DS_Store

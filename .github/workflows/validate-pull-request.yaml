@@ -22,5 +22,13 @@ jobs:
         run: sbt Compile/compile Test/compile IntegrationTest/compile
       - name: Test
         run: sbt "set ThisBuild/coverageEnabled := true" test IntegrationTest/test coverageAggregate
+      - name: DataflowCheck
+          env:
+            GITHUB_SHA: ${{github.sha}}
+          run: >
+            sbt "hca-transformation-pipeline/run
+                --inputPrefix=gs://broad-dsp-monster-hca-dev-test-storage/integration/ebi_small/ebi_test
+                --outputPrefix=gs://broad-dsp-monster-hca-dev-temp-storage/integration/output_${GITHUB_SHA}
+                --runner=direct"
       - name: Publish coverage
         uses: codecov/codecov-action@v1
