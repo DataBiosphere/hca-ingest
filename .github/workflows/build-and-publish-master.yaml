@@ -28,7 +28,7 @@ jobs:
           cache-name: cache-poetry
         with:
           path: ~/.cache/pypoetry
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('${{ github.workspace }}/orchestration/dagster_orchestration/pyproject.toml') }}
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./orchestration/dagster_orchestration/pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
