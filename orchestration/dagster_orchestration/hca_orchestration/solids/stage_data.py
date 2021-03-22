@@ -4,7 +4,7 @@ from dagster import solid, InputDefinition, Nothing, String
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
 
-STAGING_BUCKET_CONFIG = {
+STAGING_BUCKET_CONFIG_SCHEMA = {
     "staging_bucket_name": String,
     "staging_prefix_name": String,
 }
@@ -12,7 +12,7 @@ STAGING_BUCKET_CONFIG = {
 
 @solid(
     required_resource_keys={"storage_client"},
-    config_schema=STAGING_BUCKET_CONFIG,
+    config_schema=STAGING_BUCKET_CONFIG_SCHEMA,
 )
 def clear_staging_dir(context: AbstractComputeExecutionContext) -> int:
     """
@@ -35,7 +35,7 @@ def clear_staging_dir(context: AbstractComputeExecutionContext) -> int:
 @solid(
     required_resource_keys={"beam_runner"},
     config_schema={
-        **STAGING_BUCKET_CONFIG,
+        **STAGING_BUCKET_CONFIG_SCHEMA,
         "input_prefix": String,
     },
     input_defs=[InputDefinition("start", Nothing)],

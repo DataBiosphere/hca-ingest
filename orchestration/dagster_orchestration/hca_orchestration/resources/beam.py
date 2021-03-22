@@ -183,8 +183,7 @@ def dataflow_beam_runner(config):
 class LocalBeamRunner:
     working_dir: str
     logger: DagsterLogManager
-    # TODO this is hardcoded to the HCA transformation pipeline for now
-    target_class: str = 'hca-transformation-pipeline'
+    target_class: str
 
     def run(
         self,
@@ -201,11 +200,13 @@ class LocalBeamRunner:
 
 
 @resource({
-    "working_dir": Field(StringSource)
+    "working_dir": Field(StringSource),
+    "target_class": Field(StringSource),  # 'hca-transformation-pipeline' is usually what you want
 })
 def local_beam_runner(init_context: InitResourceContext):
     return LocalBeamRunner(
         working_dir=init_context.resource_config["working_dir"],
+        target_class=init_context.resource_config["target_class"],
         logger=init_context.log_manager,
     )
 
