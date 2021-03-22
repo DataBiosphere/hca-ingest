@@ -48,13 +48,19 @@ class PostImportValidateTestCase(unittest.TestCase):
             }
         }
 
-        result = execute_solid(base_post_import_validate, run_config=solid_config, mode_def=test_mode)
+        result = execute_solid(base_post_import_validate,
+                               run_config=solid_config, mode_def=test_mode)
         self.assertTrue(result.success)
-        expected_duplicate_issues = len(fake_table_names) * len(fake_duplicate_ids)
-        expected_file_ref_issues = len(fake_file_table_names) * len(fake_null_fileref_ids)
-        expected_entities_with_dangling_proj_refs = len(fake_table_names) * len(fake_entities_with_dangling_proj_refs)
-        self.assertEqual(expected_duplicate_issues, result.output_value().duplicates)
-        self.assertEqual(expected_file_ref_issues, result.output_value().null_file_refs)
+        expected_duplicate_issues = len(
+            fake_table_names) * len(fake_duplicate_ids)
+        expected_file_ref_issues = len(
+            fake_file_table_names) * len(fake_null_fileref_ids)
+        expected_entities_with_dangling_proj_refs = len(
+            fake_table_names) * len(fake_entities_with_dangling_proj_refs)
+        self.assertEqual(expected_duplicate_issues,
+                         result.output_value().duplicates)
+        self.assertEqual(expected_file_ref_issues,
+                         result.output_value().null_file_refs)
         self.assertEqual(expected_entities_with_dangling_proj_refs,
                          result.output_value().entities_with_dangling_project_refs)
 
@@ -71,6 +77,9 @@ class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
                     }
                 }
             }
+
+
+
         }
 
     def test_notifies_slack_with_failure_info(self):
