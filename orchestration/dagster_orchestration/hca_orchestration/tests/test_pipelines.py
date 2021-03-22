@@ -40,6 +40,7 @@ class PipelinesTestCase(unittest.TestCase):
     @patch("hca_manage.manage.HcaManage.get_file_table_names")
     @patch("hca_manage.manage.HcaManage.get_duplicates")
     @patch("hca_manage.manage.HcaManage.get_all_table_names")
+    @patch("hca_manage.manage.HcaManage.get_entities_with_dangling_proj_refs")
     def test_validate_egress(self, *mocks):
         """
         currently validate_egress is just a thin wrapper around
