@@ -77,9 +77,6 @@ class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
                     }
                 }
             }
-
-
-
         }
 
     def test_notifies_slack_with_failure_info(self):

@@ -34,3 +34,7 @@ manage = "hca_manage.main:run"
 [build-system]
 requires = ["poetry-core=^1.1.5"]
 build-backend = "poetry.core.masonry.api"
+
+
+[tool.autopep8]
+max_line_length = 120
