@@ -11,7 +11,14 @@ from data_repo_client import RepositoryApi, DataDeletionRequest, SnapshotRequest
 import google.auth
 from google.cloud import bigquery, storage
 
-ProblemCount = namedtuple("ProblemCount", ["duplicates", "null_file_refs"])
+ProblemCount = namedtuple(
+    "ProblemCount",
+    [
+        "duplicates",
+        "null_file_refs",
+        "links_with_dangling_project_refs"
+    ]
+)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -92,6 +99,18 @@ class HcaManage:
           ON fileRefTables.table_name = desiredViews.table_name
         """
 
+        return self._hit_bigquery(query)
+
+    def check_entities_with_dangling_proj_refs(self, target_table: str) -> Set[str]:
+        query = f"""
+        SELECT links.links_id
+        FROM `{self.project}.datarepo_{self.dataset}.{target_table}` links
+                 LEFT JOIN
+             `{self.project}.datarepo_{self.dataset}.project` projects
+             ON
+                 {target_table}.project_id = projects.project_id
+        WHERE projects.project_id IS NULL;
+        """
         return self._hit_bigquery(query)
 
     def get_duplicates(self, target_table: str) -> Set[str]:
@@ -313,6 +332,21 @@ class HcaManage:
         return self._process_rows(self.get_file_table_names, self.get_null_filerefs, soft_delete=soft_delete,
                                   issue="null file refs")
 
+    def process_entities_with_dangling_proj_refs(self, soft_delete: bool = False):
+        """
+        Check for any entities with project_id values that do not have a corresponding entry in the projects
+        table
+        :return: Number of rows with dangling project refs
+        """
+        if soft_delete:
+            raise Exception("Soft deleting rows with dangling project refs is unsupported")
+
+        def links_table():
+            return ['links']
+
+        return self._process_rows(links_table, self.check_entities_with_dangling_proj_refs, soft_delete=soft_delete,
+                                  issue=f"found rows with dangling project refs")
+
     def check_for_all(self):
         """
         Check and print the number of duplicates and null file references in all tables in the dataset.
@@ -321,8 +355,13 @@ class HcaManage:
         logging.info("Processing...")
         duplicate_count = self.process_duplicates()
         null_file_ref_count = self.process_null_file_refs()
+        dangling_proj_refs_count = self.process_entities_with_dangling_proj_refs()
         logging.info("Finished.")
-        return ProblemCount(duplicates=duplicate_count, null_file_refs=null_file_ref_count)
+        return ProblemCount(
+            duplicates=duplicate_count,
+            null_file_refs=null_file_ref_count,
+            links_with_dangling_project_refs=dangling_proj_refs_count
+        )
 
     def remove_all(self):
         """
@@ -333,8 +372,13 @@ class HcaManage:
         logging.info("Processing, deleting as we find anything...")
         duplicate_count = self.process_duplicates(soft_delete=True)
         null_file_ref_count = self.process_null_file_refs(soft_delete=True)
+        logging.info("Skipping any rows with dangling project refs, manual intervention required")
         logging.info("Finished.")
-        return ProblemCount(duplicates=duplicate_count, null_file_refs=null_file_ref_count)
+        return ProblemCount(
+            duplicates=duplicate_count,
+            null_file_refs=null_file_ref_count,
+            links_with_dangling_project_refs=0
+        )
 
     def _process_rows(self, get_table_names, get_rids, soft_delete: bool, issue: str) -> int:
         """
@@ -349,7 +393,7 @@ class HcaManage:
         for table_name in table_names:
             rids_to_process = get_rids(table_name)
             if len(rids_to_process) > 0:
-                logging.info(f"{table_name} has {len(rids_to_process)} rows to soft delete due to {issue}")
+                logging.info(f"{table_name} has {len(rids_to_process)} failing rows due to {issue}")
                 if soft_delete:
                     local_filename = f"{os.getcwd()}/{table_name}.csv"
                     try:
