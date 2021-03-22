@@ -29,6 +29,7 @@ class HcaManage:
     bucket_project: str = field(init=False)
     bucket: str = field(init=False)
     base_url: str = field(init=False)
+    # big big chungus big chungus big chungus big big chungus big chungus big chungus big big chungus big chungus big chungus big big chungus big chungus big chungus
     reader_list: str = field(init=False)
 
     def __post_init__(self):
