@@ -86,7 +86,9 @@ class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
                 run_config=self.solid_config,
                 mode_def=test_mode,
                 input_values={
-                    "validation_results": ProblemCount(duplicates=3, null_file_refs=2, entities_with_dangling_project_refs=3)
+                    "validation_results": ProblemCount(
+                        duplicates=3, null_file_refs=2, entities_with_dangling_project_refs=3
+                    )
                 }
             )
 
@@ -111,7 +113,9 @@ class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
                 run_config=self.solid_config,
                 mode_def=test_mode,
                 input_values={
-                    "validation_results": ProblemCount(duplicates=0, null_file_refs=0, entities_with_dangling_project_refs=0)
+                    "validation_results": ProblemCount(
+                        duplicates=0, null_file_refs=0, entities_with_dangling_project_refs=0
+                    )
                 }
             )
 
