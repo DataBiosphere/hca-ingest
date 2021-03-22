@@ -362,10 +362,6 @@ class HcaManage:
             null_file_refs=null_file_ref_count,
             links_with_dangling_project_refs=dangling_proj_refs_count
         )
-    
-    
-    
-    
 
     def remove_all(self):
         """
