@@ -1,29 +1,33 @@
+from contextlib import contextmanager
 import os
+from typing import Dict, Any
 import unittest
 from unittest import mock
 
-from dagster import execute_solid, ModeDefinition, solid
+from dagster import DagsterInstance, ResourceDefinition
+from dagster.core.execution.build_resources import build_resources
 import slack.web.client
 
 from hca_orchestration.resources.beam import DataflowBeamRunner
 from hca_orchestration.resources import dataflow_beam_runner, live_slack_client
 
 
-# n.b. 2021-03-18
+# n.b. 2021-03-22
 # dagster support for testing resources in isolation is currently very weak
-# and in active development, expect this section to use more robust tooling
+# and in active development, expect this section to use more robust and unchanging tooling
 # as it becomes available over the next few months
-def initialize_resource(resource_def, config={}):
-    # to initialize a resource, we need to initialize a context for it by setting up a mock solid
-    # that requires it. details of the solid aren't important. this will get a lot more lightweight
-    # as new tooling is released.
-    mode = ModeDefinition(name='fake', resource_defs={'chungus': resource_def})
-
-    @solid(required_resource_keys={'chungus'})
-    def noop(context):
-        return context.resources.chungus
-
-    return execute_solid(noop, mode).output_value()
+@contextmanager
+def initialize_resource(resource_def: ResourceDefinition, config: Dict[str, Any] = {}):
+    with build_resources(
+        {
+            'test_resource': resource_def,
+        },
+        DagsterInstance.get(),
+        {
+            'test_resource': config
+        }
+    ) as resource_context:
+        yield resource_context.test_resource
 
 
 class LiveSlackResourceTestCase(unittest.TestCase):
@@ -33,8 +37,8 @@ class LiveSlackResourceTestCase(unittest.TestCase):
         'SLACK_TOKEN': 'jeepers',
     })
     def test_resource_can_be_initialized(self):
-        client_instance = initialize_resource(live_slack_client)
-        self.assertIsInstance(client_instance, slack.web.client.WebClient)
+        with initialize_resource(live_slack_client) as client_instance:
+            self.assertIsInstance(client_instance, slack.web.client.WebClient)
 
 
 class DataflowBeamRunnerTestCase(unittest.TestCase):
@@ -51,5 +55,5 @@ class DataflowBeamRunnerTestCase(unittest.TestCase):
         'KUBERNETES_NAMESPACE': 'gamespace',
     })
     def test_resource_can_be_initialized(self):
-        client_instance = initialize_resource(dataflow_beam_runner)
-        self.assertIsInstance(client_instance, DataflowBeamRunner)
+        with initialize_resource(dataflow_beam_runner) as dataflow_runner:
+            self.assertIsInstance(dataflow_runner, DataflowBeamRunner)
