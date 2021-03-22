@@ -74,6 +74,7 @@ def base_notify_slack_of_egress_validation_results(
             f"Problems identified in post-validation for HCA {gcp_env} dataset {dataset_name}:",
             "Duplicate lines found: " + str(validation_results.duplicates),
             "Null file references found: " + str(validation_results.null_file_refs),
+            "Dangling project references found: " + str(validation_results.dangling_project_refs)
         ]
     else:
         message_lines = [f"HCA {gcp_env} dataset {dataset_name} has passed post-validation."]

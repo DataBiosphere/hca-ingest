@@ -16,7 +16,7 @@ ProblemCount = namedtuple(
     [
         "duplicates",
         "null_file_refs",
-        "entities_with_dangling_project_refs"
+        "dangling_project_refs"
     ]
 )
 
@@ -101,7 +101,7 @@ class HcaManage:
 
         return self._hit_bigquery(query)
 
-    def get_entities_with_dangling_proj_refs(self, target_table: str) -> Set[str]:
+    def get_dangling_proj_refs(self, target_table: str) -> Set[str]:
         query = f"""
         SELECT links.links_id
         FROM `{self.project}.datarepo_{self.dataset}.{target_table}` links
@@ -332,7 +332,7 @@ class HcaManage:
         return self._process_rows(self.get_file_table_names, self.get_null_filerefs, soft_delete=soft_delete,
                                   issue="null file refs")
 
-    def process_entities_with_dangling_proj_refs(self, soft_delete: bool = False):
+    def process_dangling_proj_refs(self, soft_delete: bool = False):
         """
         Check for any entities with project_id values that do not have a corresponding entry in the projects
         table
@@ -344,7 +344,7 @@ class HcaManage:
         def links_table():
             return ['links']
 
-        return self._process_rows(links_table, self.get_entities_with_dangling_proj_refs, soft_delete=soft_delete,
+        return self._process_rows(links_table, self.get_dangling_proj_refs, soft_delete=soft_delete,
                                   issue="found rows with dangling project refs")
 
     def check_for_all(self):
@@ -355,12 +355,12 @@ class HcaManage:
         logging.info("Processing...")
         duplicate_count = self.process_duplicates()
         null_file_ref_count = self.process_null_file_refs()
-        dangling_proj_refs_count = self.process_entities_with_dangling_proj_refs()
+        dangling_proj_refs_count = self.process_dangling_proj_refs()
         logging.info("Finished.")
         return ProblemCount(
             duplicates=duplicate_count,
             null_file_refs=null_file_ref_count,
-            entities_with_dangling_project_refs=dangling_proj_refs_count
+            dangling_project_refs=dangling_proj_refs_count
         )
 
     def remove_all(self):
@@ -377,7 +377,7 @@ class HcaManage:
         return ProblemCount(
             duplicates=duplicate_count,
             null_file_refs=null_file_ref_count,
-            entities_with_dangling_project_refs=0
+            dangling_project_refs=0
         )
 
     def _process_rows(self, get_table_names, get_rids, soft_delete: bool, issue: str) -> int:
