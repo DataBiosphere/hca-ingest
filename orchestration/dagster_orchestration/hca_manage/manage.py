@@ -345,7 +345,7 @@ class HcaManage:
             return ['links']
 
         return self._process_rows(links_table, self.check_entities_with_dangling_proj_refs, soft_delete=soft_delete,
-                                  issue=f"found rows with dangling project refs")
+                                  issue="found rows with dangling project refs")
 
     def check_for_all(self):
         """
