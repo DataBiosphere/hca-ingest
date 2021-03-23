@@ -11,14 +11,16 @@ from data_repo_client import RepositoryApi, DataDeletionRequest, SnapshotRequest
 import google.auth
 from google.cloud import bigquery, storage
 
-ProblemCount = namedtuple(
-    "ProblemCount",
-    [
-        "duplicates",
-        "null_file_refs",
-        "dangling_project_refs"
-    ]
-)
+
+@dataclass
+class ProblemCount:
+    duplicates: int
+    null_file_refs: int
+    dangling_project_refs: int
+
+    def has_problems(self):
+        return self.duplicates > 0 or self.null_file_refs > 0 or self.dangling_project_refs > 0
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
