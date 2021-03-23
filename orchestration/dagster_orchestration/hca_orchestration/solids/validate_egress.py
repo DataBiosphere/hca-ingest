@@ -1,7 +1,6 @@
-import os
 from typing import Any
 
-from dagster import configured, solid, InputDefinition, String, DagsterType
+from dagster import configured, DagsterType, InputDefinition, solid, String, StringSource
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
 from hca_manage.manage import HcaManage, ProblemCount
@@ -20,7 +19,7 @@ DagsterProblemCount: DagsterType = DagsterType(
 
 
 POST_VALIDATION_SETTINGS_SCHEMA = {
-    "gcp_env": String,
+    "gcp_env": StringSource,
     "dataset_name": String,
 }
 
@@ -29,7 +28,7 @@ POST_VALIDATION_SETTINGS_SCHEMA = {
     required_resource_keys={"data_repo_client"},
     config_schema={
         **POST_VALIDATION_SETTINGS_SCHEMA,
-        "google_project_name": String,
+        "google_project_name": StringSource,
     }
 )
 def base_post_import_validate(context: AbstractComputeExecutionContext) -> DagsterProblemCount:
@@ -48,8 +47,8 @@ def base_post_import_validate(context: AbstractComputeExecutionContext) -> Dagst
 @configured(base_post_import_validate, {"dataset_name": String})
 def post_import_validate(config):
     return {
-        'gcp_env': os.environ.get("HCA_GCP_ENV"),
-        'google_project_name': os.environ.get("DATA_REPO_GOOGLE_PROJECT"),
+        'gcp_env': {'env': 'HCA_GCP_ENV'},
+        'google_project_name': {'env': 'DATA_REPO_GOOGLE_PROJECT'},
         **config,
     }
 
@@ -59,7 +58,7 @@ def post_import_validate(config):
     input_defs=[InputDefinition("validation_results", DagsterProblemCount)],
     config_schema={
         **POST_VALIDATION_SETTINGS_SCHEMA,
-        "channel": String,
+        "channel": StringSource,
     }
 )
 def base_notify_slack_of_egress_validation_results(
@@ -90,7 +89,7 @@ def base_notify_slack_of_egress_validation_results(
 @configured(base_notify_slack_of_egress_validation_results, {"dataset_name": String})
 def notify_slack_of_egress_validation_results(config):
     return {
-        'gcp_env': os.environ.get("HCA_GCP_ENV"),
-        'channel': os.environ.get("SLACK_NOTIFICATIONS_CHANNEL"),
+        'gcp_env': {'env': 'HCA_GCP_ENV'},
+        'channel': {'env': 'SLACK_NOTIFICATIONS_CHANNEL'},
         **config,
     }

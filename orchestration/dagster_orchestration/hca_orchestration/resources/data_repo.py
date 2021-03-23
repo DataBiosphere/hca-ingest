@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import os
 
 from dagster import configured, resource, StringSource, Field
 from dagster.core.execution.context.init import InitResourceContext
@@ -26,7 +25,7 @@ def base_jade_data_repo_client(init_context: InitResourceContext):
 @configured(base_jade_data_repo_client)
 def jade_data_repo_client(_config):
     return {
-        'api_url': os.environ.get('DATA_REPO_URL'),
+        'api_url': {'env': 'DATA_REPO_URL'},
     }
 
 

@@ -1,5 +1,3 @@
-import os
-
 from dagster import configured, resource
 from dagster.core.execution.context.init import InitResourceContext
 from dagster_slack import slack_resource
@@ -21,5 +19,5 @@ def console_slack_client(init_context: InitResourceContext):
 @configured(slack_resource)
 def live_slack_client(_config):
     return {
-        "token": os.environ.get("SLACK_TOKEN"),
+        'token': {'env': 'SLACK_TOKEN'},
     }
