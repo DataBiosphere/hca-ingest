@@ -53,7 +53,7 @@ releases:
       - dagit:
           envSecrets:
             - name: monster-dagster-secrets
-      - userDeployments:
+      - dagster-user-deployments:
           # "user code" we deploy to dagster; these are dagster repositories of pipelines
           enabled: true
           deployments:
