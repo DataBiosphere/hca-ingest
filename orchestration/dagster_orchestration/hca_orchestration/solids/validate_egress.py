@@ -69,7 +69,9 @@ def base_notify_slack_of_egress_validation_results(
     gcp_env = context.solid_config["gcp_env"]
     dataset_name = context.solid_config["dataset_name"]
 
-    if validation_results.duplicates > 0 or validation_results.null_file_refs > 0 or validation_results.dangling_project_refs:
+    if validation_results.duplicates > 0 or \
+            validation_results.null_file_refs > 0 or \
+            validation_results.dangling_project_refs:
         message_lines = [
             f"Problems identified in post-validation for HCA {gcp_env} dataset {dataset_name}:",
             "Duplicate lines found: " + str(validation_results.duplicates),
