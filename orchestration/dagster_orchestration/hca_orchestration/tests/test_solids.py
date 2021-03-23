@@ -13,12 +13,13 @@ from .support.matchers import StringContaining
 
 
 class PostImportValidateTestCase(unittest.TestCase):
+    @patch("hca_manage.manage.HcaManage.get_dangling_proj_refs", return_value=set())
     @patch("hca_manage.manage.HcaManage.get_null_filerefs", return_value=set())
     @patch("hca_manage.manage.HcaManage.get_file_table_names", return_value=set())
     @patch("hca_manage.manage.HcaManage.get_duplicates", return_value=set())
     @patch("hca_manage.manage.HcaManage.get_all_table_names", return_value=set())
     def test_post_import_validate(self, mock_all_table_names: Mock, mock_duplicates: Mock, mock_file_table_names: Mock,
-                                  mock_null_filerefs: Mock):
+                                  mock_null_filerefs: Mock, mock_dangling_proj_refs: Mock):
         """
         Mock bigQuery interactions and make sure the post_import_validate solid works as desired.
         """
@@ -27,11 +28,13 @@ class PostImportValidateTestCase(unittest.TestCase):
         fake_duplicate_ids = {"dupid1", "dupid2"}
         fake_file_table_names = {"filetable"}
         fake_null_fileref_ids = {"nfrid1", "nfrid2", "nfrid3"}
+        fake_dangling_proj_refs = {'fake1', 'fake2'}
 
         mock_all_table_names.return_value = fake_table_names
         mock_duplicates.return_value = fake_duplicate_ids
         mock_file_table_names.return_value = fake_file_table_names
         mock_null_filerefs.return_value = fake_null_fileref_ids
+        mock_dangling_proj_refs.return_value = fake_dangling_proj_refs
 
         solid_config = {
             "solids": {
@@ -45,12 +48,15 @@ class PostImportValidateTestCase(unittest.TestCase):
             }
         }
 
-        result = execute_solid(base_post_import_validate, run_config=solid_config, mode_def=test_mode)
+        result = execute_solid(base_post_import_validate,
+                               run_config=solid_config, mode_def=test_mode)
         self.assertTrue(result.success)
         expected_duplicate_issues = len(fake_table_names) * len(fake_duplicate_ids)
         expected_file_ref_issues = len(fake_file_table_names) * len(fake_null_fileref_ids)
+        expected_dangling_proj_refs = len(fake_table_names) * len(fake_dangling_proj_refs)
         self.assertEqual(expected_duplicate_issues, result.output_value().duplicates)
         self.assertEqual(expected_file_ref_issues, result.output_value().null_file_refs)
+        self.assertEqual(expected_dangling_proj_refs, result.output_value().dangling_project_refs)
 
 
 class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
@@ -74,7 +80,9 @@ class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
                 run_config=self.solid_config,
                 mode_def=test_mode,
                 input_values={
-                    "validation_results": ProblemCount(duplicates=3, null_file_refs=2)
+                    "validation_results": ProblemCount(
+                        duplicates=3, null_file_refs=2, dangling_project_refs=3
+                    )
                 }
             )
 
@@ -99,7 +107,9 @@ class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
                 run_config=self.solid_config,
                 mode_def=test_mode,
                 input_values={
-                    "validation_results": ProblemCount(duplicates=0, null_file_refs=0)
+                    "validation_results": ProblemCount(
+                        duplicates=0, null_file_refs=0, dangling_project_refs=0
+                    )
                 }
             )
 
