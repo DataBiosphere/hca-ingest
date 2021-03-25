@@ -15,7 +15,7 @@ import google.auth
 from google.cloud import bigquery, storage
 from urllib.parse import urlparse
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 
 def get_expected_load_totals(storage_client, staging_areas):
@@ -80,12 +80,13 @@ def verify(start_date, manifest_file, gs_project, bq_project, dataset):
         if area in tdr_load_totals:
             expected_count = expected_load_totals[area]
             if expected_count != tdr_load_totals[area]:
-                logging.error(f"Mismatched file count: staging_area = {area}, "
+                logging.error(f"❌ Mismatched file count: staging_area = {area}, "
                               f"imported = {tdr_load_totals[area]}, expected = {expected_count}")
             else:
-                logging.info(f"staging_area = {area}, imported = {tdr_load_totals[area]}, expected = {expected_count}")
+                logging.info(
+                    f"✅ staging_area = {area}, imported = {tdr_load_totals[area]}, expected = {expected_count}")
         else:
-            logging.error(f"{area} has not been imported")
+            logging.error(f"❌ {area} has not been imported")
 
 
 if __name__ == '__main__':
