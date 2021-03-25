@@ -52,12 +52,9 @@ def get_load_history(bq_project, dataset, start_date):
 
 
 def parse_manifest_file(manifest_file):
-    staging_areas = []
-    with open(manifest_file) as manifest_file:
-        for area in manifest_file:
-            # some of the staging areas submitted via the form need slight cleanup
-            staging_areas.append(area.rstrip('\n').rstrip('/'))
-    return staging_areas
+    with open(manifest_file) as manifest:
+        # some of the staging areas submitted via the form need slight cleanup
+        return [area.rstrip('\n/') for area in manifest]
 
 
 def verify(start_date, manifest_file, gs_project, bq_project, dataset):
@@ -69,14 +66,15 @@ def verify(start_date, manifest_file, gs_project, bq_project, dataset):
     expected_load_totals = get_expected_load_totals(storage_client, staging_areas)
 
     logging.info("Inspecting load history in bigquery...")
-    tdr_load_totals = {}
     load_history = get_load_history(bq_project, dataset, start_date)
-    for row in load_history:
-        tdr_load_totals[row[0]] = row[1]
-        if row[0] not in expected_load_totals:
-            logging.warning(f"⚠️ {row[0]} not in manifest but was imported")
+    tdr_load_totals = {
+        load_history_row[0]: load_history_row[1]
+        for load_history_row in load_history
+    }
+    for unexpected_area in tdr_load_totals.keys() - expected_lead_totals.keys():
+        logging.warning(f"⚠️ {unexpected_path} not in manifest but was imported")
 
-    for area in expected_load_totals:
+    for area, expected_count in expected_load_totals.items():
         if area in tdr_load_totals:
             expected_count = expected_load_totals[area]
             if expected_count != tdr_load_totals[area]:
