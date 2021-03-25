@@ -52,12 +52,9 @@ def get_load_history(bq_project, dataset, start_date):
 
 
 def parse_manifest_file(manifest_file):
-    staging_areas = []
-    with open(manifest_file) as manifest_file:
-        for area in manifest_file:
-            # some of the staging areas submitted via the form need slight cleanup
-            staging_areas.append(area.rstrip('\n').rstrip('/'))
-    return staging_areas
+    with open(manifest_file) as manifest:
+        # some of the staging areas submitted via the form need slight cleanup
+        return [area.rstrip('\n/') for area in manifest]
 
 
 def verify(start_date, manifest_file, gs_project, bq_project, dataset):
