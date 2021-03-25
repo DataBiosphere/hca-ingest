@@ -48,7 +48,7 @@ def get_load_history(bq_project, dataset, start_date):
     query_job = client.query(query)
 
     # hydrate the rows
-    return list([row for row in query_job])
+    return [row for row in query_job]
 
 
 def parse_manifest_file(manifest_file):
@@ -91,10 +91,10 @@ def verify(start_date, manifest_file, gs_project, bq_project, dataset):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--start_date", required=True)
-    parser.add_argument("-f", "--manifest_file", required=True)
-    parser.add_argument("-g", "--gs_project", required=True)
-    parser.add_argument("-b", "--bq_project", required=True)
+    parser.add_argument("-s", "--start-date", required=True)
+    parser.add_argument("-f", "--manifest-file", required=True)
+    parser.add_argument("-g", "--gs-project", required=True)
+    parser.add_argument("-b", "--bq-project", required=True)
     parser.add_argument("-d", "--dataset", required=True)
     args = parser.parse_args()
 
