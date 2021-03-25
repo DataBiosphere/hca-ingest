@@ -74,7 +74,7 @@ def verify(start_date, manifest_file, gs_project, bq_project, dataset):
     for row in load_history:
         tdr_load_totals[row[0]] = row[1]
         if row[0] not in expected_load_totals:
-            logging.warning(f"{row[0]} not in manifest but was imported")
+            logging.warning(f"⚠️ {row[0]} not in manifest but was imported")
 
     for area in expected_load_totals:
         if area in tdr_load_totals:
