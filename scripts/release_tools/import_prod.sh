@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
 
-# Imports a given staging area to the production DCP2 dataset
+# Imports a given staging area to the production DCP2 dataset. This script expects to be run from the
+# scripts/release_tools subdirectory of the HCA repo.
 # Prerequisites:
-#   * a working installation of the argo CLI tool (https://argoproj.github.io/argo-workflows/cli/)
-#   * access to the broad-dsp-monster-hca-prod google project
+#   * the argo CLI tool (https://argoproj.github.io/argo-workflows/cli/)
+#   * gcloud + kubectl
+#   * gdate from coreutils (brew install coreutils)
+#   * The currently logged in gcloud credentials have access to the broad-dsp-monster-hca-prod google project
+#
+# Invoking the script:
+# ./import_prod.sh <bucket name> <subdir of bucket where the staging area resides>
+#
+# Example:
+# ./import_prod.sh broad-foo-bar-bucket-name /prod/baz-staging-area
 
 SOURCE_BUCKET_NAME=$1
 SOURCE_BUCKET_PREFIX=$2
