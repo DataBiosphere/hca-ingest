@@ -66,12 +66,13 @@ def verify(start_date, manifest_file, gs_project, bq_project, dataset):
     expected_load_totals = get_expected_load_totals(storage_client, staging_areas)
 
     logging.info("Inspecting load history in bigquery...")
-    tdr_load_totals = {}
     load_history = get_load_history(bq_project, dataset, start_date)
-    for row in load_history:
-        tdr_load_totals[row[0]] = row[1]
-        if row[0] not in expected_load_totals:
-            logging.warning(f"⚠️ {row[0]} not in manifest but was imported")
+    tdr_load_totals = {
+        load_history_row[0]: load_history_row[1]
+        for load_history_row in load_history
+    }
+    for unexpected_area in tdr_load_totals.keys() - expected_lead_totals.keys():
+        logging.warning(f"⚠️ {unexpected_path} not in manifest but was imported")
 
     for area in expected_load_totals:
         if area in tdr_load_totals:
