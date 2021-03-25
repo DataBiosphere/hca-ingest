@@ -10,10 +10,10 @@ python verify_release_manifest.py -s 2021-03-24 -f testing.csv -g fake-gs-projec
 """
 import argparse
 import logging
-
-import google.auth
-from google.cloud import bigquery, storage
 from urllib.parse import urlparse
+
+from google.cloud import bigquery, storage
+from hca_orchestration.contrib import google as hca_google
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 
@@ -58,9 +58,8 @@ def parse_manifest_file(manifest_file):
 
 
 def verify(start_date, manifest_file, gs_project, bq_project, dataset):
-    creds, _ = google.auth.default()
-
     logging.info("Parsing manifest and inspecting staging areas...")
+    creds = hca_google.get_credentials()
     storage_client = storage.Client(project=gs_project, credentials=creds)
     staging_areas = parse_manifest_file(manifest_file)
     expected_load_totals = get_expected_load_totals(storage_client, staging_areas)
@@ -71,8 +70,8 @@ def verify(start_date, manifest_file, gs_project, bq_project, dataset):
         load_history_row[0]: load_history_row[1]
         for load_history_row in load_history
     }
-    for unexpected_area in tdr_load_totals.keys() - expected_lead_totals.keys():
-        logging.warning(f"⚠️ {unexpected_path} not in manifest but was imported")
+    for unexpected_area in tdr_load_totals.keys() - expected_load_totals.keys():
+        logging.warning(f"⚠️ {unexpected_area} not in manifest but was imported")
 
     for area, expected_count in expected_load_totals.items():
         if area in tdr_load_totals:
