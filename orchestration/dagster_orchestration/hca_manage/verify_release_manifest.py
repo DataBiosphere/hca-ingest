@@ -10,6 +10,7 @@ python verify_release_manifest.py -s 2021-03-24 -f testing.csv -g fake-gs-projec
 """
 import argparse
 import logging
+import sys
 from urllib.parse import urlparse
 
 from google.cloud import bigquery, storage
@@ -70,20 +71,25 @@ def verify(start_date, manifest_file, gs_project, bq_project, dataset):
         load_history_row[0]: load_history_row[1]
         for load_history_row in load_history
     }
+
     for unexpected_area in tdr_load_totals.keys() - expected_load_totals.keys():
         logging.warning(f"⚠️ {unexpected_area} not in manifest but was imported")
 
+    success = True
     for area, expected_count in expected_load_totals.items():
         if area in tdr_load_totals:
             expected_count = expected_load_totals[area]
             if expected_count != tdr_load_totals[area]:
                 logging.error(f"❌ Mismatched file count: staging_area = {area}, "
                               f"imported = {tdr_load_totals[area]}, expected = {expected_count}")
+                success = False
             else:
                 logging.info(
                     f"✅ staging_area = {area}, imported = {tdr_load_totals[area]}, expected = {expected_count}")
         else:
             logging.error(f"❌ {area} has not been imported")
+            success = False
+    return success
 
 
 if __name__ == '__main__':
@@ -95,4 +101,6 @@ if __name__ == '__main__':
     parser.add_argument("-d", "--dataset", required=True)
     args = parser.parse_args()
 
-    verify(args.start_date, args.manifest_file, args.gs_project, args.bq_project, args.dataset)
+    result = verify(args.start_date, args.manifest_file, args.gs_project, args.bq_project, args.dataset)
+    if not result:
+        sys.exit(1)
