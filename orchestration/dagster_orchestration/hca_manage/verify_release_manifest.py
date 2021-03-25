@@ -74,7 +74,7 @@ def verify(start_date, manifest_file, gs_project, bq_project, dataset):
     for unexpected_area in tdr_load_totals.keys() - expected_lead_totals.keys():
         logging.warning(f"⚠️ {unexpected_path} not in manifest but was imported")
 
-    for area in expected_load_totals:
+    for area, expected_count in expected_load_totals.items():
         if area in tdr_load_totals:
             expected_count = expected_load_totals[area]
             if expected_count != tdr_load_totals[area]:
