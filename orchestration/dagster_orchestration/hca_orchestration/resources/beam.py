@@ -83,7 +83,7 @@ class DataflowBeamRunner:
 
     def dispatch_k8s_job(self, image_name: str, job_name_prefix: str, args: List[str]) -> V1Job:
         # we will need to poll the pod/job status on creation
-        kubernetes.config.load_kube_config()
+        kubernetes.config.load_incluster_config()
 
         job_name = f"{job_name_prefix}-{uuid4()}"
         pod_name = f"{job_name}-pod"
