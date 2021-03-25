@@ -17,7 +17,7 @@ if [ $CURRENT_CLUSTER != "gke_mystical-slate-284720_us-central1-c_hca-cluster" ]
   gcloud container clusters get-credentials hca-cluster --zone us-central1-c --project mystical-slate-284720
 fi
 
-echo submit ../../orchestration/workflows/dev/run-import-hca-total.yaml \
+argo submit ../../orchestration/workflows/dev/run-import-hca-total.yaml \
      -p source-bucket-name="$SOURCE_BUCKET_NAME" \
      -p source-bucket-prefix="$SOURCE_BUCKET_PREFIX" \
      -p staging-bucket-prefix="$STAGING_BUCKET" \
