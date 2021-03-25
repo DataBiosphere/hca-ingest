@@ -55,7 +55,6 @@ releases:
             - name: monster-dagster-secrets
       - userDeployments:
           # "user code" we deploy to dagster; these are dagster repositories of pipelines
-          enabled: true
           deployments:
             - name: "monster-hca-ingest"
               image:
