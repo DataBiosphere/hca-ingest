@@ -15,6 +15,7 @@ from kubernetes.client.models.v1_job import V1Job
 # the giant mess of parameters here a little easier to parse
 @dataclass
 class DataflowCloudConfig:
+
     project: str
     service_account: str
     subnet_name: str
@@ -45,12 +46,27 @@ class DataflowBeamRunner:
     namespace: str
     logger: DagsterLogManager
 
+    # maximum characters in a K8s job name before we reject it.
+    # Should be significantly less than the k8s-level max of 63 chars
+    # to ensure that we include a substantial portion of the UUID suffix
+    # we generate to make job names unique
+    MAX_JOB_PREFIX_LENGTH_CHARS: int = 45
+
+    # actual maximum length of a K8s job name, enforced by Kubernetes itself
+    K8S_MAX_JOB_NAME_LENGTH: int = 63
+
     def run(
         self,
         job_name: str,
         input_prefix: str,
         output_prefix: str,
     ) -> None:
+        if len(job_name) > self.MAX_JOB_PREFIX_LENGTH_CHARS:
+            raise ValueError(
+                f"Job name prefix {job_name} exceeds max length of "
+                f"{self.MAX_JOB_PREFIX_LENGTH_CHARS} characters."
+            )
+
         args_dict = {
             'runner': 'dataflow',
             'inputPrefix': input_prefix,
@@ -85,7 +101,10 @@ class DataflowBeamRunner:
         # we will need to poll the pod/job status on creation
         kubernetes.config.load_incluster_config()
 
-        job_name = f"{job_name_prefix}-{uuid4()}"
+        # trim job name to 63 characters to stay within k8s length constraints.
+        # should still include a safe amount of the UUID for uniqueness. we strip dashes off the end
+        # to make sure that the UUID's dashes don't violate job name spec after trimming.
+        job_name = f"{job_name_prefix}-{uuid4()}"[:self.K8S_MAX_JOB_NAME_LENGTH].rstrip('-')
         pod_name = f"{job_name}-pod"
         job_container = kubernetes.client.V1Container(
             name=job_name,
