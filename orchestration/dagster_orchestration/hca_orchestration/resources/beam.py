@@ -61,11 +61,11 @@ class DataflowBeamRunner:
         input_prefix: str,
         output_prefix: str,
     ) -> None:
-        # if len(job_name) > self.K8S_MAX_JOB_NAME_LENGTH:
-        #     raise ValueError(
-        #         f"Job name prefix {job_name} exceeds max length of "
-        #         f"{self.MAX_JOB_PREFIX_LENGTH_CHARS} characters."
-        #     )
+        if len(job_name) > self.K8S_MAX_JOB_NAME_LENGTH:
+            raise ValueError(
+                f"Job name prefix {job_name} exceeds max length of "
+                f"{self.K8S_MAX_JOB_NAME_LENGTH} characters."
+            )
 
         args_dict = {
             'runner': 'dataflow',
@@ -125,7 +125,7 @@ class DataflowBeamRunner:
             api_version="batch/v1",
             kind="Job",
             metadata=kubernetes.client.V1ObjectMeta(
-                name=job_name[:self.K8S_MAX_JOB_NAME_LENGTH],
+                generate_name=job_name_prefix,
             ),
             spec=kubernetes.client.V1JobSpec(
                 template=template,
