@@ -125,7 +125,7 @@ class DataflowBeamRunner:
             api_version="batch/v1",
             kind="Job",
             metadata=kubernetes.client.V1ObjectMeta(
-                name=job_name,
+                name=job_name[:self.K8S_MAX_JOB_NAME_LENGTH],
             ),
             spec=kubernetes.client.V1JobSpec(
                 template=template,
