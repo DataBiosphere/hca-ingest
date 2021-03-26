@@ -15,6 +15,11 @@ jobs:
       ENV: test
     steps:
     - uses: actions/checkout@v2
+    - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      with:
+        project_id: ${{ secrets.DEV_PROJECT_ID }}
+        service_account_key: ${{ secrets.GCP_TEST_KEY }}
+        export_default_credentials: true
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
       with:
