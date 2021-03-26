@@ -10,7 +10,7 @@ from google.cloud import storage
 logging.basicConfig(level=logging.INFO)
 
 
-def run(project, source_bucket, source_prefix, target_bucket, target_prefix):
+def diff_dirs(project, source_bucket, source_prefix, target_bucket, target_prefix):
     creds, _ = google.auth.default()
     storage_client = storage.Client(project=project, credentials=creds)
     expected_blobs = {blob.name.replace(source_prefix, ''): blob.md5_hash
@@ -26,7 +26,7 @@ def run(project, source_bucket, source_prefix, target_bucket, target_prefix):
                     for blob in storage_client.list_blobs(target_bucket,
                                                           prefix=target_prefix)}
 
-    assert expected_blobs == output_blobs, "Output results differ from expected"
+    return expected_blobs, output_blobs
 
 
 if __name__ == '__main__':
@@ -38,4 +38,6 @@ if __name__ == '__main__':
     parser.add_argument("-tb", "--target_bucket")
     parser.add_argument("-tp", "--target_prefix")
     args = parser.parse_args()
-    run(args.project, args.source_bucket, args.source_prefix, args.target_bucket, args.target_prefix)
+    expected_blobs, output_blobs = diff_dirs(args.project, args.source_bucket,
+                                             args.source_prefix, args.target_bucket, args.target_prefix)
+    assert expected_blobs == output_blobs, "Output results differ from expected"
