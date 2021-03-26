@@ -61,11 +61,11 @@ class DataflowBeamRunner:
         input_prefix: str,
         output_prefix: str,
     ) -> None:
-        if len(job_name) > self.MAX_JOB_PREFIX_LENGTH_CHARS:
-            raise ValueError(
-                f"Job name prefix {job_name} exceeds max length of "
-                f"{self.MAX_JOB_PREFIX_LENGTH_CHARS} characters."
-            )
+        # if len(job_name) > self.K8S_MAX_JOB_NAME_LENGTH:
+        #     raise ValueError(
+        #         f"Job name prefix {job_name} exceeds max length of "
+        #         f"{self.MAX_JOB_PREFIX_LENGTH_CHARS} characters."
+        #     )
 
         args_dict = {
             'runner': 'dataflow',
@@ -101,13 +101,12 @@ class DataflowBeamRunner:
         # we will need to poll the pod/job status on creation
         kubernetes.config.load_incluster_config()
 
-        # trim job name to 63 characters to stay within k8s length constraints.
-        # should still include a safe amount of the UUID for uniqueness. we strip dashes off the end
-        # to make sure that the UUID's dashes don't violate job name spec after trimming.
-        job_name = f"{job_name_prefix}-{uuid4()}"[:self.K8S_MAX_JOB_NAME_LENGTH].rstrip('-')
+        job_name = f"{job_name_prefix}-{uuid4()}"
         pod_name = f"{job_name}-pod"
         job_container = kubernetes.client.V1Container(
-            name=job_name,
+            # we can't use the job name here since container names are limited to 63 characters,
+            # which is too restrictive of a limitation for our job names to be reliably unique
+            name='beam-executor',
             image=image_name,
             args=args,
         )
