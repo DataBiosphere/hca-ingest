@@ -38,10 +38,7 @@ scale_down "$DAGIT_DEPLOYMENT_NAME"
 scale_down "$DAEMON_DEPLOYMENT_NAME"
 
 msg "applying migration..."
-helm template $HELM_DAGSTER_RELEASE_NAME dagster/dagster \
-  --set "migrate.enabled=true" \
-  --show-only templates/job-instance-migrate.yaml |
-  kubectl apply -f -
+helm template $HELM_DAGSTER_RELEASE_NAME dagster/dagster --set "migrate.enabled=true" --show-only templates/job-instance-migrate.yaml | kubectl apply -f -
 
 echo "scaling up..." >&2
 scale_up "$DAGIT_DEPLOYMENT_NAME" "$DAGIT_DEPLOYMENT_REPLICA_COUNT"
