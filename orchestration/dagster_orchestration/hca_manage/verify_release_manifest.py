@@ -91,8 +91,12 @@ def verify(start_date, manifest_file, gs_project, bq_project, dataset):
         logging.warning(f"⚠️ {unexpected_area} not in manifest but was imported")
 
     success = True
+    total_loaded_count = 0
+    total_expected_count = 0
     for area, expected_count in expected_load_totals.items():
+        total_expected_count += expected_count
         if area in tdr_load_totals:
+            total_loaded_count += tdr_load_totals[area]
             expected_count = expected_load_totals[area]
             if expected_count != tdr_load_totals[area]:
                 logging.error(f"❌ Mismatched file count: staging_area = {area}, "
@@ -104,6 +108,8 @@ def verify(start_date, manifest_file, gs_project, bq_project, dataset):
         else:
             logging.error(f"❌ {area} has not been imported")
             success = False
+    logging.info('-' * 80)
+    logging.info(f"Total files staged = {total_expected_count}, total files loaded = {total_loaded_count}")
     return success
 
 
