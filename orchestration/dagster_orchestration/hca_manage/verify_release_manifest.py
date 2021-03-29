@@ -15,12 +15,13 @@ from urllib.parse import urlparse
 
 from google.cloud import bigquery, storage
 from google.cloud.bigquery.table import Row
+from google.cloud.storage.client import Client
 from hca_orchestration.contrib import google as hca_google
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 
-def get_expected_load_totals(storage_client, staging_areas) -> dict[str, int]:
+def get_expected_load_totals(storage_client: Client, staging_areas: list[str]) -> dict[str, int]:
     """
     Given a list of GS staging areas, count the files present in each /data subdir
     """
@@ -33,7 +34,7 @@ def get_expected_load_totals(storage_client, staging_areas) -> dict[str, int]:
     return expected
 
 
-def get_load_history(bq_project, dataset, start_date) -> list[Row]:
+def get_load_history(bq_project: str, dataset: str, start_date: str) -> list[Row]:
     client = bigquery.Client(project=bq_project)
 
     # Determine the number of distinct files loaded after the given start date, grouped by staging area
@@ -68,13 +69,13 @@ def get_load_history(bq_project, dataset, start_date) -> list[Row]:
     return [row for row in query_job]
 
 
-def parse_manifest_file(manifest_file) -> list[str]:
+def parse_manifest_file(manifest_file: str) -> list[str]:
     with open(manifest_file) as manifest:
         # some of the staging areas submitted via the form need slight cleanup
         return [area.rstrip('\n/') for area in manifest]
 
 
-def verify(start_date, manifest_file, gs_project, bq_project, dataset) -> bool:
+def verify(start_date: str, manifest_file: str, gs_project: str, bq_project: str, dataset: str) -> bool:
     logging.info("Parsing manifest and inspecting staging areas...")
     creds = hca_google.get_credentials()
     storage_client = storage.Client(project=gs_project, credentials=creds)
