@@ -39,9 +39,24 @@ def get_load_history(bq_project, dataset, start_date):
     query = f"""
                 WITH base as (
                     SELECT distinct(source_name)
-                    FROM `datarepo_{dataset}.datarepo_load_history`
+                    FROM `datarepo_{dataset}.datarepo_load_history` dlh
+                    LEFT JOIN `datarepo_{dataset}.sequence_file` sf
+                    ON sf.file_id = dlh.file_id
+                    LEFT JOIN `broad-datarepo-terra-prod-hca2.datarepo_hca_prod_20201120_dcp2.analysis_file` af
+                    ON af.file_id = dlh.file_id
+                    LEFT JOIN `broad-datarepo-terra-prod-hca2.datarepo_hca_prod_20201120_dcp2.reference_file` rf
+                    ON rf.file_id = dlh.file_id
+                    LEFT JOIN `broad-datarepo-terra-prod-hca2.datarepo_hca_prod_20201120_dcp2.supplementary_file` supf
+                    ON supf.file_id = dlh.file_id
+                    LEFT JOIN `broad-datarepo-terra-prod-hca2.datarepo_hca_prod_20201120_dcp2.image_file` imgf
+                    ON imgf.file_id = dlh.file_id
                     WHERE load_time >= '{start_date}'
                     AND state = 'succeeded'
+                    AND (sf.file_id IS NOT NULL OR
+                        af.file_id IS NOT NULL OR
+                        rf.file_id IS NOT NULL OR
+                        supf.file_id IS NOT NULL OR
+                        imgf.file_id IS NOT NULL)
                 )
                 SELECT REGEXP_EXTRACT(source_name, '(gs://.*)/data/.*$') AS bucket, count(*) as cnt
                 FROM base GROUP by bucket;
