@@ -42,13 +42,13 @@ def get_load_history(bq_project, dataset, start_date):
                     FROM `datarepo_{dataset}.datarepo_load_history` dlh
                     LEFT JOIN `datarepo_{dataset}.sequence_file` sf
                     ON sf.file_id = dlh.file_id
-                    LEFT JOIN `broad-datarepo-terra-prod-hca2.datarepo_hca_prod_20201120_dcp2.analysis_file` af
+                    LEFT JOIN `datarepo_{dataset}.analysis_file` af
                     ON af.file_id = dlh.file_id
-                    LEFT JOIN `broad-datarepo-terra-prod-hca2.datarepo_hca_prod_20201120_dcp2.reference_file` rf
+                    LEFT JOIN `datarepo_{dataset}.reference_file` rf
                     ON rf.file_id = dlh.file_id
-                    LEFT JOIN `broad-datarepo-terra-prod-hca2.datarepo_hca_prod_20201120_dcp2.supplementary_file` supf
+                    LEFT JOIN `datarepo_{dataset}.supplementary_file` supf
                     ON supf.file_id = dlh.file_id
-                    LEFT JOIN `broad-datarepo-terra-prod-hca2.datarepo_hca_prod_20201120_dcp2.image_file` imgf
+                    LEFT JOIN `datarepo_{dataset}.image_file` imgf
                     ON imgf.file_id = dlh.file_id
                     WHERE load_time >= '{start_date}'
                     AND state = 'succeeded'
