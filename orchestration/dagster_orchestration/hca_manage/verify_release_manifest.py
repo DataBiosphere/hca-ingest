@@ -109,7 +109,8 @@ def verify(start_date, manifest_file, gs_project, bq_project, dataset):
             logging.error(f"❌ {area} has not been imported")
             success = False
     logging.info('-' * 80)
-    logging.info(f"Total files staged = {total_expected_count}, total files loaded = {total_loaded_count}")
+    logging.info(
+        f"Total staging areas = {len(expected_load_totals.keys())}, total files staged = {total_expected_count}, total files loaded = {total_loaded_count}")
     return success
 
 
