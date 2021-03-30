@@ -21,6 +21,11 @@ def config_path(relative_path: str) -> str:
     return path
 
 
+def beam_runner_path() -> str:
+    path: str = file_relative_path(__file__, '../../../../')
+    return path
+
+
 class PipelinesTestCase(unittest.TestCase):
     def run_pipeline(self, pipeline: PipelineDefinition, config_name: str, extra_config: dict[str, Any] = {},
                      pipeline_mode='test') -> PipelineExecutionResult:
@@ -40,6 +45,13 @@ class PipelinesTestCase(unittest.TestCase):
         test_id = f'test-{uuid.uuid4()}'
         config = load_yaml_from_globs(config_path('stage_data_local_e2e.yaml'))
         runtime_config = {
+            'resources': {
+                'beam_runner': {
+                    'config': {
+                        'working_dir': beam_runner_path()
+                    }
+                }
+            },
             'solids': {
                 'clear_staging_dir': {
                     'config': {
@@ -54,6 +66,8 @@ class PipelinesTestCase(unittest.TestCase):
             }
         }
 
+        import pdb
+        pdb.set_trace()
         self.run_pipeline(stage_data, 'stage_data_local_e2e.yaml', extra_config=runtime_config, pipeline_mode='local')
 
         expected_blobs, output_blobs = diff_dirs(

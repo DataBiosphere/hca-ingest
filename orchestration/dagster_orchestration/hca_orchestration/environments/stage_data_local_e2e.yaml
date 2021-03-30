@@ -2,7 +2,6 @@ resources:
   beam_runner:
     config:
       target_class: "hca-transformation-pipeline"
-      working_dir: "../../"
 solids:
   clear_staging_dir:
     config:
