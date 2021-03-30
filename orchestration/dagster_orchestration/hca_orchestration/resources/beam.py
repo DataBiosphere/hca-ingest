@@ -10,6 +10,8 @@ from dagster_k8s.client import DagsterKubernetesClient
 import kubernetes
 from kubernetes.client.models.v1_job import V1Job
 
+from hca_orchestration.support.typing import DagsterConfigDict
+
 
 # separating out config for the cloud dataflow pipeline to make
 # the giant mess of parameters here a little easier to parse
@@ -26,7 +28,7 @@ class DataflowCloudConfig:
     # fields computed from provided params
     subnetwork: str = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.subnetwork = '/'.join([
             'regions',
             self.region,
@@ -139,7 +141,7 @@ class DataflowBeamRunner:
     "image_version": Field(StringSource),
     "namespace": Field(StringSource),
 })
-def base_dataflow_beam_runner(init_context: InitResourceContext):
+def base_dataflow_beam_runner(init_context: InitResourceContext) -> DataflowBeamRunner:
     cloud_config = DataflowCloudConfig(
         project=init_context.resource_config['project'],
         service_account=init_context.resource_config['service_account'],
@@ -161,7 +163,7 @@ def base_dataflow_beam_runner(init_context: InitResourceContext):
 
 
 @configured(base_dataflow_beam_runner)
-def dataflow_beam_runner(config):
+def dataflow_beam_runner(config: DagsterConfigDict) -> DagsterConfigDict:
     return {
         'temp_bucket': {'env': 'HCA_TEMP_STORAGE_BUCKET'},
         'image_name': {'env': 'TRANSFORM_PIPELINE_IMAGE'},
@@ -203,7 +205,7 @@ class LocalBeamRunner:
     "working_dir": Field(StringSource),
     "target_class": Field(StringSource),  # 'hca-transformation-pipeline' is usually what you want
 })
-def local_beam_runner(init_context: InitResourceContext):
+def local_beam_runner(init_context: InitResourceContext) -> LocalBeamRunner:
     return LocalBeamRunner(
         working_dir=init_context.resource_config["working_dir"],
         target_class=init_context.resource_config["target_class"],
@@ -211,11 +213,12 @@ def local_beam_runner(init_context: InitResourceContext):
     )
 
 
-@resource
-def test_beam_runner(init_context: InitResourceContext):
-    class TestBeamRunner:
-        def run(self, job_name: str, input_prefix: str, output_prefix: str):
-            # no thoughts, head empty
-            return None
+class TestBeamRunner:
+    def run(self, job_name: str, input_prefix: str, output_prefix: str) -> None:
+        # no thoughts, head empty
+        pass
 
+
+@resource
+def test_beam_runner(init_context: InitResourceContext) -> TestBeamRunner:
     return TestBeamRunner()
