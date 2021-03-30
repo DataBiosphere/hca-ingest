@@ -7,11 +7,13 @@ import logging
 import google.auth
 from google.cloud import storage
 
+from hca_orchestration.contrib import google as hca_google
+
 logging.basicConfig(level=logging.INFO)
 
 
 def run(project: str, source_bucket: str, source_prefix: str, target_bucket: str, target_prefix: str) -> None:
-    creds, _ = google.auth.default()
+    creds = hca_google.get_credentials()
     storage_client = storage.Client(project=project, credentials=creds)
     expected_blobs = {blob.name.replace(source_prefix, ''): blob.md5_hash
                       for blob in storage_client.list_blobs(source_bucket,

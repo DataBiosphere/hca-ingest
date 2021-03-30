@@ -10,6 +10,7 @@ from data_repo_client import RepositoryApi, DataDeletionRequest, SnapshotRequest
 import google.auth
 import google.auth.credentials
 from google.cloud import bigquery, storage
+from hca_orchestration.contrib import google as hca_google
 
 
 @dataclass
@@ -67,11 +68,7 @@ class HcaManage:
 
     @cached_property
     def gcp_creds(self) -> google.auth.credentials.Credentials:
-        # use application default credentials to seamlessly work across monster devs
-        # assumes `gcloud auth application-default login` has been run
-        creds, _ = google.auth.default()
-
-        return creds
+        return hca_google.get_credentials()
 
     # bigquery interactions
     def get_all_table_names(self) -> set[str]:
@@ -218,7 +215,7 @@ class HcaManage:
         :param target_table: The table name with which to format the target filename.
         :return: The gs-path of the uploaded file.
         """
-        storage_client = storage.Client(project=self.bucket_project, credentials=self.gcp_creds)
+        storage_client = storage.Client(project=self.bucket_project, credentials=hca_google.get_credentials())
         bucket = storage_client.bucket(self.bucket)
         target_filename = self._format_filename(table=target_table)
         blob = bucket.blob(target_filename)
