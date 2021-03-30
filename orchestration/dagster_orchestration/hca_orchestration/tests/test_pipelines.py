@@ -5,7 +5,7 @@ from unittest.mock import patch
 import uuid
 
 
-from dagster import execute_pipeline, file_relative_path
+from dagster import execute_pipeline, file_relative_path, PipelineDefinition, PipelineExecutionResult
 from dagster.utils import load_yaml_from_globs
 from dagster.utils.merger import deep_merge_dicts
 from hca_orchestration.pipelines import stage_data, validate_egress
@@ -19,7 +19,8 @@ def config_path(relative_path):
 
 
 class PipelinesTestCase(unittest.TestCase):
-    def run_pipeline(self, pipeline, config_name, extra_config={}, mode='test', *execution_args, **execution_kwargs):
+    def run_pipeline(self, pipeline: PipelineDefinition, config_name: str, extra_config: dict = {},
+                     mode: str = 'test', *execution_args: tuple, **execution_kwargs: dict) -> PipelineExecutionResult:
         config_dict = load_yaml_from_globs(
             config_path(config_name)
         )
