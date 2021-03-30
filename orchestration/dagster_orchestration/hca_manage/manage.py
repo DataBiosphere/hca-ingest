@@ -215,7 +215,7 @@ class HcaManage:
         :param target_table: The table name with which to format the target filename.
         :return: The gs-path of the uploaded file.
         """
-        storage_client = storage.Client(project=self.bucket_project, credentials=hca_google.get_credentials())
+        storage_client = storage.Client(project=self.bucket_project, credentials=self.gcp_creds)
         bucket = storage_client.bucket(self.bucket)
         target_filename = self._format_filename(table=target_table)
         blob = bucket.blob(target_filename)
