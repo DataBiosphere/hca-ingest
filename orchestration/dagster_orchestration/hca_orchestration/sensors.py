@@ -1,6 +1,6 @@
 from datetime import datetime
 import os
-from typing import Iterator, List, Union
+from typing import Iterator, Union
 
 from dateutil.tz import tzlocal
 
@@ -15,7 +15,7 @@ ARGO_EPOCH: datetime = datetime(2021, 3, 15, tzinfo=tzlocal())
 
 
 class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClient):
-    def successful_hca_import_workflows(self) -> List[ExtendedArgoWorkflow]:
+    def successful_hca_import_workflows(self) -> list[ExtendedArgoWorkflow]:
         return [
             ExtendedArgoWorkflow(workflow, argo_url=self.argo_url, access_token=self.access_token)
             for workflow

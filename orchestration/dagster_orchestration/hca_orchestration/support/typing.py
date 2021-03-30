@@ -1,4 +1,7 @@
-from typing import Dict, Union
+# Complex type signatures that appear multiple times throughout the code base can live here,
+# for easy reference and descriptive naming.
+
+from typing import Union
 
 
-DAGSTER_CONFIG_TYPE = Dict[str, Union[Dict[str, str], str]]
+DagsterConfigDict = dict[str, Union[dict[str, str], str]]

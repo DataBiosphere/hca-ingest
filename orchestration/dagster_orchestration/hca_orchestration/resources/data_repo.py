@@ -6,7 +6,7 @@ from dagster.core.execution.context.init import InitResourceContext
 from data_repo_client import ApiClient, Configuration, RepositoryApi
 
 from hca_orchestration.contrib.google import default_google_access_token
-from hca_orchestration.support.typing import DAGSTER_CONFIG_TYPE
+from hca_orchestration.support.typing import DagsterConfigDict
 
 
 @resource({
@@ -24,7 +24,7 @@ def base_jade_data_repo_client(init_context: InitResourceContext) -> RepositoryA
 
 
 @configured(base_jade_data_repo_client)
-def jade_data_repo_client(_config: DAGSTER_CONFIG_TYPE) -> DAGSTER_CONFIG_TYPE:
+def jade_data_repo_client(_config: DagsterConfigDict) -> DagsterConfigDict:
     return {
         'api_url': {'env': 'DATA_REPO_URL'},
     }

@@ -386,8 +386,13 @@ class HcaManage:
             dangling_project_refs=0
         )
 
-    def _process_rows(self, get_table_names: Callable[[], set[str]], get_rids: Callable[[
-                      str], set[str]], soft_delete: bool, issue: str) -> int:
+    def _process_rows(
+        self,
+        get_table_names: Callable[[], set[str]],
+        get_rids: Callable[[str], set[str]],
+        soft_delete: bool,
+        issue: str
+    ) -> int:
         """
         Perform a check or soft deletion for duplicates or null file references.
         :param get_table_names: A function that returns a set of table names.

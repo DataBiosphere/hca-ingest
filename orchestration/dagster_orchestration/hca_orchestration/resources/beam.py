@@ -10,7 +10,7 @@ from dagster_k8s.client import DagsterKubernetesClient
 import kubernetes
 from kubernetes.client.models.v1_job import V1Job
 
-from hca_orchestration.support.typing import DAGSTER_CONFIG_TYPE
+from hca_orchestration.support.typing import DagsterConfigDict
 
 
 # separating out config for the cloud dataflow pipeline to make
@@ -163,7 +163,7 @@ def base_dataflow_beam_runner(init_context: InitResourceContext) -> DataflowBeam
 
 
 @configured(base_dataflow_beam_runner)
-def dataflow_beam_runner(config: DAGSTER_CONFIG_TYPE) -> DAGSTER_CONFIG_TYPE:
+def dataflow_beam_runner(config: DagsterConfigDict) -> DagsterConfigDict:
     return {
         'temp_bucket': {'env': 'HCA_TEMP_STORAGE_BUCKET'},
         'image_name': {'env': 'TRANSFORM_PIPELINE_IMAGE'},

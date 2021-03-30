@@ -2,7 +2,7 @@ from dagster import configured, DagsterType, InputDefinition, solid, String, Str
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
 from hca_manage.manage import HcaManage, ProblemCount
-from hca_orchestration.support.typing import DAGSTER_CONFIG_TYPE
+from hca_orchestration.support.typing import DagsterConfigDict
 
 
 def problem_count_typecheck(_: TypeCheckContext, value: object) -> bool:
@@ -44,7 +44,7 @@ def base_post_import_validate(context: AbstractComputeExecutionContext) -> Dagst
 
 # sets up default config settings to minimize pipeline boilerplate
 @configured(base_post_import_validate, {"dataset_name": String})
-def post_import_validate(config: DAGSTER_CONFIG_TYPE) -> DAGSTER_CONFIG_TYPE:
+def post_import_validate(config: DagsterConfigDict) -> DagsterConfigDict:
     return {
         'gcp_env': {'env': 'HCA_GCP_ENV'},
         'google_project_name': {'env': 'DATA_REPO_GOOGLE_PROJECT'},
@@ -87,7 +87,7 @@ def base_notify_slack_of_egress_validation_results(
 
 
 @configured(base_notify_slack_of_egress_validation_results, {"dataset_name": String})
-def notify_slack_of_egress_validation_results(config: DAGSTER_CONFIG_TYPE) -> DAGSTER_CONFIG_TYPE:
+def notify_slack_of_egress_validation_results(config: DagsterConfigDict) -> DagsterConfigDict:
     return {
         'gcp_env': {'env': 'HCA_GCP_ENV'},
         'channel': {'env': 'SLACK_NOTIFICATIONS_CHANNEL'},

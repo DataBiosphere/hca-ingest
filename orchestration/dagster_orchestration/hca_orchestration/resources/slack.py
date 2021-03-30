@@ -2,7 +2,7 @@ from dagster import configured, resource
 from dagster.core.execution.context.init import InitResourceContext
 from dagster_slack import slack_resource
 
-from hca_orchestration.support.typing import DAGSTER_CONFIG_TYPE
+from hca_orchestration.support.typing import DagsterConfigDict
 
 
 class ConsoleSlackClient:
@@ -19,7 +19,7 @@ def console_slack_client(init_context: InitResourceContext) -> ConsoleSlackClien
 
 
 @configured(slack_resource)
-def live_slack_client(_config: DAGSTER_CONFIG_TYPE) -> DAGSTER_CONFIG_TYPE:
+def live_slack_client(_config: DagsterConfigDict) -> DagsterConfigDict:
     return {
         'token': {'env': 'SLACK_TOKEN'},
     }

@@ -2,7 +2,7 @@ from __future__ import annotations  # this lets us annotate functions in class C
 
 from cached_property import cached_property
 from dataclasses import dataclass
-from typing import Any, Dict, Generator, Optional
+from typing import Any, Iterator, Optional
 from typing_extensions import Protocol
 
 from argo.workflows.client import ApiClient as ArgoApiClient,\
@@ -40,13 +40,13 @@ class ArgoArchivedWorkflowsClient:
     def client(self) -> ArchivedWorkflowServiceApi:
         return generate_argo_archived_workflows_client(self.argo_url, self.access_token)
 
-    def list_archived_workflows(self) -> Generator[V1alpha1Workflow, None, None]:
+    def list_archived_workflows(self) -> Iterator[V1alpha1Workflow]:
         return self._pull_paginated_results(self.client.list_archived_workflows)
 
     def get_archived_workflow(self, uid: str) -> V1alpha1Workflow:
         return self.client.get_archived_workflow(uid)
 
-    def _pull_paginated_results(self, api_function: ArgoFetchListOperation) -> Generator[V1alpha1Workflow, None, None]:
+    def _pull_paginated_results(self, api_function: ArgoFetchListOperation) -> Iterator[V1alpha1Workflow]:
         results = api_function()
 
         for result in results.items:
@@ -72,7 +72,7 @@ class ExtendedArgoWorkflow:
 
         return self
 
-    def params_dict(self) -> Dict[str, Any]:
+    def params_dict(self) -> dict[str, Any]:
         return {
             param.name: param.value
             for param in self.spec.arguments.parameters
