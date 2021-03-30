@@ -1,0 +1,12 @@
+resources:
+  beam_runner:
+    config:
+      target_class: "hca-transformation-pipeline"
+solids:
+  clear_staging_dir:
+    config:
+      staging_bucket_name: broad-dsp-monster-hca-dev-temp-storage
+  pre_process_metadata:
+    config:
+      input_prefix: "gs://broad-dsp-monster-hca-dev-test-storage/integration/ebi_small/test_data"
+      staging_bucket_name: broad-dsp-monster-hca-dev-temp-storage
