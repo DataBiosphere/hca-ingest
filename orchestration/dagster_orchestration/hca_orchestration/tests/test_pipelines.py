@@ -3,6 +3,7 @@ import pytest
 import unittest
 from unittest.mock import patch
 import uuid
+from typing import Any
 
 
 from dagster import execute_pipeline, file_relative_path, PipelineDefinition, PipelineExecutionResult
@@ -10,17 +11,19 @@ from dagster.utils import load_yaml_from_globs
 from dagster.utils.merger import deep_merge_dicts
 from hca_orchestration.pipelines import stage_data, validate_egress
 from hca_manage.diff_dirs import diff_dirs
+from hca_orchestration.support.typing import DagsterConfigDict
 
 
 def config_path(relative_path: str) -> str:
-    return file_relative_path(
+    path: str = file_relative_path(
         __file__, os.path.join("../environments/", relative_path)
     )
+    return path
 
 
 class PipelinesTestCase(unittest.TestCase):
-    def run_pipeline(self, pipeline: PipelineDefinition, config_name: str, extra_config: dict = {},
-                     *execution_args: tuple, **execution_kwargs: dict) -> PipelineExecutionResult:
+    def run_pipeline(self, pipeline: PipelineDefinition, config_name: str, extra_config: dict[str, Any] = {},
+                     pipeline_mode='test') -> PipelineExecutionResult:
         config_dict = load_yaml_from_globs(
             config_path(config_name)
         )
@@ -28,9 +31,8 @@ class PipelinesTestCase(unittest.TestCase):
 
         return execute_pipeline(
             pipeline,
-            *execution_args,
             run_config=config_dict,
-            **execution_kwargs
+            mode=pipeline_mode
         )
 
     @pytest.mark.e2e
@@ -52,7 +54,7 @@ class PipelinesTestCase(unittest.TestCase):
             }
         }
 
-        self.run_pipeline(stage_data, 'stage_data_local_e2e.yaml', extra_config=runtime_config, mode='local')
+        self.run_pipeline(stage_data, 'stage_data_local_e2e.yaml', extra_config=runtime_config, pipeline_mode='local')
 
         expected_blobs, output_blobs = diff_dirs(
             'broad-dsp-monster-hca-dev',
@@ -64,7 +66,7 @@ class PipelinesTestCase(unittest.TestCase):
         self.assertEqual(expected_blobs, output_blobs, "Output results differ from expected")
 
     def test_stage_data_noop_resources(self):
-        result = self.run_pipeline(stage_data, config_name="test_stage_data.yaml", mode='test')
+        result = self.run_pipeline(stage_data, config_name="test_stage_data.yaml")
 
         self.assertTrue(result.success)
 
@@ -79,7 +81,7 @@ class PipelinesTestCase(unittest.TestCase):
         post_import_validate, so this just spins it up and sees if
         it runs at all
         """
-        result = self.run_pipeline(validate_egress, config_name="test_validate_egress.yaml", mode='test')
+        result = self.run_pipeline(validate_egress, config_name="test_validate_egress.yaml")
 
         self.assertTrue(result.success)
 
