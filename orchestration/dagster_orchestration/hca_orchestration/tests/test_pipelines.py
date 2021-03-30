@@ -20,7 +20,7 @@ def config_path(relative_path: str) -> str:
 
 class PipelinesTestCase(unittest.TestCase):
     def run_pipeline(self, pipeline: PipelineDefinition, config_name: str, extra_config: dict = {},
-                     mode: str = 'test', *execution_args: tuple, **execution_kwargs: dict) -> PipelineExecutionResult:
+                     *execution_args: tuple, **execution_kwargs: dict) -> PipelineExecutionResult:
         config_dict = load_yaml_from_globs(
             config_path(config_name)
         )
@@ -29,7 +29,6 @@ class PipelinesTestCase(unittest.TestCase):
         return execute_pipeline(
             pipeline,
             *execution_args,
-            mode=mode,
             run_config=config_dict,
             **execution_kwargs
         )
@@ -37,7 +36,6 @@ class PipelinesTestCase(unittest.TestCase):
     @pytest.mark.e2e
     def test_stage_data_local_e2e(self):
         test_id = f'test-{uuid.uuid4()}'
-
         config = load_yaml_from_globs(config_path('stage_data_local_e2e.yaml'))
         runtime_config = {
             'solids': {
@@ -53,6 +51,7 @@ class PipelinesTestCase(unittest.TestCase):
                 }
             }
         }
+
         self.run_pipeline(stage_data, 'stage_data_local_e2e.yaml', extra_config=runtime_config, mode='local')
 
         expected_blobs, output_blobs = diff_dirs(
@@ -62,10 +61,10 @@ class PipelinesTestCase(unittest.TestCase):
             'broad-dsp-monster-hca-dev-temp-storage',
             f'local-stage-data/{test_id}',
         )
-        assert expected_blobs == output_blobs, "Output results differ from expected"
+        self.assertEqual(expected_blobs, output_blobs, "Output results differ from expected")
 
     def test_stage_data_noop_resources(self):
-        result = self.run_pipeline(stage_data, config_name="test_stage_data.yaml")
+        result = self.run_pipeline(stage_data, config_name="test_stage_data.yaml", mode='test')
 
         self.assertTrue(result.success)
 
@@ -80,8 +79,7 @@ class PipelinesTestCase(unittest.TestCase):
         post_import_validate, so this just spins it up and sees if
         it runs at all
         """
-
-        result = self.run_pipeline(validate_egress, config_name="test_validate_egress.yaml")
+        result = self.run_pipeline(validate_egress, config_name="test_validate_egress.yaml", mode='test')
 
         self.assertTrue(result.success)
 
