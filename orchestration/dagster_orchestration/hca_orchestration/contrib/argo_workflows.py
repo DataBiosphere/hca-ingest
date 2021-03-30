@@ -79,8 +79,8 @@ class ExtendedArgoWorkflow:
         }
 
     # proxy pattern - any function calls not defined in this class are passed to the wrapped workflow object
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         return getattr(self._workflow, name)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, ExtendedArgoWorkflow) and self._workflow == other._workflow

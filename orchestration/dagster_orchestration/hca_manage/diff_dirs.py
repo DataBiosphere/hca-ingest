@@ -10,7 +10,7 @@ from google.cloud import storage
 logging.basicConfig(level=logging.INFO)
 
 
-def run(project, source_bucket, source_prefix, target_bucket, target_prefix):
+def run(project: str, source_bucket: str, source_prefix: str, target_bucket: str, target_prefix: str) -> None:
     creds, _ = google.auth.default()
     storage_client = storage.Client(project=project, credentials=creds)
     expected_blobs = {blob.name.replace(source_prefix, ''): blob.md5_hash
