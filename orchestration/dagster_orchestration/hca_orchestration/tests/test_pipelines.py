@@ -27,8 +27,13 @@ def beam_runner_path() -> str:
 
 
 class PipelinesTestCase(unittest.TestCase):
-    def run_pipeline(self, pipeline: PipelineDefinition, config_name: str, extra_config: dict[str, Any] = {},
-                     pipeline_mode='test') -> PipelineExecutionResult:
+    def run_pipeline(
+            self,
+            pipeline: PipelineDefinition,
+            config_name: str,
+            extra_config: dict[str, Any] = {},
+        pipeline_mode='test'
+    ) -> PipelineExecutionResult:
         config_dict = load_yaml_from_globs(
             config_path(config_name)
         )
@@ -66,8 +71,6 @@ class PipelinesTestCase(unittest.TestCase):
             }
         }
 
-        import pdb
-        pdb.set_trace()
         self.run_pipeline(stage_data, 'stage_data_local_e2e.yaml', extra_config=runtime_config, pipeline_mode='local')
 
         expected_blobs, output_blobs = diff_dirs(
