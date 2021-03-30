@@ -12,7 +12,7 @@ from hca_orchestration.pipelines import stage_data, validate_egress
 from hca_manage.diff_dirs import diff_dirs
 
 
-def config_path(relative_path):
+def config_path(relative_path: str) -> str:
     return file_relative_path(
         __file__, os.path.join("../environments/", relative_path)
     )
@@ -64,12 +64,7 @@ class PipelinesTestCase(unittest.TestCase):
         )
         assert expected_blobs == output_blobs, "Output results differ from expected"
 
-    def test_stage_data(self):
-        """
-        Simple example of running a pipeline with "noop" resources
-        TODO Build a 'real' E2E pipeline invocation that runs
-        against GS and a local Beam runner
-        """
+    def test_stage_data_noop_resources(self):
         result = self.run_pipeline(stage_data, config_name="test_stage_data.yaml")
 
         self.assertTrue(result.success)
