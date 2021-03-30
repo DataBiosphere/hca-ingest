@@ -1,14 +1,14 @@
-from collections import namedtuple
 import csv
 from dataclasses import dataclass, field
 from datetime import datetime
 import logging
 import os
-from typing import Optional, Set
+from typing import BinaryIO, Callable, Optional, TextIO
 
 from cached_property import cached_property
 from data_repo_client import RepositoryApi, DataDeletionRequest, SnapshotRequestModel, SnapshotRequestContentsModel
 import google.auth
+import google.auth.credentials
 from google.cloud import bigquery, storage
 from hca_orchestration.contrib import google as hca_google
 
@@ -19,11 +19,15 @@ class ProblemCount:
     null_file_refs: int
     dangling_project_refs: int
 
-    def has_problems(self):
+    def has_problems(self) -> bool:
         return self.duplicates > 0 or self.null_file_refs > 0 or self.dangling_project_refs > 0
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+# alias for str to make the return type for jade API calls a little clearer
+JobId = str
 
 
 @dataclass
@@ -39,9 +43,9 @@ class HcaManage:
     bucket_project: str = field(init=False)
     bucket: str = field(init=False)
     base_url: str = field(init=False)
-    reader_list: str = field(init=False)
+    reader_list: list[str] = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.filename_template = f"sd-{self.project}-{self.dataset}-{{table}}.csv"
 
         bucket_projects = {"prod": "mystical-slate-284720",
@@ -62,8 +66,12 @@ class HcaManage:
     def bigquery_client(self) -> bigquery.client.Client:
         return bigquery.Client(project=self.project)
 
+    @cached_property
+    def gcp_creds(self) -> google.auth.credentials.Credentials:
+        return hca_google.get_credentials()
+
     # bigquery interactions
-    def get_all_table_names(self) -> Set[str]:
+    def get_all_table_names(self) -> set[str]:
         """
         Gets the table names for the target dataset.
         :return: A set of table names.
@@ -75,7 +83,7 @@ class HcaManage:
 
         return self._hit_bigquery(query)
 
-    def get_file_table_names(self) -> Set[str]:
+    def get_file_table_names(self) -> set[str]:
         """
         Gets the table names for tables that have a `file_id` column.
         :return: A set of table names.
@@ -96,7 +104,7 @@ class HcaManage:
 
         return self._hit_bigquery(query)
 
-    def get_dangling_proj_refs(self, target_table: str) -> Set[str]:
+    def get_dangling_proj_refs(self, target_table: str) -> set[str]:
         query = f"""
         SELECT links.links_id
         FROM `{self.project}.datarepo_{self.dataset}.{target_table}` links
@@ -108,7 +116,7 @@ class HcaManage:
         """
         return self._hit_bigquery(query)
 
-    def get_duplicates(self, target_table: str) -> Set[str]:
+    def get_duplicates(self, target_table: str) -> set[str]:
         """
         Determines what rows are undesired duplicates. We want to soft delete everything but the latest version for a
         given entity_id.
@@ -161,7 +169,7 @@ class HcaManage:
 
         return self._hit_bigquery(query)
 
-    def get_null_filerefs(self, target_table: str) -> Set[str]:
+    def get_null_filerefs(self, target_table: str) -> set[str]:
         """
         Determines what rows have null values in the file_id column. We want to soft delete those.
         :param target_table: The particular table to operate on.
@@ -174,7 +182,7 @@ class HcaManage:
 
         return self._hit_bigquery(query)
 
-    def _hit_bigquery(self, query: str) -> Set[str]:
+    def _hit_bigquery(self, query: str) -> set[str]:
         """
         Helper function to consistently interact with biqquery while reusing the same client.
         :param query: The SQL query to run.
@@ -183,12 +191,12 @@ class HcaManage:
         query_job = self.bigquery_client.query(query)
         return {row[0] for row in query_job}
 
-    def _format_filename(self, table: str):
+    def _format_filename(self, table: str) -> str:
         return self.filename_template.format(table=table)
 
     # local csv interactions
     @staticmethod
-    def populate_row_id_csv(row_ids: Set[str], temp_file):
+    def populate_row_id_csv(row_ids: set[str], temp_file: TextIO) -> None:
         """
         Create a csv locally with one column filled with row ids to soft delete.
         :param row_ids: A set of row ids to soft delete.
@@ -200,14 +208,14 @@ class HcaManage:
         sd_writer.writerows([[rid] for rid in row_ids])
 
     # gcs (cloud storage) interactions
-    def put_csv_in_bucket(self, local_file, target_table: str) -> str:
+    def put_csv_in_bucket(self, local_file: BinaryIO, target_table: str) -> str:
         """
         Puts a local file into a GCS bucket accessible by Jade.
         :param local_file: The file to upload.
         :param target_table: The table name with which to format the target filename.
         :return: The gs-path of the uploaded file.
         """
-        storage_client = storage.Client(project=self.bucket_project, credentials=hca_google.get_credentials())
+        storage_client = storage.Client(project=self.bucket_project, credentials=self.gcp_creds)
         bucket = storage_client.bucket(self.bucket)
         target_filename = self._format_filename(table=target_table)
         blob = bucket.blob(target_filename)
@@ -228,7 +236,7 @@ class HcaManage:
         response = self.data_repo_client.enumerate_datasets(filter=self.dataset)
         return response.items[0].id  # type: ignore # data repo client has no type hints, since it's auto-generated
 
-    def submit_soft_delete(self, target_table: str, target_path: str) -> str:
+    def submit_soft_delete(self, target_table: str, target_path: str) -> JobId:
         """
         Submit a soft delete request.
         :param target_table: The table to apply soft deletion to.
@@ -253,7 +261,7 @@ class HcaManage:
 
         return response.id  # type: ignore # data repo client has no type hints, since it's auto-generated
 
-    def submit_snapshot_request(self, qualifier: Optional[str] = None) -> str:
+    def submit_snapshot_request(self, qualifier: Optional[str] = None) -> JobId:
         date_stamp = str(datetime.today().date()).replace("-", "")
         if qualifier:
             # prepend an underscore if this string is present
@@ -277,7 +285,7 @@ class HcaManage:
         logging.info(f"Snapshot creation job id: {response.id}")
         return response.id  # type: ignore # data repo client has no type hints, since it's auto-generated
 
-    def delete_snapshot(self, snapshot_name: Optional[str] = None, snapshot_id: Optional[str] = None):
+    def delete_snapshot(self, snapshot_name: Optional[str] = None, snapshot_id: Optional[str] = None) -> JobId:
         if snapshot_name and not snapshot_id:
             response = self.data_repo_client.enumerate_snapshots(filter=snapshot_name)
             try:
@@ -289,11 +297,11 @@ class HcaManage:
         else:
             # can't have both/neither provided
             raise ValueError("You must provide either snapshot_name or snapshot_id, and cannot provide neither/both.")
-        response = self.data_repo_client.delete_snapshot(snapshot_id)
-        logging.info(f"Snapshot deletion job id: {response.id}")
-        return response.id
+        job_id: JobId = self.data_repo_client.delete_snapshot(snapshot_id).id
+        logging.info(f"Snapshot deletion job id: {job_id}")
+        return job_id
 
-    def delete_dataset(self, dataset_name: Optional[str] = None, dataset_id: Optional[str] = None):
+    def delete_dataset(self, dataset_name: Optional[str] = None, dataset_id: Optional[str] = None) -> JobId:
         if dataset_name and not dataset_id:
             response = self.data_repo_client.enumerate_datasets(filter=dataset_name)
             try:
@@ -305,12 +313,12 @@ class HcaManage:
         else:
             # can't have both/neither provided
             raise ValueError("You must provide either dataset_name or dataset_id, and cannot provide neither/both.")
-        delete_response = self.data_repo_client.delete_dataset(dataset_id)
-        logging.info(f"Dataset deletion job id: {delete_response.id}")
-        return delete_response.id
+        delete_response_id: JobId = self.data_repo_client.delete_dataset(dataset_id).id
+        logging.info(f"Dataset deletion job id: {delete_response_id}")
+        return delete_response_id
 
     # dataset-level checking and soft deleting
-    def process_duplicates(self, soft_delete: bool = False):
+    def process_duplicates(self, soft_delete: bool = False) -> int:
         """
         Check and print the number of duplicates for each table in the dataset.
         :return: Number of duplicate rows to soft delete
@@ -318,7 +326,7 @@ class HcaManage:
         return self._process_rows(self.get_all_table_names, self.get_duplicates, soft_delete=soft_delete,
                                   issue="duplicate rows")
 
-    def process_null_file_refs(self, soft_delete: bool = False):
+    def process_null_file_refs(self, soft_delete: bool = False) -> int:
         """
         Check/remove and print the number of null file references for each table in the dataset that has a `file_id`
         column.
@@ -327,7 +335,7 @@ class HcaManage:
         return self._process_rows(self.get_file_table_names, self.get_null_filerefs, soft_delete=soft_delete,
                                   issue="null file refs")
 
-    def process_dangling_proj_refs(self, soft_delete: bool = False):
+    def process_dangling_proj_refs(self, soft_delete: bool = False) -> int:
         """
         Check for any entities with project_id values that do not have a corresponding entry in the projects
         table
@@ -336,13 +344,13 @@ class HcaManage:
         if soft_delete:
             raise Exception("Soft deleting rows with dangling project refs is unsupported")
 
-        def links_table():
-            return ['links']
+        def links_table() -> set[str]:
+            return {'links'}
 
         return self._process_rows(links_table, self.get_dangling_proj_refs, soft_delete=soft_delete,
                                   issue="found rows with dangling project refs")
 
-    def check_for_all(self):
+    def check_for_all(self) -> ProblemCount:
         """
         Check and print the number of duplicates and null file references in all tables in the dataset.
         :return: A named tuple with the counts of rows to soft delete
@@ -358,7 +366,7 @@ class HcaManage:
             dangling_project_refs=dangling_proj_refs_count
         )
 
-    def remove_all(self):
+    def remove_all(self) -> ProblemCount:
         """
         Check and print the number of duplicates and null file references for each table in the dataset, then soft
         delete the problematic rows.
@@ -375,7 +383,13 @@ class HcaManage:
             dangling_project_refs=0
         )
 
-    def _process_rows(self, get_table_names, get_rids, soft_delete: bool, issue: str) -> int:
+    def _process_rows(
+        self,
+        get_table_names: Callable[[], set[str]],
+        get_rids: Callable[[str], set[str]],
+        soft_delete: bool,
+        issue: str
+    ) -> int:
         """
         Perform a check or soft deletion for duplicates or null file references.
         :param get_table_names: A function that returns a set of table names.
@@ -398,7 +412,7 @@ class HcaManage:
                         # do processing
                         with open(local_filename, mode="rb") as rf:
                             remote_file_path = self.put_csv_in_bucket(local_file=rf, target_table=table_name)
-                            job_id = self.submit_soft_delete(table_name, remote_file_path)
+                            job_id: JobId = self.submit_soft_delete(table_name, remote_file_path)
                             logging.info(f"Soft delete job for table {table_name} running, job id of: {job_id}")
                     finally:
                         # delete file

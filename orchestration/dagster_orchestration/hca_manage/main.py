@@ -1,10 +1,12 @@
 import sys
 import argparse
 
+from typing import NoReturn, Optional
+
 from data_repo_client import ApiClient, Configuration, RepositoryApi
 
 from hca_manage import __version__ as hca_manage_version
-from .manage import HcaManage
+from .manage import HcaManage, JobId
 from hca_orchestration.contrib.google import default_google_access_token
 
 data_repo_host = {
@@ -18,7 +20,7 @@ data_repo_profile_ids = {
 
 
 class DefaultHelpParser(argparse.ArgumentParser):
-    def error(self, message):
+    def error(self, message: str) -> NoReturn:
         """Print help message by default."""
         sys.stderr.write(f'error: {message}\n')
         self.print_help()
@@ -35,7 +37,7 @@ def get_api_client(host: str) -> RepositoryApi:
     return RepositoryApi(api_client=client)
 
 
-def run(arguments=None):
+def run(arguments: Optional[list[str]] = None) -> None:
     parser = DefaultHelpParser(description="A simple HCA Management CLI.")
     parser.add_argument("-V", "--version", action="version", version="%(prog)s " + hca_manage_version)
     parser.add_argument("-e", "--env", help="The Jade environment to target, defaults to dev", choices=["dev", "prod"],
@@ -95,7 +97,7 @@ def run(arguments=None):
                 print("No deletes attempted.")
 
 
-def check_data(args, host, parser):
+def check_data(args: argparse.Namespace, host: str, parser: argparse.ArgumentParser) -> None:
     if args.env == "dev":
         if args.project:
             parser.error("Do not specify a project when the environment is dev, there is only one project.")
@@ -117,7 +119,7 @@ def check_data(args, host, parser):
         hca.check_for_all()
 
 
-def create_snapshot(args, host):
+def create_snapshot(args: argparse.Namespace, host: str) -> JobId:
     profile_id = data_repo_profile_ids[args.env]
     hca = HcaManage(
         environment=args.env,
@@ -127,17 +129,17 @@ def create_snapshot(args, host):
     return hca.submit_snapshot_request(qualifier=args.qualifier)
 
 
-def remove_snapshot(args, host):
+def remove_snapshot(args: argparse.Namespace, host: str) -> JobId:
     hca = HcaManage(environment=args.env, data_repo_client=get_api_client(host=host))
     return hca.delete_snapshot(snapshot_name=args.snapshot_name, snapshot_id=args.snapshot_id)
 
 
-def remove_dataset(args, host):
+def remove_dataset(args: argparse.Namespace, host: str) -> JobId:
     hca = HcaManage(environment=args.env, data_repo_client=get_api_client(host=host))
     return hca.delete_dataset(dataset_name=args.dataset_name, dataset_id=args.dataset_id)
 
 
-def query_yes_no(question, default="no"):
+def query_yes_no(question: str, default: str = "no") -> bool:
     """Ask a yes/no question via raw_input() and return their answer.
 
     "question" is a string that is presented to the user.

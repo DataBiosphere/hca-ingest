@@ -1,6 +1,5 @@
 from contextlib import contextmanager
 import os
-from typing import Dict, Any
 import unittest
 from unittest import mock
 
@@ -8,6 +7,7 @@ from dagster import DagsterInstance, ResourceDefinition
 from dagster.core.execution.build_resources import build_resources
 import slack.web.client
 
+from hca_orchestration.support.typing import DagsterConfigDict
 from hca_orchestration.resources.beam import DataflowBeamRunner
 from hca_orchestration.resources import dataflow_beam_runner, live_slack_client
 
@@ -17,7 +17,7 @@ from hca_orchestration.resources import dataflow_beam_runner, live_slack_client
 # and in active development, expect this section to use more robust and unchanging tooling
 # as it becomes available over the next few months
 @contextmanager
-def initialize_resource(resource_def: ResourceDefinition, config: Dict[str, Any] = {}):
+def initialize_resource(resource_def: ResourceDefinition, config: DagsterConfigDict = {}):
     with build_resources(
         {
             'test_resource': resource_def,

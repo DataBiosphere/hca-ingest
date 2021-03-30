@@ -36,5 +36,5 @@ test_mode = ModeDefinition(
 @pipeline(
     mode_defs=[prod_mode, local_mode, test_mode]
 )
-def stage_data():
+def stage_data() -> None:
     pre_process_metadata(start=clear_staging_dir())
