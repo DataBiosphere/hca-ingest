@@ -35,6 +35,8 @@ releases:
     values:
       - environment/global.yaml
       - environment/{{ requiredEnv "ENV" }}.yaml
+      - global:
+          serviceAccountName: monster-dagster
       - rbacEnabled: true
       - postgresql:
           serviceAccount:
@@ -53,7 +55,7 @@ releases:
       - dagit:
           envSecrets:
             - name: monster-dagster-secrets
-      - userDeployments:
+      - dagster-user-deployments:
           # "user code" we deploy to dagster; these are dagster repositories of pipelines
           deployments:
             - name: "monster-hca-ingest"
