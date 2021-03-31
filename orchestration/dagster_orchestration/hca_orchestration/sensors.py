@@ -29,6 +29,7 @@ class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClient):
         inflated_workflow = workflow.inflate()
 
         dataset_name = inflated_workflow.params_dict()['data-repo-name'].removeprefix("datarepo_")
+        argo_id = inflated_workflow.metadata.uid
 
         return RunRequest(
             run_key=inflated_workflow.metadata.name,
@@ -41,7 +42,8 @@ class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClient):
                     },
                     "notify_slack_of_egress_validation_results": {
                         "config": {
-                            "dataset_name": dataset_name
+                            "dataset_name": dataset_name,
+                            "argo_id" : argo_id
                         }
                     }
                 }
