@@ -4,6 +4,6 @@ solids:
       dataset_name: hca_aeiou
   notify_slack_of_egress_validation_results:
     config:
-      dataset_name: hca_aeiou,
-      argo_id: "test_id_123"
+      dataset_name: hca_aeiou
+      argo_workflow_id: "test_id_123"
 

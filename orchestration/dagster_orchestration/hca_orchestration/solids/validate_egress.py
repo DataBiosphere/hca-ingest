@@ -58,7 +58,7 @@ def post_import_validate(config: DagsterConfigDict) -> DagsterConfigDict:
     config_schema={
         **POST_VALIDATION_SETTINGS_SCHEMA,
         "channel": StringSource,
-        "argo_id": String
+        "argo_workflow_id": String
     }
 )
 def base_notify_slack_of_egress_validation_results(
@@ -67,18 +67,19 @@ def base_notify_slack_of_egress_validation_results(
 ) -> str:
     gcp_env = context.solid_config["gcp_env"]
     dataset_name = context.solid_config["dataset_name"]
-    argo_id = context.solid_config["argo_id"]
+    argo_workflow_id = context.solid_config["argo_workflow_id"]
 
     if validation_results.has_problems():
         message_lines = [
             f"Problems identified in post-validation for HCA {gcp_env} dataset {dataset_name}:",
-            f"Triggering Argo workflow_id: {argo_id}",
+            f"Triggering Argo workflow ID: {argo_workflow_id}",
             "Duplicate lines found: " + str(validation_results.duplicates),
             "Null file references found: " + str(validation_results.null_file_refs),
             "Dangling project references found: " + str(validation_results.dangling_project_refs)
         ]
     else:
-        message_lines = [f"HCA {gcp_env} dataset {dataset_name} has passed post-validation."]
+        message_lines = [
+            f"HCA {gcp_env} dataset {dataset_name} workflow ID {argo_workflow_id} has passed post-validation."]
 
     message = "\n".join(message_lines)
 
@@ -89,7 +90,7 @@ def base_notify_slack_of_egress_validation_results(
     return message
 
 
-@configured(base_notify_slack_of_egress_validation_results, {"dataset_name": String, "argo_id": String})
+@configured(base_notify_slack_of_egress_validation_results, {"dataset_name": String, "argo_workflow_id": String})
 def notify_slack_of_egress_validation_results(config: DagsterConfigDict) -> DagsterConfigDict:
     return {
         'gcp_env': {'env': 'HCA_GCP_ENV'},
