@@ -79,7 +79,8 @@ def base_notify_slack_of_egress_validation_results(
         ]
     else:
         message_lines = [
-            f"HCA {gcp_env} dataset {dataset_name} workflow ID {argo_workflow_id} has passed post-validation."]
+            f"HCA {gcp_env} dataset {dataset_name} has passed post-validation."
+            f"Argo Workflow ID: {argo_workflow_id}"]
 
     message = "\n".join(message_lines)
 
