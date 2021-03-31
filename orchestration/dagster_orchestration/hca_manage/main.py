@@ -75,6 +75,10 @@ def run(arguments: Optional[list[str]] = None) -> None:
     dataset_delete_args.add_argument("-n", "--dataset_name", help="Name of dataset to delete.")
     dataset_delete_args.add_argument("-i", "--dataset_id", help="ID of dataset to delete.")
 
+    parser_soft_delete = subparsers.add_parser("soft_delete", help="Soft delete rows")
+    parser_soft_delete.add_argument("-p", "--path", help="Path to csv containing row IDs to soft delete")
+    parser_soft_delete.add_argument("-t", "--target_table", help="Table containing the rows slated for soft deletion")
+
     args = parser.parse_args(arguments)
 
     host = data_repo_host[args.env]
@@ -95,6 +99,14 @@ def run(arguments: Optional[list[str]] = None) -> None:
                 remove_dataset(args, host)
             else:
                 print("No deletes attempted.")
+    elif args.command == "soft_delete":
+        if query_yes_no("Are you sure?"):
+            soft_delete(args, host)
+
+
+def soft_delete(args: argparse.Namespace, host: str) -> None:
+    hca = HcaManage(environment=args.env, data_repo_client=get_api_client(host=host))
+    hca.soft_delete_rows(args.path, args.target_table)
 
 
 def check_data(args: argparse.Namespace, host: str, parser: argparse.ArgumentParser) -> None:

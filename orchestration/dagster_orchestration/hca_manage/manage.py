@@ -236,7 +236,7 @@ class HcaManage:
         response = self.data_repo_client.enumerate_datasets(filter=self.dataset)
         return response.items[0].id  # type: ignore # data repo client has no type hints, since it's auto-generated
 
-    def submit_soft_delete(self, target_table: str, target_path: str) -> JobId:
+    def _submit_soft_delete(self, target_table: str, target_path: str) -> JobId:
         """
         Submit a soft delete request.
         :param target_table: The table to apply soft deletion to.
@@ -410,12 +410,16 @@ class HcaManage:
                         with open(local_filename, mode="w") as wf:
                             self.populate_row_id_csv(rids_to_process, wf)
                         # do processing
-                        with open(local_filename, mode="rb") as rf:
-                            remote_file_path = self.put_csv_in_bucket(local_file=rf, target_table=table_name)
-                            job_id: JobId = self.submit_soft_delete(table_name, remote_file_path)
-                            logging.info(f"Soft delete job for table {table_name} running, job id of: {job_id}")
+                        self.soft_delete_rows(local_filename, table_name)
                     finally:
                         # delete file
                         os.remove(local_filename)
                 problem_count += len(rids_to_process)
         return problem_count
+
+    def soft_delete_rows(self, path: str, target_table: str) -> JobId:
+        with open(path, mode="rb") as rf:
+            remote_file_path = self.put_csv_in_bucket(local_file=rf, target_table=target_table)
+            job_id = self._submit_soft_delete(target_table=target_table, target_path=remote_file_path)
+            logging.info(f"Soft delete job for table {target_table} running, job id of: {job_id}")
+            return job_id
