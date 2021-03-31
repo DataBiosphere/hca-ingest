@@ -68,6 +68,7 @@ class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
                         "gcp_env": "dev",
                         "channel": "choonel",
                         "dataset_name": "fakedataset",
+                        "argo_workflow_id": "test_id_123",
                     }
                 }
             }
@@ -88,6 +89,7 @@ class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
 
             expected_lines = [
                 "Problems identified in post-validation for HCA dev dataset fakedataset",
+                "Triggering Argo workflow ID: test_id_123",
                 "Duplicate lines found: 3",
                 "Null file references found: 2",
             ]
@@ -116,6 +118,7 @@ class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
             slack_message_sender.assert_called_once_with(
                 channel="choonel",
                 text="HCA dev dataset fakedataset has passed post-validation."
+                     "Argo Workflow ID: test_id_123"
             )
 
         self.assertTrue(result.success)
