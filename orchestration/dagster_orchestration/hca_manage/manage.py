@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import logging
 import os
+import uuid
 from typing import BinaryIO, Callable, Optional, TextIO
 
 from cached_property import cached_property
@@ -46,8 +47,7 @@ class HcaManage:
     reader_list: list[str] = field(init=False)
 
     def __post_init__(self) -> None:
-        self.filename_template = f"sd-{self.project}-{self.dataset}-{{table}}.csv"
-
+        self.filename_template = f"sd-{self.project}-{self.dataset}-{uuid.uuid4()}-{{table}}.csv"
         bucket_projects = {"prod": "mystical-slate-284720",
                            "dev": "broad-dsp-monster-hca-dev"}
         self.bucket_project = bucket_projects[self.environment]
