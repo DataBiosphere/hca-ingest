@@ -9,7 +9,7 @@ from typing import Any
 from dagster import execute_pipeline, file_relative_path, PipelineDefinition, PipelineExecutionResult
 from dagster.utils import load_yaml_from_globs
 from dagster.utils.merger import deep_merge_dicts
-from hca_orchestration.pipelines import stage_data, validate_egress
+from hca_orchestration.pipelines import load_hca_data, validate_egress
 from hca_manage.diff_dirs import diff_dirs
 from hca_orchestration.support.typing import DagsterConfigDict
 
@@ -71,7 +71,11 @@ class PipelinesTestCase(unittest.TestCase):
             }
         }
 
-        self.run_pipeline(stage_data, 'stage_data_local_e2e.yaml', extra_config=runtime_config, pipeline_mode='local')
+        self.run_pipeline(
+            load_hca_data,
+            'stage_data_local_e2e.yaml',
+            extra_config=runtime_config,
+            pipeline_mode='local')
 
         expected_blobs, output_blobs = diff_dirs(
             'broad-dsp-monster-hca-dev',
@@ -83,7 +87,7 @@ class PipelinesTestCase(unittest.TestCase):
         self.assertEqual(expected_blobs, output_blobs, "Output results differ from expected")
 
     def test_stage_data_noop_resources(self):
-        result = self.run_pipeline(stage_data, config_name="test_stage_data.yaml")
+        result = self.run_pipeline(load_hca_data, config_name="test_stage_data.yaml")
 
         self.assertTrue(result.success)
 

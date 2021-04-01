@@ -19,7 +19,7 @@ declare -r TARGET_TABLE=${TABLE}_joined
 # Targeting the raw table will prevent re-ingestion of rows that have already
 # been appended & deleted.
 declare JADE_TABLE
-if [[ ${USE_RAW_TABLE} = 'true' ]]; then
+if [[ ${USE_RAW_TABLE} = 'true' ]]; then  # NB this is always FALSE
   JADE_TABLE="\`${JADE_PROJECT}.${JADE_DATASET}.datarepo_raw_${TABLE}_*\`"
 else
   JADE_TABLE="\`${JADE_PROJECT}.${JADE_DATASET}.${TABLE}\`"
