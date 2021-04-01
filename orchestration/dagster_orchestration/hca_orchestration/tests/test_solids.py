@@ -117,7 +117,7 @@ class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
 
             slack_message_sender.assert_called_once_with(
                 channel="choonel",
-                text="HCA dev dataset fakedataset has passed post-validation."
+                text="HCA dev dataset fakedataset has passed post-validation.\n"
                      "Argo Workflow ID: test_id_123"
             )
 
