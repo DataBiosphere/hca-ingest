@@ -1,5 +1,6 @@
-from dagster import composite_solid, solid, InputDefinition, Nothing
+from dagster import composite_solid, solid, InputDefinition, Nothing, OutputDefinition
 from dagster.experimental import DynamicOutput, DynamicOutputDefinition
+from hca_orchestration.pipelines import load_hca
 
 
 @solid(
@@ -7,31 +8,7 @@ from dagster.experimental import DynamicOutput, DynamicOutputDefinition
     output_defs=[DynamicOutputDefinition(str)]
 )
 def fan_out_to_tables(_) -> str:
-    tables = [
-        'aggregate_generation_protocol',
-        'analysis_process',
-        'analysis_protocol',
-        'cell_line',
-        'cell_suspension',
-        'collection_protocol',
-        'differentiation_protocol',
-        'dissociation_protocol',
-        'donor_organism',
-        'enrichment_protocol',
-        'imaged_specimen',
-        'imaging_preparation_protocol',
-        'imaging_protocol',
-        'ipsc_induction_protocol',
-        'library_preparation_protocol',
-        'organoid',
-        'process',
-        'project',
-        'protocol',
-        'sequencing_protocol',
-        'specimen_from_organism',
-        'links',
-    ]
-    for table in tables:
+    for table in load_hca.HCA_TABLES:
         yield DynamicOutput(value=table, mapping_key=table)
 
 
@@ -59,13 +36,17 @@ def export_appends(_context) -> Nothing:
 
 
 @solid(
-    input_defs=[InputDefinition("nothing", Nothing)]
+    input_defs=[InputDefinition("nothing", Nothing)],
+    output_defs=[OutputDefinition(name="fake_result", dagster_type=int)]
 )
 def ingest_metadata_to_jade(_context) -> Nothing:
-    pass
+    return 0
 
 
-@composite_solid(input_defs=[InputDefinition("table_name", str)])
-def import_metadata(table_name: str) -> Nothing:
+@composite_solid(
+    input_defs=[InputDefinition("table_name", str)],
+    output_defs=[OutputDefinition(name="fake_result", dagster_type=int)]
+)
+def import_metadata(table_name: str) -> int:
     return ingest_metadata_to_jade(
         export_appends(query_rows_to_append(diff_against_existing_data(table_name))))

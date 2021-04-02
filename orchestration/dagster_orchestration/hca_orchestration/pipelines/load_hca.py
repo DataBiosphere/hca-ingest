@@ -1,4 +1,4 @@
-from dagster import ModeDefinition, pipeline
+from dagster import ModeDefinition, pipeline, solid, InputDefinition, OutputDefinition
 
 from hca_orchestration.solids.load_hca.stage_data import \
     clear_staging_dir, \
@@ -38,13 +38,49 @@ test_mode = ModeDefinition(
     }
 )
 
+HCA_TABLES = [
+    'aggregate_generation_protocol',
+    'analysis_process',
+    'analysis_protocol',
+    'cell_line',
+    'cell_suspension',
+    'collection_protocol',
+    'differentiation_protocol',
+    'dissociation_protocol',
+    'donor_organism',
+    'enrichment_protocol',
+    'imaged_specimen',
+    'imaging_preparation_protocol',
+    'imaging_protocol',
+    'ipsc_induction_protocol',
+    'library_preparation_protocol',
+    'organoid',
+    'process',
+    'project',
+    'protocol',
+    'sequencing_protocol',
+    'specimen_from_organism',
+    'links',
+]
+
+
+@solid(
+    input_defs=[InputDefinition("upstream_results", list[int])]
+)
+def collector(_context, upstream_results: list[int]) -> int:
+    return 0
+
 
 @pipeline(
     mode_defs=[prod_mode, local_mode, test_mode]
 )
 def load_hca_data() -> None:
     preamble = create_staging_dataset(pre_process_metadata(clear_staging_dir()))
-    metadata_results = fan_out_to_tables(preamble).map(import_metadata)
+    #
+    # import_metadata_solids = []
+    # for table in HCA_TABLES:
+    #     import_metadata_solids.append(import_metadata(table))
 
-    fan_out_to_tables(metadata_results.collect()).map(import_data_files)
-    # import_data_files(metadata_results.collect())
+    metadata_results = fan_out_to_tables(preamble).map(import_metadata).collect()
+    file_data_results = fan_out_to_tables(preamble).map(import_data_files).collect()
+    collector([metadata_results, file_data_results])

@@ -32,14 +32,17 @@ def run_bulk_file_ingest(_context) -> Nothing:
 
 
 @solid(
-    input_defs=[InputDefinition("nothing", Nothing)]
+    input_defs=[InputDefinition("nothing", Nothing)],
+    output_defs=[OutputDefinition(name="fake_result", dagster_type=int)]
+
 )
 def ingest_file_metadata(_context) -> Nothing:
     pass
 
 
 @composite_solid(
-    input_defs=[InputDefinition("table_name", str)]
+    input_defs=[InputDefinition("table_name", str)],
+    output_defs=[OutputDefinition(name="fake_result", dagster_type=int)]
 )
 def import_data_files(table_name: str) -> Nothing:
     return ingest_file_metadata(run_bulk_file_ingest(

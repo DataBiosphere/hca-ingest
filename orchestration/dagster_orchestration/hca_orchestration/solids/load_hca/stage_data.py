@@ -1,8 +1,10 @@
 import re
+import uuid
 
 from dagster import composite_solid, solid, InputDefinition, Nothing, String, OutputDefinition
 from dagster.experimental import DynamicOutput, DynamicOutputDefinition
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
+from google.cloud import bigquery
 
 STAGING_BUCKET_CONFIG_SCHEMA = {
     "staging_bucket_name": String,
@@ -59,81 +61,28 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
     )
 
 
+def bigquery_client(project) -> bigquery.client.Client:
+    return bigquery.Client(project=project)
+
+
 @solid(
+    config_schema={
+        "staging_bq_project": String,
+    },
     input_defs=[InputDefinition("start", Nothing)],
     output_defs=[OutputDefinition(name="staging_dataset_name", dagster_type=str)]
 )
 def create_staging_dataset(context: AbstractComputeExecutionContext) -> str:
-    return "fake_dataset_name"
+    staging_bq_project = context.solid_config['staging_bq_project']
 
+    # TODO config out this prefix
+    dataset_name = f"{staging_bq_project}.arh_staging_test_{uuid.uuid4().hex[:8]}"
 
-@solid(
-    input_defs=[InputDefinition("nothing", Nothing)],
-    output_defs=[DynamicOutputDefinition(str)]
-)
-def fan_out_to_tables(_) -> str:
-    tables = [
-        'aggregate_generation_protocol',
-        'analysis_process',
-        'analysis_protocol',
-        'cell_line',
-        'cell_suspension',
-        'collection_protocol',
-        'differentiation_protocol',
-        'dissociation_protocol',
-        'donor_organism',
-        'enrichment_protocol',
-        'imaged_specimen',
-        'imaging_preparation_protocol',
-        'imaging_protocol',
-        'ipsc_induction_protocol',
-        'library_preparation_protocol',
-        'organoid',
-        'process',
-        'project',
-        'protocol',
-        'sequencing_protocol',
-        'specimen_from_organism',
-        'links',
-    ]
-    for table in tables:
-        yield DynamicOutput(value=table, mapping_key=table)
+    dataset = bigquery.Dataset(dataset_name)
 
+    # TODO (low-pri) config out the TTL
+    dataset.default_table_expiration_ms = 3600000
+    client = bigquery_client(project=staging_bq_project)
+    client.create_dataset(dataset)
 
-@solid(
-    input_defs=[InputDefinition("table_name", str)]
-)
-def diff_against_existing_data(context, table_name) -> Nothing:
-    context.log.info(
-        f"diff_against_existing_data; table_name = {table_name}"
-    )
-
-
-@solid(
-    input_defs=[InputDefinition("nothing", Nothing)]
-)
-def query_rows_to_append(context) -> Nothing:
-    pass
-
-
-@solid(
-    input_defs=[InputDefinition("nothing", Nothing)]
-)
-def export_appends(context) -> Nothing:
-    pass
-
-
-@solid(
-    input_defs=[InputDefinition("nothing", Nothing)]
-)
-def ingest_metadata_to_jade(context) -> Nothing:
-    pass
-
-
-@composite_solid(
-    input_defs=[InputDefinition("table_name", str)]
-    #output_defs=[OutputDefinition(name="ignore", dagster_type=Nothing)]
-)
-def import_metadata(table_name: str) -> Nothing:
-    return ingest_metadata_to_jade(
-        export_appends(query_rows_to_append(diff_against_existing_data(table_name))))
+    return dataset_name
