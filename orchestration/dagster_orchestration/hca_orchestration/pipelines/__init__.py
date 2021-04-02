@@ -4,5 +4,5 @@ from hca_orchestration.pipelines.validate_egress import validate_egress
 
 __all__ = [
     load_hca_data,
-    validate_egress,
+    validate_egress
 ]

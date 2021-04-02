@@ -1,23 +1,14 @@
 from dagster import composite_solid, solid, InputDefinition, Nothing, OutputDefinition
-from dagster.experimental import DynamicOutput, DynamicOutputDefinition
-from hca_orchestration.pipelines import load_hca
+from hca_orchestration.pipelines.utils import TableFanoutResult
 
 
 @solid(
-    input_defs=[InputDefinition("nothing", Nothing)],
-    output_defs=[DynamicOutputDefinition(str)]
+    input_defs=[InputDefinition("table_fanout_result", TableFanoutResult)]
 )
-def fan_out_to_tables(_) -> str:
-    for table in load_hca.HCA_TABLES:
-        yield DynamicOutput(value=table, mapping_key=table)
-
-
-@solid(
-    input_defs=[InputDefinition("table_name", str)]
-)
-def diff_against_existing_data(context, table_name) -> Nothing:
+def diff_against_existing_data(context, table_fanout_result: TableFanoutResult) -> Nothing:
     context.log.info(
-        f"diff_against_existing_data; table_name = {table_name}"
+        f"diff_against_existing_data; table_name = {table_fanout_result.table_name}; \
+        staging_dataset = {table_fanout_result.staging_dataset}"
     )
 
 
@@ -36,17 +27,17 @@ def export_appends(_context) -> Nothing:
 
 
 @solid(
-    input_defs=[InputDefinition("nothing", Nothing)],
-    output_defs=[OutputDefinition(name="fake_result", dagster_type=int)]
+    input_defs=[InputDefinition("nothing", Nothing)]
 )
 def ingest_metadata_to_jade(_context) -> Nothing:
-    return 0
+    pass
 
 
 @composite_solid(
-    input_defs=[InputDefinition("table_name", str)],
-    output_defs=[OutputDefinition(name="fake_result", dagster_type=int)]
+    input_defs=[InputDefinition("table_fanout_result", TableFanoutResult)]
 )
-def import_metadata(table_name: str) -> int:
+def import_metadata(table_fanout_result: TableFanoutResult) -> Nothing:
     return ingest_metadata_to_jade(
-        export_appends(query_rows_to_append(diff_against_existing_data(table_name))))
+        export_appends(query_rows_to_append(
+            diff_against_existing_data(table_fanout_result)))
+    )

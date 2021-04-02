@@ -5,7 +5,6 @@ from dagster.core.execution.context.init import InitResourceContext
 
 import google.auth
 from google.cloud import storage
-from google.cloud import bigquery
 
 
 @resource

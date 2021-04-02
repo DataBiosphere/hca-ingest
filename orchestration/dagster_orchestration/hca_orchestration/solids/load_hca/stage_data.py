@@ -1,10 +1,10 @@
 import re
 import uuid
 
-from dagster import composite_solid, solid, InputDefinition, Nothing, String, OutputDefinition
-from dagster.experimental import DynamicOutput, DynamicOutputDefinition
+from dagster import solid, InputDefinition, Nothing, String, OutputDefinition
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from google.cloud import bigquery
+from hca_orchestration.pipelines.utils import HcaStagingDatasetName
 
 STAGING_BUCKET_CONFIG_SCHEMA = {
     "staging_bucket_name": String,
@@ -21,7 +21,6 @@ def clear_staging_dir(context: AbstractComputeExecutionContext) -> int:
     Given a staging bucket + prefix, deletes all blobs present at that path
     :return: Number of deletions
     """
-
     staging_bucket_name = context.solid_config["staging_bucket_name"]
     staging_prefix_name = context.solid_config["staging_prefix_name"]
 
@@ -70,14 +69,13 @@ def bigquery_client(project) -> bigquery.client.Client:
         "staging_bq_project": String,
     },
     input_defs=[InputDefinition("start", Nothing)],
-    output_defs=[OutputDefinition(name="staging_dataset_name", dagster_type=str)]
+    output_defs=[OutputDefinition(name="staging_dataset_name", dagster_type=HcaStagingDatasetName)]
 )
-def create_staging_dataset(context: AbstractComputeExecutionContext) -> str:
+def create_staging_dataset(context: AbstractComputeExecutionContext) -> HcaStagingDatasetName:
     staging_bq_project = context.solid_config['staging_bq_project']
-
+    #
     # TODO config out this prefix
     dataset_name = f"{staging_bq_project}.arh_staging_test_{uuid.uuid4().hex[:8]}"
-
     dataset = bigquery.Dataset(dataset_name)
 
     # TODO (low-pri) config out the TTL
@@ -85,4 +83,4 @@ def create_staging_dataset(context: AbstractComputeExecutionContext) -> str:
     client = bigquery_client(project=staging_bq_project)
     client.create_dataset(dataset)
 
-    return dataset_name
+    return "arh_staging_test_254ae6f5"
