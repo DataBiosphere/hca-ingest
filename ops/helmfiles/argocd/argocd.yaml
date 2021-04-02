@@ -82,7 +82,7 @@ server:
           id: github
           name: GitHub
           config:
-            clientID:  example
+            clientID:  2fd73ff5b8548deae56a
             clientSecret: $dex.github.clientSecret
             orgs:
             - name: DataBiosphere
