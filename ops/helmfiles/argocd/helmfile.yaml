@@ -16,13 +16,6 @@ releases:
     values:
       - serviceAccount:
           name: argocd-dex-server
-  - name: argocd-certificate    # release name
-    namespace: argocd   # target namespace
-    createNamespace: true
-    chart: monster/gcp-managed-cert   # chart name
-    missingFileHandler: Warn
-    values:
-      - domainName: hca-argocd.monster-dev.broadinstitute.org     # Value files passed via --values
   - name: argocd-application-controller    # release name
     namespace: argocd   # target namespace
     createNamespace: true
@@ -71,19 +64,6 @@ releases:
     values:
       - serviceAccount:
           name: hca-redis-sa
-  - name: argocd-secrets   # release name
-    namespace: argocd   # target namespace
-    createNamespace: true
-    chart: datarepo-helm/create-secret-manager-secret   # chart name
-    version: 0.0.4
-    missingFileHandler: Warn
-    values:
-      - secrets.yaml
-  - name: ip-whitelist   # release name
-    namespace: argocd   # target namespace
-    createNamespace: true
-    chart: datarepo-helm/backend-config   # chart name
-    missingFileHandler: Warn
   - name: hca-dev   # release name
     namespace: argocd   # target namespace
     createNamespace: true

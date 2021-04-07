@@ -44,66 +44,7 @@ redis-ha:
   serviceAccount:
     create: true
     name: redis-sa
-configs:
-  secret:
-    createSecret: false
 server:
   extraArgs:
+    - --disable-auth
     - --insecure
-  config:
-    configManagementPlugins: |
-      - name: helmfile
-        init:
-          command: ["argo-cd-helmfile.sh"]
-          args: ["init"]
-        generate:
-          command: ["argo-cd-helmfile.sh"]
-          args: ["generate"]
-    url: https://hca-argocd.monster-dev.broadinstitute.org
-    # helm repositories
-    repositories: |
-      - type: helm
-        url: https://broadinstitute.github.io/datarepo-helm
-        name: datarepo-helm
-      - type: helm
-        url: https://kubernetes-charts.storage.googleapis.com
-        name: stable
-      - type: helm
-        url: https://broadinstitute.github.io/monster-helm
-        name: monster
-    dex.config: |
-      staticClients:
-        - id: "argo-cd-cli"
-          name: "Argo CD CLI"
-          redirectURIs: ["http://localhost:8085/auth/callback"]
-          public: true
-      connectors:
-        - type: github
-          id: github
-          name: GitHub
-          config:
-            clientID:  2fd73ff5b8548deae56a
-            clientSecret: $dex.github.clientSecret
-            orgs:
-            - name: DataBiosphere
-            - name: broadinstitute
-  service:
-    annotations:
-      beta.cloud.google.com/backend-config: '{"ports": {"80":"ip-whitelist-backend-config"}}'
-    type: NodePort  # Required to enable forwarding from Ingress/LB to service
-  ingress:
-    enabled: true
-    paths:
-      - /*
-    hosts:
-      - hca-argocd.monster-dev.broadinstitute.org
-    annotations:
-      kubernetes.io/ingress.global-static-ip-name: hca-argocd-ip
-      kubernetes.io/ingress.allow-http: "false"  # Disable http traffic
-      networking.gke.io/managed-certificates: "argocd-certificate"
-  rbacConfig:
-    policy.default: role:readonly
-    policy.csv: |
-      g, broadinstitute:DSP DevOps, role:admin
-      g, broadinstitute:monster, role:admin
-      g, broadinstitute:monster_dev, role:admin
