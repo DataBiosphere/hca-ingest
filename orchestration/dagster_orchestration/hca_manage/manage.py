@@ -360,8 +360,9 @@ class HcaManage:
                     "schema": parsed_schema
                 }
             )
-            logging.info(f"Dataset creation job id: {response.id}")
-            return response.id
+            job_id: JobId = response.id
+            logging.info(f"Dataset creation job id: {job_id}")
+            return job_id
 
     # dataset-level checking and soft deleting
     def process_duplicates(self, soft_delete: bool = False) -> int:

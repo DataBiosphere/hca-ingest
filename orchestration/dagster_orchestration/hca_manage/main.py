@@ -163,7 +163,7 @@ def remove_dataset(args: argparse.Namespace, host: str) -> JobId:
 
 def create_dataset(args: argparse.Namespace, host: str) -> JobId:
     hca = HcaManage(environment=args.env, data_repo_client=get_api_client(host=host))
-    hca.create_dataset(
+    return hca.create_dataset(
         dataset_name=args.dataset_name,
         billing_profile_id=args.billing_profile_id,
         schema_path=args.schema_path
