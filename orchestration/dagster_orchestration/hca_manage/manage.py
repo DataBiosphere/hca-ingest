@@ -430,11 +430,11 @@ class HcaManage:
         )
 
     def _process_rows(
-            self,
-            get_table_names: Callable[[], set[str]],
-            get_rids: Callable[[str], set[str]],
-            soft_delete: bool,
-            issue: str
+        self,
+        get_table_names: Callable[[], set[str]],
+        get_rids: Callable[[str], set[str]],
+        soft_delete: bool,
+        issue: str
     ) -> int:
         """
         Perform a check or soft deletion for duplicates or null file references.
