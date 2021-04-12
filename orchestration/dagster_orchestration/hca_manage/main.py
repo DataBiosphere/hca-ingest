@@ -70,10 +70,15 @@ def run(arguments: Optional[list[str]] = None) -> None:
     # dataset management
     parser_dataset = subparsers.add_parser("dataset", help="Command to manage datasets")
     dataset_flags = parser_dataset.add_mutually_exclusive_group(required=True)
+    dataset_flags.add_argument("-c", "--create", help="Flag to indicate dataset creation", action="store_true")
     dataset_flags.add_argument("-r", "--remove", help="Flag to indicate dataset deletion", action="store_true")
     dataset_delete_args = parser_dataset.add_mutually_exclusive_group(required=True)
     dataset_delete_args.add_argument("-n", "--dataset_name", help="Name of dataset to delete.")
     dataset_delete_args.add_argument("-i", "--dataset_id", help="ID of dataset to delete.")
+
+    dataset_create_args = parser_dataset.add_argument_group()
+    dataset_create_args.add_argument("-b", "--billing_profile_id", help="Billing profile ID")
+    dataset_create_args.add_argument("-j", "--schema_path", help="Path to table schema (JSON)", required=True)
 
     parser_soft_delete = subparsers.add_parser("soft_delete", help="Soft delete rows")
     parser_soft_delete.add_argument("-p", "--path", help="Path to csv containing row IDs to soft delete")
@@ -100,6 +105,9 @@ def run(arguments: Optional[list[str]] = None) -> None:
                 remove_dataset(args, host)
             else:
                 print("No deletes attempted.")
+        elif args.create:
+            if query_yes_no("This will create a dataset. Are you sure?"):
+                create_dataset(args, host)
     elif args.command == "soft_delete":
         if query_yes_no("Are you sure?"):
             soft_delete(args, host)
@@ -151,6 +159,15 @@ def remove_snapshot(args: argparse.Namespace, host: str) -> JobId:
 def remove_dataset(args: argparse.Namespace, host: str) -> JobId:
     hca = HcaManage(environment=args.env, data_repo_client=get_api_client(host=host))
     return hca.delete_dataset(dataset_name=args.dataset_name, dataset_id=args.dataset_id)
+
+
+def create_dataset(args: argparse.Namespace, host: str) -> JobId:
+    hca = HcaManage(environment=args.env, data_repo_client=get_api_client(host=host))
+    return hca.create_dataset(
+        dataset_name=args.dataset_name,
+        billing_profile_id=args.billing_profile_id,
+        schema_path=args.schema_path
+    )
 
 
 def query_yes_no(question: str, default: str = "no") -> bool:
