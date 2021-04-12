@@ -2,6 +2,10 @@ resources:
   beam_runner:
     config:
       target_class: "hca-transformation-pipeline"
+  load_tag:
+      config:
+        load_tag_prefix: "fake_load_tag_prefix"
+        append_timestamp: true
 solids:
   clear_staging_dir:
     config:

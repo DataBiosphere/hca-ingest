@@ -1,3 +1,8 @@
+resources:
+  load_tag:
+    config:
+      load_tag_prefix: fake_load_tag
+      append_timestamp: true
 solids:
   clear_staging_dir:
     config:
@@ -12,5 +17,4 @@ solids:
     config:
       staging_bq_project: fake_bq_project
       staging_dataset_prefix: testing_dataset_prefix
-      load_tag: fake_load_tag
       staging_table_expiration_ms: 1

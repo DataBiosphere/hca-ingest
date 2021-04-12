@@ -65,11 +65,6 @@ class PipelinesTestCase(unittest.TestCase):
                         'staging_prefix_name': f'local-stage-data/{test_id}'
                     }
                 },
-                'create_staging_dataset': {
-                    'config': {
-                        'load_tag': f"stage_data_e2e_{uuid.uuid4().hex[:8]}"
-                    }
-                }
             }
         }
 
@@ -89,7 +84,10 @@ class PipelinesTestCase(unittest.TestCase):
 
         self.assertTrue(result.success)
         staging_dataset_name = result.result_for_solid("create_staging_dataset").output_value("staging_dataset_name")
-        self.assertEqual(staging_dataset_name, "fake_bq_project.testing_dataset_prefix_fake_load_tag")
+        self.assertTrue(
+            staging_dataset_name.startswith("fake_bq_project.testing_dataset_prefix_fake_load_tag"),
+            "staging dataset should start with load tag prefix"
+        )
 
     @patch("hca_manage.manage.HcaManage.get_null_filerefs")
     @patch("hca_manage.manage.HcaManage.get_file_table_names")

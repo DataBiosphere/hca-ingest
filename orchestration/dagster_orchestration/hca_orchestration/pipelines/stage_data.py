@@ -3,7 +3,7 @@ from dagster import ModeDefinition, pipeline
 from hca_orchestration.solids.stage_data import clear_staging_dir, pre_process_metadata, create_staging_dataset
 from hca_orchestration.resources import dataflow_beam_runner, local_beam_runner, google_storage_client, \
     jade_data_repo_client, test_beam_runner, local_storage_client, noop_data_repo_client, bigquery_client, \
-    noop_bigquery_client
+    noop_bigquery_client, load_tag
 
 
 prod_mode = ModeDefinition(
@@ -13,6 +13,7 @@ prod_mode = ModeDefinition(
         "storage_client": google_storage_client,
         "data_repo_client": jade_data_repo_client,
         "bigquery_client": bigquery_client,
+        "load_tag": load_tag,
     }
 )
 
@@ -23,6 +24,7 @@ local_mode = ModeDefinition(
         "storage_client": google_storage_client,
         "data_repo_client": jade_data_repo_client,
         "bigquery_client": bigquery_client,
+        "load_tag": load_tag,
     }
 )
 
@@ -33,6 +35,7 @@ test_mode = ModeDefinition(
         "storage_client": local_storage_client,
         "data_repo_client": noop_data_repo_client,
         "bigquery_client": noop_bigquery_client,
+        "load_tag": load_tag,
     }
 )
 

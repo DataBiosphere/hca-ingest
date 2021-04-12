@@ -62,11 +62,10 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
 
 
 @solid(
-    required_resource_keys={"bigquery_client"},
+    required_resource_keys={"bigquery_client", "load_tag"},
     config_schema={
         "staging_bq_project": String,
         "staging_dataset_prefix": String,
-        "load_tag": String,
         "staging_table_expiration_ms": Int
     },
     input_defs=[InputDefinition("start", Nothing)],
@@ -80,7 +79,7 @@ def create_staging_dataset(context: AbstractComputeExecutionContext) -> String:
     """
     staging_bq_project = context.solid_config["staging_bq_project"]
     staging_dataset_prefix = context.solid_config["staging_dataset_prefix"]
-    load_tag = context.solid_config["load_tag"]
+    load_tag = context.resources.load_tag
 
     dataset_name = f"{staging_bq_project}.{staging_dataset_prefix}_{load_tag}"
 
