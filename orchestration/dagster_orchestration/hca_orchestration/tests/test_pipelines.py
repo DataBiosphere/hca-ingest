@@ -48,7 +48,6 @@ class PipelinesTestCase(unittest.TestCase):
     @pytest.mark.e2e
     def test_stage_data_local_e2e(self):
         test_id = f'test-{uuid.uuid4()}'
-        config = load_yaml_from_globs(config_path('stage_data_local_e2e.yaml'))
         runtime_config = {
             'resources': {
                 'beam_runner': {
@@ -66,6 +65,11 @@ class PipelinesTestCase(unittest.TestCase):
                 'pre_process_metadata': {
                     'config': {
                         'staging_prefix_name': f'local-stage-data/{test_id}'
+                    }
+                },
+                'create_staging_dataset': {
+                    'config': {
+                        'load_tag': f"stage_data_e2e_{uuid.uuid4().hex[:8]}"
                     }
                 }
             }

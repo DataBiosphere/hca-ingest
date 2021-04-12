@@ -8,3 +8,9 @@ solids:
       input_prefix: example_input_prefix
       staging_bucket_name: example_staging_bucket_name
       staging_prefix_name: example_staging_prefix_name
+  create_staging_dataset:
+    config:
+      staging_bq_project: fake_bq_project
+      staging_dataset_prefix: testing_dataset_prefix
+      load_tag: fake_load_tag
+      staging_table_expiration_ms: 3600000

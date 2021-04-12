@@ -1,7 +1,9 @@
 import re
 
-from dagster import solid, InputDefinition, Nothing, String
+from dagster import solid, InputDefinition, Nothing, String, Int
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
+
+from google.cloud.bigquery import Dataset
 
 
 STAGING_BUCKET_CONFIG_SCHEMA = {
@@ -57,3 +59,31 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
         input_prefix=context.solid_config["input_prefix"],
         output_prefix=f'gs://{bucket_name}/{prefix_name}'
     )
+
+
+@solid(
+    required_resource_keys={"bigquery_client"},
+    config_schema={
+        "staging_bq_project": String,
+        "staging_dataset_prefix": String,
+        "load_tag": String,
+        "staging_table_expiration_ms": Int
+    },
+    input_defs=[InputDefinition("start", Nothing)]
+)
+def create_staging_dataset(context: AbstractComputeExecutionContext):
+    staging_bq_project = context.solid_config["staging_bq_project"]
+    staging_dataset_prefix = context.solid_config["staging_dataset_prefix"]
+    load_tag = context.solid_config["load_tag"]
+
+    dataset_name = f"{staging_bq_project}.{staging_dataset_prefix}_{load_tag}"
+
+    dataset = Dataset(dataset_name)
+    dataset.default_table_expiration_ms = context.solid_config["staging_table_expiration_ms"]
+
+    bq_client = context.resources.bigquery_client
+    bq_client.create_dataset(dataset)
+
+    context.log.info(f"Created staging dataset {dataset_name}")
+
+    return dataset_name
