@@ -11,7 +11,6 @@ from dagster.utils import load_yaml_from_globs
 from dagster.utils.merger import deep_merge_dicts
 from hca_orchestration.pipelines import stage_data, validate_egress
 from hca_manage.diff_dirs import diff_dirs
-from hca_orchestration.support.typing import DagsterConfigDict
 
 
 def config_path(relative_path: str) -> str:
@@ -28,10 +27,10 @@ def beam_runner_path() -> str:
 
 class PipelinesTestCase(unittest.TestCase):
     def run_pipeline(
-            self,
-            pipeline: PipelineDefinition,
-            config_name: str,
-            extra_config: dict[str, Any] = {},
+        self,
+        pipeline: PipelineDefinition,
+        config_name: str,
+        extra_config: dict[str, Any] = {},
         pipeline_mode='test'
     ) -> PipelineExecutionResult:
         config_dict = load_yaml_from_globs(
@@ -48,7 +47,6 @@ class PipelinesTestCase(unittest.TestCase):
     @pytest.mark.e2e
     def test_stage_data_local_e2e(self):
         test_id = f'test-{uuid.uuid4()}'
-        config = load_yaml_from_globs(config_path('stage_data_local_e2e.yaml'))
         runtime_config = {
             'resources': {
                 'beam_runner': {

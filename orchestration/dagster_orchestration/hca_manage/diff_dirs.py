@@ -4,7 +4,6 @@ Compares the contents of two google storage paths via their md5
 import argparse
 import logging
 
-import google.auth
 from google.cloud import storage
 
 from hca_orchestration.contrib import google as hca_google
@@ -17,8 +16,8 @@ def diff_dirs(
     source_bucket: str,
     source_prefix: str,
     target_bucket: str,
-    target_prefix: str
-) -> tuple[dict[str, int], dict[str, int]]:
+    target_prefix: str,
+) -> tuple[dict[str, str], dict[str, str]]:
     creds = hca_google.get_credentials()
     storage_client = storage.Client(project=project, credentials=creds)
     expected_blobs = {blob.name.replace(source_prefix, ''): blob.md5_hash
