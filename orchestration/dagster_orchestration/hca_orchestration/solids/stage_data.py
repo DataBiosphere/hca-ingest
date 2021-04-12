@@ -1,6 +1,6 @@
 import re
 
-from dagster import solid, InputDefinition, Nothing, String, Int
+from dagster import solid, InputDefinition, Nothing, String, Int, OutputDefinition
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
 from google.cloud.bigquery import Dataset
@@ -69,9 +69,15 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
         "load_tag": String,
         "staging_table_expiration_ms": Int
     },
-    input_defs=[InputDefinition("start", Nothing)]
+    input_defs=[InputDefinition("start", Nothing)],
+    output_defs=[OutputDefinition(name="staging_dataset_name", dagster_type=String)]
 )
-def create_staging_dataset(context: AbstractComputeExecutionContext):
+def create_staging_dataset(context: AbstractComputeExecutionContext) -> String:
+    """
+    Creates a staging dataset that will house records for update/insertion into the
+    final TDR dataset
+    :return: Name of the staging dataset
+    """
     staging_bq_project = context.solid_config["staging_bq_project"]
     staging_dataset_prefix = context.solid_config["staging_dataset_prefix"]
     load_tag = context.solid_config["load_tag"]

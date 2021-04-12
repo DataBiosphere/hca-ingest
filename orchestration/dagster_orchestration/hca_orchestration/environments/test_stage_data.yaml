@@ -13,4 +13,4 @@ solids:
       staging_bq_project: fake_bq_project
       staging_dataset_prefix: testing_dataset_prefix
       load_tag: fake_load_tag
-      staging_table_expiration_ms: 3600000
+      staging_table_expiration_ms: 1

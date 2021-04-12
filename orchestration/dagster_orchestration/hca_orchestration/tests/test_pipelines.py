@@ -1,17 +1,15 @@
 import os
-import pytest
 import unittest
-from unittest.mock import patch
 import uuid
 from typing import Any
+from unittest.mock import patch
 
-
+import pytest
 from dagster import execute_pipeline, file_relative_path, PipelineDefinition, PipelineExecutionResult
 from dagster.utils import load_yaml_from_globs
 from dagster.utils.merger import deep_merge_dicts
-from hca_orchestration.pipelines import stage_data, validate_egress
 from hca_manage.diff_dirs import diff_dirs
-from hca_orchestration.support.typing import DagsterConfigDict
+from hca_orchestration.pipelines import stage_data, validate_egress
 
 
 def config_path(relative_path: str) -> str:
@@ -90,6 +88,8 @@ class PipelinesTestCase(unittest.TestCase):
         result = self.run_pipeline(stage_data, config_name="test_stage_data.yaml")
 
         self.assertTrue(result.success)
+        staging_dataset_name = result.result_for_solid("create_staging_dataset").output_value("staging_dataset_name")
+        self.assertEqual(staging_dataset_name, "fake_bq_project.testing_dataset_prefix_fake_load_tag")
 
     @patch("hca_manage.manage.HcaManage.get_null_filerefs")
     @patch("hca_manage.manage.HcaManage.get_file_table_names")
