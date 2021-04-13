@@ -182,18 +182,6 @@ class HcaManage:
 
         return self._hit_bigquery(query)
 
-    def _hit_bigquery(self, query: str) -> set[str]:
-        """
-        Helper function to consistently interact with biqquery while reusing the same client.
-        :param query: The SQL query to run.
-        :return: A set of whatever the query is asking for (assumes that we're only asking for a single column).
-        """
-        query_job = self.bigquery_client.query(query)
-        return {row[0] for row in query_job}
-
-    def _format_filename(self, table: str) -> str:
-        return self.filename_template.format(table=table)
-
     # local csv interactions
     @staticmethod
     def populate_row_id_csv(row_ids: set[str], temp_file: TextIO) -> None:
@@ -235,34 +223,6 @@ class HcaManage:
 
         response = self.data_repo_client.enumerate_datasets(filter=self.dataset)
         return response.items[0].id  # type: ignore # data repo client has no type hints, since it's auto-generated
-
-    def _submit_soft_delete(self, target_table: str, target_path: str) -> JobId:
-        """
-        Submit a soft delete request.
-        :param target_table: The table to apply soft deletion to.
-        :param target_path: The gs-path of the csv that contains the row ids to soft delete.
-        :return: The job id of the soft delete job.
-        """
-        dataset_id = self.get_dataset_id()
-
-        response = self.data_repo_client.apply_dataset_data_deletion(
-            id=dataset_id,
-            data_deletion_request=DataDeletionRequest(
-                delete_type="soft",
-                spec_type="gcsFile",
-                tables=[
-                    {
-                        "gcsFileSpec": {
-                            "fileType": "csv",
-                            "path": target_path
-                        },
-                        "tableName": target_table
-                    }
-                ]
-            )
-        )
-
-        return response.id  # type: ignore # data repo client has no type hints, since it's auto-generated
 
     def submit_snapshot_request(self, qualifier: Optional[str] = None) -> JobId:
         date_stamp = str(datetime.today().date()).replace("-", "")
@@ -386,6 +346,25 @@ class HcaManage:
             dangling_project_refs=0
         )
 
+    def soft_delete_rows(self, path: str, target_table: str) -> JobId:
+        with open(path, mode="rb") as rf:
+            remote_file_path = self.put_csv_in_bucket(local_file=rf, target_table=target_table)
+            job_id = self._submit_soft_delete(target_table=target_table, target_path=remote_file_path)
+            logging.info(f"Soft delete job for table {target_table} running, job id of: {job_id}")
+            return job_id
+
+    def _hit_bigquery(self, query: str) -> set[str]:
+        """
+        Helper function to consistently interact with biqquery while reusing the same client.
+        :param query: The SQL query to run.
+        :return: A set of whatever the query is asking for (assumes that we're only asking for a single column).
+        """
+        query_job = self.bigquery_client.query(query)
+        return {row[0] for row in query_job}
+
+    def _format_filename(self, table: str) -> str:
+        return self.filename_template.format(table=table)
+
     def _process_rows(
         self,
         get_table_names: Callable[[], set[str]],
@@ -420,9 +399,30 @@ class HcaManage:
                 problem_count += len(rids_to_process)
         return problem_count
 
-    def soft_delete_rows(self, path: str, target_table: str) -> JobId:
-        with open(path, mode="rb") as rf:
-            remote_file_path = self.put_csv_in_bucket(local_file=rf, target_table=target_table)
-            job_id = self._submit_soft_delete(target_table=target_table, target_path=remote_file_path)
-            logging.info(f"Soft delete job for table {target_table} running, job id of: {job_id}")
-            return job_id
+    def _submit_soft_delete(self, target_table: str, target_path: str) -> JobId:
+        """
+        Submit a soft delete request.
+        :param target_table: The table to apply soft deletion to.
+        :param target_path: The gs-path of the csv that contains the row ids to soft delete.
+        :return: The job id of the soft delete job.
+        """
+        dataset_id = self.get_dataset_id()
+
+        response = self.data_repo_client.apply_dataset_data_deletion(
+            id=dataset_id,
+            data_deletion_request=DataDeletionRequest(
+                delete_type="soft",
+                spec_type="gcsFile",
+                tables=[
+                    {
+                        "gcsFileSpec": {
+                            "fileType": "csv",
+                            "path": target_path
+                        },
+                        "tableName": target_table
+                    }
+                ]
+            )
+        )
+
+        return response.id  # type: ignore # data repo client has no type hints, since it's auto-generated
