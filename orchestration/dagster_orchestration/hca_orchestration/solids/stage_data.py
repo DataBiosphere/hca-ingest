@@ -71,7 +71,7 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
     input_defs=[InputDefinition("start", Nothing)],
     output_defs=[OutputDefinition(name="staging_dataset_name", dagster_type=String)]
 )
-def create_staging_dataset(context: AbstractComputeExecutionContext) -> String:
+def create_staging_dataset(context: AbstractComputeExecutionContext) -> str:
     """
     Creates a staging dataset that will house records for update/insertion into the
     final TDR dataset

@@ -44,4 +44,4 @@ test_mode = ModeDefinition(
     mode_defs=[prod_mode, local_mode, test_mode]
 )
 def stage_data() -> None:
-    create_staging_dataset(pre_process_metadata(start=clear_staging_dir()))
+    create_staging_dataset(pre_process_metadata(clear_staging_dir()))

@@ -1,10 +1,11 @@
-from dagster import resource, Field, StringSource, InitResourceContext, BoolSource
 from datetime import datetime
+
+from dagster import resource, Field, InitResourceContext, Bool, String
 
 
 @resource({
-    "load_tag_prefix": Field(StringSource),
-    "append_timestamp": Field(BoolSource),
+    "load_tag_prefix": Field(String),
+    "append_timestamp": Field(Bool),
 })
 def load_tag(init_context: InitResourceContext) -> str:
     """

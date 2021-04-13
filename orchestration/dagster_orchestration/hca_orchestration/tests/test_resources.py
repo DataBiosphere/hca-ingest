@@ -47,7 +47,7 @@ class DataflowBeamRunnerTestCase(unittest.TestCase):
         'DATAFLOW_SUBNET_NAME': 'snubnet',
         'GCLOUD_REGION': 'ec-void1',
         'DATAFLOW_WORKER_MACHINE_TYPE': 'most-expensive-4',
-        'DATAFLOW_STARTING_WORKERS': '2',  # these are marked as ints behind the scenes, but
+        'DATAFLOW_STARTING_WORKERS': '2',   # these are marked as ints behind the scenes, but
         'DATAFLOW_MAX_WORKERS': '9999999',  # dagster handles translating them
         'HCA_KUBERNETES_SERVICE_ACCOUNT': 'all-seeing-eye@iam.zombo.com',
         'TRANSFORM_PIPELINE_IMAGE': 'dorian-gray',
@@ -59,36 +59,22 @@ class DataflowBeamRunnerTestCase(unittest.TestCase):
             self.assertIsInstance(dataflow_runner, DataflowBeamRunner)
 
 
-@solid(required_resource_keys={"load_tag"})
-def load_tag_solid(context) -> str:
-    tag: str = context.resources.load_tag
-    return tag
-
-
 class LoadTagTestCase(unittest.TestCase):
+
     def test_load_tag_with_suffix(self):
-        result = execute_solid(
-            load_tag_solid,
-            run_config={
-                "resources": {"load_tag": {"config": {
-                    "load_tag_prefix": "fake_prefix",
-                    "append_timestamp": True
-                }}}
-            },
-            mode_def=ModeDefinition(resource_defs={"load_tag": load_tag})
-        )
-        self.assertTrue(result.output_value().startswith("fake_prefix"))
+        with initialize_resource(load_tag, {
+            "config": {
+                "load_tag_prefix": "fake_prefix",
+                "append_timestamp": True
+            }
+        }) as tag:
+            self.assertTrue(tag.startswith("fake_prefix"))
 
     def test_load_tag_no_suffix(self):
-        result = execute_solid(
-            load_tag_solid,
-            run_config={
-                "resources": {"load_tag": {"config": {
-                    "load_tag_prefix": "fake_prefix",
-                    "append_timestamp": False
-                }}}
-            },
-            mode_def=ModeDefinition(resource_defs={"load_tag": load_tag})
-        )
-
-        self.assertEqual(result.output_value(), "fake_prefix")
+        with initialize_resource(load_tag, {
+            "config": {
+                "load_tag_prefix": "fake_prefix",
+                "append_timestamp": False
+            }
+        }) as tag:
+            self.assertEqual(tag, "fake_prefix")
