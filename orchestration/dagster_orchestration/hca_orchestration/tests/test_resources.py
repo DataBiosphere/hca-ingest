@@ -8,7 +8,7 @@ from dagster import DagsterInstance, ResourceDefinition
 from dagster.core.execution.build_resources import build_resources
 from hca_orchestration.resources import dataflow_beam_runner, live_slack_client, load_tag
 from hca_orchestration.resources.beam import DataflowBeamRunner
-from hca_orchestration.support.typing import DagsterConfigDict
+from hca_orchestration.support.typing import MyConfig
 
 
 # n.b. 2021-03-22
@@ -16,7 +16,7 @@ from hca_orchestration.support.typing import DagsterConfigDict
 # and in active development, expect this section to use more robust and unchanging tooling
 # as it becomes available over the next few months
 @contextmanager
-def initialize_resource(resource_def: ResourceDefinition, config: DagsterConfigDict = {}):
+def initialize_resource(resource_def: ResourceDefinition, config: MyConfig = {"config": {}}):
     with build_resources(
         {
             'test_resource': resource_def,
