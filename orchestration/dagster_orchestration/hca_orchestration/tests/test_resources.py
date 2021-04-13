@@ -18,13 +18,13 @@ from hca_orchestration.support.typing import DagsterConfigDict
 @contextmanager
 def initialize_resource(resource_def: ResourceDefinition, config: DagsterConfigDict = {}):
     with build_resources(
-            {
-                'test_resource': resource_def,
-            },
-            DagsterInstance.get(),
-            {
-                'test_resource': config
-            }
+        {
+            'test_resource': resource_def,
+        },
+        DagsterInstance.get(),
+        {
+            'test_resource': config
+        }
     ) as resource_context:
         yield resource_context.test_resource
 
