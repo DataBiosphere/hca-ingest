@@ -1,15 +1,14 @@
-from contextlib import contextmanager
 import os
 import unittest
+from contextlib import contextmanager
 from unittest import mock
 
-from dagster import DagsterInstance, ResourceDefinition
-from dagster.core.execution.build_resources import build_resources
 import slack.web.client
-
-from hca_orchestration.support.typing import DagsterConfigDict
+from dagster import DagsterInstance, ResourceDefinition, configured
+from dagster.core.execution.build_resources import build_resources
+from hca_orchestration.resources import dataflow_beam_runner, live_slack_client, load_tag
 from hca_orchestration.resources.beam import DataflowBeamRunner
-from hca_orchestration.resources import dataflow_beam_runner, live_slack_client
+from hca_orchestration.support.typing import DagsterConfigDict
 
 
 # n.b. 2021-03-22
@@ -57,3 +56,22 @@ class DataflowBeamRunnerTestCase(unittest.TestCase):
     def test_resource_can_be_initialized(self):
         with initialize_resource(dataflow_beam_runner) as dataflow_runner:
             self.assertIsInstance(dataflow_runner, DataflowBeamRunner)
+
+
+class LoadTagTestCase(unittest.TestCase):
+
+    def test_load_tag_with_suffix(self):
+        configured_tag = configured(load_tag)({
+            "load_tag_prefix": "fake_prefix",
+            "append_timestamp": True
+        })
+        with initialize_resource(configured_tag) as tag:
+            self.assertTrue(tag.startswith("fake_prefix"))
+
+    def test_load_tag_no_suffix(self):
+        configured_tag = configured(load_tag)({
+            "load_tag_prefix": "fake_prefix",
+            "append_timestamp": False
+        })
+        with initialize_resource(configured_tag) as tag:
+            self.assertEqual(tag, "fake_prefix")

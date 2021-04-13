@@ -1,17 +1,15 @@
 import os
-import pytest
 import unittest
-from unittest.mock import patch
 import uuid
 from typing import Any
+from unittest.mock import patch
 
-
+import pytest
 from dagster import execute_pipeline, file_relative_path, PipelineDefinition, PipelineExecutionResult
 from dagster.utils import load_yaml_from_globs
 from dagster.utils.merger import deep_merge_dicts
-from hca_orchestration.pipelines import stage_data, validate_egress
 from hca_manage.diff_dirs import diff_dirs
-from hca_orchestration.support.typing import DagsterConfigDict
+from hca_orchestration.pipelines import stage_data, validate_egress
 
 
 def config_path(relative_path: str) -> str:
@@ -48,7 +46,6 @@ class PipelinesTestCase(unittest.TestCase):
     @pytest.mark.e2e
     def test_stage_data_local_e2e(self):
         test_id = f'test-{uuid.uuid4()}'
-        config = load_yaml_from_globs(config_path('stage_data_local_e2e.yaml'))
         runtime_config = {
             'resources': {
                 'beam_runner': {
@@ -67,11 +64,15 @@ class PipelinesTestCase(unittest.TestCase):
                     'config': {
                         'staging_prefix_name': f'local-stage-data/{test_id}'
                     }
-                }
+                },
             }
         }
 
-        self.run_pipeline(stage_data, 'stage_data_local_e2e.yaml', extra_config=runtime_config, pipeline_mode='local')
+        self.run_pipeline(
+            stage_data,
+            'test_stage_data_local_e2e.yaml',
+            extra_config=runtime_config,
+            pipeline_mode='local')
 
         expected_blobs, output_blobs = diff_dirs(
             'broad-dsp-monster-hca-dev',
@@ -86,6 +87,11 @@ class PipelinesTestCase(unittest.TestCase):
         result = self.run_pipeline(stage_data, config_name="test_stage_data.yaml")
 
         self.assertTrue(result.success)
+        staging_dataset_name = result.result_for_solid("create_staging_dataset").output_value("staging_dataset_name")
+        self.assertTrue(
+            staging_dataset_name.startswith("fake_bq_project.testing_dataset_prefix_fake_load_tag"),
+            "staging dataset should start with load tag prefix"
+        )
 
     @patch("hca_manage.manage.HcaManage.get_null_filerefs")
     @patch("hca_manage.manage.HcaManage.get_file_table_names")

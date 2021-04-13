@@ -13,6 +13,7 @@ DagsterConfigDict = dict[
         ],
         str,
         int,
-        float
+        float,
+        bool
     ]
 ]
