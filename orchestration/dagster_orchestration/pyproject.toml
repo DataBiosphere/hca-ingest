@@ -27,9 +27,6 @@ pdbpp = "^0.10.2"
 pre-commit = "^2.11.0"
 pytest = "^6.2.1"
 pytest-dotenv = "^0.5.2"
-# default tinyquery package is out of date and bound to incompatibly out of date dependencies,
-# so we install from a more up-to-date fork with tagged releases
-Tinyquery = { git = "https://github.com/broadinstitute/tinyquery.git", branch = "sjp-fix-backtick-parsing" }
 
 [tool.poetry.scripts]
 manage = "hca_manage.main:run"

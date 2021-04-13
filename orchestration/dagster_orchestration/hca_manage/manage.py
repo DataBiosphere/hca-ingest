@@ -248,7 +248,8 @@ class HcaManage:
         response = self.data_repo_client.apply_dataset_data_deletion(
             id=dataset_id,
             data_deletion_request=DataDeletionRequest(
-                delete_type="soft", spec_type="gcsFile",
+                delete_type="soft",
+                spec_type="gcsFile",
                 tables=[
                     {
                         "gcsFileSpec": {
@@ -257,7 +258,9 @@ class HcaManage:
                         },
                         "tableName": target_table
                     }
-                ]))
+                ]
+            )
+        )
 
         return response.id  # type: ignore # data repo client has no type hints, since it's auto-generated
 
@@ -307,7 +310,7 @@ class HcaManage:
             try:
                 dataset_id = response.items[0].id
             except IndexError:
-                raise ValueError("The provided snapshot name returned no results.")
+                raise ValueError("The provided dataset name returned no results.")
         elif dataset_id and not dataset_name:
             pass  # let dataset_id argument pass through
         else:
@@ -342,7 +345,7 @@ class HcaManage:
         :return: Number of rows with dangling project refs
         """
         if soft_delete:
-            raise Exception("Soft deleting rows with dangling project refs is unsupported")
+            raise NotImplementedError("Soft deleting rows with dangling project refs is unsupported")
 
         def links_table() -> set[str]:
             return {'links'}
