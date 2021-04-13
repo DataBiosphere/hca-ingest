@@ -1,5 +1,6 @@
 import base64
 import re
+from typing import AnyStr, cast, Optional, TypedDict, Union
 from unittest.mock import create_autospec
 
 from google.cloud import storage
@@ -34,33 +35,54 @@ class FakeGoogleBlob:
         file_object.write(self.content.encode('UTF8'))
 
 
+class HexBlobInfo(TypedDict):
+    hex_md5: str
+    content: str
+
+
+class Base64BlobInfo(TypedDict):
+    md5: bytes
+    content: str
+
+
+BlobInfo = Union[HexBlobInfo, Base64BlobInfo]
+
+
 class FakeGoogleBucket:
+    _blobs: dict[str, FakeGoogleBlob]
+    _nonexistent_blobs: dict[str, FakeGoogleBlob]
+
     # blob_info is a dictionary that maps blob paths to the hash of the metadata of that blob
     # Blob metadata can contain 3 fields (the first 2 of which are mutually exclusive):
     #     1) md5 (base64 format)
     #     2) hex_md5 (hexadecimal format)
     #     3) content (actual content of the file)
-    def __init__(self, blob_info={}):
+    def __init__(self, blob_info: dict[str, BlobInfo] = {}):
         self._blobs = {}
         self._nonexistent_blobs = {}
 
         for blob_uri, base_blob_metadata in blob_info.items():
             if blob_uri.startswith('gs://'):
-                blob_name = re.match(BUCKET_PREFIX_REGEX, blob_uri).group(1)
+                if match := re.match(BUCKET_PREFIX_REGEX, blob_uri):
+                    blob_name = match.group(1)
+                else:
+                    raise ValueError(f"Invalid blob URI {blob_uri} provided.")
             else:
                 blob_name = blob_uri
-            # make a non-frozen dict copy so we can modify its keys
-            blob_metadata = {**base_blob_metadata}
 
-            if 'hex_md5' in blob_metadata:
-                blob_metadata['md5'] = base64.b64encode(bytes.fromhex(blob_metadata.pop('hex_md5')))
+            if 'hex_md5' in base_blob_metadata:
+                hex_metadata = cast(HexBlobInfo, base_blob_metadata)
+                blob_metadata: Base64BlobInfo = {
+                    'content': hex_metadata['content'],
+                    'md5': base64.b64encode(bytes.fromhex(hex_metadata['hex_md5']))
+                }
 
             self._blobs[blob_name] = FakeGoogleBlob(name=blob_name, **blob_metadata)
 
-    def get_blob(self, path):
+    def get_blob(self, path) -> Optional[FakeGoogleBlob]:
         return self._blobs.get(path)
 
-    def blob(self, path):
+    def blob(self, path) -> FakeGoogleBlob:
         if path not in self._nonexistent_blobs:
             self._nonexistent_blobs[path] = FakeGoogleBlob(name=path)
 

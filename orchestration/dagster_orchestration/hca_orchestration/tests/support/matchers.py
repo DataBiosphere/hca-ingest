@@ -40,6 +40,7 @@ class StringMatchingRegex(str):
         return super().__hash__()
 
 
+# matches any instance of the specified type (or a descendant)
 class ObjectOfType:
     def __init__(self, expected_type: type):
         self.expected_type = expected_type
