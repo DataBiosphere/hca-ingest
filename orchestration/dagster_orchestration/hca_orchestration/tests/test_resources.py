@@ -4,11 +4,11 @@ from contextlib import contextmanager
 from unittest import mock
 
 import slack.web.client
-from dagster import DagsterInstance, ResourceDefinition
+from dagster import DagsterInstance, ResourceDefinition, configured
 from dagster.core.execution.build_resources import build_resources
 from hca_orchestration.resources import dataflow_beam_runner, live_slack_client, load_tag
 from hca_orchestration.resources.beam import DataflowBeamRunner
-from hca_orchestration.support.typing import MyConfig
+from hca_orchestration.support.typing import DagsterConfigDict
 
 
 # n.b. 2021-03-22
@@ -16,7 +16,7 @@ from hca_orchestration.support.typing import MyConfig
 # and in active development, expect this section to use more robust and unchanging tooling
 # as it becomes available over the next few months
 @contextmanager
-def initialize_resource(resource_def: ResourceDefinition, config: MyConfig = {"config": {}}):
+def initialize_resource(resource_def: ResourceDefinition, config: DagsterConfigDict = {}):
     with build_resources(
         {
             'test_resource': resource_def,
@@ -61,19 +61,17 @@ class DataflowBeamRunnerTestCase(unittest.TestCase):
 class LoadTagTestCase(unittest.TestCase):
 
     def test_load_tag_with_suffix(self):
-        with initialize_resource(load_tag, {
-            "config": {
-                "load_tag_prefix": "fake_prefix",
-                "append_timestamp": True
-            }
-        }) as tag:
+        configured_tag = configured(load_tag)({
+            "load_tag_prefix": "fake_prefix",
+            "append_timestamp": True
+        })
+        with initialize_resource(configured_tag) as tag:
             self.assertTrue(tag.startswith("fake_prefix"))
 
     def test_load_tag_no_suffix(self):
-        with initialize_resource(load_tag, {
-            "config": {
-                "load_tag_prefix": "fake_prefix",
-                "append_timestamp": False
-            }
-        }) as tag:
+        configured_tag = configured(load_tag)({
+            "load_tag_prefix": "fake_prefix",
+            "append_timestamp": False
+        })
+        with initialize_resource(configured_tag) as tag:
             self.assertEqual(tag, "fake_prefix")

@@ -1,7 +1,7 @@
 # Complex type signatures that appear multiple times throughout the code base can live here,
 # for easy reference and descriptive naming.
 
-from typing import Literal, Union, TypedDict
+from typing import Literal, Union
 
 
 DagsterConfigDict = dict[
@@ -17,7 +17,3 @@ DagsterConfigDict = dict[
         bool
     ]
 ]
-
-
-class MyConfig(TypedDict):
-    config: DagsterConfigDict
