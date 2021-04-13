@@ -68,7 +68,11 @@ class PipelinesTestCase(unittest.TestCase):
             }
         }
 
-        self.run_pipeline(stage_data, 'stage_data_local_e2e.yaml', extra_config=runtime_config, pipeline_mode='local')
+        self.run_pipeline(
+            stage_data,
+            'test_stage_data_local_e2e.yaml',
+            extra_config=runtime_config,
+            pipeline_mode='local')
 
         expected_blobs, output_blobs = diff_dirs(
             'broad-dsp-monster-hca-dev',
