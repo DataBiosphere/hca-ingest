@@ -11,6 +11,8 @@ DagsterConfigDict = dict[
             Literal['env'],
             str
         ],
+        dict[str, str],
+        dict[str, object],
         str,
         int,
         float

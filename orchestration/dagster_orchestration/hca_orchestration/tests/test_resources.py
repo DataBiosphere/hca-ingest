@@ -1,15 +1,14 @@
-from contextlib import contextmanager
 import os
 import unittest
+from contextlib import contextmanager
 from unittest import mock
 
-from dagster import DagsterInstance, ResourceDefinition, solid, execute_solid, ModeDefinition, SolidDefinition
-from dagster.core.execution.build_resources import build_resources
 import slack.web.client
-
-from hca_orchestration.support.typing import DagsterConfigDict
-from hca_orchestration.resources.beam import DataflowBeamRunner
+from dagster import DagsterInstance, ResourceDefinition
+from dagster.core.execution.build_resources import build_resources
 from hca_orchestration.resources import dataflow_beam_runner, live_slack_client, load_tag
+from hca_orchestration.resources.beam import DataflowBeamRunner
+from hca_orchestration.support.typing import DagsterConfigDict
 
 
 # n.b. 2021-03-22
