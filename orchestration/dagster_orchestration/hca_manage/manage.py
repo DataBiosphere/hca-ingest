@@ -5,6 +5,7 @@ import logging
 import os
 import uuid
 from typing import BinaryIO, Callable, Optional, TextIO
+import json
 
 from cached_property import cached_property
 from data_repo_client import RepositoryApi, DataDeletionRequest, SnapshotRequestModel, SnapshotRequestContentsModel
@@ -25,7 +26,6 @@ class ProblemCount:
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
 
 # alias for str to make the return type for jade API calls a little clearer
 JobId = str
@@ -225,6 +225,11 @@ class HcaManage:
         return response.items[0].id  # type: ignore # data repo client has no type hints, since it's auto-generated
 
     def submit_snapshot_request(self, qualifier: Optional[str] = None) -> JobId:
+        """
+        Submit a snapshot creation request.
+        :param qualifier: Optional trailing suffix for the snapshot name
+        :return: Job ID of the snapshot creation job
+        """
         date_stamp = str(datetime.today().date()).replace("-", "")
         if qualifier:
             # prepend an underscore if this string is present
@@ -249,6 +254,13 @@ class HcaManage:
         return response.id  # type: ignore # data repo client has no type hints, since it's auto-generated
 
     def delete_snapshot(self, snapshot_name: Optional[str] = None, snapshot_id: Optional[str] = None) -> JobId:
+        """
+        Submit a snapshot deletion request. Requires either a snapshot ID or a snapshot name.
+        :param snapshot_id: ID of the snapshot to delete
+        :param snapshot_name: Name of the snapshot to delete.
+        :return: Job ID of the snapshot creation job
+        """
+
         if snapshot_name and not snapshot_id:
             response = self.data_repo_client.enumerate_snapshots(filter=snapshot_name)
             try:
@@ -265,6 +277,12 @@ class HcaManage:
         return job_id
 
     def delete_dataset(self, dataset_name: Optional[str] = None, dataset_id: Optional[str] = None) -> JobId:
+        """
+        Submits a dataset for deletion. Requires either a dataset ID or name.
+        :param dataset_name: Name of the dataset
+        :param dataset_id: ID of the dataset
+        :return: Job ID of the dataset deletion job
+        """
         if dataset_name and not dataset_id:
             response = self.data_repo_client.enumerate_datasets(filter=dataset_name)
             try:
@@ -279,6 +297,35 @@ class HcaManage:
         delete_response_id: JobId = self.data_repo_client.delete_dataset(dataset_id).id
         logging.info(f"Dataset deletion job id: {delete_response_id}")
         return delete_response_id
+
+    def create_dataset(
+            self,
+            dataset_name: str,
+            billing_profile_id: str,
+            schema_path: str,
+            description: Optional[str] = None) -> JobId:
+        """
+        Creates a dataset in the data repo.
+        :param dataset_name:  Name of the dataset
+        :param billing_profile_id: GCP billing profile ID
+        :param schema_path: Local path to a file containing a schema for the dataset
+        :param description: Optional description for the dataset
+        :return: Job ID of the dataset creation job
+        """
+        with open(schema_path, "r") as f:
+            # verify that the schema is valid json
+            parsed_schema = json.load(f)
+            response = self.data_repo_client.create_dataset(
+                dataset={
+                    "name": dataset_name,
+                    "description": description,
+                    "defaultProfileId": billing_profile_id,
+                    "schema": parsed_schema
+                }
+            )
+            job_id: JobId = response.id
+            logging.info(f"Dataset creation job id: {job_id}")
+            return job_id
 
     # dataset-level checking and soft deleting
     def process_duplicates(self, soft_delete: bool = False) -> int:
