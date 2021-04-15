@@ -1,37 +1,16 @@
 import unittest
 
 from unittest.mock import MagicMock, patch, call
-from typing import Generator, TypeVar
+from typing import Generator, TypeVar, Optional
 from collections.abc import Iterable
-from datetime import datetime
-from dateutil.tz import tzlocal
 
-from hca_orchestration.contrib.argo_workflows import ExtendedArgoWorkflow, generate_argo_archived_workflows_client, ArgoFetchListOperation, ArgoArchivedWorkflowsClient
-from argo.workflows.client.models import V1alpha1Workflow, V1ObjectMeta, V1alpha1WorkflowSpec, V1alpha1Arguments, V1alpha1Parameter,\
+from hca_orchestration.contrib.argo_workflows import ExtendedArgoWorkflow, generate_argo_archived_workflows_client, \
+    ArgoFetchListOperation, ArgoArchivedWorkflowsClient
+from argo.workflows.client.models import V1alpha1Workflow, V1ObjectMeta, V1alpha1WorkflowSpec, V1alpha1Arguments, \
+    V1alpha1Parameter, \
     V1alpha1WorkflowStatus
 
-
-# the argo workflows api produces this abominable nested set of classes for each workflow,
-# so we build one from simple params here to keep our tests lean
-def mock_argo_workflow(name, uid, status, finished_at=datetime.now(tz=tzlocal()), params={}):
-    return V1alpha1Workflow(
-        metadata=V1ObjectMeta(
-            name=name,
-            uid=uid,
-        ),
-        spec=V1alpha1WorkflowSpec(
-            arguments=V1alpha1Arguments(
-                parameters=[
-                    V1alpha1Parameter(name=k, value=v)
-                    for k, v in params.items()
-                ]
-            )
-        ),
-        status=V1alpha1WorkflowStatus(
-            phase=status,
-            finished_at=finished_at,
-        )
-    )
+from hca_orchestration.tests.support.mock_workflows import mock_argo_workflow
 
 
 def extend_workflow(workflow: V1alpha1Workflow) -> ExtendedArgoWorkflow:
@@ -39,10 +18,17 @@ def extend_workflow(workflow: V1alpha1Workflow) -> ExtendedArgoWorkflow:
 
 
 class ArgoArchivedWorkflowsClientTestCase(unittest.TestCase):
+    def setUp(self):
+        self.client = ArgoArchivedWorkflowsClient("https://zombo.com", "tokentokentoken")
+
+    def workflows_to_page_of_results(self, archived_workflows: [], next_page: Optional[str]):
+        results_page = MagicMock()
+        results_page.items = archived_workflows
+        results_page.metadata._continue = next_page
+        return results_page
 
     def test__pull_paginated_results_api_function_no_continue_results_one_call(self):
-        client = ArgoArchivedWorkflowsClient("https://zombo.com", "tokentokentoken")
-        archived_workflows = [
+        list_containing_3_V1alpha1Workflows = [
             mock_argo_workflow('import-hca-total-defg', 'abc123uid', 'Succeeded'),
             mock_argo_workflow('import-hca-total-abcd', 'abc234uid', 'Supsneeded', params={
                 'data-repo-name': 'datarepo_dataset1'
@@ -52,19 +38,16 @@ class ArgoArchivedWorkflowsClientTestCase(unittest.TestCase):
             }),
         ]
 
-        test_mock = MagicMock()
-        test_mock.items = archived_workflows
-        test_mock.metadata._continue = None
+        archived_workflow_list = self.workflows_to_page_of_results(list_containing_3_V1alpha1Workflows, None)
 
         with patch('argo.workflows.client.ArchivedWorkflowServiceApi.list_archived_workflows',
-                   return_value=test_mock) as mock_list_archived_workflows:
-            list_results = list(client._pull_paginated_results(mock_list_archived_workflows))
-            self.assertEqual(list_results, archived_workflows)
+                   return_value=archived_workflow_list) as mock_list_archived_workflows:
+            list_results = list(self.client._pull_paginated_results(mock_list_archived_workflows))
+            self.assertEqual(list_results, list_containing_3_V1alpha1Workflows)
             mock_list_archived_workflows.assert_called_once()
 
     def test__pull_paginated_results_api_function_one_continue_results_two_calls(self):
-        client = ArgoArchivedWorkflowsClient("https://zombo.com", "tokentokentoken")
-        archived_workflows = [
+        list_containing_3_V1alpha1Workflows = [
             mock_argo_workflow('import-hca-total-defg', 'abc123uid', 'Succeeded'),
             mock_argo_workflow('import-hca-total-abcd', 'abc234uid', 'Supsneeded', params={
                 'data-repo-name': 'datarepo_dataset1'
@@ -74,38 +57,35 @@ class ArgoArchivedWorkflowsClientTestCase(unittest.TestCase):
             }),
         ]
 
-        test_mock = MagicMock()
-        test_mock.items = archived_workflows
-        test_mock.metadata._continue = "next_page"
+        archived_workflow_list_3_workflows = self.workflows_to_page_of_results(list_containing_3_V1alpha1Workflows,
+                                                                               "next_page")
 
-        archived_workflows_2 = [
+        list_containing_1_V1alpha1Workflows = [
             mock_argo_workflow('import-hca-total-page2', 'page2uid', 'Supsneeded', params={
                 'data-repo-name': 'datarepo_dataset1'
             }),
         ]
 
-        test_mock2 = MagicMock()
-        test_mock2.items = archived_workflows_2
-        test_mock2.metadata._continue = None
+        archived_workflow_list_1_workflows = self.workflows_to_page_of_results(list_containing_1_V1alpha1Workflows,
+                                                                               None)
 
         def get_page(list_options_continue=None):
             if list_options_continue is None:
-                return test_mock
+                return archived_workflow_list_3_workflows
 
             if list_options_continue == "next_page":
-                return test_mock2
+                return archived_workflow_list_1_workflows
 
         with patch('argo.workflows.client.ArchivedWorkflowServiceApi.list_archived_workflows',
                    side_effect=get_page) as mock_list_archived_workflows:
-            list_results = list(client._pull_paginated_results(mock_list_archived_workflows))
-            self.assertEqual(list_results, archived_workflows + archived_workflows_2)
+            list_results = list(self.client._pull_paginated_results(mock_list_archived_workflows))
+            self.assertEqual(list_results, list_containing_3_V1alpha1Workflows + list_containing_1_V1alpha1Workflows)
             self.assertEqual(mock_list_archived_workflows.call_count, 2)
 
             mock_list_archived_workflows.assert_has_calls([call(), call(list_options_continue="next_page")])
 
     def test__pull_paginated_results_api_function_multiple_continues_results_multiple_calls(self):
-        client = ArgoArchivedWorkflowsClient("https://zombo.com", "tokentokentoken")
-        archived_workflows = [
+        list_containing_3_V1alpha1Workflows = [
             mock_argo_workflow('import-hca-total-defg', 'abc123uid', 'Succeeded'),
             mock_argo_workflow('import-hca-total-abcd', 'abc234uid', 'Supsneeded', params={
                 'data-repo-name': 'datarepo_dataset1'
@@ -115,21 +95,19 @@ class ArgoArchivedWorkflowsClientTestCase(unittest.TestCase):
             }),
         ]
 
-        test_mock = MagicMock()
-        test_mock.items = archived_workflows
-        test_mock.metadata._continue = "page2"
+        archived_workflow_list_3_workflows = self.workflows_to_page_of_results(list_containing_3_V1alpha1Workflows,
+                                                                               "page2")
 
-        archived_workflows_2 = [
+        list_containing_1_V1alpha1Workflows = [
             mock_argo_workflow('import-hca-total-page2', 'page2uid', 'Supsneeded', params={
                 'data-repo-name': 'datarepo_dataset1'
             }),
         ]
 
-        test_mock2 = MagicMock()
-        test_mock2.items = archived_workflows_2
-        test_mock2.metadata._continue = "page3"
+        archived_workflow_list_1_workflows = self.workflows_to_page_of_results(list_containing_1_V1alpha1Workflows,
+                                                                               "page3")
 
-        archived_workflows_3 = [
+        list_containing_2_V1alpha1Workflows = [
             mock_argo_workflow('import-hca-1', '12345', 'Succeeded', params={
                 'data-name': 'dataset',
                 'test': 'data'
@@ -137,42 +115,34 @@ class ArgoArchivedWorkflowsClientTestCase(unittest.TestCase):
             mock_argo_workflow('hca-data', 'u123id', 'Succeeded'),
         ]
 
-        test_mock3 = MagicMock()
-        test_mock3.items = archived_workflows_3
-        test_mock3.metadata._continue = "page4"
+        archived_workflow_list_2_workflows = self.workflows_to_page_of_results(list_containing_2_V1alpha1Workflows,
+                                                                               "page4")
 
-        archived_workflows_4 = [
-            mock_argo_workflow('104', 'uid', 'Succeeded', params={
-                'dataset': 'data'
-            }),
+        list_containing_0_V1alpha1Workflows = [
         ]
 
-        test_mock4 = MagicMock()
-        test_mock4.items = archived_workflows_4
-        test_mock4.metadata._continue = None
+        archived_workflow_list_0_workflows = self.workflows_to_page_of_results(list_containing_0_V1alpha1Workflows,
+                                                                               None)
 
         def get_page(list_options_continue=None):
-            if list_options_continue is None:
-                return test_mock
+            {
+                None: archived_workflow_list_3_workflows,
+                "page2": archived_workflow_list_1_workflows,
+                "page3": archived_workflow_list_2_workflows,
+                "page4": archived_workflow_list_0_workflows
+            }[list_options_continue]
 
-            if list_options_continue == "page2":
-                return test_mock2
-
-            if list_options_continue == "page3":
-                return test_mock3
-
-            if list_options_continue == "page4":
-                return test_mock4
-
-        with patch('argo.workflows.client.ArchivedWorkflowServiceApi.list_archived_workflows',
-                   side_effect=get_page) as mock_list_archived_workflows:
-            list_results = list(client._pull_paginated_results(mock_list_archived_workflows))
-            self.assertEqual(list_results, archived_workflows + archived_workflows_2 + archived_workflows_3 +
-                             archived_workflows_4)
-            self.assertEqual(mock_list_archived_workflows.call_count, 4)
-            mock_list_archived_workflows.assert_has_calls([call(), call(list_options_continue="page2"),
-                                                           call(list_options_continue="page3"),
-                                                           call(list_options_continue="page4")])
+            list_results = list(self.client._pull_paginated_results(get_page()))
+            self.assertEqual(list_results,
+                             list_containing_3_V1alpha1Workflows +
+                             list_containing_1_V1alpha1Workflows +
+                             list_containing_2_V1alpha1Workflows +
+                             list_containing_0_V1alpha1Workflows)
+            self.assertEqual(list_results.call_count, 4)
+            list_results.assert_has_calls([call(),
+                                           call(list_options_continue="page2"),
+                                           call(list_options_continue="page3"),
+                                           call(list_options_continue="page4")])
 
     def test_inflate_one_workflow_one_call(self):
         v1alphaworkflow_mock = mock_argo_workflow('import-hca-total-abcd', 'abc234uid', 'Succeeded', params={
@@ -185,23 +155,11 @@ class ArgoArchivedWorkflowsClientTestCase(unittest.TestCase):
                    return_value=v1alphaworkflow_mock) as mock_get_archived_workflow:
             workflow.inflate()
             mock_get_archived_workflow.assert_called_once_with(workflow.metadata.uid)
+            # Checking that despite inflate called twice, mock_get_archived_workflow is only called once
             workflow.inflate()
             mock_get_archived_workflow.assert_called_once_with(workflow.metadata.uid)
 
     def test_params_dict_workflow_info_dict_proper_values(self):
-        archived_workflows = [
-            mock_argo_workflow('import-hca-total-abcd', 'abc234uid', 'Succeeded', params={
-                'data-repo-name': 'datarepo_dataset1',
-                'name': 'value',
-                'testing': 'data',
-                '1023_3': 'e5Qss'
-            }),
-            mock_argo_workflow('hca_import', 'randomuid', 'Succeeded', params={
-                'dataset_name': 'data'
-            }),
-            mock_argo_workflow('hca_import', 'randomuid', 'Succeeded'),
-        ]
-
         dict0 = {'data-repo-name': 'datarepo_dataset1',
                  'name': 'value',
                  'testing': 'data',
@@ -209,11 +167,14 @@ class ArgoArchivedWorkflowsClientTestCase(unittest.TestCase):
         dict1 = {
             'dataset_name': 'data'
         }
+        archived_workflows = [
+            mock_argo_workflow('import-hca-total-abcd', 'abc234uid', 'Succeeded', params=dict0),
+            mock_argo_workflow('hca_import', 'randomuid', 'Succeeded', params=dict1),
+            mock_argo_workflow('hca_import', 'randomuid', 'Succeeded'),
+        ]
 
-        workflow0 = extend_workflow(archived_workflows[0])
-        workflow1 = extend_workflow(archived_workflows[1])
-        workflow2 = extend_workflow(archived_workflows[2])
+        list_workflows = [extend_workflow(workflow) for workflow in archived_workflows]
 
-        self.assertEqual(workflow0.params_dict(), dict0)
-        self.assertEqual(workflow1.params_dict(), dict1)
-        self.assertEqual(workflow2.params_dict(), {})
+        self.assertEqual(list_workflows[0].params_dict(), dict0)
+        self.assertEqual(list_workflows[1].params_dict(), dict1)
+        self.assertEqual(list_workflows[2].params_dict(), {})
