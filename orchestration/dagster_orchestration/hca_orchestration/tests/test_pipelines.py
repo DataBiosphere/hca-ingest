@@ -26,10 +26,10 @@ def beam_runner_path() -> str:
 
 class PipelinesTestCase(unittest.TestCase):
     def run_pipeline(
-            self,
-            pipeline: PipelineDefinition,
-            config_name: str,
-            extra_config: dict[str, Any] = {},
+        self,
+        pipeline: PipelineDefinition,
+        config_name: str,
+        extra_config: dict[str, Any] = {},
         pipeline_mode='test'
     ) -> PipelineExecutionResult:
         config_dict = load_yaml_from_globs(
