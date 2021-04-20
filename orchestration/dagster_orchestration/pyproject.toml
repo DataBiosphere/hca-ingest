@@ -29,7 +29,10 @@ pytest = "^6.2.1"
 pytest-dotenv = "^0.5.2"
 
 [tool.poetry.scripts]
-manage = "hca_manage.main:run"
+check = "hca_manage.check:run"
+dataset = "hca_manage.dataset:run"
+snapshot = "hca_manage.snapshot:run"
+soft_delete = "hca_manage.soft_delete:run"
 
 [build-system]
 requires = ["poetry-core=^1.1.5"]
