@@ -35,7 +35,7 @@ def run(arguments: Optional[List[str]] = None) -> None:
             # TODO change to logger?
             print("No deletion attempted.")
     elif args.create:
-        if query_yes_no("This will create a dataset. Are you sure?"):
+        if query_yes_no("This will create a snapshot. Are you sure?"):
             create_snapshot(args, host)
 
 
