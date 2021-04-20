@@ -1,12 +1,12 @@
 import argparse
-from typing import List, Optional
+from typing import Optional
 
 from hca_manage import __version__ as hca_manage_version
 from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client, query_yes_no
 from hca_manage.manage import HcaManage
 
 
-def run(arguments: Optional[List[str]] = None) -> None:
+def run(arguments: Optional[list[str]] = None) -> None:
     parser = DefaultHelpParser(description="A simple CLI to soft delete rows in a TDR dataset.")
     parser.add_argument("-V", "--version", action="version", version="%(prog)s " + hca_manage_version)
     parser.add_argument("-e", "--env", help="The Jade environment to target", choices=["dev", "prod"], required=True)
