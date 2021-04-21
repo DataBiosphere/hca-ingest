@@ -22,12 +22,12 @@ STAGING_BUCKET=${STAGING_BUCKET_PREFIX}_$(gdate +%Y_%m_%d_%H%M%S)
 
 # always run these imports in our prod k8s cluster
 CURRENT_CLUSTER=$(kubectl config current-context)
-if [[ $CURRENT_CLUSTER != "gke_mystical-slate-284720_us-central1-c_hca-cluster" ]] ; then
+if [ $CURRENT_CLUSTER != "gke_mystical-slate-284720_us-central1-c_hca-cluster" ] ; then
   echo "Connecting to HCA  prod cluster..."
   gcloud container clusters get-credentials hca-cluster --zone us-central1-c --project mystical-slate-284720
 fi
 
-echo $STAGING_BUCKET
+echo "Importing to Staging Bucket: "$STAGING_BUCKET
 argo submit ../../orchestration/workflows/dev/run-import-hca-total.yaml \
      -p source-bucket-name="$SOURCE_BUCKET_NAME" \
      -p source-bucket-prefix="$SOURCE_BUCKET_PREFIX" \
