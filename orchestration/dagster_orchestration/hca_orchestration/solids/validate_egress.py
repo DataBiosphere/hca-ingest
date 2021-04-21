@@ -1,44 +1,29 @@
-from dagster import configured, DagsterType, InputDefinition, solid, String, StringSource, TypeCheckContext
+from dagster import configured, InputDefinition, solid, String, StringSource, TypeCheckContext
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
-from hca_manage.manage import HcaManage, ProblemCount
-from hca_orchestration.support.typing import DagsterConfigDict
+from hca_manage.manage import ProblemCount
+from hca_orchestration.support.hca_manage import hca_manage_from_solid_context
+from hca_orchestration.support.schemas import HCA_MANAGE_SCHEMA
+from hca_orchestration.support.typing import DagsterConfigDict, wrap_as_dagster_type
 
 
 def problem_count_typecheck(_: TypeCheckContext, value: object) -> bool:
     return isinstance(value, ProblemCount)
 
 
-DagsterProblemCount: DagsterType = DagsterType(
-    name="DagsterProblemCount",
-    type_check_fn=problem_count_typecheck,
+DagsterProblemCount = wrap_as_dagster_type(
+    ProblemCount,
     description="A simple named tuple to represent the different types of issues "
                 "present from the post process validation.",
 )
 
 
-POST_VALIDATION_SETTINGS_SCHEMA = {
-    "gcp_env": StringSource,
-    "dataset_name": String,
-}
-
-
-@solid(
-    required_resource_keys={"data_repo_client"},
-    config_schema={
-        **POST_VALIDATION_SETTINGS_SCHEMA,
-        "google_project_name": StringSource,
-    }
-)
+@solid(required_resource_keys={'data_repo_client'}, config_schema=HCA_MANAGE_SCHEMA)
 def base_post_import_validate(context: AbstractComputeExecutionContext) -> DagsterProblemCount:
     """
     Checks if the target dataset has any rows with duplicate IDs or null file references.
     """
-    validator = HcaManage(
-        environment=context.solid_config["gcp_env"],
-        project=context.solid_config["google_project_name"],
-        dataset=context.solid_config["dataset_name"],
-        data_repo_client=context.resources.data_repo_client)
+    validator = hca_manage_from_solid_context(context)
     return validator.check_for_all()
 
 
@@ -56,7 +41,8 @@ def post_import_validate(config: DagsterConfigDict) -> DagsterConfigDict:
     required_resource_keys={"slack"},
     input_defs=[InputDefinition("validation_results", DagsterProblemCount)],
     config_schema={
-        **POST_VALIDATION_SETTINGS_SCHEMA,
+        "gcp_env": StringSource,
+        "dataset_name": String,
         "channel": StringSource,
         "argo_workflow_id": String
     }

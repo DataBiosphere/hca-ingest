@@ -1,5 +1,5 @@
 import google.auth
-from google.auth.transport.requests import Request
+from google.auth.transport.requests import AuthorizedSession, Request
 from google.oauth2.credentials import Credentials
 
 
@@ -14,3 +14,7 @@ def default_google_access_token() -> str:
     credentials.refresh(Request())
 
     return credentials.token  # type: ignore # (unannotated library)
+
+
+def authorized_session() -> AuthorizedSession:
+    return AuthorizedSession(default_google_access_token())

@@ -27,8 +27,10 @@ class ProblemCount:
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+
 # alias for str to make the return type for jade API calls a little clearer
-JobId = str
+class JobId(str):
+    pass
 
 
 @dataclass
