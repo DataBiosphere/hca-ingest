@@ -42,7 +42,7 @@ class NoopDataRepoClient:
     def enumerate_datasets(self) -> NoopResult:
         return NoopDataRepoClient.NoopResult(5)
 
-    def retrieve_job(self, job_id):
+    def retrieve_job(self, job_id) -> FakeJobResponse:
         return NoopDataRepoClient.FakeJobResponse(True)
 
 
