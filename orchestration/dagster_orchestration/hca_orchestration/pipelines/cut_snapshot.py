@@ -17,7 +17,9 @@ local_mode = ModeDefinition(
     name="local",
     resource_defs={
         "data_repo_client": jade_data_repo_client,
-        "sam_client": prod_sam_client,
+        # we don't want to actually hit sam and make a snapshot public
+        # unless we're running in prod
+        "sam_client": noop_sam_client,
     }
 )
 
@@ -34,4 +36,4 @@ test_mode = ModeDefinition(
     mode_defs=[prod_mode, local_mode, test_mode]
 )
 def cut_snapshot() -> None:
-    make_snapshot_public(create_snapshot())
+    make_snapshot_public(create_snapshot().id)

@@ -35,8 +35,15 @@ class NoopDataRepoClient:
     class NoopResult:
         total: int
 
+    @dataclass
+    class FakeJobResponse:
+        completed: bool
+
     def enumerate_datasets(self) -> NoopResult:
         return NoopDataRepoClient.NoopResult(5)
+
+    def retrieve_job(self, job_id):
+        return NoopDataRepoClient.FakeJobResponse(True)
 
 
 @resource

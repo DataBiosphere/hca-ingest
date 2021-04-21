@@ -2,7 +2,7 @@ from urllib.parse import urljoin
 from cached_property import cached_property
 from dataclasses import dataclass
 
-from dagster import configured, DagsterLogManager, Field, resource, String
+from dagster import configured, Field, resource, String
 from dagster.core.execution.context.init import InitResourceContext
 from google.auth.transport.requests import AuthorizedSession
 
@@ -33,14 +33,6 @@ class Sam:
         return authorized_session()
 
 
-@dataclass
-class NoopSam:
-    logger: DagsterLogManager
-
-    def make_snapshot_public(self, snapshot_id: str) -> None:
-        self.logger.info(f"No-op request to make {snapshot_id} public triggered.")
-
-
 @resource({
     "api_url": Field(String)
 })
@@ -55,6 +47,11 @@ def prod_sam_client(_config: DagsterConfigDict) -> DagsterConfigDict:
     }
 
 
+class NoopSamClient:
+    def make_snapshot_public(self, snapshot_id: str) -> None:
+        pass
+
+
 @resource
-def noop_sam_client(init_context: InitResourceContext) -> NoopSam:
-    return NoopSam(logger=init_context.log_manager)
+def noop_sam_client(init_context: InitResourceContext) -> NoopSamClient:
+    return NoopSamClient()
