@@ -1,3 +1,4 @@
+import os
 import unittest
 from unittest.mock import patch
 
@@ -7,6 +8,10 @@ from hca_orchestration.tests.support.matchers import StringEndingWith
 
 
 class SamResourceTestCase(unittest.TestCase):
+    @patch.dict(os.environ, {
+        **os.environ,
+        'SAM_URL': 'http://fakety-fake.url',
+    })
     def test_resource_can_be_initialized(self):
         with initialize_resource(prod_sam_client) as client_instance:
             self.assertIsInstance(client_instance, Sam)

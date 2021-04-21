@@ -2,7 +2,7 @@ from urllib.parse import urljoin
 from cached_property import cached_property
 from dataclasses import dataclass
 
-from dagster import configured, Field, resource, String
+from dagster import configured, Field, resource, StringSource
 from dagster.core.execution.context.init import InitResourceContext
 from google.auth.transport.requests import AuthorizedSession
 
@@ -16,7 +16,7 @@ class Sam:
 
     def make_snapshot_public(self, snapshot_id: str) -> None:
         response = self._session.put(
-            self._api_url(f'datasnapshot/{snapshot_id}/policies/reader/public'),
+            self._api_url(f'api/resources/v1/datasnapshot/{snapshot_id}/policies/reader/public'),
             data="true",  # telling the endpoint to set the flag to true
         )
 
@@ -34,7 +34,7 @@ class Sam:
 
 
 @resource({
-    "api_url": Field(String)
+    "api_url": Field(StringSource)
 })
 def sam(init_context: InitResourceContext) -> Sam:
     return Sam(base_url=init_context.resource_config['api_url'])
@@ -43,7 +43,7 @@ def sam(init_context: InitResourceContext) -> Sam:
 @configured(sam)
 def prod_sam_client(_config: DagsterConfigDict) -> DagsterConfigDict:
     return {
-        'api_url': 'https://sam.dsde-prod.broadinstitute.org/api/resources/v1'
+        'api_url': {'env': 'SAM_URL'}
     }
 
 
