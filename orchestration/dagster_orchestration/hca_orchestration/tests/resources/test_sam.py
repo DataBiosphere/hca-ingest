@@ -18,7 +18,7 @@ class SamResourceTestCase(unittest.TestCase):
 
     def test_make_snapshot_public_hits_expected_url(self):
         with initialize_resource(prod_sam_client) as client_instance:
-            with patch.object(client_instance, '_session') as mock_authorized_session:
+            with patch('hca_orchestration.resources.sam.Sam._session') as mock_authorized_session:
                 client_instance.make_snapshot_public('fake-snapshot-id')
                 mock_authorized_session.put.assert_called_once_with(
                     StringEndingWith('datasnapshot/fake-snapshot-id/policies/reader/public'),
