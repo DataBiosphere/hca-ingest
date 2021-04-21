@@ -36,4 +36,4 @@ test_mode = ModeDefinition(
     mode_defs=[prod_mode, local_mode, test_mode]
 )
 def cut_snapshot() -> None:
-    make_snapshot_public(create_snapshot().id)
+    make_snapshot_public(create_snapshot())

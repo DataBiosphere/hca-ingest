@@ -1,7 +1,9 @@
 import unittest
 from unittest.mock import patch
+import uuid
 
 from dagster import ModeDefinition, execute_solid
+from data_repo_client import SnapshotModel
 
 from hca_manage.manage import JobId
 from hca_orchestration.resources.data_repo import noop_data_repo_client
@@ -43,14 +45,18 @@ class CreateSnapshotSolidsTestCase(unittest.TestCase):
                 "sam_client": noop_sam_client,
             }
         )
+        # SnapshotModel has VERY strict restrictions on valid IDs,
+        # so we need to generate an actual UUID here for it to let us
+        # create an instance.
+        snapshot_id = str(uuid.uuid4())
 
         with patch('hca_orchestration.resources.sam.NoopSamClient.make_snapshot_public') as mock_make_public:
             result = execute_solid(
                 make_snapshot_public,
                 run_config={},
                 input_values={
-                    'snapshot_id': '12345',
+                    'snapshot_info': SnapshotModel(id=snapshot_id),
                 },
                 mode_def=test_mode)
             self.assertTrue(result.success)
-            mock_make_public.assert_called_once_with('12345')
+            mock_make_public.assert_called_once_with(snapshot_id)

@@ -43,5 +43,5 @@ def create_snapshot() -> SnapshotModel:
 @solid(
     required_resource_keys={'sam_client'}
 )
-def make_snapshot_public(context: AbstractComputeExecutionContext, snapshot_id: str) -> None:
-    context.resources.sam_client.make_snapshot_public(snapshot_id)
+def make_snapshot_public(context: AbstractComputeExecutionContext, snapshot_info: SnapshotModel) -> None:
+    context.resources.sam_client.make_snapshot_public(snapshot_info.id)
