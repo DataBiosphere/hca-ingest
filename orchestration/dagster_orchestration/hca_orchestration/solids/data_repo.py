@@ -22,6 +22,8 @@ def base_wait_for_job_completion(context: AbstractComputeExecutionContext, job_i
     while time_waited < max_wait_time:
         job_info = context.resources.data_repo_client.retrieve_job(job_id)
         if job_info.completed:
+            if job_info.job_status == "failed":
+                raise Failure(f"Job ID {job_id} did not complete successfully.")
             return job_id
 
         time.sleep(context.solid_config['poll_interval_seconds'])

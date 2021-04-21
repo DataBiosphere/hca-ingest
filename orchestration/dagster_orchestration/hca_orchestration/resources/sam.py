@@ -1,5 +1,4 @@
 from urllib.parse import urljoin
-from cached_property import cached_property
 from dataclasses import dataclass
 
 from dagster import configured, Field, resource, StringSource
@@ -15,7 +14,7 @@ class Sam:
     base_url: str
 
     def make_snapshot_public(self, snapshot_id: str) -> None:
-        response = self._session.put(
+        response = self._session().put(
             self._api_url(f'api/resources/v1/datasnapshot/{snapshot_id}/policies/reader/public'),
             data="true",  # telling the endpoint to set the flag to true
         )
@@ -28,7 +27,6 @@ class Sam:
     def _api_url(self, url_part: str) -> str:
         return urljoin(self.base_url, url_part)
 
-    @cached_property
     def _session(self) -> AuthorizedSession:
         return authorized_session()
 

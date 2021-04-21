@@ -2,7 +2,7 @@ import os
 
 from dagster import ModeDefinition, pipeline
 from dagster.core.execution.context.system import HookContext
-from dagster_slack import slack_on_success
+from dagster_slack import slack_on_failure, slack_on_success
 
 from hca_orchestration.solids.create_snapshot import get_completed_snapshot_info, make_snapshot_public, submit_snapshot_job
 from hca_orchestration.solids.data_repo import wait_for_job_completion
@@ -45,6 +45,13 @@ def message_for_snapshot_start(context: HookContext) -> str:
     return f"Cutting a snapshot for dataset {context.solid_config['dataset_name']}."
 
 
+def message_for_job_failed(context: HookContext) -> str:
+    return f"""
+        FAILED to cut a snapshot for dataset {context.solid_config['dataset_name']}!
+        Failed Data Repo Job ID: {context.solid.input_dict['job_id']}"
+    """
+
+
 def message_for_snapshot_done(context: HookContext) -> str:
     return f"""
         Snapshot for dataset {context.solid_config['dataset_name']} complete.
@@ -56,9 +63,18 @@ def message_for_snapshot_done(context: HookContext) -> str:
     mode_defs=[prod_mode, local_mode, test_mode]
 )
 def cut_snapshot() -> None:
-    snapshot_job_id = submit_snapshot_job().with_hooks(hook_defs={
-        slack_on_success(os.environ.get("SLACK_NOTIFICATIONS_CHANNEL"), message_for_snapshot_start)
+    slack_channel = os.environ.get("SLACK_NOTIFICATIONS_CHANNEL")
+    hooked_submit_snapshot_job = submit_snapshot_job.with_hooks({
+        slack_on_success(slack_channel, message_for_snapshot_start)
     })
-    make_snapshot_public(get_completed_snapshot_info(wait_for_job_completion(snapshot_job_id))).with_hooks(hook_defs={
-        slack_on_success(os.environ.get("SLACK_NOTIFICATIONS_CHANNEL"), message_for_snapshot_done)
+    hooked_make_snapshot_public = make_snapshot_public.with_hooks({
+        slack_on_success(slack_channel, message_for_snapshot_done)
     })
+    hooked_wait_for_job_completion = wait_for_job_completion.with_hooks({
+        slack_on_failure(slack_channel, message_for_job_failed)
+    })
+
+    hooked_make_snapshot_public(
+        get_completed_snapshot_info(
+            hooked_wait_for_job_completion(
+                hooked_submit_snapshot_job())))
