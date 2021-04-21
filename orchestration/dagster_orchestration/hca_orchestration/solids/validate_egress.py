@@ -1,25 +1,14 @@
-from dagster import configured, InputDefinition, solid, String, StringSource, TypeCheckContext
+from dagster import configured, solid, String, StringSource
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
 from hca_manage.manage import ProblemCount
 from hca_orchestration.support.hca_manage import hca_manage_from_solid_context
 from hca_orchestration.support.schemas import HCA_MANAGE_SCHEMA
-from hca_orchestration.support.typing import DagsterConfigDict, wrap_as_dagster_type
-
-
-def problem_count_typecheck(_: TypeCheckContext, value: object) -> bool:
-    return isinstance(value, ProblemCount)
-
-
-DagsterProblemCount = wrap_as_dagster_type(
-    ProblemCount,
-    description="A simple named tuple to represent the different types of issues "
-                "present from the post process validation.",
-)
+from hca_orchestration.support.typing import DagsterConfigDict
 
 
 @solid(required_resource_keys={'data_repo_client'}, config_schema=HCA_MANAGE_SCHEMA)
-def base_post_import_validate(context: AbstractComputeExecutionContext) -> DagsterProblemCount:
+def base_post_import_validate(context: AbstractComputeExecutionContext) -> ProblemCount:
     """
     Checks if the target dataset has any rows with duplicate IDs or null file references.
     """
@@ -39,7 +28,6 @@ def post_import_validate(config: DagsterConfigDict) -> DagsterConfigDict:
 
 @solid(
     required_resource_keys={"slack"},
-    input_defs=[InputDefinition("validation_results", DagsterProblemCount)],
     config_schema={
         "gcp_env": StringSource,
         "dataset_name": String,

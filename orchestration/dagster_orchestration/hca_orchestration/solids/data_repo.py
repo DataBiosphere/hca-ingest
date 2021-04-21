@@ -4,9 +4,7 @@ from dagster import configured, Failure, solid, Int
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
 from hca_manage.manage import JobId
-from hca_orchestration.support.typing import DagsterConfigDict, wrap_as_dagster_type
-
-DagsterJobId = wrap_as_dagster_type(JobId)
+from hca_orchestration.support.typing import DagsterConfigDict
 
 
 @solid(
@@ -16,7 +14,7 @@ DagsterJobId = wrap_as_dagster_type(JobId)
         'poll_interval_seconds': Int,
     }
 )
-def base_wait_for_job_completion(context: AbstractComputeExecutionContext, job_id: DagsterJobId) -> JobId:
+def base_wait_for_job_completion(context: AbstractComputeExecutionContext, job_id: JobId) -> JobId:
     time_waited = 0
 
     max_wait_time = context.solid_config['max_wait_time_seconds']

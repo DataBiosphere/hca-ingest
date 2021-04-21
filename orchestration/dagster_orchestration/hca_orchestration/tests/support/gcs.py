@@ -1,6 +1,6 @@
 import base64
 import re
-from typing import AnyStr, cast, Optional, TypedDict, Union
+from typing import cast, Optional, TypedDict, Union
 from unittest.mock import create_autospec
 
 from google.cloud import storage

@@ -4,7 +4,7 @@ from dagster.core.execution.context.compute import AbstractComputeExecutionConte
 from data_repo_client import SnapshotModel
 
 from hca_manage.manage import JobId
-from hca_orchestration.solids.data_repo import DagsterJobId, wait_for_job_completion
+from hca_orchestration.solids.data_repo import wait_for_job_completion
 from hca_orchestration.support.hca_manage import hca_manage_from_solid_context
 from hca_orchestration.support.schemas import HCA_MANAGE_SCHEMA
 
@@ -25,18 +25,18 @@ def submit_snapshot_job(context: AbstractComputeExecutionContext) -> JobId:
 @solid(
     required_resource_keys={'data_repo_client'}
 )
-def get_completed_snapshot_info(context: AbstractComputeExecutionContext, job_id: DagsterJobId) -> SnapshotModel:
+def get_completed_snapshot_info(context: AbstractComputeExecutionContext, job_id: JobId) -> SnapshotModel:
     return context.resources.data_repo_client.retrieve_job_result(job_id)
 
 
 @composite_solid(
-    required_resource_keys={'data_repo_client'},
     config_schema={
         **HCA_MANAGE_SCHEMA,
         'qualifier': Noneable(String),
-    }
+    },
+    config_fn=lambda composite_config: {'submit_snapshot_job': {'config': composite_config}}
 )
-def create_snapshot(context: AbstractComputeExecutionContext) -> SnapshotModel:
+def create_snapshot() -> SnapshotModel:
     return get_completed_snapshot_info(wait_for_job_completion(submit_snapshot_job()))
 
 

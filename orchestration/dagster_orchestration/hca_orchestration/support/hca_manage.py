@@ -1,3 +1,9 @@
+"""
+Utilities for the hca_manage class can go here.
+
+This file shouldn't last very long once we're done refactoring HcaManage.
+After that, we should redesign it to be used as a resource.
+"""
 from hca_manage.manage import HcaManage
 
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
