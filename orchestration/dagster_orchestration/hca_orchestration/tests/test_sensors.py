@@ -12,7 +12,7 @@ from argo.workflows.client.models import V1alpha1Arguments, V1alpha1Parameter, V
 
 from hca_orchestration.contrib.argo_workflows import ExtendedArgoWorkflow, generate_argo_archived_workflows_client
 from hca_orchestration.sensors import ArgoHcaImportCompletionSensor
-from hca_orchestration.tests.support.mock_workflows import mock_argo_workflow
+from hca_orchestration.tests.support.mock_workflows import mock_argo_workflow, extend_workflow
 
 T = TypeVar('T')
 
@@ -21,10 +21,6 @@ T = TypeVar('T')
 def generator(iterable: Iterable[T]) -> Generator[T, None, None]:
     for obj in iterable:
         yield obj
-
-
-def extend_workflow(workflow: V1alpha1Workflow) -> ExtendedArgoWorkflow:
-    return ExtendedArgoWorkflow(workflow, argo_url='https://nonexistentsite.test', access_token='token')
 
 
 class TestArgoWorkflowsClient(unittest.TestCase):
