@@ -1,7 +1,7 @@
 import unittest
 
 from unittest.mock import MagicMock, patch, call
-from typing import Generator, TypeVar, Optional
+from typing import Generator, TypeVar, Optional, Iterator
 from collections.abc import Iterable
 
 from hca_orchestration.contrib.argo_workflows import ExtendedArgoWorkflow, generate_argo_archived_workflows_client, \
@@ -132,7 +132,7 @@ class ArgoArchivedWorkflowsClientTestCase(unittest.TestCase):
                 "page4": page_four_response
             }[list_options_continue]
 
-            list_results = list(self.client._pull_paginated_results(get_page()))
+            list_results: list(Iterator[V1alpha1Workflow]) = list(self.client._pull_paginated_results(get_page()))
             self.assertEqual(list_results,
                              workflows_on_page_one +
                              workflows_on_page_two +
