@@ -125,24 +125,27 @@ class ArgoArchivedWorkflowsClientTestCase(unittest.TestCase):
                                                                None)
 
         def get_page(list_options_continue=None):
-            {
+            page_response = {
                 None: page_one_response,
                 "page2": page_two_response,
                 "page3": page_three_response,
                 "page4": page_four_response
             }[list_options_continue]
+            return page_response
 
-            list_results: list[Iterator[V1alpha1Workflow]] = list(self.client._pull_paginated_results(get_page()))
+        with patch('argo.workflows.client.ArchivedWorkflowServiceApi.list_archived_workflows',
+                   side_effect=get_page) as mock_list_archived_workflows:
+            list_results = list(self.client._pull_paginated_results(mock_list_archived_workflows))
             self.assertEqual(list_results,
                              workflows_on_page_one +
                              workflows_on_page_two +
                              workflows_on_page_three +
                              workflows_on_page_four)
-            self.assertEqual(list_results.call_count, 4)
-            list_results.assert_has_calls([call(),
-                                           call(list_options_continue="page2"),
-                                           call(list_options_continue="page3"),
-                                           call(list_options_continue="page4")])
+            self.assertEqual(mock_list_archived_workflows.call_count, 4)
+            mock_list_archived_workflows.assert_has_calls([call(),
+                                                           call(list_options_continue="page2"),
+                                                           call(list_options_continue="page3"),
+                                                           call(list_options_continue="page4")])
 
     def test_inflate_one_workflow_one_call(self):
         mock_inflated_workflow = mock_argo_workflow('import-hca-total-abcd', 'abc234uid', 'Succeeded', params={
