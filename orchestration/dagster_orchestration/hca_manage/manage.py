@@ -220,8 +220,9 @@ class HcaManage:
     def snapshot_name(
         self,
         qualifier: Optional[str] = None,
-        snapshot_date: date = datetime.today().date()
+        snapshot_date: Optional[date] = None,
     ) -> str:
+        snapshot_date = snapshot_date or datetime.today().date()
         date_stamp = str(snapshot_date).replace("-", "")
         if qualifier:
             # prepend an underscore if this string is present
@@ -242,8 +243,9 @@ class HcaManage:
     def submit_snapshot_request(
         self,
         qualifier: Optional[str] = None,
-        snapshot_date: date = datetime.today().date(),
+        snapshot_date: Optional[date] = None,
     ) -> JobId:
+        snapshot_date = snapshot_date or datetime.today().date()
         return self.submit_snapshot_request_with_name(self.snapshot_name(qualifier, snapshot_date))
 
     def submit_snapshot_request_with_name(self, snapshot_name: str) -> JobId:
