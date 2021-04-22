@@ -1,8 +1,7 @@
 from dagster import configured, solid, String, StringSource
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
-from hca_manage.manage import ProblemCount
-from hca_orchestration.support.hca_manage import hca_manage_from_solid_context
+from hca_manage.manage import HcaManage, ProblemCount
 from hca_orchestration.support.schemas import HCA_MANAGE_SCHEMA
 from hca_orchestration.support.typing import DagsterConfigDict
 
@@ -12,8 +11,12 @@ def base_post_import_validate(context: AbstractComputeExecutionContext) -> Probl
     """
     Checks if the target dataset has any rows with duplicate IDs or null file references.
     """
-    validator = hca_manage_from_solid_context(context)
-    return validator.check_for_all()
+    return HcaManage(
+        environment=context.solid_config["gcp_env"],
+        project=context.solid_config["google_project_name"],
+        dataset=context.solid_config["dataset_name"],
+        data_repo_client=context.resources.data_repo_client
+    ).check_for_all()
 
 
 # sets up default config settings to minimize pipeline boilerplate

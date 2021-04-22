@@ -8,6 +8,7 @@ env: &envConfig
   HCA_KUBERNETES_SERVICE_ACCOUNT: monster-dagster
   TRANSFORM_PIPELINE_IMAGE: us.gcr.io/broad-dsp-gcr-public/hca-transformation-pipeline
   TRANSFORM_PIPELINE_IMAGE_VERSION: latest
+  DAGIT_BASE_URL: https://localhost:3000
 
 dagit:
   env: *envConfig

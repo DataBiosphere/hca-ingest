@@ -19,7 +19,7 @@ class CreateSnapshotSolidsTestCase(unittest.TestCase):
                 "data_repo_client": noop_data_repo_client,
             }
         )
-        with patch('hca_manage.manage.HcaManage.submit_snapshot_request', return_value=JobId("abcde")) as submit_snap:
+        with patch('hca_manage.manage.HcaManage.submit_snapshot_request_with_name', return_value=JobId("abcde")) as submit_snap:
             result = execute_solid(
                 submit_snapshot_job,
                 run_config={
@@ -29,6 +29,7 @@ class CreateSnapshotSolidsTestCase(unittest.TestCase):
                                 'gcp_env': 'dev',
                                 'dataset_name': 'badset',
                                 'google_project_name': 'schmloogle',
+                                'snapshot_name': 'namityname',
                             }
                         }
                     }
@@ -36,7 +37,7 @@ class CreateSnapshotSolidsTestCase(unittest.TestCase):
                 mode_def=test_mode)
             self.assertTrue(result.success)
             self.assertEqual(result.output_value(), JobId('abcde'))
-            submit_snap.assert_called_once_with(None)
+            submit_snap.assert_called_once_with('namityname')
 
     def test_make_snapshot_public_hits_correct_sam_path(self):
         test_mode = ModeDefinition(
@@ -55,7 +56,7 @@ class CreateSnapshotSolidsTestCase(unittest.TestCase):
                 make_snapshot_public,
                 run_config={},
                 input_values={
-                    'snapshot_info': SnapshotModel(id=snapshot_id),
+                    'snapshot_info': SnapshotModel(id=snapshot_id, name='steve'),
                 },
                 mode_def=test_mode)
             self.assertTrue(result.success)

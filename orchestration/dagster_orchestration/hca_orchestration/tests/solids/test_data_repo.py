@@ -72,7 +72,7 @@ class WaitForJobCompletionTestCase(unittest.TestCase):
 
         with patch('hca_orchestration.resources.data_repo.NoopDataRepoClient.retrieve_job',
                    return_value=mock_job_status(completed=True, successful=False)) as mocked_retrieve_job:
-            with self.assertRaisesRegex(Failure, "Job ID steve-was-here did not complete successfully."):
+            with self.assertRaisesRegex(Failure, "Job did not complete successfully."):
                 result = execute_solid(
                     base_wait_for_job_completion,
                     run_config=solid_config,
