@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from dagster import configured, resource, StringSource, Field
+from dagster import configured, resource, String, StringSource, Field
 from dagster.core.execution.context.init import InitResourceContext
 
 from data_repo_client import ApiClient, Configuration, RepositoryApi
@@ -49,3 +49,17 @@ class NoopDataRepoClient:
 @resource
 def noop_data_repo_client(init_context: InitResourceContext) -> NoopDataRepoClient:
     return NoopDataRepoClient()
+
+
+@dataclass
+class SnapshotCreationConfig:
+    dataset_name: str
+    snapshot_name: str
+
+
+@resource({
+    'dataset_name': String,
+    'snapshot_name': String,
+})
+def snapshot_creation_config(init_context: InitResourceContext) -> SnapshotCreationConfig:
+    return SnapshotCreationConfig(**init_context.resource_config)

@@ -2,11 +2,17 @@ from dagster import configured, solid, String, StringSource
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
 from hca_manage.manage import HcaManage, ProblemCount
-from hca_orchestration.support.schemas import HCA_MANAGE_SCHEMA
 from hca_orchestration.support.typing import DagsterConfigDict
 
 
-@solid(required_resource_keys={'data_repo_client'}, config_schema=HCA_MANAGE_SCHEMA)
+@solid(
+    required_resource_keys={'data_repo_client'},
+    config_schema={
+        "gcp_env": StringSource,
+        "dataset_name": String,
+        "google_project_name": StringSource,
+    }
+)
 def base_post_import_validate(context: AbstractComputeExecutionContext) -> ProblemCount:
     """
     Checks if the target dataset has any rows with duplicate IDs or null file references.
