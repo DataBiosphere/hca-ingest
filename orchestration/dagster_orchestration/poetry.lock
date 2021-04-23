@@ -204,7 +204,7 @@ python-dateutil = "*"
 
 [[package]]
 name = "dagit"
-version = "0.11.5"
+version = "0.11.6"
 description = "Web UI for dagster."
 category = "dev"
 optional = false
@@ -212,8 +212,8 @@ python-versions = "*"
 
 [package.dependencies]
 click = ">=7.0"
-dagster = "0.11.5"
-dagster-graphql = "0.11.5"
+dagster = "0.11.6"
+dagster-graphql = "0.11.6"
 flask = ">=0.12.4"
 flask-cors = ">=3.0.6"
 Flask-GraphQL = ">=2.0.0"
@@ -229,7 +229,7 @@ watchdog = ">=0.8.3"
 
 [[package]]
 name = "dagster"
-version = "0.11.5"
+version = "0.11.6"
 description = "A data orchestrator for machine learning, analytics, and ETL."
 category = "main"
 optional = false
@@ -264,7 +264,7 @@ test = ["astroid (>=2.3.3,<2.5)", "black (==20.8b1)", "coverage (==5.3)", "docke
 
 [[package]]
 name = "dagster-graphql"
-version = "0.11.5"
+version = "0.11.6"
 description = "The GraphQL frontend to python dagster."
 category = "main"
 optional = false
@@ -278,7 +278,7 @@ requests = "*"
 
 [[package]]
 name = "dagster-k8s"
-version = "0.11.5"
+version = "0.11.6"
 description = "A Dagster integration for k8s"
 category = "main"
 optional = false
@@ -291,7 +291,7 @@ kubernetes = "*"
 
 [[package]]
 name = "dagster-postgres"
-version = "0.11.5"
+version = "0.11.6"
 description = "A Dagster integration for postgres"
 category = "main"
 optional = false
@@ -303,7 +303,7 @@ psycopg2-binary = "*"
 
 [[package]]
 name = "dagster-slack"
-version = "0.11.5"
+version = "0.11.6"
 description = "A Slack client resource for posting to Slack"
 category = "main"
 optional = false
@@ -316,7 +316,7 @@ slackclient = ">=2,<3"
 
 [[package]]
 name = "data-repo-client"
-version = "1.27.1"
+version = "1.64.0"
 description = "Data Repository API"
 category = "main"
 optional = false
@@ -1578,7 +1578,7 @@ watchdog = ["watchdog"]
 
 [[package]]
 name = "wmctrl"
-version = "0.3"
+version = "0.4"
 description = "A tool to programmatically control windows inside X"
 category = "dev"
 optional = false
@@ -1778,32 +1778,32 @@ croniter = [
     {file = "croniter-1.0.12.tar.gz", hash = "sha256:3603ef0d60fc6df98ce356c01529de90b06a002379b9f5e9eae981fb9c1fd936"},
 ]
 dagit = [
-    {file = "dagit-0.11.5-py3-none-any.whl", hash = "sha256:aa3a86c14d8e2df9d77e0490317b31bc6f55cbaa7a95a095cc095e20c10bfd52"},
-    {file = "dagit-0.11.5.tar.gz", hash = "sha256:f218c3e7cf1db829217fd13525fb6b6e1231ea1387f91ed5d849579eab023b2e"},
+    {file = "dagit-0.11.6-py3-none-any.whl", hash = "sha256:1bdd2398b207992300f1c02825ae2ff46569f365879e5450e7b908334fdca61a"},
+    {file = "dagit-0.11.6.tar.gz", hash = "sha256:7ace57380f88484836341623e241645e050add5d94b996ca4630d2736dca2c3a"},
 ]
 dagster = [
-    {file = "dagster-0.11.5-py3-none-any.whl", hash = "sha256:493e4b69b85adb7742d0a251814dc28adb27854be5402d9eefdc13d25d9ee0a0"},
-    {file = "dagster-0.11.5.tar.gz", hash = "sha256:0bfb7b32fa2a98e5de827650b585aa3eadfae981873409bf0b0b5aa70da5510d"},
+    {file = "dagster-0.11.6-py3-none-any.whl", hash = "sha256:852e33f9d614472e1d8f40995db3c23547eea4f4c66cd99f5e0797300478949f"},
+    {file = "dagster-0.11.6.tar.gz", hash = "sha256:a4971b66b8fce7f083d707b5d239bda548c792688dc34f582c6708eb1cae0747"},
 ]
 dagster-graphql = [
-    {file = "dagster-graphql-0.11.5.tar.gz", hash = "sha256:6de09430600f45b230a19da6baf43eb01167ed13ab280594c07250a1a01d6d7d"},
-    {file = "dagster_graphql-0.11.5-py3-none-any.whl", hash = "sha256:5bbd9b89870f627897ad6bf8a448f73c5bbe33f500d29eb3291e5ab7c8c0ccf0"},
+    {file = "dagster-graphql-0.11.6.tar.gz", hash = "sha256:79b6f2ddcc90643bc5c2e8d0ec77edadded73975202c200ce1c5c4fdb2afb347"},
+    {file = "dagster_graphql-0.11.6-py3-none-any.whl", hash = "sha256:69f7bf833408726adcb115acd35735e61e82267a0115e994a9e2ae7eddd54e11"},
 ]
 dagster-k8s = [
-    {file = "dagster-k8s-0.11.5.tar.gz", hash = "sha256:ef50501e0ccdd0a82442e45fe3e76fb388081b1c3a35afc01d42102f990f5bcf"},
-    {file = "dagster_k8s-0.11.5-py3-none-any.whl", hash = "sha256:53734d5647401509ea1bc4cdaff18f4a1d4acbb485bf61aacddb725d61c51320"},
+    {file = "dagster-k8s-0.11.6.tar.gz", hash = "sha256:a441e133c8d10f07a8c3a69cc83c19353ee60be9d7500c038e3b705f47d8f939"},
+    {file = "dagster_k8s-0.11.6-py3-none-any.whl", hash = "sha256:c36e1b478c7d02bb3501f40c69296e79e4a468b834ada380e3c14770b9163eaa"},
 ]
 dagster-postgres = [
-    {file = "dagster-postgres-0.11.5.tar.gz", hash = "sha256:c68d50cd07bb4a56d9f0b3101cec2c2e69ddcbc5d934afd0fe07f469a59e87fd"},
-    {file = "dagster_postgres-0.11.5-py3-none-any.whl", hash = "sha256:499d33f32211c98d2eef8c9fb74ffc2ca2a002181060c8aed6dba39c9f3e7078"},
+    {file = "dagster-postgres-0.11.6.tar.gz", hash = "sha256:3d063c667228a076eb68d835cfba3c5e931f9c93277190b2a2990409c2123895"},
+    {file = "dagster_postgres-0.11.6-py3-none-any.whl", hash = "sha256:7fb974a76b06f13dd11c2c9d18df9a26c71d8dbb7ac4ed49bb47bfd6b2507f07"},
 ]
 dagster-slack = [
-    {file = "dagster-slack-0.11.5.tar.gz", hash = "sha256:2fe041aa5e7529eb682fdcf9c786cac6c140da8f7d11fcf99e51a62555dbd9e2"},
-    {file = "dagster_slack-0.11.5-py3-none-any.whl", hash = "sha256:4029068febab9257148b8b2507dfcfe18fd51c404000e12e2d177e599cabd9e6"},
+    {file = "dagster-slack-0.11.6.tar.gz", hash = "sha256:2c130e301277f212e3e89761d93203df12c3aa4149d4f4c70ea45d41fcde68c3"},
+    {file = "dagster_slack-0.11.6-py3-none-any.whl", hash = "sha256:b84d338668867a9ede93f0edb021eba317ef9d3b4a68d1249229b59643b46ada"},
 ]
 data-repo-client = [
-    {file = "data-repo-client-1.27.1.tar.gz", hash = "sha256:5c3151a2ad92b0133c182714152db2b3f329b96266a222a8fa1d4c8da0e2474a"},
-    {file = "data_repo_client-1.27.1-py3-none-any.whl", hash = "sha256:7d2be60779b0e8cac50012b45bab9a1813bc980046e03c70a19aa071f6646168"},
+    {file = "data-repo-client-1.64.0.tar.gz", hash = "sha256:a5b2e224bda51a5023b2a846ac6a6f16dd6548488d3fd4392f4cd9bd289bd728"},
+    {file = "data_repo_client-1.64.0-py3-none-any.whl", hash = "sha256:b52c737ab3fb3f4aacba065bd558590b2c8191054a93f09c889846982343dc53"},
 ]
 defusedxml = [
     {file = "defusedxml-0.7.1-py2.py3-none-any.whl", hash = "sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61"},
@@ -2689,7 +2689,7 @@ werkzeug = [
     {file = "Werkzeug-1.0.1.tar.gz", hash = "sha256:6c80b1e5ad3665290ea39320b91e1be1e0d5f60652b964a3070216de83d2e47c"},
 ]
 wmctrl = [
-    {file = "wmctrl-0.3.tar.gz", hash = "sha256:d806f65ac1554366b6e31d29d7be2e8893996c0acbb2824bbf2b1f49cf628a13"},
+    {file = "wmctrl-0.4.tar.gz", hash = "sha256:66cbff72b0ca06a22ec3883ac3a4d7c41078bdae4fb7310f52951769b10e14e0"},
 ]
 yarl = [
     {file = "yarl-1.6.3-cp36-cp36m-macosx_10_14_x86_64.whl", hash = "sha256:0355a701b3998dcd832d0dc47cc5dedf3874f966ac7f870e0f3a6788d802d434"},
