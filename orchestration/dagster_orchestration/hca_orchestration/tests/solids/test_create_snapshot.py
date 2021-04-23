@@ -3,10 +3,9 @@ from unittest.mock import patch
 import uuid
 
 from dagster import ModeDefinition, execute_solid
-from data_repo_client import SnapshotModel
 
 from hca_manage.manage import JobId
-from hca_orchestration.resources.data_repo import noop_data_repo_client
+from hca_orchestration.resources.data_repo import noop_data_repo_client, snapshot_creation_config
 from hca_orchestration.resources.sam import noop_sam_client
 from hca_orchestration.solids.create_snapshot import make_snapshot_public, submit_snapshot_job
 
@@ -17,24 +16,24 @@ class CreateSnapshotSolidsTestCase(unittest.TestCase):
             name="test",
             resource_defs={
                 "data_repo_client": noop_data_repo_client,
+                "snapshot_config": snapshot_creation_config,
             }
         )
         with patch('hca_manage.manage.HcaManage.submit_snapshot_request_with_name', return_value=JobId("abcde")) as submit_snap:
             result = execute_solid(
                 submit_snapshot_job,
+                mode_def=test_mode,
                 run_config={
-                    'solids': {
-                        'submit_snapshot_job': {
+                    'resources': {
+                        'snapshot_config': {
                             'config': {
-                                'gcp_env': 'dev',
                                 'dataset_name': 'badset',
-                                'google_project_name': 'schmloogle',
-                                'snapshot_name': 'namityname',
+                                'snapshot_name': 'namityname'
                             }
                         }
                     }
                 },
-                mode_def=test_mode)
+            )
             self.assertTrue(result.success)
             self.assertEqual(result.output_value(), JobId('abcde'))
             submit_snap.assert_called_once_with('namityname')
@@ -46,18 +45,14 @@ class CreateSnapshotSolidsTestCase(unittest.TestCase):
                 "sam_client": noop_sam_client,
             }
         )
-        # SnapshotModel has VERY strict restrictions on valid IDs,
-        # so we need to generate an actual UUID here for it to let us
-        # create an instance.
-        snapshot_id = str(uuid.uuid4())
 
         with patch('hca_orchestration.resources.sam.NoopSamClient.make_snapshot_public') as mock_make_public:
             result = execute_solid(
                 make_snapshot_public,
                 run_config={},
                 input_values={
-                    'snapshot_info': SnapshotModel(id=snapshot_id, name='steve'),
+                    'snapshot_id': 'steve',
                 },
                 mode_def=test_mode)
             self.assertTrue(result.success)
-            mock_make_public.assert_called_once_with(snapshot_id)
+            mock_make_public.assert_called_once_with('steve')

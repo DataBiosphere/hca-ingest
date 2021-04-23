@@ -1,6 +1,6 @@
 from typing import Iterator
 
-from dagster import AssetMaterialization, configured, EventMetadataEntry, Output, solid, StringSource
+from dagster import AssetMaterialization, configured, EventMetadataEntry, Output, OutputDefinition, solid, StringSource
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
 from hca_manage.main import data_repo_profile_ids
@@ -36,6 +36,9 @@ def submit_snapshot_job(_config: DagsterConfigDict) -> DagsterConfigDict:
 
 @solid(
     required_resource_keys={'data_repo_client', 'snapshot_config'},
+    output_defs=[
+        OutputDefinition(name='result', dagster_type=str)
+    ],
 )
 def get_completed_snapshot_info(context: AbstractComputeExecutionContext, job_id: JobId) -> Iterator[Output]:
     # retrieve_job_result returns a raw dict (since it can return many kinds of data), so we need to make
