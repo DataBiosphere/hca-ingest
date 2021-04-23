@@ -9,7 +9,7 @@ from hca_orchestration.pipelines.validate_egress import test_mode
 from hca_orchestration.solids.validate_egress import base_post_import_validate,\
     base_notify_slack_of_egress_validation_results
 
-from .support.matchers import StringContaining
+from hca_orchestration.tests.support.matchers import StringContaining
 
 
 class PostImportValidateTestCase(unittest.TestCase):

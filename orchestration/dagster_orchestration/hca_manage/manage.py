@@ -1,6 +1,6 @@
 import csv
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, date
 import logging
 import os
 import uuid
@@ -12,6 +12,7 @@ from data_repo_client import RepositoryApi, DataDeletionRequest, SnapshotRequest
 import google.auth
 import google.auth.credentials
 from google.cloud import bigquery, storage
+
 from hca_orchestration.contrib import google as hca_google
 
 
@@ -27,8 +28,10 @@ class ProblemCount:
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+
 # alias for str to make the return type for jade API calls a little clearer
-JobId = str
+class JobId(str):
+    pass
 
 
 @dataclass
@@ -214,6 +217,19 @@ class HcaManage:
 
         return filepath
 
+    def snapshot_name(
+        self,
+        qualifier: Optional[str] = None,
+        snapshot_date: Optional[date] = None,
+    ) -> str:
+        snapshot_date = snapshot_date or datetime.today().date()
+        date_stamp = str(snapshot_date).replace("-", "")
+        if qualifier:
+            # prepend an underscore if this string is present
+            qualifier = f"_{qualifier}"
+
+        return f"{self.dataset}___{date_stamp}{qualifier}"
+
     # jade interactions
     def get_dataset_id(self) -> str:
         """
@@ -224,17 +240,20 @@ class HcaManage:
         response = self.data_repo_client.enumerate_datasets(filter=self.dataset)
         return response.items[0].id  # type: ignore # data repo client has no type hints, since it's auto-generated
 
-    def submit_snapshot_request(self, qualifier: Optional[str] = None) -> JobId:
+    def submit_snapshot_request(
+        self,
+        qualifier: Optional[str] = None,
+        snapshot_date: Optional[date] = None,
+    ) -> JobId:
+        snapshot_date = snapshot_date or datetime.today().date()
+        return self.submit_snapshot_request_with_name(self.snapshot_name(qualifier, snapshot_date))
+
+    def submit_snapshot_request_with_name(self, snapshot_name: str) -> JobId:
         """
         Submit a snapshot creation request.
         :param qualifier: Optional trailing suffix for the snapshot name
         :return: Job ID of the snapshot creation job
         """
-        date_stamp = str(datetime.today().date()).replace("-", "")
-        if qualifier:
-            # prepend an underscore if this string is present
-            qualifier = f"_{qualifier}"
-        snapshot_name = f"{self.dataset}___{date_stamp}{qualifier}"
 
         snapshot_request = SnapshotRequestModel(
             name=snapshot_name,
@@ -251,7 +270,7 @@ class HcaManage:
         )
 
         logging.info(f"Snapshot creation job id: {response.id}")
-        return response.id  # type: ignore # data repo client has no type hints, since it's auto-generated
+        return JobId(response.id)
 
     def delete_snapshot(self, snapshot_name: Optional[str] = None, snapshot_id: Optional[str] = None) -> JobId:
         """

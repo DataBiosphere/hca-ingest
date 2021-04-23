@@ -1,45 +1,28 @@
-from dagster import configured, DagsterType, InputDefinition, solid, String, StringSource, TypeCheckContext
+from dagster import configured, solid, String, StringSource
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
 from hca_manage.manage import HcaManage, ProblemCount
 from hca_orchestration.support.typing import DagsterConfigDict
 
 
-def problem_count_typecheck(_: TypeCheckContext, value: object) -> bool:
-    return isinstance(value, ProblemCount)
-
-
-DagsterProblemCount: DagsterType = DagsterType(
-    name="DagsterProblemCount",
-    type_check_fn=problem_count_typecheck,
-    description="A simple named tuple to represent the different types of issues "
-                "present from the post process validation.",
-)
-
-
-POST_VALIDATION_SETTINGS_SCHEMA = {
-    "gcp_env": StringSource,
-    "dataset_name": String,
-}
-
-
 @solid(
-    required_resource_keys={"data_repo_client"},
+    required_resource_keys={'data_repo_client'},
     config_schema={
-        **POST_VALIDATION_SETTINGS_SCHEMA,
+        "gcp_env": StringSource,
+        "dataset_name": String,
         "google_project_name": StringSource,
     }
 )
-def base_post_import_validate(context: AbstractComputeExecutionContext) -> DagsterProblemCount:
+def base_post_import_validate(context: AbstractComputeExecutionContext) -> ProblemCount:
     """
     Checks if the target dataset has any rows with duplicate IDs or null file references.
     """
-    validator = HcaManage(
+    return HcaManage(
         environment=context.solid_config["gcp_env"],
         project=context.solid_config["google_project_name"],
         dataset=context.solid_config["dataset_name"],
-        data_repo_client=context.resources.data_repo_client)
-    return validator.check_for_all()
+        data_repo_client=context.resources.data_repo_client
+    ).check_for_all()
 
 
 # sets up default config settings to minimize pipeline boilerplate
@@ -54,9 +37,9 @@ def post_import_validate(config: DagsterConfigDict) -> DagsterConfigDict:
 
 @solid(
     required_resource_keys={"slack"},
-    input_defs=[InputDefinition("validation_results", DagsterProblemCount)],
     config_schema={
-        **POST_VALIDATION_SETTINGS_SCHEMA,
+        "gcp_env": StringSource,
+        "dataset_name": String,
         "channel": StringSource,
         "argo_workflow_id": String
     }
