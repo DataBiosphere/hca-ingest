@@ -15,7 +15,7 @@ def initialize_resource(resource_def: ResourceDefinition, config: DagsterConfigD
         {
             'test_resource': resource_def,
         },
-        DagsterInstance.get(),
+        DagsterInstance.ephemeral(),
         {
             'test_resource': config
         }

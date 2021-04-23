@@ -1,6 +1,5 @@
 import unittest
 from unittest.mock import patch
-import uuid
 
 from dagster import ModeDefinition, execute_solid
 
