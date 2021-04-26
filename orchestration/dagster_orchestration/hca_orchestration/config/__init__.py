@@ -1,7 +1,7 @@
 from pkg_resources import resource_filename
 from typing import Optional
 
-from dagster import configured, ResourceDefinition
+from dagster import configured, Noneable, ResourceDefinition
 from dagster.core.definitions.configurable import ConfigurableDefinition
 
 from hca_orchestration.support.typing import DagsterConfigDict, DagsterSolidConfigSchema
@@ -37,13 +37,18 @@ def preconfigure_for_mode(
     :return: The Dagster object configured with the loaded values.
     """
 
-    # set up a PreconfigurationSchema object for this dagster object, to indicate the fields
-    # we expect to be preconfigured and where to find them
+    # [NOTE]
+    # This line assumes the object is configured with a dict. Other dagster config patterns,
+    # such as a single primitive type, aren't accounted for (but probably shouldn't be used,
+    # since they provide no context for the config setting's meaning/purpose)
     definition_config_keys = dagster_object.config_schema.config_type.fields
+    optional_config_keys = [k for k, v in definition_config_keys.items() if isinstance(v.config_type, Noneable)]
+    required_config_keys = [k for k, v in definition_config_keys.items() if k not in optional_config_keys]
     schema = PreconfigurationSchema(
         name=dagster_object.__name__,
         directory=resource_filename(__name__, config_dir or dagster_object.__name__),
-        keys=(set(definition_config_keys) - set(additional_schema.keys()))
+        required_keys=(set(required_config_keys) - set(additional_schema.keys())),
+        optional_keys=(set(optional_config_keys) - set(additional_schema.keys()))
     )
 
     # we load the config in preconfigure_for_mode instead of in the @configured function to
@@ -52,13 +57,13 @@ def preconfigure_for_mode(
     loaded_config = schema.load_for_mode(mode_name)
 
     @configured(dagster_object, additional_schema)
-    def __dagster_object_config(extra_config: DagsterConfigDict) -> DagsterConfigDict:
+    def __dagster_object_preconfigured(extra_config: DagsterConfigDict) -> DagsterConfigDict:
         return {
             **loaded_config,
             **extra_config,
         }
 
-    return __dagster_object_config
+    return __dagster_object_preconfigured
 
 
 def preconfigure_resource_for_mode(

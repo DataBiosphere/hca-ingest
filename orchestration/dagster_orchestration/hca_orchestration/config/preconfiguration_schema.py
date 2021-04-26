@@ -20,12 +20,15 @@ def load_config(config_path: str) -> Optional[DagsterConfigDict]:
 class PreconfigurationSchema:
     name: str
     directory: str
-    keys: set[str]
+    optional_keys: set[str]
+    required_keys: set[str]
 
+    # raises an error for any missing config keys, records a warning for (and discards) any extra keys
     def validated_config(self, config: DagsterConfigDict) -> DagsterConfigDict:
         keys_present = set(config.keys())
-        missing_keys = self.keys - keys_present
-        extra_keys = keys_present - self.keys
+        permitted_keys = self.required_keys | self.optional_keys
+        missing_keys = self.required_keys - keys_present
+        extra_keys = keys_present - permitted_keys
 
         if any(missing_keys):
             missing_keys_str = ", ".join(key for key in missing_keys)
@@ -44,8 +47,9 @@ class PreconfigurationSchema:
                 )
             )
 
-        return {k: v for k, v in config.items() if k in self.keys}
+        return {k: v for k, v in config.items() if k in permitted_keys}
 
+    # loads a list of config files, returning only those that exist
     def load_files(self, filenames: list[str]) -> list[DagsterConfigDict]:
         configs = [
             load_config(os.path.join(self.directory, config_name))
@@ -60,6 +64,8 @@ class PreconfigurationSchema:
 
         return [config for config in configs if config is not None]
 
+    # loads the global and mode-specific config for the given mode,
+    # and verifies that the loaded config is valid.
     def load_for_mode(self, mode: str) -> DagsterConfigDict:
         configs = self.load_files(['global.yaml', f"{mode}.yaml"])
 
