@@ -3,8 +3,6 @@ from dataclasses import dataclass
 from dagster import resource, String
 from dagster.core.execution.context.init import InitResourceContext
 
-from hca_manage.manage import HcaManage
-
 
 @dataclass
 class SnapshotCreationConfig:
