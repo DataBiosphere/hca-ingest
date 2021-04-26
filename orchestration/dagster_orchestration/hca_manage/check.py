@@ -11,7 +11,7 @@ def run(arguments: Optional[list[str]] = None) -> None:
     parser.add_argument("-V", "--version", action="version", version="%(prog)s " + hca_manage_version)
     parser.add_argument("-e", "--env", help="The Jade environment to target", choices=["dev", "prod"], required=True)
 
-    parser.add_argument("-p", "--project", help="The Jade project to target, defaults to correct project for dev")
+    parser.add_argument("-p", "--project", help="The Jade project to target", required=True)
     parser.add_argument("-d", "--dataset", help="The Jade dataset to target", required=True)
     parser.add_argument("-r", "--remove",
                         help="Remove problematic rows. If flag not set, "
