@@ -7,10 +7,8 @@ from collections.abc import Iterable
 from typing import Generator, TypeVar
 
 from argo.workflows.client import ArchivedWorkflowServiceApi
-from argo.workflows.client.models import V1alpha1Arguments, V1alpha1Parameter, V1alpha1Workflow, V1alpha1WorkflowSpec,\
-    V1alpha1WorkflowStatus, V1ObjectMeta
 
-from hca_orchestration.contrib.argo_workflows import ExtendedArgoWorkflow, generate_argo_archived_workflows_client
+from hca_orchestration.contrib.argo_workflows import generate_argo_archived_workflows_client
 from hca_orchestration.sensors import ArgoHcaImportCompletionSensor
 from hca_orchestration.tests.support.mock_workflows import mock_argo_workflow, extend_workflow
 
@@ -156,4 +154,5 @@ class TestArgoHcaImportCompletionSensor(unittest.TestCase):
         ))
         with patch('hca_orchestration.contrib.argo_workflows.ExtendedArgoWorkflow.inflate', return_value=workflow):
             req = sensor.generate_run_request(workflow)
-            self.assertEqual(req.run_config['solids']['post_import_validate']['config']['dataset_name'], 'snatasnet')
+            self.assertEqual(req.run_config['resources']['hca_dataset_operation_config']
+                             ['config']['dataset_name'], 'snatasnet')

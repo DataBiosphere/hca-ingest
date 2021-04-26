@@ -1,9 +1,9 @@
-solids:
-  post_import_validate:
+resources:
+  hca_dataset_operation_config:
     config:
       dataset_name: hca_aeiou
+solids:
   notify_slack_of_egress_validation_results:
     config:
-      dataset_name: hca_aeiou
       argo_workflow_id: "test_id_123"
 

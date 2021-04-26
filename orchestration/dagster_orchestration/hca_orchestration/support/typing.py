@@ -9,6 +9,7 @@ from dagster.config import ConfigType as DagsterConfigType
 from typing import Literal, TypedDict, Union
 
 
+# dict of config settings for a given instance of a dagster object
 DagsterConfigDict = dict[
     str,
     Union[
@@ -23,6 +24,7 @@ DagsterConfigDict = dict[
     ]
 ]
 
+# dict representing how a solid can be configured
 DagsterSolidConfigSchema = dict[str, DagsterConfigType]
 
 
