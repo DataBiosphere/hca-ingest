@@ -33,9 +33,9 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-dev
         working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
-      - uses: olafurpg/setup-scala@v10
-        with:
-          java-version: graalvm@20.0.0
+      # - uses: olafurpg/setup-scala@v10
+      #   with:
+      #     java-version: graalvm@20.0.0
       # - name: Check Scala formatting
       #   run: sbt scalafmtCheckAll
       # - name: Scala Compile
