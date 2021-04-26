@@ -12,7 +12,7 @@ from argo.workflows.client.models import V1alpha1Arguments, V1alpha1Parameter, V
 
 from hca_orchestration.contrib.argo_workflows import ExtendedArgoWorkflow, generate_argo_archived_workflows_client
 from hca_orchestration.sensors import ArgoHcaImportCompletionSensor
-
+from hca_orchestration.tests.support.mock_workflows import mock_argo_workflow, extend_workflow
 
 T = TypeVar('T')
 
@@ -21,33 +21,6 @@ T = TypeVar('T')
 def generator(iterable: Iterable[T]) -> Generator[T, None, None]:
     for obj in iterable:
         yield obj
-
-
-# the argo workflows api produces this abominable nested set of classes for each workflow,
-# so we build one from simple params here to keep our tests lean
-def mock_argo_workflow(name, uid, status, finished_at=datetime.now(tz=tzlocal()), params={}):
-    return V1alpha1Workflow(
-        metadata=V1ObjectMeta(
-            name=name,
-            uid=uid,
-        ),
-        spec=V1alpha1WorkflowSpec(
-            arguments=V1alpha1Arguments(
-                parameters=[
-                    V1alpha1Parameter(name=k, value=v)
-                    for k, v in params.items()
-                ]
-            )
-        ),
-        status=V1alpha1WorkflowStatus(
-            phase=status,
-            finished_at=finished_at,
-        )
-    )
-
-
-def extend_workflow(workflow: V1alpha1Workflow) -> ExtendedArgoWorkflow:
-    return ExtendedArgoWorkflow(workflow, argo_url='https://nonexistentsite.test', access_token='token')
 
 
 class TestArgoWorkflowsClient(unittest.TestCase):
