@@ -316,7 +316,7 @@ slackclient = ">=2,<3"
 
 [[package]]
 name = "data-repo-client"
-version = "1.64.0"
+version = "1.27.1"
 description = "Data Repository API"
 category = "main"
 optional = false
@@ -1624,7 +1624,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "0e4687a009635fa701c0c5ef73b83b6fdf60a25ec292d9a1a841237e159a787f"
+content-hash = "1bf7424d40e38f19e3701838d1cb1e2dda2f2e98d23520489ff93a5b45340a7c"
 
 [metadata.files]
 aiohttp = [
@@ -1802,8 +1802,8 @@ dagster-slack = [
     {file = "dagster_slack-0.11.6-py3-none-any.whl", hash = "sha256:b84d338668867a9ede93f0edb021eba317ef9d3b4a68d1249229b59643b46ada"},
 ]
 data-repo-client = [
-    {file = "data-repo-client-1.64.0.tar.gz", hash = "sha256:a5b2e224bda51a5023b2a846ac6a6f16dd6548488d3fd4392f4cd9bd289bd728"},
-    {file = "data_repo_client-1.64.0-py3-none-any.whl", hash = "sha256:b52c737ab3fb3f4aacba065bd558590b2c8191054a93f09c889846982343dc53"},
+    {file = "data-repo-client-1.27.1.tar.gz", hash = "sha256:5c3151a2ad92b0133c182714152db2b3f329b96266a222a8fa1d4c8da0e2474a"},
+    {file = "data_repo_client-1.27.1-py3-none-any.whl", hash = "sha256:7d2be60779b0e8cac50012b45bab9a1813bc980046e03c70a19aa071f6646168"},
 ]
 defusedxml = [
     {file = "defusedxml-0.7.1-py2.py3-none-any.whl", hash = "sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61"},

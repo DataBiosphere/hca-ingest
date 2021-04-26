@@ -6,7 +6,7 @@ from typing import NoReturn, Optional
 from data_repo_client import ApiClient, Configuration, RepositoryApi
 
 from hca_manage import __version__ as hca_manage_version
-from .manage import HcaManage, JobId
+from hca_manage.manage import HcaManage, JobId
 from hca_orchestration.contrib.google import default_google_access_token
 
 data_repo_host = {
