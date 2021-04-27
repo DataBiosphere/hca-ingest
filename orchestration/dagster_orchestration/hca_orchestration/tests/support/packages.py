@@ -10,7 +10,7 @@ from typing import ContextManager, Iterator, Optional
 
 def random_valid_package_name(count):
     chars = 'abcdefghijklmnopqrstuvwxyz_'
-    return random.choices(chars, k=count)
+    return ''.join(random.choices(chars, k=count))
 
 
 @dataclass
