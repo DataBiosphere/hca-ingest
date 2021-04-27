@@ -15,6 +15,7 @@ class TempPackage:
     subpackage: str
 
 
+# works as a temporary directory, but with a fixed name
 @contextmanager
 def EphemeralNamedDirectory(dirname: str, parent_directory: str) -> Iterator[str]:
     if dirname == '' or parent_directory == '':

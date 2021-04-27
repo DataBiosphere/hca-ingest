@@ -81,7 +81,7 @@ class PreconfigurationLoaderTestCase(unittest.TestCase):
                 name="foo",
                 package=temp_package.package,
                 optional_keys=set(),
-                required_keys=set()
+                required_keys={'x'},
             )
             with open(os.path.join(temp_package.directory, 'exists.yaml'), 'w') as existing_yaml_io:
                 yaml.dump({'x': 'y'}, existing_yaml_io)
