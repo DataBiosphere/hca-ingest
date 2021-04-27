@@ -53,6 +53,7 @@ def TemporaryPackage(parent_package: str, exact_name: Optional[str] = None) -> I
 
     # make a new temporary subdirectory beneath it
     with temp_dir as temp_package_dir:
+        print(temp_package_dir)
         # put an __init__.py file in the subdir so it's treated as a package
         Path(os.path.join(temp_package_dir, '__init__.py')).touch()
         subpackage = os.path.basename(temp_package_dir)
