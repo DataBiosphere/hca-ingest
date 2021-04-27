@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 import shutil
 from tempfile import TemporaryDirectory
-from typing import Optional
+from typing import ContextManager, Iterator, Optional
 
 
 @dataclass
@@ -16,7 +16,7 @@ class TempPackage:
 
 
 @contextmanager
-def EphemeralNamedDirectory(dirname: str, parent_directory: str):
+def EphemeralNamedDirectory(dirname: str, parent_directory: str) -> Iterator[str]:
     if dirname == '' or parent_directory == '':
         raise ValueError('Must provide a directory name to create!')
 
@@ -34,14 +34,16 @@ def EphemeralNamedDirectory(dirname: str, parent_directory: str):
 # generate a temporary directory that is a valid python package (i.e. contains an __init__.py file)
 # beneath the specified parent package
 @contextmanager
-def TemporaryPackage(parent_package: str, exact_name: Optional[str] = None):
+def TemporaryPackage(parent_package: str, exact_name: Optional[str] = None) -> Iterator[TempPackage]:
     # get the absolute path of the specified package
-    if package_spec := find_spec(parent_package):
+    if (package_spec := find_spec(parent_package)) and package_spec.submodule_search_locations:
         package_path = package_spec.submodule_search_locations[0]
     else:
         raise ModuleNotFoundError(
             f"Failed to locate parent package {parent_package} when generating temporary package."
         )
+
+    temp_dir: ContextManager[str]
 
     if exact_name:
         temp_dir = EphemeralNamedDirectory(exact_name, package_path)

@@ -15,7 +15,7 @@ class PreconfigurationLoader:
     optional_keys: set[str]
     required_keys: set[str]
 
-    def load_config(self, filename) -> Optional[DagsterConfigDict]:
+    def load_config(self, filename: str) -> Optional[DagsterConfigDict]:
         # the term 'resource' is a tad overloaded here - Python resources are just files in a package.
         if importlib.resources.is_resource(self.package, filename):
             with importlib.resources.open_text(self.package, filename) as config_file_io:

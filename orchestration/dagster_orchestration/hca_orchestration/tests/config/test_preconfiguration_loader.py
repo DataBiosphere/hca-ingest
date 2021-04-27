@@ -3,7 +3,7 @@ import unittest
 import warnings
 import yaml
 
-from hca_orchestration.config import PreconfigurationLoader
+from hca_orchestration.config.preconfiguration_loader import PreconfigurationLoader
 from hca_orchestration.tests.support.packages import TemporaryPackage
 
 
