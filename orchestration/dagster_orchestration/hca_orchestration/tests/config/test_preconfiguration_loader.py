@@ -3,13 +3,13 @@ import unittest
 import warnings
 import yaml
 
-from hca_orchestration.config import PreconfigurationSchema
+from hca_orchestration.config import PreconfigurationLoader
 from hca_orchestration.tests.support.packages import TemporaryPackage
 
 
-class PreconfigurationSchemaTestCase(unittest.TestCase):
+class PreconfigurationLoaderTestCase(unittest.TestCase):
     def test_validated_config_raises_if_missing_keys(self):
-        schema = PreconfigurationSchema(
+        loader = PreconfigurationLoader(
             name="foo",
             package="bar.baz",
             optional_keys=set(),
@@ -17,22 +17,22 @@ class PreconfigurationSchemaTestCase(unittest.TestCase):
         )
 
         with self.assertRaisesRegex(ValueError, 'Missing expected preconfigured field'):
-            schema.validated_config({'a': 'value'})
+            loader.validated_config({'a': 'value'})
 
     def test_validated_config_does_not_raise_if_missing_optional_keys(self):
-        schema = PreconfigurationSchema(
+        loader = PreconfigurationLoader(
             name="foo",
             package="bar.baz",
             optional_keys={'b', 'c'},
             required_keys={'a'},
         )
         self.assertEqual(
-            schema.validated_config({'a': 'value', 'b': 'thing'}),
+            loader.validated_config({'a': 'value', 'b': 'thing'}),
             {'a': 'value', 'b': 'thing'}
         )
 
     def test_validated_config_warns_and_cuts_if_extra_keys(self):
-        schema = PreconfigurationSchema(
+        loader = PreconfigurationLoader(
             name="foo",
             package="bar.baz",
             optional_keys=set(),
@@ -44,7 +44,7 @@ class PreconfigurationSchemaTestCase(unittest.TestCase):
             warnings.simplefilter("always")
 
             self.assertEqual(
-                schema.validated_config({'a': 'value', 'b': 'thing'}),
+                loader.validated_config({'a': 'value', 'b': 'thing'}),
                 {'a': 'value'}
             )
 
@@ -53,31 +53,31 @@ class PreconfigurationSchemaTestCase(unittest.TestCase):
             self.assertIn("Found unexpected fields", str(caught_warnings[0].message))
 
     def test_validated_config_returns_unaltered_if_all_keys_present(self):
-        schema = PreconfigurationSchema(
+        loader = PreconfigurationLoader(
             name="foo",
             package="bar.baz",
             optional_keys=set(),
             required_keys={'a', 'b'},
         )
         self.assertEqual(
-            schema.validated_config({'a': 'value', 'b': 'thing'}),
+            loader.validated_config({'a': 'value', 'b': 'thing'}),
             {'a': 'value', 'b': 'thing'}
         )
 
     def test_load_files_raises_if_no_files_present(self):
         with TemporaryPackage('hca_orchestration.config') as temp_package:
-            schema = PreconfigurationSchema(
+            loader = PreconfigurationLoader(
                 name="foo",
                 package=temp_package.package,
                 optional_keys=set(),
                 required_keys=set()
             )
             with self.assertRaises(FileNotFoundError):
-                schema.load_files(['nonexistent.yaml', 'nope.yaml'])
+                loader.load_files(['nonexistent.yaml', 'nope.yaml'])
 
     def test_load_files_returns_only_present_files(self):
         with TemporaryPackage('hca_orchestration.config') as temp_package:
-            schema = PreconfigurationSchema(
+            loader = PreconfigurationLoader(
                 name="foo",
                 package=temp_package.package,
                 optional_keys=set(),
@@ -86,13 +86,13 @@ class PreconfigurationSchemaTestCase(unittest.TestCase):
             with open(os.path.join(temp_package.directory, 'exists.yaml'), 'w') as existing_yaml_io:
                 yaml.dump({'x': 'y'}, existing_yaml_io)
 
-            files = schema.load_files(['not_there.yaml', 'exists.yaml'])
+            files = loader.load_files(['not_there.yaml', 'exists.yaml'])
             self.assertEqual(len(files), 1)
             self.assertEqual(files[0], {'x': 'y'})
 
     def test_load_for_mode_gives_precedent_to_mode_specific(self):
         with TemporaryPackage('hca_orchestration.config') as temp_package:
-            schema = PreconfigurationSchema(
+            loader = PreconfigurationLoader(
                 name="foo",
                 package=temp_package.package,
                 optional_keys=set(),
@@ -104,12 +104,12 @@ class PreconfigurationSchemaTestCase(unittest.TestCase):
             with open(os.path.join(temp_package.directory, 'some_mode.yaml'), 'w') as existing_yaml_io:
                 yaml.dump({'x': 'abc'}, existing_yaml_io)
 
-            loaded_info = schema.load_for_mode('some_mode')
+            loaded_info = loader.load_for_mode('some_mode')
             self.assertEqual(loaded_info, {'x': 'abc', 'y': 'z'})
 
     def test_load_for_mode_works_with_global_only(self):
         with TemporaryPackage('hca_orchestration.config') as temp_package:
-            schema = PreconfigurationSchema(
+            loader = PreconfigurationLoader(
                 name="foo",
                 package=temp_package.package,
                 optional_keys=set(),
@@ -118,5 +118,5 @@ class PreconfigurationSchemaTestCase(unittest.TestCase):
             with open(os.path.join(temp_package.directory, 'global.yaml'), 'w') as existing_yaml_io:
                 yaml.dump({'x': 'y', 'y': 'z'}, existing_yaml_io)
 
-            loaded_info = schema.load_for_mode('some_mode')
+            loaded_info = loader.load_for_mode('some_mode')
             self.assertEqual(loaded_info, {'x': 'y', 'y': 'z'})

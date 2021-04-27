@@ -33,7 +33,6 @@ releases:
     chart: dagster/dagster   # chart name
     missingFileHandler: Warn
     values:
-      - environment/global.yaml
       - environment/{{ requiredEnv "ENV" }}.yaml
       - global:
           serviceAccountName: monster-dagster

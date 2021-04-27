@@ -1,7 +1,7 @@
 image_name: us.gcr.io/broad-dsp-gcr-public/hca-transformation-pipeline
 image_version: latest
 kubernetes_service_account: monster-dagster
-subnet_name: blarg
+subnet_name: hca-network
 region: us-central1
 worker_machine_type: n1-standard-4
 starting_workers: 4

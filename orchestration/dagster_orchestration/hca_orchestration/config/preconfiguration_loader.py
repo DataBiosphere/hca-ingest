@@ -9,7 +9,7 @@ from hca_orchestration.support.typing import DagsterConfigDict
 
 
 @dataclass
-class PreconfigurationSchema:
+class PreconfigurationLoader:
     name: str
     package: str
     optional_keys: set[str]

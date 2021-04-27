@@ -1,7 +1,0 @@
-env: &envConfig
-  DAGIT_BASE_URL: https://localhost:8080
-
-dagit:
-  env: *envConfig
-dagsterDaemon:
-  env: *envConfig

@@ -4,7 +4,7 @@ from dagster import configured, Noneable, ResourceDefinition
 from dagster.core.definitions.configurable import ConfigurableDefinition
 
 from hca_orchestration.support.typing import DagsterConfigDict, DagsterSolidConfigSchema
-from hca_orchestration.config.preconfiguration_schema import PreconfigurationSchema
+from hca_orchestration.config.preconfiguration_loader import PreconfigurationLoader
 
 
 def preconfigure_for_mode(
@@ -47,7 +47,7 @@ def preconfigure_for_mode(
     optional_config_keys = [k for k, v in definition_config_keys.items() if isinstance(v.config_type, Noneable)]
     required_config_keys = [k for k, v in definition_config_keys.items() if k not in optional_config_keys]
     subpackage = subpackage or dagster_object.__name__
-    schema = PreconfigurationSchema(
+    schema = PreconfigurationLoader(
         name=dagster_object.__name__,
         package=f'hca_orchestration.config.{subpackage}',
         required_keys=(set(required_config_keys) - set(additional_schema.keys())),
