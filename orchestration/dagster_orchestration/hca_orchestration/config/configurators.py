@@ -47,7 +47,7 @@ def preconfigure_for_mode(
     optional_config_keys = [k for k, v in definition_config_keys.items() if isinstance(v.config_type, Noneable)]
     required_config_keys = [k for k, v in definition_config_keys.items() if k not in optional_config_keys]
     subpackage = subpackage or dagster_object.__name__
-    schema = PreconfigurationLoader(
+    loader = PreconfigurationLoader(
         name=dagster_object.__name__,
         package=f'hca_orchestration.config.{subpackage}',
         required_keys=(set(required_config_keys) - set(additional_schema.keys())),
@@ -57,7 +57,7 @@ def preconfigure_for_mode(
     # we load the config in preconfigure_for_mode instead of in the @configured function to
     # ensure that any config issues cause errors upon initialization, instead of waiting until
     # we try to use the object being configured
-    loaded_config = schema.load_for_mode(mode_name)
+    loaded_config = loader.load_for_mode(mode_name)
 
     @configured(dagster_object, additional_schema)
     def __dagster_object_preconfigured(extra_config: DagsterConfigDict) -> DagsterConfigDict:
