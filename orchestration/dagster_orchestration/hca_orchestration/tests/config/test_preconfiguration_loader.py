@@ -83,10 +83,9 @@ class PreconfigurationLoaderTestCase(unittest.TestCase):
                 optional_keys=set(),
                 required_keys={'x'},
             )
-            with open(os.path.join(temp_package.directory, 'exists.yaml'), 'w') as existing_yaml_io:
+            with open(os.path.join(temp_package.directory, 'thing.yaml'), 'w') as existing_yaml_io:
                 yaml.dump({'x': 'y'}, existing_yaml_io)
-
-            files = loader.load_files(['not_there.yaml', 'exists.yaml'])
+            files = loader.load_files(['not_there.yaml', 'thing.yaml'])
             self.assertEqual(len(files), 1)
             self.assertEqual(files[0], {'x': 'y'})
 
