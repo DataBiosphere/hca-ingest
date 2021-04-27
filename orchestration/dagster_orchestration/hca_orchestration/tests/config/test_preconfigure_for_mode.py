@@ -1,17 +1,20 @@
 import os
+from tempfile import TemporaryDirectory
 import unittest
 import yaml
 
 from dagster import solid, Noneable, String
 
+import hca_orchestration.config
 from hca_orchestration.config import preconfigure_for_mode
-from hca_orchestration.tests.support.packages import TemporaryPackage
+from hca_orchestration.tests.support.filesystem import EphemeralNamedDirectory
 
 
 class PreconfigureForModeTestCase(unittest.TestCase):
     def setUp(self):
         self.dummy_function = lambda _: 0
         self.dummy_function.__name__ = 'steve'
+        self.config_package_dir = os.path.dirname(hca_orchestration.config.__file__)
 
     def test_treats_noneable_fields_as_optional(self):
         solid_def = solid(config_schema={
@@ -19,14 +22,14 @@ class PreconfigureForModeTestCase(unittest.TestCase):
             'b': String,
         })(self.dummy_function)
 
-        with TemporaryPackage('hca_orchestration.config') as temp_package:
-            with open(os.path.join(temp_package.directory, 'mode.yaml'), 'w') as config_yaml_io:
+        with TemporaryDirectory(dir=self.config_package_dir) as temp_dir:
+            with open(os.path.join(temp_dir, 'mode.yaml'), 'w') as config_yaml_io:
                 yaml.dump({'b': 'steve'}, config_yaml_io)
 
             preconfigured = preconfigure_for_mode(
                 solid_def,
                 'mode',
-                subpackage=temp_package.subpackage)
+                subdirectory=os.path.basename(temp_dir))
             # assert that it accepts no additional config
             self.assertEqual(preconfigured.get_config_field().config_type.fields, {})
 
@@ -36,15 +39,15 @@ class PreconfigureForModeTestCase(unittest.TestCase):
             'b': String,
         })(self.dummy_function)
 
-        with TemporaryPackage('hca_orchestration.config') as temp_package:
-            with open(os.path.join(temp_package.directory, 'mode.yaml'), 'w') as config_yaml_io:
+        with TemporaryDirectory(dir=self.config_package_dir) as temp_dir:
+            with open(os.path.join(temp_dir, 'mode.yaml'), 'w') as config_yaml_io:
                 yaml.dump({'b': 'steve'}, config_yaml_io)
 
             with self.assertRaises(ValueError):
                 preconfigure_for_mode(
                     solid_def,
                     'mode',
-                    subpackage=temp_package.subpackage)
+                    subdirectory=os.path.basename(temp_dir))
 
     def test_defaults_to_using_resource_name_for_directory(self):
         solid_def = solid(config_schema={
@@ -52,8 +55,8 @@ class PreconfigureForModeTestCase(unittest.TestCase):
             'b': String,
         })(self.dummy_function)
 
-        with TemporaryPackage('hca_orchestration.config', exact_name='steve') as temp_package:
-            with open(os.path.join(temp_package.directory, 'global.yaml'), 'w') as config_yaml_io:
+        with EphemeralNamedDirectory('steve', self.config_package_dir) as temp_dir:
+            with open(os.path.join(temp_dir, 'global.yaml'), 'w') as config_yaml_io:
                 yaml.dump({'a': 'sneve', 'b': 'steve'}, config_yaml_io)
 
             preconfigured = preconfigure_for_mode(solid_def, 'mode')
@@ -66,8 +69,8 @@ class PreconfigureForModeTestCase(unittest.TestCase):
             'b': String,
         })(self.dummy_function)
 
-        with TemporaryPackage('hca_orchestration.config', exact_name='steve') as temp_package:
-            with open(os.path.join(temp_package.directory, 'global.yaml'), 'w') as config_yaml_io:
+        with EphemeralNamedDirectory('steve', self.config_package_dir) as temp_dir:
+            with open(os.path.join(temp_dir, 'global.yaml'), 'w') as config_yaml_io:
                 yaml.dump({'a': 'sneve'}, config_yaml_io)
 
             preconfigured = preconfigure_for_mode(solid_def, 'mode', additional_schema={'b': String})

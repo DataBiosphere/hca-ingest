@@ -1,24 +1,34 @@
 from dataclasses import dataclass
-import importlib.resources
+import os
 from typing import Optional
 import warnings
 
 import yaml
 
+import hca_orchestration.config
 from hca_orchestration.support.typing import DagsterConfigDict
 
 
 @dataclass
 class PreconfigurationLoader:
     name: str
-    package: str
+    subdirectory: str
     optional_keys: set[str]
     required_keys: set[str]
 
+    def __post_init__(self):
+        self.config_file_directory = os.path.join(
+            os.path.dirname(hca_orchestration.config.__file__),
+            self.subdirectory
+        )
+
+    def file_path(self, filename: str) -> str:
+        return os.path.join(self.config_file_directory, filename)
+
     def load_config(self, filename: str) -> Optional[DagsterConfigDict]:
-        # the term 'resource' is a tad overloaded here - Python resources are just files in a package.
-        if importlib.resources.is_resource(self.package, filename):
-            with importlib.resources.open_text(self.package, filename) as config_file_io:
+        config_file_path = self.file_path(filename)
+        if os.path.exists(config_file_path):
+            with open(config_file_path, 'r') as config_file_io:
                 return DagsterConfigDict(yaml.safe_load(config_file_io))
 
         return None
@@ -34,7 +44,8 @@ class PreconfigurationLoader:
             missing_keys_str = ", ".join(key for key in missing_keys)
             raise ValueError(
                 f"Missing expected preconfigured field(s) in configuration files for {self.name}. "
-                f"Config files do not define these required fields:\n{missing_keys_str}\n(package: {self.package})"
+                f"Config files do not define these required fields:\n{missing_keys_str}\n"
+                f"(config dir: {self.config_file_directory})"
             )
 
         if any(extra_keys):
@@ -43,7 +54,7 @@ class PreconfigurationLoader:
                 message=(
                     f"Found unexpected fields in configuration files for {self.name}. "
                     "These fields will be ignored. "
-                    f"Fields:\n{extra_keys_str}\n(package: {self.package})"
+                    f"Fields:\n{extra_keys_str}\n(config dir: {self.config_file_directory})"
                 )
             )
 
@@ -59,7 +70,7 @@ class PreconfigurationLoader:
             expected_files_str = ', '.join(filenames)
             raise FileNotFoundError(
                 f"No configuration files detected for {self.name}! "
-                f"Expected at least one of these files in {self.package}:\n{expected_files_str}"
+                f"Expected at least one of these files in {self.config_file_directory}:\n{expected_files_str}"
             )
 
         return [config for config in configs if config is not None]

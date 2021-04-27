@@ -11,7 +11,7 @@ def preconfigure_for_mode(
     dagster_object: ConfigurableDefinition,
     mode_name: str,
     additional_schema: DagsterSolidConfigSchema = {},
-    subpackage: Optional[str] = None,
+    subdirectory: Optional[str] = None,
 ) -> ConfigurableDefinition:
     """
     Preconfigures a Dagster object (such as a resource) for a given mode by setting all config values
@@ -34,7 +34,7 @@ def preconfigure_for_mode(
     :param dagster_object: The definition for the object to be configured (e.g. a ResourceDefinition).
     :param mode_name: The name of the mode. This will determine the name of the mode-specific config file to load.
     :param additional_schema: Any config schema that is part of the Dagster object but should NOT be preconfigured.
-    :param subpackage: Which package to search for the config files. Defaults to the name of the Dagster object
+    :param subdirectory: Which directory to search for the config files. Defaults to the name of the Dagster object
         beneath hca_orchestration.config.
     :return: The Dagster object configured with the loaded values.
     """
@@ -46,10 +46,10 @@ def preconfigure_for_mode(
     definition_config_keys = dagster_object.config_schema.config_type.fields
     optional_config_keys = [k for k, v in definition_config_keys.items() if isinstance(v.config_type, Noneable)]
     required_config_keys = [k for k, v in definition_config_keys.items() if k not in optional_config_keys]
-    subpackage = subpackage or dagster_object.__name__
+    subdirectory = subdirectory or dagster_object.__name__
     loader = PreconfigurationLoader(
         name=dagster_object.__name__,
-        package=f'hca_orchestration.config.{subpackage}',
+        subdirectory=subdirectory,
         required_keys=(set(required_config_keys) - set(additional_schema.keys())),
         optional_keys=(set(optional_config_keys) - set(additional_schema.keys()))
     )
@@ -78,4 +78,4 @@ def preconfigure_resource_for_mode(
     Helper function for preconfiguring resources, specifically.
     Tells preconfigure_for_mode to look in `resources/[resource name]` for config files.
     """
-    return preconfigure_for_mode(resource, mode_name, additional_schema, f'resources.{resource.__name__}')
+    return preconfigure_for_mode(resource, mode_name, additional_schema, f'resources/{resource.__name__}')
