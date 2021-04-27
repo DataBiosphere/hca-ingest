@@ -3,9 +3,14 @@ from dataclasses import dataclass
 from importlib.util import find_spec
 import os
 from pathlib import Path
+import random
 import shutil
-from tempfile import TemporaryDirectory
 from typing import ContextManager, Iterator, Optional
+
+
+def random_valid_package_name(count):
+    chars = 'abcdefghijklmnopqrstuvwxyz_'
+    return random.choices(chars, k=count)
 
 
 @dataclass
@@ -15,7 +20,8 @@ class TempPackage:
     subpackage: str
 
 
-# works as a temporary directory, but with a fixed name
+# works as a temporary directory, but with a fixed name. we use this because the name generation
+# for TemporaryDirectory can produce invalid package names
 @contextmanager
 def EphemeralNamedDirectory(dirname: str, parent_directory: str) -> Iterator[str]:
     if dirname == '' or parent_directory == '':
@@ -46,14 +52,10 @@ def TemporaryPackage(parent_package: str, exact_name: Optional[str] = None) -> I
 
     temp_dir: ContextManager[str]
 
-    if exact_name:
-        temp_dir = EphemeralNamedDirectory(exact_name, package_path)
-    else:
-        temp_dir = TemporaryDirectory(dir=package_path)
+    temp_dir = EphemeralNamedDirectory(exact_name or random_valid_package_name(8), package_path)
 
     # make a new temporary subdirectory beneath it
     with temp_dir as temp_package_dir:
-        print(temp_package_dir)
         # put an __init__.py file in the subdir so it's treated as a package
         Path(os.path.join(temp_package_dir, '__init__.py')).touch()
         subpackage = os.path.basename(temp_package_dir)
