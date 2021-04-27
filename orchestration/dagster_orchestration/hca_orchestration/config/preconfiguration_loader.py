@@ -16,7 +16,7 @@ class PreconfigurationLoader:
     optional_keys: set[str]
     required_keys: set[str]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.config_file_directory = os.path.join(
             os.path.dirname(hca_orchestration.config.__file__),
             self.subdirectory
