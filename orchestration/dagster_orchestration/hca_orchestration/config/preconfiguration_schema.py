@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-import os
+import importlib.resources
 from typing import Optional
 import warnings
 
@@ -8,20 +8,20 @@ import yaml
 from hca_orchestration.support.typing import DagsterConfigDict
 
 
-def load_config(config_path: str) -> Optional[DagsterConfigDict]:
-    try:
-        with open(config_path, 'r') as config_file_io:
-            return DagsterConfigDict(yaml.safe_load(config_file_io))
-    except FileNotFoundError:
-        return None
-
-
 @dataclass
 class PreconfigurationSchema:
     name: str
-    directory: str
+    package: str
     optional_keys: set[str]
     required_keys: set[str]
+
+    def load_config(self, filename) -> Optional[DagsterConfigDict]:
+        # the term 'resource' is a tad overloaded here - Python resources are just files in a package.
+        if importlib.resources.is_resource(self.package, filename):
+            with importlib.resources.open_text(self.package, filename) as config_file_io:
+                return DagsterConfigDict(yaml.safe_load(config_file_io))
+
+        return None
 
     # raises an error for any missing config keys, records a warning for (and discards) any extra keys
     def validated_config(self, config: DagsterConfigDict) -> DagsterConfigDict:
@@ -34,7 +34,7 @@ class PreconfigurationSchema:
             missing_keys_str = ", ".join(key for key in missing_keys)
             raise ValueError(
                 f"Missing expected preconfigured field(s) in configuration files for {self.name}. "
-                f"Config files do not define these required fields:\n{missing_keys_str}\n(config dir: {self.directory})"
+                f"Config files do not define these required fields:\n{missing_keys_str}\n(package: {self.package})"
             )
 
         if any(extra_keys):
@@ -43,7 +43,7 @@ class PreconfigurationSchema:
                 message=(
                     f"Found unexpected fields in configuration files for {self.name}. "
                     "These fields will be ignored. "
-                    f"Fields:\n{extra_keys_str}\n(config dir: {self.directory})"
+                    f"Fields:\n{extra_keys_str}\n(package: {self.package})"
                 )
             )
 
@@ -52,14 +52,14 @@ class PreconfigurationSchema:
     # loads a list of config files, returning only those that exist
     def load_files(self, filenames: list[str]) -> list[DagsterConfigDict]:
         configs = [
-            load_config(os.path.join(self.directory, config_name))
+            self.load_config(config_name)
             for config_name in filenames
         ]
         if not any(configs):
             expected_files_str = ', '.join(filenames)
-            raise ValueError(
+            raise FileNotFoundError(
                 f"No configuration files detected for {self.name}! "
-                f"Expected at least one of these files in {self.directory}:\n{expected_files_str}"
+                f"Expected at least one of these files in {self.package}:\n{expected_files_str}"
             )
 
         return [config for config in configs if config is not None]

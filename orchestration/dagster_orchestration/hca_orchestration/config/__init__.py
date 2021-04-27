@@ -1,78 +1,8 @@
-from pkg_resources import resource_filename
-from typing import Optional
-
-from dagster import configured, Noneable, ResourceDefinition
-from dagster.core.definitions.configurable import ConfigurableDefinition
-
-from hca_orchestration.support.typing import DagsterConfigDict, DagsterSolidConfigSchema
 from hca_orchestration.config.preconfiguration_schema import PreconfigurationSchema
+from hca_orchestration.config.configurators import preconfigure_for_mode, preconfigure_resource_for_mode
 
-
-def preconfigure_for_mode(
-    dagster_object: ConfigurableDefinition,
-    mode_name: str,
-    additional_schema: DagsterSolidConfigSchema = {},
-    config_dir: Optional[str] = None,
-) -> ConfigurableDefinition:
-    """
-    Preconfigures a Dagster object (such as a resource) for a given mode by setting all config values
-    for the object to values found in the config files in the specified directory.
-
-    The method will load from the specified directory under hca_orchestration/config/, looking for:
-    * global.yaml
-    * [mode].yaml
-
-    Values in the mode-specific config wil supersede global config. Only one of these needs to be present.
-
-    This method expects a value to be specified for all fields in the object's config schema. If
-    a value should remain configurable after preconfiguration, list it in the `additional_schema` argument.
-    If any values it expects to be specified are missing, it will raise an error. If any values for
-    fields it does not expect are specified, it will record a warning and ignore those values.
-
-
-    :param dagster_object: The definition for the object to be configured (e.g. a ResourceDefinition).
-    :param mode_name: The name of the mode. This will determine the name of the mode-specific config file to load.
-    :param additional_schema: Any config schema that is part of the Dagster object but should NOT be preconfigured.
-    :param config_dir: Where to look for the config files. Defaults to the name of the Dagster object.
-    :return: The Dagster object configured with the loaded values.
-    """
-
-    # [NOTE]
-    # This line assumes the object is configured with a dict. Other dagster config patterns,
-    # such as a single primitive type, aren't accounted for (but probably shouldn't be used,
-    # since they provide no context for the config setting's meaning/purpose)
-    definition_config_keys = dagster_object.config_schema.config_type.fields
-    optional_config_keys = [k for k, v in definition_config_keys.items() if isinstance(v.config_type, Noneable)]
-    required_config_keys = [k for k, v in definition_config_keys.items() if k not in optional_config_keys]
-    schema = PreconfigurationSchema(
-        name=dagster_object.__name__,
-        directory=resource_filename(__name__, config_dir or dagster_object.__name__),
-        required_keys=(set(required_config_keys) - set(additional_schema.keys())),
-        optional_keys=(set(optional_config_keys) - set(additional_schema.keys()))
-    )
-
-    # we load the config in preconfigure_for_mode instead of in the @configured function to
-    # ensure that any config issues cause errors upon initialization, instead of waiting until
-    # we try to use the object being configured
-    loaded_config = schema.load_for_mode(mode_name)
-
-    @configured(dagster_object, additional_schema)
-    def __dagster_object_preconfigured(extra_config: DagsterConfigDict) -> DagsterConfigDict:
-        return {
-            **loaded_config,
-            **extra_config,
-        }
-
-    return __dagster_object_preconfigured
-
-
-def preconfigure_resource_for_mode(
-    resource: ResourceDefinition,
-    mode_name: str,
-    additional_schema: DagsterSolidConfigSchema = {}
-) -> ResourceDefinition:
-    """
-    Helper function for preconfiguring resources, specifically.
-    Tells preconfigure_for_mode to look in `resources/[resource name]` for config files.
-    """
-    return preconfigure_for_mode(resource, mode_name, additional_schema, f'resources/{resource.__name__}')
+__all__ = [
+    PreconfigurationSchema,
+    preconfigure_for_mode,
+    preconfigure_resource_for_mode,
+]
