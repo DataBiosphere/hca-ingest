@@ -6,8 +6,8 @@ from dagster import execute_solid
 from hca_manage.manage import ProblemCount
 
 from hca_orchestration.pipelines.validate_egress import test_mode
-from hca_orchestration.solids.validate_egress import base_post_import_validate,\
-    base_notify_slack_of_egress_validation_results
+from hca_orchestration.solids.validate_egress import post_import_validate,\
+    notify_slack_of_egress_validation_results
 
 from hca_orchestration.tests.support.matchers import StringContaining
 
@@ -37,18 +37,16 @@ class PostImportValidateTestCase(unittest.TestCase):
         mock_dangling_proj_refs.return_value = fake_dangling_proj_refs
 
         solid_config = {
-            "solids": {
-                "base_post_import_validate": {
+            "resources": {
+                "hca_dataset_operation_config": {
                     "config": {
-                        "gcp_env": "dev",
-                        "google_project_name": "fakeproj",
                         "dataset_name": "fakedataset",
                     }
                 }
-            }
+            },
         }
 
-        result = execute_solid(base_post_import_validate,
+        result = execute_solid(post_import_validate,
                                run_config=solid_config, mode_def=test_mode)
         self.assertTrue(result.success)
         expected_duplicate_issues = len(fake_table_names) * len(fake_duplicate_ids)
@@ -62,12 +60,16 @@ class PostImportValidateTestCase(unittest.TestCase):
 class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
     def setUp(self):
         self.solid_config = {
-            "solids": {
-                "base_notify_slack_of_egress_validation_results": {
+            "resources": {
+                "hca_dataset_operation_config": {
                     "config": {
-                        "gcp_env": "dev",
-                        "channel": "choonel",
                         "dataset_name": "fakedataset",
+                    }
+                }
+            },
+            "solids": {
+                "notify_slack_of_egress_validation_results": {
+                    "config": {
                         "argo_workflow_id": "test_id_123",
                     }
                 }
@@ -75,9 +77,9 @@ class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
         }
 
     def test_notifies_slack_with_failure_info(self):
-        with patch("hca_orchestration.resources.slack.ConsoleSlackClient.chat_postMessage") as slack_message_sender:
+        with patch("hca_orchestration.resources.slack.ConsoleSlackClient.send_message") as slack_message_sender:
             result = execute_solid(
-                base_notify_slack_of_egress_validation_results,
+                notify_slack_of_egress_validation_results,
                 run_config=self.solid_config,
                 mode_def=test_mode,
                 input_values={
@@ -96,16 +98,15 @@ class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
 
             for expected_line in expected_lines:
                 slack_message_sender.assert_called_once_with(
-                    channel="choonel",
-                    text=StringContaining(expected_line)
+                    StringContaining(expected_line)
                 )
 
         self.assertTrue(result.success)
 
     def test_notifies_slack_of_success(self):
-        with patch("hca_orchestration.resources.slack.ConsoleSlackClient.chat_postMessage") as slack_message_sender:
+        with patch("hca_orchestration.resources.slack.ConsoleSlackClient.send_message") as slack_message_sender:
             result = execute_solid(
-                base_notify_slack_of_egress_validation_results,
+                notify_slack_of_egress_validation_results,
                 run_config=self.solid_config,
                 mode_def=test_mode,
                 input_values={
@@ -116,9 +117,8 @@ class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
             )
 
             slack_message_sender.assert_called_once_with(
-                channel="choonel",
-                text="HCA dev dataset fakedataset has passed post-validation.\n"
-                     "Argo Workflow ID: test_id_123"
+                "HCA dev dataset fakedataset has passed post-validation.\n"
+                "Argo Workflow ID: test_id_123"
             )
 
         self.assertTrue(result.success)

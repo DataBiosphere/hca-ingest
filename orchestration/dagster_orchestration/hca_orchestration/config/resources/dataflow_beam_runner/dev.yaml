@@ -1,0 +1,3 @@
+temp_bucket: broad-dsp-monster-hca-dev-temp-storage
+service_account: hca-dataflow-runner@broad-dsp-monster-hca-dev.iam.gserviceaccount.com
+project: broad-dsp-monster-hca-dev

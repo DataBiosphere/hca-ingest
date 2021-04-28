@@ -27,5 +27,4 @@ class LocalStorageClient:
 
 @resource
 def local_storage_client(init_context: InitResourceContext) -> LocalStorageClient:
-
     return LocalStorageClient()

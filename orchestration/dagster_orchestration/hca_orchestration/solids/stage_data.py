@@ -2,19 +2,11 @@ import re
 
 from dagster import solid, InputDefinition, Nothing, String, Int, OutputDefinition
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
-
 from google.cloud.bigquery import Dataset
 
 
-STAGING_BUCKET_CONFIG_SCHEMA = {
-    "staging_bucket_name": String,
-    "staging_prefix_name": String,
-}
-
-
 @solid(
-    required_resource_keys={"storage_client"},
-    config_schema=STAGING_BUCKET_CONFIG_SCHEMA,
+    required_resource_keys={"storage_client", "staging_bucket_config"},
 )
 def clear_staging_dir(context: AbstractComputeExecutionContext) -> int:
     """
@@ -22,8 +14,8 @@ def clear_staging_dir(context: AbstractComputeExecutionContext) -> int:
     :return: Number of deletions
     """
 
-    staging_bucket_name = context.solid_config["staging_bucket_name"]
-    staging_prefix_name = context.solid_config["staging_prefix_name"]
+    staging_bucket_name = context.resources.staging_bucket_config.staging_bucket_name
+    staging_prefix_name = context.resources.staging_bucket_config.staging_prefix_name
 
     blobs = context.resources.storage_client.list_blobs(staging_bucket_name, prefix=f"{staging_prefix_name}/")
     deletions_count = 0
@@ -35,9 +27,8 @@ def clear_staging_dir(context: AbstractComputeExecutionContext) -> int:
 
 
 @solid(
-    required_resource_keys={"beam_runner"},
+    required_resource_keys={"beam_runner", "staging_bucket_config"},
     config_schema={
-        **STAGING_BUCKET_CONFIG_SCHEMA,
         "input_prefix": String,
     },
     input_defs=[InputDefinition("start", Nothing)],
@@ -49,8 +40,8 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
     context.log.info("--pre_process_metadata")
 
     # not strictly required, but makes the ensuing lines a lot shorter
-    bucket_name = context.solid_config['staging_bucket_name']
-    prefix_name = context.solid_config['staging_prefix_name']
+    bucket_name = context.resources.staging_bucket_config.staging_bucket_name
+    prefix_name = context.resources.staging_bucket_config.staging_prefix_name
 
     kebabified_output_prefix = re.sub(r"[^A-Za-z0-9]", "-", prefix_name)
 

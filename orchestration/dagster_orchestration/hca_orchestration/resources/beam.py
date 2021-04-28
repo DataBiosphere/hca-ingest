@@ -3,14 +3,12 @@ import subprocess
 from typing import List
 from uuid import uuid4
 
-from dagster import configured, DagsterLogManager, Field, IntSource, resource, StringSource
+from dagster import DagsterLogManager, Field, IntSource, resource, StringSource
 from dagster.core.execution.context.init import InitResourceContext
 from dagster_k8s.client import DagsterKubernetesClient
 
 import kubernetes
 from kubernetes.client.models.v1_job import V1Job
-
-from hca_orchestration.support.typing import DagsterConfigDict
 
 
 # separating out config for the cloud dataflow pipeline to make
@@ -141,7 +139,7 @@ class DataflowBeamRunner:
     "image_version": Field(StringSource),
     "namespace": Field(StringSource),
 })
-def base_dataflow_beam_runner(init_context: InitResourceContext) -> DataflowBeamRunner:
+def dataflow_beam_runner(init_context: InitResourceContext) -> DataflowBeamRunner:
     cloud_config = DataflowCloudConfig(
         project=init_context.resource_config['project'],
         service_account=init_context.resource_config['service_account'],
@@ -160,25 +158,6 @@ def base_dataflow_beam_runner(init_context: InitResourceContext) -> DataflowBeam
         namespace=init_context.resource_config['namespace'],
         logger=init_context.log_manager,
     )
-
-
-@configured(base_dataflow_beam_runner)
-def dataflow_beam_runner(config: DagsterConfigDict) -> DagsterConfigDict:
-    return {
-        'temp_bucket': {'env': 'HCA_TEMP_STORAGE_BUCKET'},
-        'image_name': {'env': 'TRANSFORM_PIPELINE_IMAGE'},
-        'image_version': {'env': 'TRANSFORM_PIPELINE_IMAGE_VERSION'},
-        'service_account': {'env': 'HCA_DATAFLOW_SERVICE_ACCOUNT'},
-        'kubernetes_service_account': {'env': 'HCA_KUBERNETES_SERVICE_ACCOUNT'},
-        'project': {'env': 'HCA_GOOGLE_PROJECT'},
-        'subnet_name': {'env': 'DATAFLOW_SUBNET_NAME'},
-        'region': {'env': 'GCLOUD_REGION'},
-        'worker_machine_type': {'env': 'DATAFLOW_WORKER_MACHINE_TYPE'},
-        'starting_workers': {'env': 'DATAFLOW_STARTING_WORKERS'},
-        'max_workers': {'env': 'DATAFLOW_MAX_WORKERS'},
-        'namespace': {'env': 'KUBERNETES_NAMESPACE'},
-        **config,
-    }
 
 
 @dataclass

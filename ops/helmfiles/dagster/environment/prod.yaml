@@ -2,13 +2,6 @@ env: &envConfig
   # all of these key-value pairs get injected as environment variables into the containers running dagster,
   # including the dagit ui server and any pipeline executors
   HCA_ARGO_URL: https://hca-argo.monster-prod.broadinstitute.org/
-  DATA_REPO_URL: https://jade-terra.datarepo-prod.broadinstitute.org/
-  SAM_URL: https://sam.dsde-prod.broadinstitute.org/
-  HCA_GOOGLE_PROJECT: broad-dsp-monster-hca-prod
-  DATA_REPO_GOOGLE_PROJECT: broad-datarepo-terra-prod-hca2
-  HCA_TEMP_STORAGE_BUCKET: broad-dsp-monster-hca-prod-temp-storage
-  HCA_DATAFLOW_SERVICE_ACCOUNT: hca-dataflow-runner@broad-dsp-monster-hca-prod.iam.gserviceaccount.com
-  HCA_GCP_ENV: prod
 
 dagit:
   env: *envConfig

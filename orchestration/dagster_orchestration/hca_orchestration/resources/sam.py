@@ -1,12 +1,11 @@
 from urllib.parse import urljoin
 from dataclasses import dataclass
 
-from dagster import configured, Field, resource, StringSource
+from dagster import Field, resource, StringSource
 from dagster.core.execution.context.init import InitResourceContext
 from google.auth.transport.requests import AuthorizedSession
 
 from hca_orchestration.contrib.google import authorized_session
-from hca_orchestration.support.typing import DagsterConfigDict
 
 
 @dataclass
@@ -34,15 +33,8 @@ class Sam:
 @resource({
     "api_url": Field(StringSource)
 })
-def sam(init_context: InitResourceContext) -> Sam:
+def sam_client(init_context: InitResourceContext) -> Sam:
     return Sam(base_url=init_context.resource_config['api_url'])
-
-
-@configured(sam)
-def prod_sam_client(_config: DagsterConfigDict) -> DagsterConfigDict:
-    return {
-        'api_url': {'env': 'SAM_URL'}
-    }
 
 
 class NoopSamClient:
