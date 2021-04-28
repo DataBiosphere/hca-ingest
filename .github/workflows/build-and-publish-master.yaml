@@ -33,37 +33,37 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-dev
         working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
-      - uses: olafurpg/setup-scala@v10
-        with:
-          java-version: graalvm@20.0.0
-      - name: Check Scala formatting
-        run: sbt scalafmtCheckAll
-      - name: Scala Compile
-        run: sbt Compile/compile Test/compile IntegrationTest/compile
-      - name: Scala Test
-        run: sbt "set ThisBuild/coverageEnabled := true" test IntegrationTest/test coverageAggregate
-      - name: Run Dataflow against test data
-        env:
-          GITHUB_SHA: ${{github.sha}}
-        run: >
-          sbt "hca-transformation-pipeline/run
-                 --inputPrefix=gs://broad-dsp-monster-hca-dev-test-storage/integration/ebi_small/test_data
-                 --outputPrefix=gs://broad-dsp-monster-hca-dev-temp-storage/integration/output_${GITHUB_SHA}
-                 --runner=DataflowRunner
-                 --project=broad-dsp-monster-hca-dev
-                 --region=us-central1
-                 --tempLocation=gs://broad-dsp-monster-hca-dev-temp-storage/dataflow
-                 --workerMachineType=n1-standard-4
-                 --numWorkers=16
-                 --experiments=shuffle_mode=service"
-      - name: Verify Dataflow output
-        env:
-          GITHUB_SHA: ${{github.sha}}
-        run: >
-          poetry run python diff_dirs.py -p broad-dsp-monster-hca-dev -sb broad-dsp-monster-hca-dev-test-storage -sp integration/ebi_small/expected_output -tb broad-dsp-monster-hca-dev-temp-storage -tp "integration/output_${GITHUB_SHA}"
-        working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration/hca_manage
-      - name: Publish Scala coverage
-        uses: codecov/codecov-action@v1
+      # - uses: olafurpg/setup-scala@v10
+      #   with:
+      #     java-version: graalvm@20.0.0
+      # - name: Check Scala formatting
+      #   run: sbt scalafmtCheckAll
+      # - name: Scala Compile
+      #   run: sbt Compile/compile Test/compile IntegrationTest/compile
+      # - name: Scala Test
+      #   run: sbt "set ThisBuild/coverageEnabled := true" test IntegrationTest/test coverageAggregate
+      # - name: Run Dataflow against test data
+      #   env:
+      #     GITHUB_SHA: ${{github.sha}}
+      #   run: >
+      #     sbt "hca-transformation-pipeline/run
+      #            --inputPrefix=gs://broad-dsp-monster-hca-dev-test-storage/integration/ebi_small/test_data
+      #            --outputPrefix=gs://broad-dsp-monster-hca-dev-temp-storage/integration/output_${GITHUB_SHA}
+      #            --runner=DataflowRunner
+      #            --project=broad-dsp-monster-hca-dev
+      #            --region=us-central1
+      #            --tempLocation=gs://broad-dsp-monster-hca-dev-temp-storage/dataflow
+      #            --workerMachineType=n1-standard-4
+      #            --numWorkers=16
+      #            --experiments=shuffle_mode=service"
+      # - name: Verify Dataflow output
+      #   env:
+      #     GITHUB_SHA: ${{github.sha}}
+      #   run: >
+      #     poetry run python diff_dirs.py -p broad-dsp-monster-hca-dev -sb broad-dsp-monster-hca-dev-test-storage -sp integration/ebi_small/expected_output -tb broad-dsp-monster-hca-dev-temp-storage -tp "integration/output_${GITHUB_SHA}"
+      #   working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration/hca_manage
+      # - name: Publish Scala coverage
+      #   uses: codecov/codecov-action@v1
       - uses: google-github-actions/setup-gcloud@v0.2.1
         name: Setup gcloud for pushing Docker images
         with:
@@ -72,8 +72,8 @@ jobs:
           export_default_credentials: true
       - name: Setup GCR auth
         run: gcloud auth configure-docker --quiet us.gcr.io
-      - name: Push Scala Dataflow Docker image
-        run: sbt publish
+      # - name: Push Scala Dataflow Docker image
+      #   run: sbt publish
       - name: Get artifact slug
         id: get-artifact-slug
         run: 'echo ::set-output name=slug::$(git rev-parse --short "$GITHUB_SHA")'
