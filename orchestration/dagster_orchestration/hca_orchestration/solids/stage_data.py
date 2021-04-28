@@ -4,11 +4,6 @@ from dagster import solid, InputDefinition, Nothing, String, Int, OutputDefiniti
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from google.cloud.bigquery import Dataset
 
-STAGING_BUCKET_CONFIG_SCHEMA = {
-    "staging_bucket_name": String,
-    "staging_prefix_name": String,
-}
-
 
 @solid(
     required_resource_keys={"storage_client", "staging_bucket_config"},
