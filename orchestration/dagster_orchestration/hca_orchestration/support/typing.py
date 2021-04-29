@@ -3,7 +3,7 @@ Complex type signatures that appear multiple times throughout the code
 base can live here, for easy reference and descriptive naming.
 """
 
-from dagster import InputDefinition
+from dagster import InputDefinition, usable_as_dagster_type
 from dagster.config import ConfigType as DagsterConfigType
 
 from typing import Literal, TypedDict, Union
@@ -33,5 +33,21 @@ class DagsterSolidConfig(TypedDict, total=False):
     config_schema: DagsterSolidConfigSchema
 
 
+@usable_as_dagster_type
 class HcaStagingDatasetName(str):
+    pass
+
+
+@usable_as_dagster_type
+class StagingBucket(str):
+    pass
+
+
+@usable_as_dagster_type
+class StagingPrefix(str):
+    pass
+
+
+@usable_as_dagster_type
+class JadeDatasetId(str):
     pass

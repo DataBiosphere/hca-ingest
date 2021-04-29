@@ -40,18 +40,19 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
     Runs the Beam hca transformation pipeline flow over the given input prefix
     """
     context.log.info("--pre_process_metadata")
-
-    # not strictly required, but makes the ensuing lines a lot shorter
-    bucket_name = context.resources.staging_bucket_config.staging_bucket_name
-    prefix_name = context.resources.staging_bucket_config.staging_prefix_name
-
-    kebabified_output_prefix = re.sub(r"[^A-Za-z0-9]", "-", prefix_name)
-
-    context.resources.beam_runner.run(
-        job_name=f"hca-stage-metadata-{kebabified_output_prefix}",
-        input_prefix=context.solid_config["input_prefix"],
-        output_prefix=f'gs://{bucket_name}/{prefix_name}'
-    )
+    pass
+    #
+    # # not strictly required, but makes the ensuing lines a lot shorter
+    # bucket_name = context.resources.staging_bucket_config.staging_bucket_name
+    # prefix_name = context.resources.staging_bucket_config.staging_prefix_name
+    #
+    # kebabified_output_prefix = re.sub(r"[^A-Za-z0-9]", "-", prefix_name)
+    #
+    # context.resources.beam_runner.run(
+    #     job_name=f"hca-stage-metadata-{kebabified_output_prefix}",
+    #     input_prefix=context.solid_config["input_prefix"],
+    #     output_prefix=f'gs://{bucket_name}/{prefix_name}'
+    # )
 
 
 @solid(
