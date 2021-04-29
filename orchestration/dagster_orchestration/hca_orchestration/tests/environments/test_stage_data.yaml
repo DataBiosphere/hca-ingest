@@ -3,16 +3,14 @@ resources:
     config:
       load_tag_prefix: fake_load_tag
       append_timestamp: true
-solids:
-  clear_staging_dir:
+  staging_bucket_config:
     config:
       staging_bucket_name: example_staging_bucket_name
       staging_prefix_name: example_staging_prefix_name
+solids:
   pre_process_metadata:
     config:
       input_prefix: example_input_prefix
-      staging_bucket_name: example_staging_bucket_name
-      staging_prefix_name: example_staging_prefix_name
   create_staging_dataset:
     config:
       staging_bq_project: fake_bq_project

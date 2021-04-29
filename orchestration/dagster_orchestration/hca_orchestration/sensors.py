@@ -34,15 +34,16 @@ class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClient):
         return RunRequest(
             run_key=inflated_workflow.metadata.name,
             run_config={
-                "solids": {
-                    "post_import_validate": {
+                "resources": {
+                    "hca_dataset_operation_config": {
                         "config": {
                             "dataset_name": dataset_name
                         }
-                    },
+                    }
+                },
+                "solids": {
                     "notify_slack_of_egress_validation_results": {
                         "config": {
-                            "dataset_name": dataset_name,
                             "argo_workflow_id": argo_workflow_id
                         }
                     }

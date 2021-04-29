@@ -4,7 +4,7 @@ from hca_orchestration.pipelines.validate_egress import validate_egress
 
 
 __all__ = [
-    cut_snapshot,
-    stage_data,
-    validate_egress,
+    'cut_snapshot',
+    'stage_data',
+    'validate_egress',
 ]

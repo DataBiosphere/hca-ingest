@@ -14,7 +14,7 @@ from hca_orchestration.pipelines import stage_data, validate_egress
 
 def config_path(relative_path: str) -> str:
     path: str = file_relative_path(
-        __file__, os.path.join("../environments/", relative_path)
+        __file__, os.path.join("./environments/", relative_path)
     )
     return path
 
@@ -52,19 +52,12 @@ class PipelinesTestCase(unittest.TestCase):
                     'config': {
                         'working_dir': beam_runner_path()
                     }
+                },
+                'staging_bucket_config': {
+                    'config': {
+                        'staging_prefix_name': f'local-stage-data/{test_id}'
+                    }
                 }
-            },
-            'solids': {
-                'clear_staging_dir': {
-                    'config': {
-                        'staging_prefix_name': f'local-stage-data/{test_id}'
-                    }
-                },
-                'pre_process_metadata': {
-                    'config': {
-                        'staging_prefix_name': f'local-stage-data/{test_id}'
-                    }
-                },
             }
         }
 

@@ -1,0 +1,2 @@
+gcp_env: dev
+google_project_name: please-dont-make-live-google-calls-in-tests
