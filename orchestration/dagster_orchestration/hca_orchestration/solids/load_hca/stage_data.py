@@ -4,9 +4,7 @@ from dagster import solid, InputDefinition, Nothing, String, Int, OutputDefiniti
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from google.cloud.bigquery import Dataset
 
-
-class HcaStagingDatasetName(str):
-    pass
+from hca_orchestration.support.typing import HcaStagingDatasetName
 
 
 @solid(
@@ -64,7 +62,6 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
         "staging_table_expiration_ms": Int
     },
     input_defs=[InputDefinition("start", Nothing)],
-    output_defs=[OutputDefinition(name="staging_dataset_name", dagster_type=HcaStagingDatasetName)]
 )
 def create_staging_dataset(context: AbstractComputeExecutionContext) -> HcaStagingDatasetName:
     """
