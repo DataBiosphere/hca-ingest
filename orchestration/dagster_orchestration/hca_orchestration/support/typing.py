@@ -8,7 +8,6 @@ from dagster.config import ConfigType as DagsterConfigType
 
 from typing import Literal, TypedDict, Union
 
-
 # dict of config settings for a given instance of a dagster object
 DagsterConfigDict = dict[
     str,
@@ -32,3 +31,7 @@ class DagsterSolidConfig(TypedDict, total=False):
     required_resource_keys: set[str]
     input_defs: list[InputDefinition]
     config_schema: DagsterSolidConfigSchema
+
+
+class HcaStagingDatasetName(str):
+    pass

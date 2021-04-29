@@ -15,7 +15,7 @@ Once you have your environment set up:
 
 * Run dagit and our toy pipeline via `poetry run dagit  -f hca_orchestration/pipelines.py`
 
-The `stage_data` pipeline is being built to mimic our current HCA `stage_data` pipeline.
+The `load_hca` pipeline is being built to mimic our current HCA `load_hca` workflow.
 
 The `pre_process_metadata` solid kicks off a Beam job, either locally or in GCP depending
 on which Dagster mode you're running in.

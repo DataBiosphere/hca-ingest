@@ -9,7 +9,7 @@ from dagster import execute_pipeline, file_relative_path, PipelineDefinition, Pi
 from dagster.utils import load_yaml_from_globs
 from dagster.utils.merger import deep_merge_dicts
 from hca_manage.diff_dirs import diff_dirs
-from hca_orchestration.pipelines import stage_data, validate_egress
+from hca_orchestration.pipelines import load_hca, validate_egress
 
 
 def config_path(relative_path: str) -> str:
@@ -44,7 +44,7 @@ class PipelinesTestCase(unittest.TestCase):
         )
 
     @pytest.mark.e2e
-    def test_stage_data_local_e2e(self):
+    def test_load_hca_local_e2e(self):
         test_id = f'test-{uuid.uuid4()}'
         runtime_config = {
             'resources': {
@@ -62,8 +62,8 @@ class PipelinesTestCase(unittest.TestCase):
         }
 
         self.run_pipeline(
-            stage_data,
-            'test_stage_data_local_e2e.yaml',
+            load_hca,
+            'test_load_hca_local_e2e.yaml',
             extra_config=runtime_config,
             pipeline_mode='local')
 
@@ -76,11 +76,11 @@ class PipelinesTestCase(unittest.TestCase):
         )
         self.assertEqual(expected_blobs, output_blobs, "Output results differ from expected")
 
-    def test_stage_data_noop_resources(self):
-        result = self.run_pipeline(stage_data, config_name="test_stage_data.yaml")
+    def test_load_data_noop_resources(self):
+        result = self.run_pipeline(load_hca, config_name="test_load_hca_noop_resources.yaml")
 
         self.assertTrue(result.success)
-        staging_dataset_name = result.result_for_solid("create_staging_dataset").output_value("staging_dataset_name")
+        staging_dataset_name = result.result_for_solid("create_staging_dataset").output_value("result")
         self.assertTrue(
             staging_dataset_name.startswith("fake_bq_project.testing_dataset_prefix_fake_load_tag"),
             "staging dataset should start with load tag prefix"
