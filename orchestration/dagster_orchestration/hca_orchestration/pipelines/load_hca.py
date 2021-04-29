@@ -1,7 +1,7 @@
 from dagster import ModeDefinition, pipeline
 
 from hca_orchestration.config import preconfigure_resource_for_mode
-from hca_orchestration.solids.stage_data import clear_staging_dir, pre_process_metadata, create_staging_dataset
+from hca_orchestration.solids.load_hca import clear_staging_dir, pre_process_metadata, create_staging_dataset
 from hca_orchestration.resources import dataflow_beam_runner, local_beam_runner, google_storage_client, \
     jade_data_repo_client, test_beam_runner, local_storage_client, noop_data_repo_client, bigquery_client, \
     noop_bigquery_client, load_tag
@@ -61,5 +61,5 @@ test_mode = ModeDefinition(
 @pipeline(
     mode_defs=[prod_mode, dev_mode, local_mode, test_mode]
 )
-def stage_data() -> None:
+def load_hca() -> None:
     create_staging_dataset(pre_process_metadata(clear_staging_dir()))
