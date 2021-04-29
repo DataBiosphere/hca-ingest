@@ -5,6 +5,10 @@ from dagster.core.execution.context.compute import AbstractComputeExecutionConte
 from google.cloud.bigquery import Dataset
 
 
+class HcaStagingDatasetName(str):
+    pass
+
+
 @solid(
     required_resource_keys={"storage_client", "staging_bucket_config"},
 )
@@ -60,9 +64,9 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
         "staging_table_expiration_ms": Int
     },
     input_defs=[InputDefinition("start", Nothing)],
-    output_defs=[OutputDefinition(name="staging_dataset_name", dagster_type=String)]
+    output_defs=[OutputDefinition(name="staging_dataset_name", dagster_type=HcaStagingDatasetName)]
 )
-def create_staging_dataset(context: AbstractComputeExecutionContext) -> str:
+def create_staging_dataset(context: AbstractComputeExecutionContext) -> HcaStagingDatasetName:
     """
     Creates a staging dataset that will house records for update/insertion into the
     final TDR dataset
@@ -82,4 +86,4 @@ def create_staging_dataset(context: AbstractComputeExecutionContext) -> str:
 
     context.log.info(f"Created staging dataset {dataset_name}")
 
-    return dataset_name
+    return HcaStagingDatasetName(dataset_name)
