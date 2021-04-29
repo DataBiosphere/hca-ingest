@@ -11,7 +11,7 @@ prod_mode = ModeDefinition(
     name="prod",
     resource_defs={
         "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "prod"),
-        "slack": live_slack_client,
+        "slack": preconfigure_resource_for_mode(live_slack_client, "prod"),
         "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, "prod"),
         "hca_dataset_operation_config": hca_dataset_operation_config,
     }
@@ -21,7 +21,7 @@ dev_mode = ModeDefinition(
     name="dev",
     resource_defs={
         "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
-        "slack": live_slack_client,
+        "slack": preconfigure_resource_for_mode(live_slack_client, "dev"),
         "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, "dev"),
         "hca_dataset_operation_config": hca_dataset_operation_config,
     }
