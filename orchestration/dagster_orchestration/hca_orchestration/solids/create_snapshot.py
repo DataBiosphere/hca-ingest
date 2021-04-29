@@ -3,7 +3,7 @@ from typing import Iterator
 from dagster import AssetMaterialization, EventMetadataEntry, Output, OutputDefinition, solid
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
-from hca_manage.main import data_repo_profile_ids
+from hca_manage.common import data_repo_profile_ids
 from hca_manage.manage import JobId, HcaManage
 
 
