@@ -5,7 +5,6 @@ import logging
 import os
 from typing import Callable, Optional, TextIO
 
-from cached_property import cached_property
 from google.cloud import bigquery
 
 from hca_manage import __version__ as hca_manage_version
@@ -62,7 +61,7 @@ def check_data(args: argparse.Namespace, host: str, parser: argparse.ArgumentPar
 @dataclass
 class CheckManager(SoftDeleteManager):
 
-    @cached_property
+    @property
     def bigquery_client(self) -> bigquery.client.Client:
         return bigquery.Client(project=self.project)
 

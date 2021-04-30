@@ -4,7 +4,6 @@ import logging
 from typing import BinaryIO, Optional
 import uuid
 
-from cached_property import cached_property
 from data_repo_client import RepositoryApi, DataDeletionRequest
 import google.auth.credentials
 from google.cloud import storage
@@ -56,7 +55,7 @@ class SoftDeleteManager:
                                "dev": "broad-dsp-monster-hca-dev"}[self.environment]
         self.bucket = f"broad-dsp-monster-hca-{self.environment}-staging-storage"
 
-    @cached_property
+    @property
     def gcp_creds(self) -> google.auth.credentials.Credentials:
         return hca_google.get_credentials()
 
