@@ -9,21 +9,21 @@ Example invocation:
 python verify_release_manifest.py -s 2021-03-24 -f testing.csv -g fake-gs-project -b fake-bq-project -d fake-dataset
 """
 import argparse
+import json
 import logging
-from functools import partial
-
 import sys
-from urllib.parse import urlparse
-from collections import defaultdict
+from collections import defaultdict, namedtuple
+from functools import partial
 from multiprocessing import Pool
+from urllib.parse import urlparse
 
 from google.cloud import bigquery, storage
-from google.cloud.bigquery.table import Row
 from google.cloud.storage.client import Client
 from hca_orchestration.contrib import google as hca_google
-import json
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
+
+PathWithCrc = namedtuple('PathWithCrc', 'path crc')
 
 file_types = {
     'analysis_file',
@@ -35,7 +35,7 @@ file_types = {
 }
 
 
-def get_expected_load_totals(storage_client: Client, staging_areas: set[str]) -> dict[str, set[str]]:
+def get_staging_area_file_descriptors(storage_client: Client, staging_areas: set[str]) -> dict[str, set[str]]:
     """
     Given a list of GS staging areas, count the files present in each /data subdir
     """
@@ -47,31 +47,37 @@ def get_expected_load_totals(storage_client: Client, staging_areas: set[str]) ->
             prefix = f"{url.path.lstrip('/')}/descriptors/{file_type}"
             blobs = list(storage_client.list_blobs(url.netloc, prefix=prefix))
             for blob in blobs:
-                descriptor = json.loads(blob.download_as_text())
-                target_path = f"/{descriptor['file_id']}/{descriptor['file_name']}"
+                expected[staging_area].add(blob.download_as_text())
 
-                expected[staging_area].add(target_path)
     return expected
 
 
-def find_files_in_load_history(bq_project: str, dataset: str, areas: dict[str, set]):
+def target_path_from_descriptor(descriptor: dict):
+    return f"/{descriptor['file_id']}/{descriptor['file_name']}"
+
+
+def find_files_in_load_history(bq_project: str, dataset: str, areas: dict[str, set[PathWithCrc]]):
     client = bigquery.Client(project=bq_project)
-    loaded_paths = defaultdict(set[str])
-    for area, target_paths in areas.items():
+    loaded_paths = {}
+
+    for area, raw_descriptors in areas.items():
         logging.debug(f"\tPulling loaded files for area {area}...")
+        target_paths = [target_path_from_descriptor(json.loads(raw_descriptor)) for raw_descriptor in raw_descriptors]
         query = f"""
-            SELECT distinct(target_path)
+            SELECT target_path, checksum_crc32c
                         FROM `datarepo_{dataset}.datarepo_load_history` dlh
                         WHERE  state = 'succeeded'
                         and target_path IN UNNEST(@paths)
         """
+
         job_config = bigquery.QueryJobConfig(
             query_parameters=[
                 bigquery.ArrayQueryParameter("paths", "STRING", target_paths),
             ]
         )
         query_job = client.query(query, job_config=job_config)
-        loaded_paths[area] = {row[0] for row in query_job}
+        loaded_paths[area] = {PathWithCrc(row["target_path"], row["checksum_crc32c"]) for row in query_job}
+
     return loaded_paths
 
 
@@ -85,18 +91,24 @@ def process_staging_area(area: str, gs_project: str, bq_project: str, dataset: s
     logging.debug(f"Processing staging area = {area}")
     creds = hca_google.get_credentials()
     storage_client = storage.Client(project=gs_project, credentials=creds)
-    expected_load_totals = get_expected_load_totals(storage_client, {area})
-    loaded_paths = find_files_in_load_history(bq_project, dataset, expected_load_totals)
+    expected_load_totals = get_staging_area_file_descriptors(storage_client, {area})
+    loaded_paths_by_staging_area = find_files_in_load_history(bq_project, dataset, expected_load_totals)
 
-    for a, target_paths in expected_load_totals.items():
-        loaded_paths = loaded_paths[a]
-        r = target_paths - loaded_paths
+    for a, raw_descriptors in expected_load_totals.items():
+        target_paths_with_crcs = set()
+        for raw_descriptor in raw_descriptors:
+            parsed = json.loads(raw_descriptor)
+            target_paths_with_crcs.add(PathWithCrc(target_path_from_descriptor(parsed), parsed["crc32c"]))
+
+        load_paths_for_staging_area = {PathWithCrc(path[0], path[1]) for path in loaded_paths_by_staging_area[a]}
+        r = target_paths_with_crcs - load_paths_for_staging_area
         if len(r) > 0:
             logging.warning(
-                f"❌ area = {a} Mismatched loaded paths; expected to find {len(target_paths)}, found {len(loaded_paths)}")
+                f"❌ area = {a} Mismatched loaded paths; expected to find {len(target_paths_with_crcs)}, found {len(load_paths_for_staging_area)}")
             logging.warning(r)
         else:
-            logging.info(f"✅  area = {a}, expected = {len(target_paths)}, found {len(loaded_paths)}, diff = {r}")
+            logging.info(
+                f"✅  area = {a}, expected = {len(target_paths_with_crcs)}, found {len(load_paths_for_staging_area)}, diff = {r}")
 
 
 def verify(manifest_file: str, gs_project: str, bq_project: str, dataset: str, pool_size: int) -> bool:
