@@ -14,6 +14,9 @@ from hca_manage.common import data_repo_host, DefaultHelpParser, JobId, get_api_
 from hca_orchestration.contrib import google as hca_google
 
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
 def run(arguments: Optional[list[str]] = None) -> None:
     parser = DefaultHelpParser(description="A simple CLI to soft delete rows in a TDR dataset.")
     parser.add_argument("-V", "--version", action="version", version="%(prog)s " + hca_manage_version)

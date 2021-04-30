@@ -13,6 +13,9 @@ from hca_manage.common import DefaultHelpParser, ProblemCount, data_repo_host, g
 from hca_manage.soft_delete import SoftDeleteManager
 
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
 def run(arguments: Optional[list[str]] = None) -> None:
     parser = DefaultHelpParser(description="A simple CLI to check for issues in a TDR dataset.")
     parser.add_argument("-V", "--version", action="version", version="%(prog)s " + hca_manage_version)

@@ -11,6 +11,9 @@ from hca_manage.common import data_repo_host, data_repo_profile_ids, DefaultHelp
     query_yes_no
 
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
 def run(arguments: Optional[list[str]] = None) -> None:
     parser = DefaultHelpParser(description="A simple CLI to manage TDR snapshots.")
     parser.add_argument("-V", "--version", action="version", version="%(prog)s " + hca_manage_version)
