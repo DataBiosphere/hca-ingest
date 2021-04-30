@@ -295,57 +295,6 @@ class HcaManage:
         logging.info(f"Snapshot deletion job id: {job_id}")
         return job_id
 
-    def delete_dataset(self, dataset_name: Optional[str] = None, dataset_id: Optional[str] = None) -> JobId:
-        """
-        Submits a dataset for deletion. Requires either a dataset ID or name.
-        :param dataset_name: Name of the dataset
-        :param dataset_id: ID of the dataset
-        :return: Job ID of the dataset deletion job
-        """
-        if dataset_name and not dataset_id:
-            response = self.data_repo_client.enumerate_datasets(filter=dataset_name)
-            try:
-                dataset_id = response.items[0].id
-            except IndexError:
-                raise ValueError("The provided dataset name returned no results.")
-        elif dataset_id and not dataset_name:
-            pass  # let dataset_id argument pass through
-        else:
-            # can't have both/neither provided
-            raise ValueError("You must provide either dataset_name or dataset_id, and cannot provide neither/both.")
-        delete_response_id: JobId = self.data_repo_client.delete_dataset(dataset_id).id
-        logging.info(f"Dataset deletion job id: {delete_response_id}")
-        return delete_response_id
-
-    def create_dataset(
-            self,
-            dataset_name: str,
-            billing_profile_id: str,
-            schema_path: str,
-            description: Optional[str] = None) -> JobId:
-        """
-        Creates a dataset in the data repo.
-        :param dataset_name:  Name of the dataset
-        :param billing_profile_id: GCP billing profile ID
-        :param schema_path: Local path to a file containing a schema for the dataset
-        :param description: Optional description for the dataset
-        :return: Job ID of the dataset creation job
-        """
-        with open(schema_path, "r") as f:
-            # verify that the schema is valid json
-            parsed_schema = json.load(f)
-            response = self.data_repo_client.create_dataset(
-                dataset={
-                    "name": dataset_name,
-                    "description": description,
-                    "defaultProfileId": billing_profile_id,
-                    "schema": parsed_schema
-                }
-            )
-            job_id: JobId = response.id
-            logging.info(f"Dataset creation job id: {job_id}")
-            return job_id
-
     # dataset-level checking and soft deleting
     def process_duplicates(self, soft_delete: bool = False) -> int:
         """
