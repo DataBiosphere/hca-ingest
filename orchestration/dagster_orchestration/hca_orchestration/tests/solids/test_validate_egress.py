@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 from dagster import execute_solid
 
-from hca_manage.manage import ProblemCount
+from hca_manage.common import ProblemCount
 
 from hca_orchestration.pipelines.validate_egress import test_mode
 from hca_orchestration.solids.validate_egress import post_import_validate,\

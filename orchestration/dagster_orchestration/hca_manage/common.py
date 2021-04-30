@@ -1,4 +1,5 @@
 import argparse
+from dataclasses import dataclass
 import sys
 from typing import NoReturn
 
@@ -7,6 +8,17 @@ from data_repo_client import ApiClient, Configuration, RepositoryApi
 from hca_orchestration.contrib.google import default_google_access_token
 
 JobId = str
+
+
+@dataclass
+class ProblemCount:
+    duplicates: int
+    null_file_refs: int
+    dangling_project_refs: int
+
+    def has_problems(self) -> bool:
+        return self.duplicates > 0 or self.null_file_refs > 0 or self.dangling_project_refs > 0
+
 
 data_repo_host = {
     "dev": "https://jade.datarepo-dev.broadinstitute.org/",
