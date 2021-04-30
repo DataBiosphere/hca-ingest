@@ -1,12 +1,13 @@
 """
 Given a file containing a list of constituent staging dirs for a DCP release (aka a manifest),
 verify that data has been loaded from each of them to the target DCP dataset and the count of loaded files
-matches the # in the staging area
+matches the # in the staging area.
 
-All datarepo load totals are inferred from a supplied start date for the import process.
+Files are determined to be loaded if they exist at the desired target path and crc as defined in the staging
+areas descriptors.
 
 Example invocation:
-python verify_release_manifest.py -s 2021-03-24 -f testing.csv -g fake-gs-project -b fake-bq-project -d fake-dataset
+python verify_release_manifest.py -f testing.csv -g fake-gs-project -b fake-bq-project -d fake-dataset
 """
 import argparse
 import json
@@ -25,7 +26,7 @@ logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 PathWithCrc = namedtuple('PathWithCrc', 'path crc')
 
-file_types = {
+FILE_TYPES = {
     'analysis_file',
     'sequence_file',
     'image_file',
@@ -37,13 +38,13 @@ file_types = {
 
 def get_staging_area_file_descriptors(storage_client: Client, staging_areas: set[str]) -> dict[str, set[str]]:
     """
-    Given a list of GS staging areas, count the files present in each /data subdir
+    Given a set of GS staging areas, return the descriptors present in each area
     """
 
     expected = defaultdict(set[str])
     for staging_area in staging_areas:
         url = urlparse(staging_area)
-        for file_type in file_types:
+        for file_type in FILE_TYPES:
             prefix = f"{url.path.lstrip('/')}/descriptors/{file_type}"
             blobs = list(storage_client.list_blobs(url.netloc, prefix=prefix))
             for blob in blobs:
@@ -117,9 +118,13 @@ def verify(manifest_file: str, gs_project: str, bq_project: str, dataset: str, p
     logging.info(f"{len(staging_areas)} staging areas in manifest.")
     logging.info(f"Inspecting staging areas (pool_size = {pool_size})...")
 
-    with Pool(pool_size) as p:
-        curried = partial(process_staging_area, gs_project=gs_project, bq_project=bq_project, dataset=dataset)
-        p.map(curried, staging_areas)
+    frozen = partial(process_staging_area, gs_project=gs_project, bq_project=bq_project, dataset=dataset)
+    if pool_size > 0:
+        with Pool(pool_size) as p:
+            p.map(frozen, staging_areas)
+    else:
+        for area in staging_areas:
+            frozen(area)
 
     return True
 
