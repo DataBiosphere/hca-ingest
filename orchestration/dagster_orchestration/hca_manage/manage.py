@@ -7,7 +7,7 @@ import uuid
 from typing import BinaryIO, Callable, Optional, TextIO
 
 from cached_property import cached_property
-from data_repo_client import RepositoryApi, DataDeletionRequest, SnapshotRequestModel, SnapshotRequestContentsModel
+from data_repo_client import RepositoryApi, DataDeletionRequest
 import google.auth
 import google.auth.credentials
 from google.cloud import bigquery, storage
