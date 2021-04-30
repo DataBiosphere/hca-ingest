@@ -12,26 +12,69 @@ import argparse
 import logging
 import sys
 from urllib.parse import urlparse
+from collections import defaultdict
 
 from google.cloud import bigquery, storage
 from google.cloud.bigquery.table import Row
 from google.cloud.storage.client import Client
 from hca_orchestration.contrib import google as hca_google
+import json
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 
-def get_expected_load_totals(storage_client: Client, staging_areas: list[str]) -> dict[str, int]:
+file_types = {
+    'analysis_file',
+    'sequence_file',
+    'image_file',
+    'reference_file',
+    'sequence_file',
+    'supplementary_file'
+}
+
+
+def get_expected_load_totals(storage_client: Client, staging_areas: list[str]) -> dict[str, list[str]]:
     """
     Given a list of GS staging areas, count the files present in each /data subdir
     """
-    expected = {}
+
+    expected = defaultdict(list[str])
     for staging_area in staging_areas:
         url = urlparse(staging_area)
-        prefix = f"{url.path.lstrip('/')}/data/"
-        blobs = list(storage_client.list_blobs(url.netloc, prefix=prefix))
-        expected[staging_area] = len(blobs)
+        for file_type in file_types:
+            prefix = f"{url.path.lstrip('/')}/descriptors/{file_type}"
+            blobs = list(storage_client.list_blobs(url.netloc, prefix=prefix))
+            logging.info("Pulling descriptors...")
+            for blob in blobs:
+                descriptor = json.loads(blob.download_as_text())
+                target_path = f"/{descriptor['file_id']}/{descriptor['file_name']}"
+
+                expected[staging_area].append(target_path)
     return expected
+
+
+def find_files_in_load_history(bq_project: str, dataset: str, areas: list[str], start_date: str):
+    import pdb
+    pdb.set_trace()
+    client = bigquery.Client(project=bq_project)
+
+    for area, target_paths in areas.items():
+        query = f"""
+            SELECT distinct(target_path)
+                        FROM `datarepo_{dataset}.datarepo_load_history` dlh
+                        WHERE load_time >= '{start_date}'
+                        and state = 'succeeded'
+                        and target_path IN (@paths)
+        """
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ArrayQueryParameter("paths", "STRING", target_paths),
+            ]
+        )
+        query_job = client.query(query, job_config=job_config)
+        import pdb
+        pdb.set_trace()
+        return [row for row in query_job]
 
 
 def get_load_history(bq_project: str, dataset: str, start_date: str) -> list[Row]:
@@ -40,7 +83,7 @@ def get_load_history(bq_project: str, dataset: str, start_date: str) -> list[Row
     # Determine the number of distinct files loaded after the given start date, grouped by staging area
     query = f"""
                 WITH base as (
-                    SELECT distinct(source_name)
+                    SELECT distinct(target_path)
                     FROM `datarepo_{dataset}.datarepo_load_history` dlh
                     LEFT JOIN `datarepo_{dataset}.sequence_file` sf
                     ON sf.file_id = dlh.file_id
@@ -81,6 +124,8 @@ def verify(start_date: str, manifest_file: str, gs_project: str, bq_project: str
     storage_client = storage.Client(project=gs_project, credentials=creds)
     staging_areas = parse_manifest_file(manifest_file)
     expected_load_totals = get_expected_load_totals(storage_client, staging_areas)
+    find_files_in_load_history(bq_project, dataset, expected_load_totals, start_date)
+    sys.exit(1)
 
     logging.info("Inspecting load history in bigquery...")
     load_history = get_load_history(bq_project, dataset, start_date)

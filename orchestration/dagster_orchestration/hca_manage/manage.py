@@ -117,6 +117,7 @@ class HcaManage:
                  {target_table}.project_id = projects.project_id
         WHERE projects.project_id IS NULL;
         """
+        print(query)
         return self._hit_bigquery(query)
 
     def get_duplicates(self, target_table: str) -> set[str]:
