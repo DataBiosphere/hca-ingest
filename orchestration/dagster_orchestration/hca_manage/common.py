@@ -6,6 +6,7 @@ from data_repo_client import ApiClient, Configuration, RepositoryApi
 
 from hca_orchestration.contrib.google import default_google_access_token
 
+JobId = str
 
 data_repo_host = {
     "dev": "https://jade.datarepo-dev.broadinstitute.org/",

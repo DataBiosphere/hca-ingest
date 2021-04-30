@@ -7,8 +7,7 @@ from typing import Optional
 from data_repo_client import RepositoryApi
 
 from hca_manage import __version__ as hca_manage_version
-from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client, query_yes_no
-from hca_manage.manage import HcaManage, JobId
+from hca_manage.common import data_repo_host, DefaultHelpParser, JobId, get_api_client, query_yes_no
 
 
 def run(arguments: Optional[list[str]] = None) -> None:

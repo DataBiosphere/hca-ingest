@@ -5,7 +5,6 @@ import logging
 import os
 import uuid
 from typing import BinaryIO, Callable, Optional, TextIO
-import json
 
 from cached_property import cached_property
 from data_repo_client import RepositoryApi, DataDeletionRequest, SnapshotRequestModel, SnapshotRequestContentsModel
@@ -239,61 +238,6 @@ class HcaManage:
 
         response = self.data_repo_client.enumerate_datasets(filter=self.dataset)
         return response.items[0].id  # type: ignore # data repo client has no type hints, since it's auto-generated
-
-    def submit_snapshot_request(
-        self,
-        qualifier: Optional[str] = None,
-        snapshot_date: Optional[date] = None,
-    ) -> JobId:
-        snapshot_date = snapshot_date or datetime.today().date()
-        return self.submit_snapshot_request_with_name(self.snapshot_name(qualifier, snapshot_date))
-
-    def submit_snapshot_request_with_name(self, snapshot_name: str) -> JobId:
-        """
-        Submit a snapshot creation request.
-        :param qualifier: Optional trailing suffix for the snapshot name
-        :return: Job ID of the snapshot creation job
-        """
-
-        snapshot_request = SnapshotRequestModel(
-            name=snapshot_name,
-            profile_id=self.data_repo_profile_id,
-            description=f"Create snapshot {snapshot_name}",
-            contents=[SnapshotRequestContentsModel(dataset_name=self.dataset, mode="byFullView")],
-            readers=self.reader_list
-        )
-
-        logging.info(snapshot_request)
-
-        response = self.data_repo_client.create_snapshot(
-            snapshot=snapshot_request
-        )
-
-        logging.info(f"Snapshot creation job id: {response.id}")
-        return JobId(response.id)
-
-    def delete_snapshot(self, snapshot_name: Optional[str] = None, snapshot_id: Optional[str] = None) -> JobId:
-        """
-        Submit a snapshot deletion request. Requires either a snapshot ID or a snapshot name.
-        :param snapshot_id: ID of the snapshot to delete
-        :param snapshot_name: Name of the snapshot to delete.
-        :return: Job ID of the snapshot creation job
-        """
-
-        if snapshot_name and not snapshot_id:
-            response = self.data_repo_client.enumerate_snapshots(filter=snapshot_name)
-            try:
-                snapshot_id = response.items[0].id
-            except IndexError:
-                raise ValueError("The provided snapshot name returned no results.")
-        elif snapshot_id and not snapshot_name:
-            pass  # let snapshot_id argument pass through
-        else:
-            # can't have both/neither provided
-            raise ValueError("You must provide either snapshot_name or snapshot_id, and cannot provide neither/both.")
-        job_id: JobId = self.data_repo_client.delete_snapshot(snapshot_id).id
-        logging.info(f"Snapshot deletion job id: {job_id}")
-        return job_id
 
     # dataset-level checking and soft deleting
     def process_duplicates(self, soft_delete: bool = False) -> int:
