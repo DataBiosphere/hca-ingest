@@ -48,7 +48,7 @@ class CheckManagerTestCase(unittest.TestCase):
         self.assertEqual(result, 0)
 
     def test_process_rows_does_no_soft_delete_if_soft_delete_false(self):
-        with patch('hca_manage.manage.HcaManage.soft_delete_rows') as mock_soft_delete:
+        with patch('hca_manage.check.CheckManager.soft_delete_rows') as mock_soft_delete:
             result = self.manager._process_rows(
                 lambda: {'table_a', 'table_b'},
                 lambda table: {'abc'},
@@ -59,7 +59,7 @@ class CheckManagerTestCase(unittest.TestCase):
         self.assertEqual(result, 2)  # one error per table
 
     def test_process_rows_does_soft_delete_if_soft_delete_true(self):
-        with patch('hca_manage.manage.HcaManage.soft_delete_rows') as mock_soft_delete:
+        with patch('hca_manage.check.CheckManager.soft_delete_rows') as mock_soft_delete:
             result = self.manager._process_rows(
                 lambda: {'table_a', 'table_b'},
                 lambda table: {'abc'},

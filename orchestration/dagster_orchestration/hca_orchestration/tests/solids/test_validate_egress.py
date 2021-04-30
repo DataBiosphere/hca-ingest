@@ -13,11 +13,11 @@ from hca_orchestration.tests.support.matchers import StringContaining
 
 
 class PostImportValidateTestCase(unittest.TestCase):
-    @patch("hca_manage.manage.HcaManage.get_dangling_proj_refs", return_value=set())
-    @patch("hca_manage.manage.HcaManage.get_null_filerefs", return_value=set())
-    @patch("hca_manage.manage.HcaManage.get_file_table_names", return_value=set())
-    @patch("hca_manage.manage.HcaManage.get_duplicates", return_value=set())
-    @patch("hca_manage.manage.HcaManage.get_all_table_names", return_value=set())
+    @patch("hca_manage.check.CheckManager.get_dangling_proj_refs", return_value=set())
+    @patch("hca_manage.check.CheckManager.get_null_filerefs", return_value=set())
+    @patch("hca_manage.check.CheckManager.get_file_table_names", return_value=set())
+    @patch("hca_manage.check.CheckManager.get_duplicates", return_value=set())
+    @patch("hca_manage.check.CheckManager.get_all_table_names", return_value=set())
     def test_post_import_validate(self, mock_all_table_names: Mock, mock_duplicates: Mock, mock_file_table_names: Mock,
                                   mock_null_filerefs: Mock, mock_dangling_proj_refs: Mock):
         """

@@ -22,8 +22,10 @@ class SoftDeleteManagerTestCase(unittest.TestCase):
     def test_soft_delete_rows_calls_submit_soft_delete(self):
         fake_google_path = 'fake://google/path.csv'
         fake_job_id = 'jorb_id'
-        patched_soft_delete = patch('hca_manage.manage.HcaManage._submit_soft_delete', return_value=fake_job_id)
-        patched_put_in_bucket = patch('hca_manage.manage.HcaManage.put_csv_in_bucket', return_value=fake_google_path)
+        patched_soft_delete = patch('hca_manage.soft_delete.SoftDeleteManager._submit_soft_delete',
+                                    return_value=fake_job_id)
+        patched_put_in_bucket = patch('hca_manage.soft_delete.SoftDeleteManager.put_csv_in_bucket',
+                                      return_value=fake_google_path)
 
         with patched_soft_delete as mock_submit, patched_put_in_bucket as mock_bucket_upload:
             with NamedTemporaryFile() as fake_file:
