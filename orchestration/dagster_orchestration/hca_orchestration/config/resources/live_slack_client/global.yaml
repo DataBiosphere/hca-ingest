@@ -1,1 +1,3 @@
 channel: "#monster-ci"
+token:
+  env: SLACK_TOKEN
