@@ -12,7 +12,7 @@ from hca_manage.soft_delete import SoftDeleteManager
 
 
 @dataclass
-class BQRowManager:
+class BQRowManager:  # type: ignore # even using @abstractmethod seems to cause mypy some sadness
     dataset: str
     project: str
     soft_delete_manager: SoftDeleteManager
