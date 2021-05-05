@@ -8,7 +8,10 @@ from data_repo_client import ApiClient, Configuration, RepositoryApi
 
 from hca_orchestration.contrib.google import default_google_access_token
 
-JobId = str
+
+# alias for str to make the return type for jade API calls a little clearer
+class JobId(str):
+    pass
 
 
 @dataclass
