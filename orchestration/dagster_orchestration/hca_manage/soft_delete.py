@@ -61,14 +61,14 @@ class SoftDeleteManager:
 
     def soft_delete_rows(self, path: str, target_table: str) -> JobId:
         with open(path, mode="rb") as rf:
-            remote_file_path = self.put_csv_in_bucket(local_file=rf, target_table=target_table)
+            remote_file_path = self.put_soft_delete_csv_in_bucket(local_file=rf, target_table=target_table)
             job_id = self._submit_soft_delete(target_table=target_table, target_path=remote_file_path)
             logging.info(f"Soft delete job for table {target_table} running, job id of: {job_id}")
             return job_id
 
-    def put_csv_in_bucket(self, local_file: BinaryIO, target_table: str) -> str:
+    def put_soft_delete_csv_in_bucket(self, local_file: BinaryIO, target_table: str) -> str:
         """
-        Puts a local file into a GCS bucket accessible by Jade.
+        Puts a local file into a GCS bucket accessible by Jade so that a soft delete operation can be performed.
         :param local_file: The file to upload.
         :param target_table: The table name with which to format the target filename.
         :return: The gs-path of the uploaded file.

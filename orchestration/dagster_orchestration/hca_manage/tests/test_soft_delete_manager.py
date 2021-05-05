@@ -25,7 +25,7 @@ class SoftDeleteManagerTestCase(unittest.TestCase):
         fake_job_id = 'jorb_id'
         patched_soft_delete = patch('hca_manage.soft_delete.SoftDeleteManager._submit_soft_delete',
                                     return_value=fake_job_id)
-        patched_put_in_bucket = patch('hca_manage.soft_delete.SoftDeleteManager.put_csv_in_bucket',
+        patched_put_in_bucket = patch('hca_manage.soft_delete.SoftDeleteManager.put_soft_delete_csv_in_bucket',
                                       return_value=fake_google_path)
 
         with patched_soft_delete as mock_submit, patched_put_in_bucket as mock_bucket_upload:
@@ -46,7 +46,7 @@ class SoftDeleteManagerTestCase(unittest.TestCase):
 
         with patch('google.cloud.storage.Client', return_value=fake_gcs_client):
             very_real_csv = BytesIO(b"steve\r\nwas\r\nhere\r\n")
-            self.manager.put_csv_in_bucket(very_real_csv, 'some_table')
+            self.manager.put_soft_delete_csv_in_bucket(very_real_csv, 'some_table')
 
         expected_target_blob = fake_gcs_client.get_bucket(target_bucket).blob(expected_filename)
         expected_target_blob.upload_from_file.assert_called_once_with(very_real_csv)
