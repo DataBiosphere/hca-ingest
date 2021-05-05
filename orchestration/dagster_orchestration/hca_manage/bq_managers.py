@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import logging
 import os
@@ -11,12 +11,16 @@ from hca_manage.common import populate_row_id_csv
 from hca_manage.soft_delete import SoftDeleteManager
 
 
+# this hacky nonsense is because mypy currently can't reckon with abstract dataclasses
+# see here for explanation/updates: https://github.com/python/mypy/issues/5374
 @dataclass
-class BQRowManager:  # type: ignore # even using @abstractmethod seems to cause mypy some sadness
+class _BQRowDataclass:
     dataset: str
     project: str
     soft_delete_manager: SoftDeleteManager
 
+
+class BQRowManager(_BQRowDataclass, ABC):
     @property
     def bigquery_client(self) -> bigquery.client.Client:
         return bigquery.Client(project=self.project)
