@@ -53,6 +53,16 @@ def get_api_client(host: str) -> RepositoryApi:
     return RepositoryApi(api_client=client)
 
 
+def get_dataset_id(dataset: str, data_repo_client: RepositoryApi) -> str:
+    """
+    Get the dataset ID of the provided dataset name.
+    :return: The dataset id.
+    """
+
+    response = data_repo_client.enumerate_datasets(filter=dataset)
+    return response.items[0].id  # type: ignore # data repo client has no type hints, since it's auto-generated
+
+
 def populate_row_id_csv(row_ids: set[str], temp_file: TextIO) -> None:
     """
     Create a csv locally with one column filled with row ids to soft delete.

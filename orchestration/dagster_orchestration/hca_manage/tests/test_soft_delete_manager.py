@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 from data_repo_client import RepositoryApi, DataDeletionRequest
 
+from hca_manage.common import get_dataset_id
 from hca_manage.soft_delete import SoftDeleteManager
 from hca_orchestration.tests.support.gcs import FakeGCSClient
 from hca_orchestration.tests.support.matchers import ObjectOfType
@@ -59,7 +60,8 @@ class SoftDeleteManagerTestCase(unittest.TestCase):
         enumerate_datasets_response.items = [first_dataset, second_dataset]
         self.manager.data_repo_client.enumerate_datasets.return_value = enumerate_datasets_response
 
-        self.assertEqual(self.manager.get_dataset_id(), 'abc')
+        self.assertEqual(get_dataset_id(dataset=self.manager.dataset, data_repo_client=self.manager.data_repo_client),
+                         'abc')
 
     def test_submit_soft_delete_submits_dataset_deletion_with_expected_params(self):
         enumerate_datasets_response = Mock()

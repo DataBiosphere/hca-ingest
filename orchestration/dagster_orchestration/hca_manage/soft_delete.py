@@ -9,7 +9,7 @@ import google.auth.credentials
 from google.cloud import storage
 
 from hca_manage import __version__ as hca_manage_version
-from hca_manage.common import data_repo_host, DefaultHelpParser, JobId, get_api_client, query_yes_no
+from hca_manage.common import data_repo_host, DefaultHelpParser, JobId, get_api_client, get_dataset_id, query_yes_no
 from hca_orchestration.contrib import google as hca_google
 
 
@@ -84,15 +84,6 @@ class SoftDeleteManager:
 
         return filepath
 
-    def get_dataset_id(self) -> str:
-        """
-        Get the dataset ID of the provided dataset name.
-        :return: The dataset id.
-        """
-
-        response = self.data_repo_client.enumerate_datasets(filter=self.dataset)
-        return response.items[0].id  # type: ignore # data repo client has no type hints, since it's auto-generated
-
     def _format_filename(self, table: str) -> str:
         return self.filename_template.format(table=table)
 
@@ -103,7 +94,7 @@ class SoftDeleteManager:
         :param target_path: The gs-path of the csv that contains the row ids to soft delete.
         :return: The job id of the soft delete job.
         """
-        dataset_id = self.get_dataset_id()
+        dataset_id = get_dataset_id(dataset=self.dataset, data_repo_client=self.data_repo_client)
 
         response = self.data_repo_client.apply_dataset_data_deletion(
             id=dataset_id,
