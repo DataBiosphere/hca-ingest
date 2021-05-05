@@ -4,6 +4,7 @@ import logging
 from typing import Optional
 
 from cached_property import cached_property
+from data_repo_client import RepositoryApi
 
 from hca_manage import __version__ as hca_manage_version
 from hca_manage.bq_managers import DanglingFileRefManager, DuplicatesManager, NullFileRefManager
@@ -49,7 +50,7 @@ def check_data(args: argparse.Namespace, host: str, parser: argparse.ArgumentPar
     hca = CheckManager(environment=args.env,
                        project=project,
                        dataset=args.dataset,
-                       host=host)
+                       data_repo_client=get_api_client(host))
 
     if remove:
         hca.remove_all()
@@ -62,14 +63,14 @@ class CheckManager:
     environment: str
     project: str
     dataset: str
-    host: str
+    data_repo_client: RepositoryApi
 
     @cached_property
     def soft_delete_manager(self) -> SoftDeleteManager:
         return SoftDeleteManager(environment=self.environment,
                                  dataset=self.dataset,
                                  project=self.project,
-                                 data_repo_client=get_api_client(host=self.host))
+                                 data_repo_client=self.data_repo_client)
 
     @property
     def duplicate_manager(self) -> DuplicatesManager:

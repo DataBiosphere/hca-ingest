@@ -1,7 +1,9 @@
 import csv
 from io import StringIO
 import unittest
-from unittest.mock import call, patch
+from unittest.mock import MagicMock, call, patch
+
+from data_repo_client import RepositoryApi
 
 from hca_manage.check import CheckManager
 from hca_manage.common import populate_row_id_csv
@@ -12,7 +14,7 @@ class CheckManagerTestCase(unittest.TestCase):
     def setUp(self):
         self.manager = CheckManager(
             environment='dev',
-            host="hostname",
+            data_repo_client=MagicMock(autospec=RepositoryApi),
             project='project-id',
             dataset='datasetname',
         )
