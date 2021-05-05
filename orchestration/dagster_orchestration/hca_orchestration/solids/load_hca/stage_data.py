@@ -55,12 +55,8 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
 
 
 @solid(
-    required_resource_keys={"bigquery_client", "load_tag"},
-    config_schema={
-        "scratch_bq_project": String,
-        "scratch_dataset_prefix": String,
-        "scratch_table_expiration_ms": Int
-    },
+    required_resource_keys={"bigquery_client", "load_tag", "scratch_config"},
+
     input_defs=[InputDefinition("start", Nothing)],
 )
 def create_scratch_dataset(context: AbstractComputeExecutionContext) -> HcaStagingDatasetName:
@@ -69,14 +65,14 @@ def create_scratch_dataset(context: AbstractComputeExecutionContext) -> HcaStagi
     final TDR dataset
     :return: Name of the staging dataset
     """
-    scratch_bq_project = context.solid_config["scratch_bq_project"]
-    scratch_dataset_prefix = context.solid_config["scratch_dataset_prefix"]
+    scratch_bq_project = context.resources.scratch_config.scratch_bq_project
+    scratch_dataset_prefix = context.resources.scratch_config.scratch_dataset_prefix
     load_tag = context.resources.load_tag
 
     dataset_name = f"{scratch_bq_project}.{scratch_dataset_prefix}_{load_tag}"
 
     dataset = Dataset(dataset_name)
-    dataset.default_table_expiration_ms = context.solid_config["scratch_table_expiration_ms"]
+    dataset.default_table_expiration_ms = context.resources.scratch_config.scratch_table_expiration_ms
 
     bq_client = context.resources.bigquery_client
     bq_client.create_dataset(dataset)

@@ -9,12 +9,10 @@ resources:
   scratch_config:
     config:
       scratch_bucket_name: broad-dsp-monster-hca-dev-temp-storage
+      scratch_bq_project: broad-dsp-monster-hca-dev
+      scratch_dataset_prefix: local_e2e
+      scratch_table_expiration_ms: 3600000
 solids:
   pre_process_metadata:
     config:
       input_prefix: "gs://broad-dsp-monster-hca-dev-test-storage/integration/ebi_small/test_data"
-  create_scratch_dataset:
-    config:
-      scratch_bq_project: broad-dsp-monster-hca-dev
-      scratch_dataset_prefix: local_e2e
-      scratch_table_expiration_ms: 3600000

@@ -7,12 +7,10 @@ resources:
     config:
       scratch_bucket_name: example_staging_bucket_name
       scratch_prefix_name: example_staging_prefix_name
+      scratch_bq_project: fake_bq_project
+      scratch_dataset_prefix: testing_dataset_prefix
+      scratch_table_expiration_ms: 1
 solids:
   pre_process_metadata:
     config:
       input_prefix: example_input_prefix
-  create_scratch_dataset:
-    config:
-      scratch_bq_project: fake_bq_project
-      scratch_dataset_prefix: testing_dataset_prefix
-      scratch_table_expiration_ms: 1
