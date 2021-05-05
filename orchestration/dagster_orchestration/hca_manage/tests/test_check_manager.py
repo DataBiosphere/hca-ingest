@@ -1,9 +1,7 @@
 import csv
 from io import StringIO
 import unittest
-from unittest.mock import MagicMock, call, patch
-
-from data_repo_client import RepositoryApi
+from unittest.mock import call, patch
 
 from hca_manage.check import CheckManager
 from hca_manage.common import populate_row_id_csv
@@ -14,7 +12,7 @@ class CheckManagerTestCase(unittest.TestCase):
     def setUp(self):
         self.manager = CheckManager(
             environment='dev',
-            data_repo_client=MagicMock(autospec=RepositoryApi),
+            host="hostname",
             project='project-id',
             dataset='datasetname',
         )
@@ -26,7 +24,7 @@ class CheckManagerTestCase(unittest.TestCase):
             ['e', 'f']
         ]
         with patch('google.cloud.bigquery.Client.query', return_value=results_list):
-            self.assertEqual(self.manager._hit_bigquery("querying querulously"), {'a', 'c', 'e'})
+            self.assertEqual(self.manager.duplicate_manager._hit_bigquery("querying querulously"), {'a', 'c', 'e'})
 
     def test_populate_row_id_csv_writes_to_csv(self):
         string_io = StringIO()
@@ -40,7 +38,7 @@ class CheckManagerTestCase(unittest.TestCase):
         self.assertEqual(set(row[0] for row in csv_reader), strings)
 
     def test_process_rows_returns_zero_if_no_bad_rids(self):
-        result = self.manager._check_or_delete_rows(
+        result = self.manager.duplicate_manager._check_or_delete_rows(
             lambda: {'table_a', 'table_b'},
             lambda table: set(),
             soft_delete=True,
@@ -49,8 +47,8 @@ class CheckManagerTestCase(unittest.TestCase):
         self.assertEqual(result, 0)
 
     def test_process_rows_does_no_soft_delete_if_soft_delete_false(self):
-        with patch('hca_manage.check.CheckManager.soft_delete_rows') as mock_soft_delete:
-            result = self.manager._check_or_delete_rows(
+        with patch('hca_manage.soft_delete.SoftDeleteManager.soft_delete_rows') as mock_soft_delete:
+            result = self.manager.duplicate_manager._check_or_delete_rows(
                 lambda: {'table_a', 'table_b'},
                 lambda table: {'abc'},
                 soft_delete=False,
@@ -60,8 +58,8 @@ class CheckManagerTestCase(unittest.TestCase):
         self.assertEqual(result, 2)  # one error per table
 
     def test_process_rows_does_soft_delete_if_soft_delete_true(self):
-        with patch('hca_manage.check.CheckManager.soft_delete_rows') as mock_soft_delete:
-            result = self.manager._check_or_delete_rows(
+        with patch('hca_manage.soft_delete.SoftDeleteManager.soft_delete_rows') as mock_soft_delete:
+            result = self.manager.duplicate_manager._check_or_delete_rows(
                 lambda: {'table_a', 'table_b'},
                 lambda table: {'abc'},
                 soft_delete=True,
