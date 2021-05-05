@@ -1,7 +1,8 @@
 import argparse
+import csv
 from dataclasses import dataclass
 import sys
-from typing import NoReturn
+from typing import NoReturn, TextIO
 
 from data_repo_client import ApiClient, Configuration, RepositoryApi
 
@@ -47,6 +48,18 @@ def get_api_client(host: str) -> RepositoryApi:
     client.client_side_validation = False
 
     return RepositoryApi(api_client=client)
+
+
+def populate_row_id_csv(row_ids: set[str], temp_file: TextIO) -> None:
+    """
+    Create a csv locally with one column filled with row ids to soft delete.
+    :param row_ids: A set of row ids to soft delete.
+    :param temp_file: a temporary file to pass in
+    :return: The filename of the created csv.
+    """
+    sd_writer = csv.writer(temp_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
+
+    sd_writer.writerows([[rid] for rid in row_ids])
 
 
 def query_yes_no(question: str, default: str = "no") -> bool:

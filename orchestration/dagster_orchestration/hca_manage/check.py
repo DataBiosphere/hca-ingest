@@ -1,14 +1,14 @@
 import argparse
-import csv
 from dataclasses import dataclass
 import logging
 import os
-from typing import Callable, Optional, TextIO
+from typing import Callable, Optional
 
 from google.cloud import bigquery
 
 from hca_manage import __version__ as hca_manage_version
-from hca_manage.common import DefaultHelpParser, ProblemCount, data_repo_host, get_api_client, query_yes_no
+from hca_manage.common import DefaultHelpParser, ProblemCount, data_repo_host, get_api_client, populate_row_id_csv, \
+    query_yes_no
 from hca_manage.soft_delete import SoftDeleteManager
 
 
@@ -241,18 +241,6 @@ class CheckManager(SoftDeleteManager):
 
         return self._hit_bigquery(query)
 
-    @staticmethod
-    def populate_row_id_csv(row_ids: set[str], temp_file: TextIO) -> None:
-        """
-        Create a csv locally with one column filled with row ids to soft delete.
-        :param row_ids: A set of row ids to soft delete.
-        :param temp_file: a temporary file to pass in
-        :return: The filename of the created csv.
-        """
-        sd_writer = csv.writer(temp_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
-
-        sd_writer.writerows([[rid] for rid in row_ids])
-
     def _process_rows(
         self,
         get_table_names: Callable[[], set[str]],
@@ -278,7 +266,7 @@ class CheckManager(SoftDeleteManager):
                     try:
                         # create and populate file
                         with open(local_filename, mode="w") as wf:
-                            self.populate_row_id_csv(rids_to_process, wf)
+                            populate_row_id_csv(rids_to_process, wf)
                         # do processing
                         self.soft_delete_rows(local_filename, table_name)
                     finally:
