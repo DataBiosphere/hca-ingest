@@ -110,8 +110,8 @@ class CheckManager(SoftDeleteManager):
         def links_table() -> set[str]:
             return {'links'}
 
-        return self._process_rows(links_table, self.get_dangling_proj_refs, soft_delete=soft_delete,
-                                  issue="found rows with dangling project refs")
+        return self._check_or_delete_rows(links_table, self.get_dangling_proj_refs, soft_delete=soft_delete,
+                                          issue="found rows with dangling project refs")
 
     def get_dangling_proj_refs(self, target_table: str) -> set[str]:
         query = f"""
@@ -131,8 +131,8 @@ class CheckManager(SoftDeleteManager):
         column.
         :return: Number of rows with null file refs to soft delete
         """
-        return self._process_rows(self.get_file_table_names, self.get_null_filerefs, soft_delete=soft_delete,
-                                  issue="null file refs")
+        return self._check_or_delete_rows(self.get_file_table_names, self.get_null_filerefs, soft_delete=soft_delete,
+                                          issue="null file refs")
 
     def get_file_table_names(self) -> set[str]:
         """
@@ -173,8 +173,8 @@ class CheckManager(SoftDeleteManager):
         Check and print the number of duplicates for each table in the dataset.
         :return: Number of duplicate rows to soft delete
         """
-        return self._process_rows(self.get_all_table_names, self.get_duplicates, soft_delete=soft_delete,
-                                  issue="duplicate rows")
+        return self._check_or_delete_rows(self.get_all_table_names, self.get_duplicates, soft_delete=soft_delete,
+                                          issue="duplicate rows")
 
     def get_duplicates(self, target_table: str) -> set[str]:
         """
@@ -241,7 +241,7 @@ class CheckManager(SoftDeleteManager):
 
         return self._hit_bigquery(query)
 
-    def _process_rows(
+    def _check_or_delete_rows(
         self,
         get_table_names: Callable[[], set[str]],
         get_rids: Callable[[str], set[str]],

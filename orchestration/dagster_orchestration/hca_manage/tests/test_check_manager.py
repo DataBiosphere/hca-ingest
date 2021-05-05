@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, call, patch
 from data_repo_client import RepositoryApi
 
 from hca_manage.check import CheckManager
+from hca_manage.common import populate_row_id_csv
 from hca_orchestration.tests.support.matchers import StringContaining
 
 
@@ -31,7 +32,7 @@ class CheckManagerTestCase(unittest.TestCase):
         string_io = StringIO()
         strings = {'abc', 'def', 'ghi'}
 
-        CheckManager.populate_row_id_csv(strings, string_io)
+        populate_row_id_csv(strings, string_io)
 
         # move to the start so we can read the newly-written text
         string_io.seek(0)
@@ -39,7 +40,7 @@ class CheckManagerTestCase(unittest.TestCase):
         self.assertEqual(set(row[0] for row in csv_reader), strings)
 
     def test_process_rows_returns_zero_if_no_bad_rids(self):
-        result = self.manager._process_rows(
+        result = self.manager._check_or_delete_rows(
             lambda: {'table_a', 'table_b'},
             lambda table: set(),
             soft_delete=True,
@@ -49,7 +50,7 @@ class CheckManagerTestCase(unittest.TestCase):
 
     def test_process_rows_does_no_soft_delete_if_soft_delete_false(self):
         with patch('hca_manage.check.CheckManager.soft_delete_rows') as mock_soft_delete:
-            result = self.manager._process_rows(
+            result = self.manager._check_or_delete_rows(
                 lambda: {'table_a', 'table_b'},
                 lambda table: {'abc'},
                 soft_delete=False,
@@ -60,7 +61,7 @@ class CheckManagerTestCase(unittest.TestCase):
 
     def test_process_rows_does_soft_delete_if_soft_delete_true(self):
         with patch('hca_manage.check.CheckManager.soft_delete_rows') as mock_soft_delete:
-            result = self.manager._process_rows(
+            result = self.manager._check_or_delete_rows(
                 lambda: {'table_a', 'table_b'},
                 lambda table: {'abc'},
                 soft_delete=True,
