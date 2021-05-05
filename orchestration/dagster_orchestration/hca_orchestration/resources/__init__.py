@@ -5,7 +5,6 @@ from hca_orchestration.resources.storage import google_storage_client, local_sto
 from hca_orchestration.resources.bigquery import noop_bigquery_client, bigquery_client
 from hca_orchestration.resources.load_tag import load_tag
 
-
 __all__ = [
     'console_slack_client',
     'dataflow_beam_runner',

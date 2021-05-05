@@ -10,6 +10,12 @@ resources:
       scratch_bq_project: fake_bq_project
       scratch_dataset_prefix: testing_dataset_prefix
       scratch_table_expiration_ms: 1
+  target_hca_dataset:
+    config:
+      dataset_name: fake_target_dataset_name
+      dataset_id: fake_target_dataset_id
+      project_id: fake_target_jade_project_name
+      billing_profile_id: fake_billing_profile_id
 solids:
   pre_process_metadata:
     config:

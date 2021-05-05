@@ -4,7 +4,7 @@ from dagster import solid, InputDefinition, Nothing, String, Int
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from google.cloud.bigquery import Dataset
 
-from hca_orchestration.support.typing import HcaStagingDatasetName
+from hca_orchestration.support.typing import HcaScratchDatasetName
 
 
 @solid(
@@ -56,10 +56,9 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
 
 @solid(
     required_resource_keys={"bigquery_client", "load_tag", "scratch_config"},
-
     input_defs=[InputDefinition("start", Nothing)],
 )
-def create_scratch_dataset(context: AbstractComputeExecutionContext) -> HcaStagingDatasetName:
+def create_scratch_dataset(context: AbstractComputeExecutionContext) -> HcaScratchDatasetName:
     """
     Creates a staging dataset that will house records for update/insertion into the
     final TDR dataset
@@ -79,4 +78,4 @@ def create_scratch_dataset(context: AbstractComputeExecutionContext) -> HcaStagi
 
     context.log.info(f"Created scratch dataset {dataset_name}")
 
-    return HcaStagingDatasetName(dataset_name)
+    return HcaScratchDatasetName(dataset_name)

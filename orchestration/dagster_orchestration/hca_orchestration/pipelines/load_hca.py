@@ -8,6 +8,7 @@ from hca_orchestration.resources import dataflow_beam_runner, local_beam_runner,
     noop_bigquery_client, load_tag
 
 from hca_orchestration.resources.config.scratch import scratch_config
+from hca_orchestration.resources.config.hca_dataset import target_hca_dataset
 
 
 prod_mode = ModeDefinition(
@@ -19,6 +20,7 @@ prod_mode = ModeDefinition(
         "bigquery_client": bigquery_client,
         "load_tag": load_tag,
         "scratch_config": scratch_config,
+        "target_hca_dataset": target_hca_dataset
     }
 )
 
@@ -31,6 +33,7 @@ dev_mode = ModeDefinition(
         "bigquery_client": bigquery_client,
         "load_tag": load_tag,
         "scratch_config": scratch_config,
+        "target_hca_dataset": target_hca_dataset
     }
 )
 
@@ -43,6 +46,7 @@ local_mode = ModeDefinition(
         "bigquery_client": bigquery_client,
         "load_tag": load_tag,
         "scratch_config": scratch_config,
+        "target_hca_dataset": target_hca_dataset
     }
 )
 
@@ -55,6 +59,7 @@ test_mode = ModeDefinition(
         "bigquery_client": noop_bigquery_client,
         "load_tag": load_tag,
         "scratch_config": scratch_config,
+        "target_hca_dataset": target_hca_dataset
     }
 )
 

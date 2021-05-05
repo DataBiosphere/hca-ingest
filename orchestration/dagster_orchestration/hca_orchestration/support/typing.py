@@ -33,21 +33,5 @@ class DagsterSolidConfig(TypedDict, total=False):
     config_schema: DagsterSolidConfigSchema
 
 
-@usable_as_dagster_type
-class HcaStagingDatasetName(str):
-    pass
-
-
-@usable_as_dagster_type
-class StagingBucket(str):
-    pass
-
-
-@usable_as_dagster_type
-class StagingPrefix(str):
-    pass
-
-
-@usable_as_dagster_type
-class JadeDatasetId(str):
+class HcaScratchDatasetName(str):
     pass
