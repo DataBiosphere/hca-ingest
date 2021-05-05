@@ -43,8 +43,8 @@ def soft_delete(args: argparse.Namespace, host: str) -> None:
 class SoftDeleteManager:
     environment: str
     data_repo_client: RepositoryApi
-    project: Optional[str] = None
-    dataset: Optional[str] = None
+    project: str
+    dataset: str
 
     bucket_project: str = field(init=False)
     bucket: str = field(init=False)
