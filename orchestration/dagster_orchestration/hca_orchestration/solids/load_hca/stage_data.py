@@ -1,6 +1,6 @@
 import re
 
-from dagster import solid, InputDefinition, Nothing, String, Int, OutputDefinition
+from dagster import solid, InputDefinition, Nothing, String, Int
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from google.cloud.bigquery import Dataset
 
