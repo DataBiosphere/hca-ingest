@@ -15,6 +15,7 @@ resources:
   target_hca_dataset:
     config:
       dataset_name: hca_dev_20210405_arh_testing
+      dataset_id: fake_id
       project_id: broad-jade-dev-data
       billing_profile_id: 390e7a85-d47f-4531-b612-165fc977d3bd
 solids:

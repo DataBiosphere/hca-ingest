@@ -7,9 +7,12 @@ from data_repo_client import JobModel
 from google.cloud import bigquery
 from google.cloud.bigquery import ExternalConfig, ExternalSourceFormat, SchemaField, WriteDisposition
 from google.cloud.bigquery.client import RowIterator
+
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
 from hca_orchestration.support.typing import HcaScratchDatasetName
+from hca_orchestration.solids.data_repo import base_wait_for_job_completion
+from hca_manage.manage import JobId
 
 
 @solid(
@@ -133,6 +136,7 @@ def extract_files_to_load(
     input_defs=[InputDefinition("control_file_path", str)]
 )
 def run_bulk_file_ingest(context: AbstractComputeExecutionContext, control_file_path: str) -> str:
+    # TODO bail out if the control file is empty
     profile_id = context.resources.target_hca_dataset.billing_profile_id
     dataset_id = context.resources.target_hca_dataset.dataset_id
     scratch_bucket_name = context.resources.scratch_config.scratch_bucket_name
@@ -151,8 +155,28 @@ def run_bulk_file_ingest(context: AbstractComputeExecutionContext, control_file_
         bulk_file_load=payload
     )
     context.log.info(f"bulk file ingest job id = {job_response.id}")
-    result: str = job_response.id
+    result: JobId = JobId(job_response.id)
+
     return result
+
+
+@solid(
+    required_resource_keys={"data_repo_client"}
+)
+def check_bulk_file_ingest_job_result(context: AbstractComputeExecutionContext, job_id: JobId):
+    context.log.info(f"check job result, job_id = {job_id}")
+    job_results = context.resources.data_repo_client.retrieve_job_result(job_id)
+    context.log.info(f"results = {job_results}")
+    if job_results["failedFiles"] > 0:
+        raise Exception(f"Bulk load failed, failedFiles was > 0; job_id = {job_id}, results = {job_results}")
+
+
+@composite_solid(
+    input_defs=[InputDefinition("control_file_path", str)]
+)
+def bulk_ingest(control_file_path: str):
+    job_id = base_wait_for_job_completion(run_bulk_file_ingest(control_file_path))
+    check_bulk_file_ingest_job_result(job_id)
 
 
 def gs_path_from_bucket_prefix(bucket: str, prefix: str) -> str:
@@ -168,4 +192,4 @@ def fully_qualified_jade_dataset_name(base_dataset_name: str) -> str:
 )
 def import_data_files(scratch_dataset_name: HcaScratchDatasetName) -> Nothing:
     generated_file_loads = diff_file_loads(scratch_dataset_name)
-    result = generated_file_loads.map(run_bulk_file_ingest)
+    bulk_ingest_jobs = generated_file_loads.map(bulk_ingest)

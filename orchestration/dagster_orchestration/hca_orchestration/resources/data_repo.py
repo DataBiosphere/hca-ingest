@@ -31,15 +31,21 @@ class NoopDataRepoClient:
     class FakeJobResponse:
         completed: bool
         id: str
+        job_status: str
 
     def enumerate_datasets(self) -> NoopResult:
         return NoopDataRepoClient.NoopResult(5)
 
     def retrieve_job(self, job_id: str) -> FakeJobResponse:
-        return NoopDataRepoClient.FakeJobResponse(True, "abcdef")
+        return NoopDataRepoClient.FakeJobResponse(True, "abcdef", "succeeded")
 
     def bulk_file_load(self, dataset_id: str, bulk_file_load: dict[str, str]) -> FakeJobResponse:
-        return NoopDataRepoClient.FakeJobResponse(True, "abcdef")
+        return NoopDataRepoClient.FakeJobResponse(True, "abcdef", "succeeded")
+
+    def retrieve_job_result(self, job_id: str):
+        return {
+            "failedFiles": 0
+        }
 
 
 @resource
