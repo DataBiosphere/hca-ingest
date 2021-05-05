@@ -3,16 +3,16 @@ resources:
     config:
       load_tag_prefix: fake_load_tag
       append_timestamp: true
-  staging_bucket_config:
+  scratch_config:
     config:
-      staging_bucket_name: example_staging_bucket_name
-      staging_prefix_name: example_staging_prefix_name
+      scratch_bucket_name: example_staging_bucket_name
+      scratch_prefix_name: example_staging_prefix_name
 solids:
   pre_process_metadata:
     config:
       input_prefix: example_input_prefix
-  create_staging_dataset:
+  create_scratch_dataset:
     config:
-      staging_bq_project: fake_bq_project
-      staging_dataset_prefix: testing_dataset_prefix
-      staging_table_expiration_ms: 1
+      scratch_bq_project: fake_bq_project
+      scratch_dataset_prefix: testing_dataset_prefix
+      scratch_table_expiration_ms: 1
