@@ -1,4 +1,4 @@
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass
 import logging
 import os
@@ -12,7 +12,7 @@ from hca_manage.soft_delete import SoftDeleteManager
 
 
 @dataclass
-class BQRowManager(metaclass=ABCMeta):
+class BQRowManager:
     dataset: str
     project: str
     soft_delete_manager: SoftDeleteManager
