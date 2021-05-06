@@ -24,19 +24,18 @@ from hca_orchestration.support.typing import HcaScratchDatasetName, DagsterConfi
 def diff_file_loads(context: AbstractComputeExecutionContext,
                     scratch_dataset_name: HcaScratchDatasetName) -> Iterator[str]:
     """
-    Determine files to load by joining against the target HCA dataset
-    then drop the result in our scratch bucket as a "control file"
-    that Jade will use for bulk file ingest
+    Determine files to load by joining against the target HCA dataset, then drop the result in our scratch bucket as a
+     "control file" that Jade will use for bulk file ingest
     :param context: Dagster solid context
     :param scratch_dataset_name: Name of the "scratch" dataset we are using for this pipeline run
-    :return:
+    :return: Yields a list of control file blob names
     """
     target_hca_dataset = context.resources.target_hca_dataset
     file_load_table_name = 'file_load_requests'
     bigquery_client = context.resources.bigquery_client
     scratch = context.resources.scratch_config
 
-    determine_files_to_load(
+    _determine_files_to_load(
         bigquery_client,
         target_hca_dataset,
         scratch_dataset_name,
@@ -44,7 +43,7 @@ def diff_file_loads(context: AbstractComputeExecutionContext,
         scratch
     )
 
-    extract_files_to_load(
+    _extract_files_to_load_to_control_files(
         bigquery_client,
         context.resources.scratch_config,
         scratch_dataset_name,
@@ -52,24 +51,23 @@ def diff_file_loads(context: AbstractComputeExecutionContext,
     )
 
     prefix = f'{scratch.scratch_prefix_name}/data-transfer-requests-deduped'
-    context.log.debug(f"bucket = {scratch.scratch_bucket_name}; prefix={scratch.scratch_prefix_name}")
     storage_client = context.resources.storage_client
     for blob in storage_client.list_blobs(scratch.scratch_bucket_name, prefix=prefix):
         yield DynamicOutput(
             output_name='control_file_path',
             value=blob.name,
-            mapping_key=blob.name.replace('/', '_').replace('-', '_')
+            mapping_key=blob.name.replace('/', '_').replace('-', '_')  # filter out bad chars for dagster dynamic output
         )
 
 
-def determine_files_to_load(
+def _determine_files_to_load(
         bigquery_client: bigquery.client.Client,
         target_hca_dataset: TargetHcaDataset,
         staging_dataset: HcaScratchDatasetName,
         file_load_table_name: str,
         scratch_config: ScratchConfig,
 ) -> RowIterator:
-    fq_dataset_id = fully_qualified_jade_dataset_name(target_hca_dataset.dataset_name)
+    fq_dataset_id = _fully_qualified_jade_dataset_name(target_hca_dataset.dataset_name)
     query = f"""
     WITH J AS (
         SELECT target_path FROM `{target_hca_dataset.project_id}.{fq_dataset_id}.datarepo_load_history` WHERE state = 'succeeded'
@@ -85,7 +83,7 @@ def determine_files_to_load(
         ExternalSourceFormat.NEWLINE_DELIMITED_JSON
     )
     external_config.source_uris = [
-        f"{gs_path_from_bucket_prefix(scratch_config.scratch_bucket_name, scratch_config.scratch_prefix_name)}/data-transfer-requests/*"
+        f"{_gs_path_from_bucket_prefix(scratch_config.scratch_bucket_name, scratch_config.scratch_prefix_name)}/data-transfer-requests/*"
     ]
     external_config.schema = [
         SchemaField("source_path", "STRING"),
@@ -110,13 +108,13 @@ def determine_files_to_load(
     return query_job.result()
 
 
-def extract_files_to_load(
+def _extract_files_to_load_to_control_files(
         bigquery_client: bigquery.client.Client,
         scratch_config: ScratchConfig,
         scratch_dataset_name: HcaScratchDatasetName,
         file_load_table_name: str
 ) -> bigquery.ExtractJob:
-    out_path = f"{gs_path_from_bucket_prefix(scratch_config.scratch_bucket_name, scratch_config.scratch_prefix_name)}/data-transfer-requests-deduped/*"
+    out_path = f"{_gs_path_from_bucket_prefix(scratch_config.scratch_bucket_name, scratch_config.scratch_prefix_name)}/data-transfer-requests-deduped/*"
 
     job_config = bigquery.job.ExtractJobConfig()
     job_config.destination_format = bigquery.DestinationFormat.NEWLINE_DELIMITED_JSON
@@ -137,6 +135,13 @@ def extract_files_to_load(
     input_defs=[InputDefinition("control_file_path", str)]
 )
 def run_bulk_file_ingest(context: AbstractComputeExecutionContext, control_file_path: str) -> JobId:
+    """
+    Submits the given control for ingestion to TDR
+    :param context: Dagster solid context
+    :param control_file_path: Path to the control file for ingest
+    :return: Jade Job ID
+    """
+
     # TODO bail out if the control file is empty
     profile_id = context.resources.target_hca_dataset.billing_profile_id
     dataset_id = context.resources.target_hca_dataset.dataset_id
@@ -148,7 +153,7 @@ def run_bulk_file_ingest(context: AbstractComputeExecutionContext, control_file_
         "loadTag": context.resources.load_tag,
         "maxFailedFileLoads": 0
     }
-    context.log.info(f'payload = {payload}')
+    context.log.info(f'Bulk file ingest payload = {payload}')
 
     data_repo_client = context.resources.data_repo_client
     job_response: JobModel = data_repo_client.bulk_file_load(
@@ -169,6 +174,7 @@ def run_bulk_file_ingest(context: AbstractComputeExecutionContext, control_file_
     }
 )
 def _base_check_bulk_file_ingest_job_result(context: AbstractComputeExecutionContext, job_id: JobId):
+    # we need to poll on the endpoint as a workaround for a race condition in TDR (DR-1791)
     job_results = api_request_with_retry(
         context.resources.data_repo_client.retrieve_job_result,
         context.solid_config['max_wait_time_seconds'],
@@ -183,6 +189,10 @@ def _base_check_bulk_file_ingest_job_result(context: AbstractComputeExecutionCon
 
 @configured(_base_check_bulk_file_ingest_job_result)
 def check_bulk_file_ingest_job_result(config: DagsterConfigDict) -> DagsterConfigDict:
+    """
+    Pulls the bulk file ingest results
+    Any files failed will fail the pipeline
+    """
     return {
         'max_wait_time_seconds': 120,  # 1 day
         'poll_interval_seconds': 5
@@ -193,16 +203,21 @@ def check_bulk_file_ingest_job_result(config: DagsterConfigDict) -> DagsterConfi
     input_defs=[InputDefinition("control_file_path", str)]
 )
 def bulk_ingest(control_file_path: str):
+    """
+    Composite solid that submits the given control file for ingest to TDR, then polls on the resulting job
+    to completion.
+    :param control_file_path: GS path to the ingest control file
+    """
     job_id = run_bulk_file_ingest(control_file_path)
     wait_for_job_completion(job_id)
     check_bulk_file_ingest_job_result(job_id)
 
 
-def gs_path_from_bucket_prefix(bucket: str, prefix: str) -> str:
+def _gs_path_from_bucket_prefix(bucket: str, prefix: str) -> str:
     return f"gs://{bucket}/{prefix}"
 
 
-def fully_qualified_jade_dataset_name(base_dataset_name: str) -> str:
+def _fully_qualified_jade_dataset_name(base_dataset_name: str) -> str:
     return f"datarepo_{base_dataset_name}"
 
 
@@ -210,5 +225,11 @@ def fully_qualified_jade_dataset_name(base_dataset_name: str) -> str:
     input_defs=[InputDefinition("scratch_dataset_name", HcaScratchDatasetName)]
 )
 def import_data_files(scratch_dataset_name: HcaScratchDatasetName) -> Nothing:
+    """
+    Composite solid responsible for ingesting data files and related descriptors to TDR
+    :param scratch_dataset_name: Scratch dataset that will hold temporary ingest data
+    """
     generated_file_loads = diff_file_loads(scratch_dataset_name)
     bulk_ingest_jobs = generated_file_loads.map(bulk_ingest)
+
+    # TODO implement rest of data file ingest (descriptors, etc.)

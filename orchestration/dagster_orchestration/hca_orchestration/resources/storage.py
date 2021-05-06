@@ -26,7 +26,7 @@ class MockBlob:
 class LocalStorageClient:
     def list_blobs(self, bucket_name: str, prefix: str) -> Iterator[MockBlob]:
         for i in range(0, 10):
-            yield MockBlob(f"foobar_{i}")
+            yield MockBlob(f"fake_blob_{i}")
 
 
 @resource
