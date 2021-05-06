@@ -1,5 +1,7 @@
 import time
 import logging
+from typing import Callable, Any
+
 import data_repo_client
 
 
@@ -10,7 +12,12 @@ class DataRepoApiRetryException(Exception):
     pass
 
 
-def api_request_with_retry(api_fn, max_wait_time: int, poll_interval_seconds: int, retriable_status_codes: set, *args):
+def api_request_with_retry(
+        api_fn: Callable[[Any], Any],
+        max_wait_time: int,
+        poll_interval_seconds: int,
+        retriable_status_codes: set[int],
+        *args: str) -> Any:
     """
     Polls on the given API call; any status codes return in the retriable_status_codes will not result in
     immediate failure but instead cause a retry until max_wait_time is reached.
@@ -29,7 +36,7 @@ def api_request_with_retry(api_fn, max_wait_time: int, poll_interval_seconds: in
         except data_repo_client.ApiException as ae:
             if ae.status not in retriable_status_codes:
                 logging.info(f"data repo api returned status {ae.status}, bailing out")
-                raise ae
+                raise
 
             logging.info(f"data repo api returned status {ae.status}, retrying")
 

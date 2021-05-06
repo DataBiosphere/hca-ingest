@@ -173,7 +173,7 @@ def run_bulk_file_ingest(context: AbstractComputeExecutionContext, control_file_
         'poll_interval_seconds': Int,
     }
 )
-def _base_check_bulk_file_ingest_job_result(context: AbstractComputeExecutionContext, job_id: JobId):
+def _base_check_bulk_file_ingest_job_result(context: AbstractComputeExecutionContext, job_id: JobId) -> Nothing:
     # we need to poll on the endpoint as a workaround for a race condition in TDR (DR-1791)
     job_results = api_request_with_retry(
         context.resources.data_repo_client.retrieve_job_result,
@@ -190,11 +190,11 @@ def _base_check_bulk_file_ingest_job_result(context: AbstractComputeExecutionCon
 @configured(_base_check_bulk_file_ingest_job_result)
 def check_bulk_file_ingest_job_result(config: DagsterConfigDict) -> DagsterConfigDict:
     """
-    Pulls the bulk file ingest results
+    Polls the bulk file ingest results
     Any files failed will fail the pipeline
     """
     return {
-        'max_wait_time_seconds': 120,  # 1 day
+        'max_wait_time_seconds': 300,  # 5 minutes
         'poll_interval_seconds': 5
     }
 
@@ -202,7 +202,7 @@ def check_bulk_file_ingest_job_result(config: DagsterConfigDict) -> DagsterConfi
 @composite_solid(
     input_defs=[InputDefinition("control_file_path", str)]
 )
-def bulk_ingest(control_file_path: str):
+def bulk_ingest(control_file_path: str) -> Nothing:
     """
     Composite solid that submits the given control file for ingest to TDR, then polls on the resulting job
     to completion.

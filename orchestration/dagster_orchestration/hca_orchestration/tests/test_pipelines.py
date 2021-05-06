@@ -61,11 +61,11 @@ class PipelinesTestCase(unittest.TestCase):
             }
         }
 
-        result = self.run_pipeline(
+        self.run_pipeline(
             load_hca,
             'test_load_hca_local_e2e.yaml',
             extra_config=runtime_config,
-            pipeline_mode='test')
+            pipeline_mode='local')
 
         expected_blobs, output_blobs = diff_dirs(
             'broad-dsp-monster-hca-dev',

@@ -1,8 +1,8 @@
-from google.cloud.bigquery import Dataset, Client, QueryJobConfig
-from dagster import resource, InitResourceContext
-from hca_orchestration.contrib.google import get_credentials
+from unittest.mock import Mock
 
-from unittest.mock import create_autospec
+from dagster import resource, InitResourceContext
+from google.cloud.bigquery import Client
+from hca_orchestration.contrib.google import get_credentials
 
 
 @resource
@@ -12,4 +12,4 @@ def bigquery_client(init_context: InitResourceContext) -> Client:
 
 @resource
 def noop_bigquery_client(init_context: InitResourceContext) -> Client:
-    return create_autospec(Client)
+    return Mock(spec=Client)
