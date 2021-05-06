@@ -7,12 +7,12 @@ from data_repo_client import JobModel
 from google.cloud import bigquery
 from google.cloud.bigquery import ExternalConfig, ExternalSourceFormat, SchemaField, WriteDisposition
 from google.cloud.bigquery.client import RowIterator
-
+from hca_manage.manage import JobId
+from hca_orchestration.contrib.data_repo import retry_api_request
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
+from hca_orchestration.solids.data_repo import wait_for_job_completion
 from hca_orchestration.support.typing import HcaScratchDatasetName
-from hca_orchestration.solids.data_repo import base_wait_for_job_completion
-from hca_manage.manage import JobId
 
 
 @solid(
@@ -163,19 +163,16 @@ def run_bulk_file_ingest(context: AbstractComputeExecutionContext, control_file_
 @solid(
     required_resource_keys={"data_repo_client"}
 )
-def check_bulk_file_ingest_job_result(context: AbstractComputeExecutionContext, job_id: JobId):
-    context.log.info(f"check job result, job_id = {job_id}")
-    job_results = context.resources.data_repo_client.retrieve_job_result(job_id)
-    context.log.info(f"results = {job_results}")
-    if job_results["failedFiles"] > 0:
-        raise Exception(f"Bulk load failed, failedFiles was > 0; job_id = {job_id}, results = {job_results}")
+def check_bulk_file_ingest_job_result(context: AbstractComputeExecutionContext, job_id: str):
+    retry_api_request(context.resources.data_repo_client.retrieve_job_result, 60, 2, {500}, job_id)
 
 
 @composite_solid(
     input_defs=[InputDefinition("control_file_path", str)]
 )
 def bulk_ingest(control_file_path: str):
-    job_id = base_wait_for_job_completion(run_bulk_file_ingest(control_file_path))
+    job_id = run_bulk_file_ingest(control_file_path)
+    wait_for_job_completion(job_id)
     check_bulk_file_ingest_job_result(job_id)
 
 

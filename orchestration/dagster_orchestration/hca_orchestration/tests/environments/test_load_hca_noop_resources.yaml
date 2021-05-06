@@ -20,11 +20,3 @@ solids:
   pre_process_metadata:
     config:
       input_prefix: example_input_prefix
-  import_data_files:
-    solids:
-      bulk_ingest:
-        solids:
-          base_wait_for_job_completion:
-            config:
-              max_wait_time_seconds: 60000
-              poll_interval_seconds: 15
