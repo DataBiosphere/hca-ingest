@@ -1,7 +1,8 @@
 from dagster import solid, String
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
-from hca_manage.manage import HcaManage, ProblemCount
+from hca_manage.common import ProblemCount
+from hca_manage.check import CheckManager
 
 
 @solid(
@@ -11,7 +12,7 @@ def post_import_validate(context: AbstractComputeExecutionContext) -> ProblemCou
     """
     Checks if the target dataset has any rows with duplicate IDs or null file references.
     """
-    return HcaManage(
+    return CheckManager(
         environment=context.resources.hca_manage_config.gcp_env,
         project=context.resources.hca_manage_config.google_project_name,
         dataset=context.resources.hca_dataset_operation_config.dataset_name,

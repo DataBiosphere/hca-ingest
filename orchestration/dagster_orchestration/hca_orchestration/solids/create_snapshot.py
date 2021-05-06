@@ -3,17 +3,16 @@ from typing import Iterator
 from dagster import AssetMaterialization, EventMetadataEntry, Output, OutputDefinition, solid
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
-from hca_manage.common import data_repo_profile_ids
-from hca_manage.manage import JobId, HcaManage
+from hca_manage.common import JobId, data_repo_profile_ids
+from hca_manage.snapshot import SnapshotManager
 
 
 @solid(
     required_resource_keys={'data_repo_client', 'snapshot_config', 'hca_manage_config'}
 )
 def submit_snapshot_job(context: AbstractComputeExecutionContext) -> JobId:
-    return HcaManage(
+    return SnapshotManager(
         environment=context.resources.hca_manage_config.gcp_env,
-        project=context.resources.hca_manage_config.google_project_name,
         dataset=context.resources.snapshot_config.dataset_name,
         data_repo_client=context.resources.data_repo_client,
         data_repo_profile_id=data_repo_profile_ids[context.resources.hca_manage_config.gcp_env],
