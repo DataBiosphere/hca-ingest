@@ -5,30 +5,20 @@ resources:
   load_tag:
     config:
       append_timestamp: true
-      load_tag_prefix: arh
+      load_tag_prefix: test_load_hca_local_e2e
   scratch_config:
     config:
       scratch_bq_project: broad-dsp-monster-hca-dev
       scratch_bucket_name: broad-dsp-monster-hca-dev-temp-storage
-      scratch_dataset_prefix: arh_testing
-      scratch_table_expiration_ms: 0
+      scratch_dataset_prefix: test_load_hca_local_e2e
+      scratch_table_expiration_ms: 86400000
   target_hca_dataset:
     config:
       dataset_name: hca_dev_20210405_arh_testing
-      dataset_id: fake_id
+      dataset_id: f413bcb3-9ec4-41b0-a75b-1e36b19dc3dc
       project_id: broad-jade-dev-data
       billing_profile_id: 390e7a85-d47f-4531-b612-165fc977d3bd
 solids:
-  import_data_files:
-    solids:
-      diff_file_loads:
-        config:
-          jade_dataset: hca_dev_20210405_arh_testing
-          jade_project: broad-jade-dev-data
-      run_bulk_file_ingest:
-        config:
-          jade_dataset: hca_dev_20210405_arh_testing
-          jade_profile_id: foobar_profile_id
   pre_process_metadata:
     config:
       input_prefix: gs://broad-dsp-monster-hca-dev-test-storage/integration/ebi_small/test_data

@@ -43,7 +43,7 @@ class PipelinesTestCase(unittest.TestCase):
             mode=pipeline_mode
         )
 
-    @pytest.mark.e2e
+    @pytest.mark.skip
     def test_load_hca_local_e2e(self):
         test_id = f'test-{uuid.uuid4()}'
         runtime_config = {
@@ -61,7 +61,7 @@ class PipelinesTestCase(unittest.TestCase):
             }
         }
 
-        self.run_pipeline(
+        result = self.run_pipeline(
             load_hca,
             'test_load_hca_local_e2e.yaml',
             extra_config=runtime_config,

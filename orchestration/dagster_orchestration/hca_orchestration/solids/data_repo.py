@@ -21,7 +21,6 @@ def base_wait_for_job_completion(context: AbstractComputeExecutionContext, job_i
 
     while time_waited < max_wait_time:
         job_info = context.resources.data_repo_client.retrieve_job(job_id)
-        context.log.info(f"job_info == {job_info}")
         if job_info.completed:
             if job_info.job_status == "failed":
                 raise Failure(

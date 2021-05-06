@@ -1,18 +1,19 @@
 from typing import Iterator
 
-from dagster import composite_solid, solid, Nothing, InputDefinition
+from dagster import composite_solid, solid, Nothing, InputDefinition, Int, configured, Failure
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from dagster.experimental import DynamicOutput, DynamicOutputDefinition
 from data_repo_client import JobModel
 from google.cloud import bigquery
 from google.cloud.bigquery import ExternalConfig, ExternalSourceFormat, SchemaField, WriteDisposition
 from google.cloud.bigquery.client import RowIterator
+
 from hca_manage.manage import JobId
-from hca_orchestration.contrib.data_repo import retry_api_request
+from hca_orchestration.contrib.data_repo import api_request_with_retry
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
 from hca_orchestration.solids.data_repo import wait_for_job_completion
-from hca_orchestration.support.typing import HcaScratchDatasetName
+from hca_orchestration.support.typing import HcaScratchDatasetName, DagsterConfigDict
 
 
 @solid(
@@ -135,7 +136,7 @@ def extract_files_to_load(
     required_resource_keys={"data_repo_client", "scratch_config", "load_tag", "target_hca_dataset"},
     input_defs=[InputDefinition("control_file_path", str)]
 )
-def run_bulk_file_ingest(context: AbstractComputeExecutionContext, control_file_path: str) -> str:
+def run_bulk_file_ingest(context: AbstractComputeExecutionContext, control_file_path: str) -> JobId:
     # TODO bail out if the control file is empty
     profile_id = context.resources.target_hca_dataset.billing_profile_id
     dataset_id = context.resources.target_hca_dataset.dataset_id
@@ -161,10 +162,31 @@ def run_bulk_file_ingest(context: AbstractComputeExecutionContext, control_file_
 
 
 @solid(
-    required_resource_keys={"data_repo_client"}
+    required_resource_keys={"data_repo_client"},
+    config_schema={
+        'max_wait_time_seconds': Int,
+        'poll_interval_seconds': Int,
+    }
 )
-def check_bulk_file_ingest_job_result(context: AbstractComputeExecutionContext, job_id: str):
-    retry_api_request(context.resources.data_repo_client.retrieve_job_result, 60, 2, {500}, job_id)
+def _base_check_bulk_file_ingest_job_result(context: AbstractComputeExecutionContext, job_id: JobId):
+    job_results = api_request_with_retry(
+        context.resources.data_repo_client.retrieve_job_result,
+        context.solid_config['max_wait_time_seconds'],
+        context.solid_config['poll_interval_seconds'],
+        {500},
+        job_id
+    )
+    failed_files = job_results['failedFiles']
+    if failed_files > 0:
+        raise Failure(f"Bulk file load (job_id = {job_id} had failedFiles = {failed_files}")
+
+
+@configured(_base_check_bulk_file_ingest_job_result)
+def check_bulk_file_ingest_job_result(config: DagsterConfigDict) -> DagsterConfigDict:
+    return {
+        'max_wait_time_seconds': 120,  # 1 day
+        'poll_interval_seconds': 5
+    }
 
 
 @composite_solid(
