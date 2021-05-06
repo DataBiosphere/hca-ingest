@@ -241,7 +241,7 @@ class HcaManage:
         return response.items[0].id  # type: ignore # data repo client has no type hints, since it's auto-generated
 
     def enumerate_dataset(self) -> str:
-        response = self.data_repo_client.enumerate_datasets(filter=self.dataset)
+        response = f"{self.data_repo_client.enumerate_datasets(filter=self.dataset)}"
         return response
 
     def submit_snapshot_request(

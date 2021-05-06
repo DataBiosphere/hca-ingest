@@ -56,7 +56,7 @@ def create_dataset(args: argparse.Namespace, host: str) -> JobId:
     )
 
 
-def query_dataset(args: argparse.Namespace, host: str) -> JobId:
+def query_dataset(args: argparse.Namespace, host: str) -> str:
     hca = HcaManage(environment=args.env, data_repo_client=get_api_client(host=host), dataset=args.dataset_name)
     print(hca.enumerate_dataset())
     return hca.enumerate_dataset()
