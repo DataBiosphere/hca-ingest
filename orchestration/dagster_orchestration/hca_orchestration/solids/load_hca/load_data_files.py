@@ -96,9 +96,9 @@ def _determine_files_to_load(
     # setup the destination and other configs
     job_config.destination = f"{staging_dataset}.{file_load_table_name}"
     job_config.use_legacy_sql = False
-    job_config.write_disposition = WriteDisposition.WRITE_TRUNCATE  # TODO consider removing this or config'ing out
+    job_config.write_disposition = WriteDisposition.WRITE_TRUNCATE
 
-    # todo retry on 5xx failure
+    # todo retry on 5xx failure (DSPDC-1729)
     query_job: bigquery.QueryJob = bigquery_client.query(
         query,
         job_config,
@@ -114,7 +114,10 @@ def _extract_files_to_load_to_control_files(
         scratch_dataset_name: HcaScratchDatasetName,
         file_load_table_name: str
 ) -> bigquery.ExtractJob:
-    out_path = f"{_gs_path_from_bucket_prefix(scratch_config.scratch_bucket_name, scratch_config.scratch_prefix_name)}/data-transfer-requests-deduped/*"
+    # dump the contents of our file load requests table to a file in GCS suitable for use as a
+    # control file for jade bulk data ingest
+    out_prefix = _gs_path_from_bucket_prefix(scratch_config.scratch_bucket_name, scratch_config.scratch_prefix_name)
+    out_path = f"{out_prefix}/data-transfer-requests-deduped/*"
 
     job_config = bigquery.job.ExtractJobConfig()
     job_config.destination_format = bigquery.DestinationFormat.NEWLINE_DELIMITED_JSON
@@ -131,7 +134,7 @@ def _extract_files_to_load_to_control_files(
 
 
 @solid(
-    required_resource_keys={"data_repo_client", "scratch_config", "load_tag", "target_hca_dataset"},
+    required_resource_keys={"data_repo_client", "scratch_config", "load_tag", "target_hca_dataset", "storage_client"},
     input_defs=[InputDefinition("control_file_path", str)]
 )
 def run_bulk_file_ingest(context: AbstractComputeExecutionContext, control_file_path: str) -> JobId:
@@ -141,8 +144,6 @@ def run_bulk_file_ingest(context: AbstractComputeExecutionContext, control_file_
     :param control_file_path: Path to the control file for ingest
     :return: Jade Job ID
     """
-
-    # TODO bail out if the control file is empty
     profile_id = context.resources.target_hca_dataset.billing_profile_id
     dataset_id = context.resources.target_hca_dataset.dataset_id
     scratch_bucket_name = context.resources.scratch_config.scratch_bucket_name
