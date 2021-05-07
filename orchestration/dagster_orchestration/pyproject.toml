@@ -43,3 +43,4 @@ build-backend = "poetry.core.masonry.api"
 aggressive = 1
 exclude = ".pytest_cache,__pycache__"
 max_line_length = 120
+

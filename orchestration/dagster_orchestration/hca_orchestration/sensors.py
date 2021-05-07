@@ -1,17 +1,11 @@
+import os
 from datetime import datetime
-import os
 from typing import Iterator, Union
-import time
-import os
-
-
-from dateutil.tz import tzlocal
 
 from dagster import RunRequest, sensor, SensorExecutionContext, SkipReason
-
+from dateutil.tz import tzlocal
 from hca_orchestration.contrib.argo_workflows import ArgoArchivedWorkflowsClient, ExtendedArgoWorkflow
 from hca_orchestration.contrib.google import default_google_access_token
-
 
 # boundary before which we don't care about any workflows in argo
 ARGO_EPOCH: datetime = datetime(2021, 3, 15, tzinfo=tzlocal())

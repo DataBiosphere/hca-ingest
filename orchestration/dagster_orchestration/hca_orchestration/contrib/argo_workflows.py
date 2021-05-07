@@ -28,7 +28,8 @@ class ArgoFetchListOperation(Protocol):
         *args: Any,
         list_options_continue: Optional[str] = None,
         **kwargs: Any
-    ) -> V1alpha1WorkflowList: ...
+    ) -> V1alpha1WorkflowList:
+        ...
 
 
 @dataclass

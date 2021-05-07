@@ -1,15 +1,9 @@
 import unittest
-
+from typing import Optional
 from unittest.mock import MagicMock, patch, call
-from typing import Generator, TypeVar, Optional, Iterator
-from collections.abc import Iterable
 
-from hca_orchestration.contrib.argo_workflows import ExtendedArgoWorkflow, generate_argo_archived_workflows_client, \
-    ArgoFetchListOperation, ArgoArchivedWorkflowsClient
-from argo.workflows.client.models import V1alpha1Workflow, V1ObjectMeta, V1alpha1WorkflowSpec, V1alpha1Arguments, \
-    V1alpha1Parameter, \
-    V1alpha1WorkflowStatus
-
+from argo.workflows.client.models import V1alpha1Workflow
+from hca_orchestration.contrib.argo_workflows import ArgoArchivedWorkflowsClient
 from hca_orchestration.tests.support.mock_workflows import mock_argo_workflow, extend_workflow
 
 
@@ -137,10 +131,10 @@ class ArgoArchivedWorkflowsClientTestCase(unittest.TestCase):
                    side_effect=get_page) as mock_list_archived_workflows:
             list_results = list(self.client._pull_paginated_results(mock_list_archived_workflows))
             self.assertEqual(list_results,
-                             workflows_on_page_one +
-                             workflows_on_page_two +
-                             workflows_on_page_three +
-                             workflows_on_page_four)
+                             workflows_on_page_one
+                             + workflows_on_page_two
+                             + workflows_on_page_three
+                             + workflows_on_page_four)
             self.assertEqual(mock_list_archived_workflows.call_count, 4)
             mock_list_archived_workflows.assert_has_calls([call(),
                                                            call(list_options_continue="page2"),
