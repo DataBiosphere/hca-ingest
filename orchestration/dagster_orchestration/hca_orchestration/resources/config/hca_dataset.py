@@ -14,6 +14,9 @@ class TargetHcaDataset:
     project_id: str
     billing_profile_id: str
 
+    def fully_qualified_jade_dataset_name(self) -> str:
+        return f"datarepo_{self.dataset_name}"
+
 
 @resource({
     "dataset_name": String,

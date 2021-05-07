@@ -42,7 +42,7 @@ class LoadDataFilesTestCase(unittest.TestCase):
         self.assertTrue(result.success)
         self.assertEqual(len(result.output_values["control_file_path"]), 10)
 
-    def test_run_bulk_file_ingest(self):
+    def test_run_bulk_file_ingest_should_return_a_jade_job_id(self):
         job_id = "fake_job_id"
         data_repo = Mock(spec=RepositoryApi)
         job_response = Mock(spec=JobModel)
@@ -62,7 +62,7 @@ class LoadDataFilesTestCase(unittest.TestCase):
         self.assertTrue(result.success)
         self.assertEqual(result.output_values["result"], job_id, f"Job ID should be {job_id}")
 
-    def test_check_bulk_file_ingest_job_result(self):
+    def test_check_bulk_file_ingest_job_result_should_poll_jade(self):
         data_repo = Mock(spec=RepositoryApi)
         job_response = {
             "failedFiles": 0

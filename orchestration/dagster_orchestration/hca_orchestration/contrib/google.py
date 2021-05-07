@@ -20,3 +20,7 @@ def default_google_access_token() -> str:
 
 def authorized_session() -> AuthorizedSession:
     return AuthorizedSession(default_google_access_token())
+
+
+def gs_path_from_bucket_prefix(bucket: str, prefix: str) -> str:
+    return f"gs://{bucket}/{prefix}"

@@ -1,11 +1,11 @@
 from typing import Iterator
-
-from dagster import resource
-from dagster.core.execution.context.init import InitResourceContext
+from dataclasses import dataclass
 
 import google.auth
 from google.cloud import storage
-from unittest.mock import create_autospec
+
+from dagster import resource
+from dagster.core.execution.context.init import InitResourceContext
 
 
 @resource
@@ -15,9 +15,9 @@ def google_storage_client(init_context: InitResourceContext) -> storage.Client:
     return storage.Client(project=project, credentials=credentials)
 
 
+@dataclass
 class MockBlob:
-    def __init__(self, name: str):
-        self.name = name
+    name: str
 
     def delete(self) -> None:
         pass

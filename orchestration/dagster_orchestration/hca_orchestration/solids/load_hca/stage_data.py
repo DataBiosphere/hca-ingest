@@ -1,9 +1,8 @@
 import re
 
-from dagster import solid, InputDefinition, Nothing, String, Int
+from dagster import solid, InputDefinition, Nothing, String
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from google.cloud.bigquery import Dataset
-
 from hca_orchestration.support.typing import HcaScratchDatasetName
 
 

@@ -44,6 +44,7 @@ class PipelinesTestCase(unittest.TestCase):
         )
 
     @pytest.mark.skip
+    @pytest.mark.e2e
     def test_load_hca_local_e2e(self):
         test_id = f'test-{uuid.uuid4()}'
         runtime_config = {
