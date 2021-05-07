@@ -2,14 +2,13 @@ import unittest
 from unittest.mock import Mock, patch
 
 from dagster import execute_solid
+from dagster_utils.testing.matchers import StringContaining
 
 from hca_manage.manage import ProblemCount
 
 from hca_orchestration.pipelines.validate_egress import test_mode
 from hca_orchestration.solids.validate_egress import post_import_validate,\
     notify_slack_of_egress_validation_results
-
-from hca_orchestration.tests.support.matchers import StringContaining
 
 
 class PostImportValidateTestCase(unittest.TestCase):
@@ -77,7 +76,7 @@ class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
         }
 
     def test_notifies_slack_with_failure_info(self):
-        with patch("hca_orchestration.resources.slack.ConsoleSlackClient.send_message") as slack_message_sender:
+        with patch("dagster_utils.resources.slack.ConsoleSlackClient.send_message") as slack_message_sender:
             result = execute_solid(
                 notify_slack_of_egress_validation_results,
                 run_config=self.solid_config,
@@ -104,7 +103,7 @@ class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
         self.assertTrue(result.success)
 
     def test_notifies_slack_of_success(self):
-        with patch("hca_orchestration.resources.slack.ConsoleSlackClient.send_message") as slack_message_sender:
+        with patch("dagster_utils.resources.slack.ConsoleSlackClient.send_message") as slack_message_sender:
             result = execute_solid(
                 notify_slack_of_egress_validation_results,
                 run_config=self.solid_config,

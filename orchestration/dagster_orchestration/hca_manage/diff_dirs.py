@@ -6,7 +6,7 @@ import logging
 
 from google.cloud import storage
 
-from hca_orchestration.contrib import google as hca_google
+from dagster_utils.contrib.google import get_credentials
 
 logging.basicConfig(level=logging.INFO)
 
@@ -18,7 +18,7 @@ def diff_dirs(
     target_bucket: str,
     target_prefix: str,
 ) -> tuple[dict[str, str], dict[str, str]]:
-    creds = hca_google.get_credentials()
+    creds = get_credentials()
     storage_client = storage.Client(project=project, credentials=creds)
     expected_blobs = {blob.name.replace(source_prefix, ''): blob.md5_hash
                       for blob in storage_client.list_blobs(source_bucket,

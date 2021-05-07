@@ -8,6 +8,7 @@ import pytest
 from dagster import execute_pipeline, file_relative_path, PipelineDefinition, PipelineExecutionResult
 from dagster.utils import load_yaml_from_globs
 from dagster.utils.merger import deep_merge_dicts
+
 from hca_manage.diff_dirs import diff_dirs
 from hca_orchestration.pipelines import load_hca, validate_egress
 

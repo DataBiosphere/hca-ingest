@@ -1,14 +1,15 @@
 from dagster import ModeDefinition, pipeline, success_hook, failure_hook
 from dagster.core.execution.context.system import HookContext
 
+from dagster_utils.resources.jade_data_repo import jade_data_repo_client, noop_data_repo_client
+from dagster_utils.resources.sam import sam_client, noop_sam_client
+from dagster_utils.resources.slack import console_slack_client, live_slack_client
+
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.solids.create_snapshot import get_completed_snapshot_info, make_snapshot_public, submit_snapshot_job
 from hca_orchestration.solids.data_repo import wait_for_job_completion
-from hca_orchestration.resources.data_repo import jade_data_repo_client, noop_data_repo_client
 from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.data_repo import hca_manage_config, snapshot_creation_config
-from hca_orchestration.resources.slack import console_slack_client, live_slack_client
-from hca_orchestration.resources.sam import sam_client, noop_sam_client
 
 
 prod_mode = ModeDefinition(

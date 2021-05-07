@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 from google.cloud import bigquery, storage
 from google.cloud.bigquery.table import Row
 from google.cloud.storage.client import Client
-from hca_orchestration.contrib import google as hca_google
+from dagster_utils.contrib.google import get_credentials
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 
@@ -77,7 +77,7 @@ def parse_manifest_file(manifest_file: str) -> list[str]:
 
 def verify(start_date: str, manifest_file: str, gs_project: str, bq_project: str, dataset: str) -> bool:
     logging.info("Parsing manifest and inspecting staging areas...")
-    creds = hca_google.get_credentials()
+    creds = get_credentials()
     storage_client = storage.Client(project=gs_project, credentials=creds)
     staging_areas = parse_manifest_file(manifest_file)
     expected_load_totals = get_expected_load_totals(storage_client, staging_areas)

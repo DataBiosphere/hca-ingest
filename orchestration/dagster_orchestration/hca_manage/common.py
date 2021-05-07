@@ -2,9 +2,8 @@ import argparse
 import sys
 from typing import NoReturn
 
+from dagster_utils.contrib.google import default_google_access_token
 from data_repo_client import ApiClient, Configuration, RepositoryApi
-
-from hca_orchestration.contrib.google import default_google_access_token
 
 
 data_repo_host = {

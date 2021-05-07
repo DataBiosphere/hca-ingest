@@ -5,11 +5,11 @@ import unittest
 from unittest.mock import call, MagicMock, Mock, patch
 
 from data_repo_client import RepositoryApi, DataDeletionRequest, SnapshotRequestModel
+from dagster_utils.testing.matchers import StringContaining, StringMatchingRegex,\
+    ObjectOfType, ObjectWithAttributes
 
 from hca_manage.manage import HcaManage
 from hca_orchestration.tests.support.gcs import FakeGCSClient
-from hca_orchestration.tests.support.matchers import StringContaining, StringMatchingRegex,\
-    ObjectOfType, ObjectWithAttributes
 
 
 class HcaManageTestCase(unittest.TestCase):

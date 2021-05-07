@@ -2,9 +2,9 @@ import time
 
 from dagster import configured, EventMetadataEntry, Failure, Int, solid
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
+from dagster_utils.typing import DagsterConfigDict
 
 from hca_manage.manage import JobId
-from hca_orchestration.support.typing import DagsterConfigDict
 
 
 @solid(
