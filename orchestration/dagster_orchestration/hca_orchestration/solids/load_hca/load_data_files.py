@@ -9,11 +9,12 @@ from google.cloud.bigquery import ExternalConfig, ExternalSourceFormat, SchemaFi
 from google.cloud.bigquery.client import RowIterator
 
 from hca_manage.manage import JobId
-from hca_orchestration.contrib.data_repo import api_request_with_retry
+from hca_orchestration.contrib.retry import is_truthy, retry
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
 from hca_orchestration.solids.data_repo import wait_for_job_completion
 from hca_orchestration.support.typing import HcaScratchDatasetName, DagsterConfigDict
+from data_repo_client import ApiException
 
 
 @solid(
@@ -176,13 +177,22 @@ def run_bulk_file_ingest(context: AbstractComputeExecutionContext, control_file_
 )
 def _base_check_bulk_file_ingest_job_result(context: AbstractComputeExecutionContext, job_id: JobId) -> Nothing:
     # we need to poll on the endpoint as a workaround for a race condition in TDR (DR-1791)
-    job_results = api_request_with_retry(
-        context.resources.data_repo_client.retrieve_job_result,
+    def __fetch_job_results(jid: JobId) -> JobModel:
+        try:
+            return context.resources.data_repo_client.retrieve_job_result(jid)
+        except ApiException as ae:
+            if ae == 500:
+                return None
+            raise
+
+    job_results = retry(
+        __fetch_job_results,
         context.solid_config['max_wait_time_seconds'],
         context.solid_config['poll_interval_seconds'],
-        {500},
+        is_truthy,
         job_id
     )
+
     failed_files = job_results['failedFiles']
     if failed_files > 0:
         raise Failure(f"Bulk file load (job_id = {job_id} had failedFiles = {failed_files}")
