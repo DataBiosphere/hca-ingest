@@ -33,7 +33,7 @@ class TestArgoHcaImportCompletionSensor(unittest.TestCase):
             }),
         ]
 
-        with patch('hca_orchestration.contrib.argo_workflows.ArgoArchivedWorkflowsClient.list_archived_workflows',
+        with patch('dagster_utils.contrib.argo_workflows.ArgoArchivedWorkflowsClient.list_archived_workflows',
                    return_value=archived_workflows):
             workflows = list(
                 ArgoHcaImportCompletionSensor(
@@ -57,7 +57,7 @@ class TestArgoHcaImportCompletionSensor(unittest.TestCase):
             }),
         ]
 
-        with patch('hca_orchestration.contrib.argo_workflows.ArgoArchivedWorkflowsClient.list_archived_workflows',
+        with patch('dagster_utils.contrib.argo_workflows.ArgoArchivedWorkflowsClient.list_archived_workflows',
                    return_value=archived_workflows):
             workflows = list(
                 ArgoHcaImportCompletionSensor(
@@ -95,7 +95,7 @@ class TestArgoHcaImportCompletionSensor(unittest.TestCase):
             ),
         ]
 
-        with patch('hca_orchestration.contrib.argo_workflows.ArgoArchivedWorkflowsClient.list_archived_workflows',
+        with patch('dagster_utils.contrib.argo_workflows.ArgoArchivedWorkflowsClient.list_archived_workflows',
                    return_value=archived_workflows):
             workflows = list(
                 ArgoHcaImportCompletionSensor(
@@ -116,7 +116,7 @@ class TestArgoHcaImportCompletionSensor(unittest.TestCase):
             'Succeeded',
             params={'data-repo-name': 'datarepo_snatasnet'}
         ))
-        with patch('hca_orchestration.contrib.argo_workflows.ExtendedArgoWorkflow.inflate', return_value=workflow):
+        with patch('dagster_utils.contrib.argo_workflows.ExtendedArgoWorkflow.inflate', return_value=workflow):
             req = sensor.generate_run_request(workflow)
 
             self.assertEqual(req.run_key, 'import-hca-total-defg')
@@ -129,7 +129,7 @@ class TestArgoHcaImportCompletionSensor(unittest.TestCase):
             'Succeeded',
             params={'data-repo-name': 'datarepo_snatasnet'}
         ))
-        with patch('hca_orchestration.contrib.argo_workflows.ExtendedArgoWorkflow.inflate',
+        with patch('dagster_utils.contrib.argo_workflows.ExtendedArgoWorkflow.inflate',
                    return_value=workflow) as mocked_inflate:
             sensor.generate_run_request(workflow)
             mocked_inflate.assert_called_once()
@@ -142,7 +142,7 @@ class TestArgoHcaImportCompletionSensor(unittest.TestCase):
             'Succeeded',
             params={'data-repo-name': 'datarepo_snatasnet'}
         ))
-        with patch('hca_orchestration.contrib.argo_workflows.ExtendedArgoWorkflow.inflate', return_value=workflow):
+        with patch('dagster_utils.contrib.argo_workflows.ExtendedArgoWorkflow.inflate', return_value=workflow):
             req = sensor.generate_run_request(workflow)
             self.assertEqual(req.run_config['resources']['hca_dataset_operation_config']
                              ['config']['dataset_name'], 'snatasnet')

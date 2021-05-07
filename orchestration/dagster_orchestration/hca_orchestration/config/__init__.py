@@ -1,10 +1,11 @@
+import os
+
 from dagster import ResourceDefinition
-from dagster_utils.config import configurator_aimed_at
+from dagster_utils.config import configurator_aimed_at_directory
 from dagster_utils.typing import DagsterObjectConfigSchema
 
-import hca_orchestration.config
 
-preconfigure_for_mode = configurator_aimed_at(hca_orchestration.config)
+preconfigure_for_mode = configurator_aimed_at_directory(os.path.dirname(__file__))
 
 
 def preconfigure_resource_for_mode(

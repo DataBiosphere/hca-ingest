@@ -2,7 +2,7 @@ from dagster import ModeDefinition, pipeline
 
 from dagster_utils.resources.beam import dataflow_beam_runner, local_beam_runner, test_beam_runner
 from dagster_utils.resources.bigquery import bigquery_client, noop_bigquery_client
-from dagster_utils.resources.google_storage import google_storage_client, local_storage_client
+from dagster_utils.resources.google_storage import google_storage_client, mock_storage_client
 from dagster_utils.resources.jade_data_repo import jade_data_repo_client, noop_data_repo_client
 
 from hca_orchestration.config import preconfigure_resource_for_mode
@@ -53,7 +53,7 @@ test_mode = ModeDefinition(
     name="test",
     resource_defs={
         "beam_runner": test_beam_runner,
-        "storage_client": local_storage_client,
+        "storage_client": mock_storage_client,
         "data_repo_client": noop_data_repo_client,
         "bigquery_client": noop_bigquery_client,
         "load_tag": load_tag,

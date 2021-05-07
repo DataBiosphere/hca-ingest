@@ -76,7 +76,7 @@ class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
         }
 
     def test_notifies_slack_with_failure_info(self):
-        with patch("hca_orchestration.resources.slack.ConsoleSlackClient.send_message") as slack_message_sender:
+        with patch("dagster_utils.resources.slack.ConsoleSlackClient.send_message") as slack_message_sender:
             result = execute_solid(
                 notify_slack_of_egress_validation_results,
                 run_config=self.solid_config,
@@ -103,7 +103,7 @@ class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
         self.assertTrue(result.success)
 
     def test_notifies_slack_of_success(self):
-        with patch("hca_orchestration.resources.slack.ConsoleSlackClient.send_message") as slack_message_sender:
+        with patch("dagster_utils.resources.slack.ConsoleSlackClient.send_message") as slack_message_sender:
             result = execute_solid(
                 notify_slack_of_egress_validation_results,
                 run_config=self.solid_config,

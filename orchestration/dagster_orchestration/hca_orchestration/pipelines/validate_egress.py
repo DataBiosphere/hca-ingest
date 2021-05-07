@@ -1,6 +1,6 @@
 from dagster import ModeDefinition, pipeline
 
-from dagster_utils.resources.data_repo import jade_data_repo_client, noop_data_repo_client
+from dagster_utils.resources.jade_data_repo import jade_data_repo_client, noop_data_repo_client
 from dagster_utils.resources.slack import console_slack_client, live_slack_client
 
 from hca_orchestration.config import preconfigure_resource_for_mode
