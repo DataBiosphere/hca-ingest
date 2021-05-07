@@ -3,22 +3,12 @@ from unittest.mock import patch
 
 from datetime import datetime
 from dateutil.tz import tzlocal
-from collections.abc import Iterable
-from typing import Generator, TypeVar
 
 from argo.workflows.client import ArchivedWorkflowServiceApi
+from dagster_utils.contrib.argo_workflows import generate_argo_archived_workflows_client
+from dagster_utils.tests.support.mock_workflows import mock_argo_workflow, extend_workflow
 
-from hca_orchestration.contrib.argo_workflows import generate_argo_archived_workflows_client
 from hca_orchestration.sensors import ArgoHcaImportCompletionSensor
-from hca_orchestration.tests.support.mock_workflows import mock_argo_workflow, extend_workflow
-
-T = TypeVar('T')
-
-
-# helper to turn a list into a generator to help mock generator functions
-def generator(iterable: Iterable[T]) -> Generator[T, None, None]:
-    for obj in iterable:
-        yield obj
 
 
 class TestArgoWorkflowsClient(unittest.TestCase):
@@ -44,7 +34,7 @@ class TestArgoHcaImportCompletionSensor(unittest.TestCase):
         ]
 
         with patch('hca_orchestration.contrib.argo_workflows.ArgoArchivedWorkflowsClient.list_archived_workflows',
-                   return_value=generator(archived_workflows)):
+                   return_value=archived_workflows):
             workflows = list(
                 ArgoHcaImportCompletionSensor(
                     argo_url='https://nonexistentsite.test',
@@ -68,7 +58,7 @@ class TestArgoHcaImportCompletionSensor(unittest.TestCase):
         ]
 
         with patch('hca_orchestration.contrib.argo_workflows.ArgoArchivedWorkflowsClient.list_archived_workflows',
-                   return_value=generator(archived_workflows)):
+                   return_value=archived_workflows):
             workflows = list(
                 ArgoHcaImportCompletionSensor(
                     argo_url='https://nonexistentsite.test',
@@ -106,7 +96,7 @@ class TestArgoHcaImportCompletionSensor(unittest.TestCase):
         ]
 
         with patch('hca_orchestration.contrib.argo_workflows.ArgoArchivedWorkflowsClient.list_archived_workflows',
-                   return_value=generator(archived_workflows)):
+                   return_value=archived_workflows):
             workflows = list(
                 ArgoHcaImportCompletionSensor(
                     argo_url='https://nonexistentsite.test',
