@@ -45,6 +45,10 @@ jobs:
       run: poetry run autopep8 --recursive --diff --exit-code .
       working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
       if: always() && steps.dependencies.outcome == 'success' # run all three checks, even if a prior check fails
+    - name: Enforce flake8
+      run: poetry run flake8
+      working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
+      if: always() && steps.dependencies.outcome == 'success' # run all three checks, even if a prior check fails
     - name: Check static types
       run: poetry run mypy
       working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
