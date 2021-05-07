@@ -7,3 +7,5 @@ repos:
   rev: 3.9.1
   hooks:
     - id: flake8
+      args:
+        - --config=orchestration/dagster_orchestration/.flake8
