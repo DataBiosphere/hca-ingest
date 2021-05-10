@@ -1,5 +1,8 @@
 from dagster import ModeDefinition, pipeline
 
+from dagster_gcp.gcs import gcs_pickle_io_manager
+
+from dagster_utils.resources.google_storage import google_storage_client, mock_storage_client
 from dagster_utils.resources.jade_data_repo import jade_data_repo_client, noop_data_repo_client
 from dagster_utils.resources.slack import console_slack_client, live_slack_client
 
@@ -12,9 +15,11 @@ prod_mode = ModeDefinition(
     name="prod",
     resource_defs={
         "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "prod"),
-        "slack": preconfigure_resource_for_mode(live_slack_client, "prod"),
+        "gcs": google_storage_client,
         "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, "prod"),
         "hca_dataset_operation_config": hca_dataset_operation_config,
+        "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "prod"),
+        "slack": preconfigure_resource_for_mode(live_slack_client, "prod"),
     }
 )
 
@@ -22,9 +27,11 @@ dev_mode = ModeDefinition(
     name="dev",
     resource_defs={
         "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
-        "slack": preconfigure_resource_for_mode(live_slack_client, "dev"),
+        "gcs": google_storage_client,
         "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, "dev"),
         "hca_dataset_operation_config": hca_dataset_operation_config,
+        "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "dev"),
+        "slack": preconfigure_resource_for_mode(live_slack_client, "dev"),
     }
 )
 
@@ -32,9 +39,11 @@ local_mode = ModeDefinition(
     name="local",
     resource_defs={
         "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
-        "slack": console_slack_client,
+        "gcs": google_storage_client,
         "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, "dev"),
         "hca_dataset_operation_config": hca_dataset_operation_config,
+        "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "dev"),
+        "slack": console_slack_client,
     }
 )
 
@@ -42,9 +51,10 @@ test_mode = ModeDefinition(
     name="test",
     resource_defs={
         "data_repo_client": noop_data_repo_client,
-        "slack": console_slack_client,
+        "gcs": mock_storage_client,
         "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, "test"),
         "hca_dataset_operation_config": hca_dataset_operation_config,
+        "slack": console_slack_client,
     }
 )
 

@@ -1,6 +1,9 @@
 from dagster import ModeDefinition, pipeline, success_hook, failure_hook
 from dagster.core.execution.context.system import HookContext
 
+from dagster_gcp.gcs import gcs_pickle_io_manager
+
+from dagster_utils.resources.google_storage import google_storage_client
 from dagster_utils.resources.jade_data_repo import jade_data_repo_client, noop_data_repo_client
 from dagster_utils.resources.sam import sam_client, noop_sam_client
 from dagster_utils.resources.slack import console_slack_client, live_slack_client
@@ -16,7 +19,9 @@ prod_mode = ModeDefinition(
     name="prod",
     resource_defs={
         "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "prod"),
+        "gcs": google_storage_client,
         "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, "prod"),
+        "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "prod"),
         "sam_client": preconfigure_resource_for_mode(sam_client, "prod"),
         "slack": preconfigure_resource_for_mode(live_slack_client, "prod"),
         "snapshot_config": snapshot_creation_config,
@@ -28,7 +33,9 @@ dev_mode = ModeDefinition(
     name="dev",
     resource_defs={
         "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
+        "gcs": google_storage_client,
         "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, "dev"),
+        "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "dev"),
         # we don't want to actually hit sam and make a snapshot public
         # unless we're running in prod
         "sam_client": noop_sam_client,
@@ -42,6 +49,7 @@ local_mode = ModeDefinition(
     name="local",
     resource_defs={
         "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
+        "gcs": google_storage_client,
         "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, "dev"),
         "sam_client": noop_sam_client,
         "slack": preconfigure_resource_for_mode(live_slack_client, "local"),

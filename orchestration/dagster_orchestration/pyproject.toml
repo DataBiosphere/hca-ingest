@@ -19,6 +19,7 @@ python-dateutil = "^2.8.1"
 typing-extensions = "^3.7.4"
 pyyaml = "^5.3"
 broad-dagster-utils = "^0.2.0"
+dagster-gcp = "^0.11.8"
 
 [tool.poetry.dev-dependencies]
 autopep8 = "^1.5.5"
