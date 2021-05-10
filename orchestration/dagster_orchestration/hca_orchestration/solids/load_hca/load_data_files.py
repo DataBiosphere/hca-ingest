@@ -216,9 +216,7 @@ def bulk_ingest(control_file_path: str) -> Nothing:
     check_bulk_file_ingest_job_result(job_id)
 
 
-@composite_solid(
-    input_defs=[InputDefinition("scratch_dataset_name", HcaScratchDatasetName)]
-)
+@composite_solid
 def import_data_files(scratch_dataset_name: HcaScratchDatasetName) -> Nothing:
     """
     Composite solid responsible for ingesting data files and related descriptors to TDR
