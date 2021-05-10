@@ -1,8 +1,9 @@
 import unittest
 
 from dagster import configured
+from dagster_utils.testing.resources import initialize_resource
+
 from hca_orchestration.resources import load_tag
-from hca_orchestration.tests.support.resources import initialize_resource
 
 
 class LoadTagTestCase(unittest.TestCase):

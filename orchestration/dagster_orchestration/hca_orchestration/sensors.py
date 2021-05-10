@@ -6,8 +6,8 @@ from dateutil.tz import tzlocal
 
 from dagster import RunRequest, sensor, SensorExecutionContext, SkipReason
 
-from hca_orchestration.contrib.argo_workflows import ArgoArchivedWorkflowsClient, ExtendedArgoWorkflow
-from hca_orchestration.contrib.google import default_google_access_token
+from dagster_utils.contrib.argo_workflows import ArgoArchivedWorkflowsClient, ExtendedArgoWorkflow
+from dagster_utils.contrib.google import default_google_access_token
 
 
 # boundary before which we don't care about any workflows in argo
