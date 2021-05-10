@@ -4,7 +4,7 @@ from typing import Any, Callable
 
 class RetryException(Exception):
     """
-    Represents a failure after some number of retries against the data repo API
+    Represents a failure after some number of retries
     """
     pass
 

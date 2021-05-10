@@ -3,19 +3,32 @@ from typing import Iterator
 from dagster import composite_solid, solid, Nothing, InputDefinition, Int, configured, Failure
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from dagster.experimental import DynamicOutput, DynamicOutputDefinition
+from data_repo_client import ApiException
 from data_repo_client import JobModel
 from google.cloud import bigquery
-from google.cloud.bigquery import ExternalConfig, ExternalSourceFormat, SchemaField, WriteDisposition
 from google.cloud.bigquery.client import RowIterator
 
 from hca_manage.manage import JobId
-from hca_orchestration.contrib.retry import is_truthy, retry
+from hca_orchestration.contrib.bigquery import build_query_job_using_external_schema, build_extract_job
 from hca_orchestration.contrib.google import gs_path_from_bucket_prefix
+from hca_orchestration.contrib.retry import is_truthy, retry
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
 from hca_orchestration.solids.data_repo import wait_for_job_completion
 from hca_orchestration.support.typing import HcaScratchDatasetName, DagsterConfigDict
-from data_repo_client import ApiException
+
+FILE_LOAD_TABLE_BQ_SCHEMA = [
+    {
+        'mode': 'NULLABLE',
+        'name': 'source_path',
+        'type': 'STRING'
+    },
+    {
+        'mode': 'NULLABLE',
+        'name': 'target_path',
+        'type': 'STRING',
+    }
+]
 
 
 @solid(
@@ -79,33 +92,18 @@ def _determine_files_to_load(
     WHERE J.target_path IS NULL
     """
 
-    # configure the external table definition
-    job_config = bigquery.QueryJobConfig()
-    external_config: ExternalConfig = ExternalConfig(
-        ExternalSourceFormat.NEWLINE_DELIMITED_JSON
-    )
-    external_config.source_uris = [
+    source_paths = [
         f"{gs_path_from_bucket_prefix(scratch_config.scratch_bucket_name, scratch_config.scratch_prefix_name)}/data-transfer-requests/*"
     ]
-    external_config.schema = [
-        SchemaField("source_path", "STRING"),
-        SchemaField("target_path", "STRING")
-    ]
-    job_config.table_definitions = {
-        "file_load_requests": external_config
-    }
 
-    # setup the destination and other configs
-    job_config.destination = f"{staging_dataset}.{file_load_table_name}"
-    job_config.use_legacy_sql = False
-    job_config.write_disposition = WriteDisposition.WRITE_TRUNCATE
-
-    # todo retry on 5xx failure (DSPDC-1729)
-    query_job: bigquery.QueryJob = bigquery_client.query(
+    query_job = build_query_job_using_external_schema(
         query,
-        job_config,
-        location='US',
-        project=scratch_config.scratch_bq_project
+        source_paths,
+        FILE_LOAD_TABLE_BQ_SCHEMA,
+        file_load_table_name,
+        f"{staging_dataset}.{file_load_table_name}",
+        bigquery_client,
+        scratch_config.scratch_bq_project
     )
     return query_job.result()
 
@@ -121,16 +119,11 @@ def _extract_files_to_load_to_control_files(
     out_prefix = gs_path_from_bucket_prefix(scratch_config.scratch_bucket_name, scratch_config.scratch_prefix_name)
     out_path = f"{out_prefix}/data-transfer-requests-deduped/*"
 
-    job_config = bigquery.job.ExtractJobConfig()
-    job_config.destination_format = bigquery.DestinationFormat.NEWLINE_DELIMITED_JSON
-    extract_job: bigquery.ExtractJob = bigquery_client.extract_table(
+    extract_job = build_extract_job(
         f"{scratch_dataset_name}.{file_load_table_name}",
-        destination_uris=[
-            f"{out_path}"
-        ],
-        job_config=job_config,
-        location="US",
-        project=scratch_config.scratch_bq_project
+        out_path,
+        scratch_config.scratch_bq_project,
+        bigquery_client
     )
     return extract_job.result()
 
