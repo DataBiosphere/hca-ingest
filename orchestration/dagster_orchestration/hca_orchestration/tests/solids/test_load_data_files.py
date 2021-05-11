@@ -19,7 +19,7 @@ class LoadDataFilesTestCase(unittest.TestCase):
         self.load_datafiles_test_mode: ModeDefinition = ModeDefinition(
             name="test",
             resource_defs={
-                "storage_client": mock_storage_client,
+                "gcs": mock_storage_client,
                 "bigquery_client": noop_bigquery_client,
                 "target_hca_dataset": ResourceDefinition.hardcoded_resource(
                     TargetHcaDataset(

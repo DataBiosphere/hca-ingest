@@ -36,7 +36,7 @@ FILE_LOAD_TABLE_NAME = 'file_load_requests'
 
 
 @solid(
-    required_resource_keys={"bigquery_client", "scratch_config", "storage_client", "target_hca_dataset"},
+    required_resource_keys={"bigquery_client", "scratch_config", "gcs", "target_hca_dataset"},
     output_defs=[DynamicOutputDefinition(name="control_file_path", dagster_type=str)]
 )
 def diff_file_loads(context: AbstractComputeExecutionContext,
@@ -68,7 +68,7 @@ def diff_file_loads(context: AbstractComputeExecutionContext,
     )
 
     prefix = f'{scratch.scratch_prefix_name}/data-transfer-requests-deduped'
-    storage_client = context.resources.storage_client
+    storage_client = context.resources.gcs
     for blob in storage_client.list_blobs(scratch.scratch_bucket_name, prefix=prefix):
         yield DynamicOutput(
             output_name='control_file_path',
@@ -135,7 +135,7 @@ def _extract_files_to_load_to_control_files(
 
 
 @solid(
-    required_resource_keys={"data_repo_client", "scratch_config", "load_tag", "target_hca_dataset", "storage_client"},
+    required_resource_keys={"data_repo_client", "scratch_config", "load_tag", "target_hca_dataset"},
 )
 def run_bulk_file_ingest(context: AbstractComputeExecutionContext, control_file_path: str) -> JobId:
     """
