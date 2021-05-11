@@ -2,14 +2,14 @@ import time
 from typing import Any, Callable, TypeVar
 
 
-class RetryException(Exception):
+class RetryException(RuntimeError):
     """
     Represents a failure after some number of retries
     """
     pass
 
 
-def is_truthy(result: Any) -> bool:
+def is_truthy(result: object) -> bool:
     """
     Helper that returns True if the provided result is defined, False if not
     """
@@ -23,7 +23,7 @@ def retry(
         target_fn: Callable[..., T],
         max_wait_time_seconds: int,
         poll_interval_seconds: int,
-        success_predicate: Callable[[Any], bool],
+        success_predicate: Callable[[T], bool],
         *args: Any,
         **kwargs: Any
 ) -> T:
