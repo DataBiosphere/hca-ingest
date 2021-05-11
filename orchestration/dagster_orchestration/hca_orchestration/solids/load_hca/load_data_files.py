@@ -10,12 +10,14 @@ from google.cloud.bigquery.client import RowIterator
 
 from hca_manage.manage import JobId
 from hca_orchestration.contrib.bigquery import build_query_job_using_external_schema, build_extract_job
-from hca_orchestration.contrib.google import gs_path_from_bucket_prefix
 from hca_orchestration.contrib.retry import is_truthy, retry
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
 from hca_orchestration.solids.data_repo import wait_for_job_completion
-from hca_orchestration.support.typing import HcaScratchDatasetName, DagsterConfigDict
+from hca_orchestration.support.typing import HcaScratchDatasetName
+from dagster_utils.typing import DagsterConfigDict
+from dagster_utils.contrib.google import gs_path_from_bucket_prefix
+
 
 FILE_LOAD_TABLE_BQ_SCHEMA = [
     {

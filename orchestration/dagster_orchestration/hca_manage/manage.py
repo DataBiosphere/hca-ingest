@@ -13,7 +13,7 @@ import google.auth
 import google.auth.credentials
 from google.cloud import bigquery, storage
 
-from hca_orchestration.contrib import google as hca_google
+from dagster_utils.contrib.google import get_credentials
 
 
 @dataclass
@@ -71,7 +71,7 @@ class HcaManage:
 
     @cached_property
     def gcp_creds(self) -> google.auth.credentials.Credentials:
-        return hca_google.get_credentials()
+        return get_credentials()
 
     # bigquery interactions
     def get_all_table_names(self) -> set[str]:
@@ -239,6 +239,10 @@ class HcaManage:
 
         response = self.data_repo_client.enumerate_datasets(filter=self.dataset)
         return response.items[0].id  # type: ignore # data repo client has no type hints, since it's auto-generated
+
+    def enumerate_dataset(self) -> str:
+        response = f"{self.data_repo_client.enumerate_datasets(filter=self.dataset)}"
+        return response
 
     def submit_snapshot_request(
         self,

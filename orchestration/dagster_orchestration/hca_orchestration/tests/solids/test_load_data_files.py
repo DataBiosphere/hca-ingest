@@ -3,15 +3,15 @@ import unittest
 from unittest.mock import Mock
 
 from dagster import execute_solid, ModeDefinition, SolidExecutionResult, ResourceDefinition, Failure
-from hca_orchestration.config.configurators import preconfigure_resource_for_mode
-from hca_orchestration.resources.bigquery import noop_bigquery_client
+from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.resources.config.hca_dataset import target_hca_dataset
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.load_tag import load_tag
-from hca_orchestration.resources.storage import local_storage_client
 from hca_orchestration.solids.load_hca.load_data_files import diff_file_loads, run_bulk_file_ingest, \
     check_bulk_file_ingest_job_result, JobId
 from hca_orchestration.support.typing import HcaScratchDatasetName
+from dagster_utils.resources.bigquery import noop_bigquery_client
+from dagster_utils.resources.google_storage import mock_storage_client
 
 from data_repo_client.models import JobModel
 from data_repo_client.api import RepositoryApi
@@ -22,7 +22,7 @@ class LoadDataFilesTestCase(unittest.TestCase):
         self.load_datafiles_test_mode: ModeDefinition = ModeDefinition(
             name="test",
             resource_defs={
-                "storage_client": local_storage_client,
+                "storage_client": mock_storage_client,
                 "bigquery_client": noop_bigquery_client,
                 "target_hca_dataset": preconfigure_resource_for_mode(target_hca_dataset, "test"),
                 "scratch_config": preconfigure_resource_for_mode(scratch_config, "test"),
