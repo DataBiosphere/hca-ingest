@@ -34,8 +34,10 @@ def run(arguments: Optional[list[str]] = None) -> None:
 
 
 def soft_delete(args: argparse.Namespace, host: str) -> None:
-    hca = SoftDeleteManager(environment=args.env, data_repo_client=get_api_client(host=host),
-                            project=args.project, dataset=args.dataset)
+    hca = SoftDeleteManager(environment=args.env,
+                            data_repo_client=get_api_client(host=host),
+                            project=args.project,
+                            dataset=args.dataset)
     hca.soft_delete_rows(args.path, args.target_table)
 
 
@@ -113,4 +115,4 @@ class SoftDeleteManager:
             )
         )
 
-        return response.id  # type: ignore # data repo client has no type hints, since it's auto-generated
+        return JobId(response.id)  # type: ignore # data repo client has no type hints, since it's auto-generated

@@ -30,7 +30,7 @@ class BQRowManager(_BQRowDataclass, ABC):
         pass
 
     @abstractmethod
-    def check_or_remove_rows(self, soft_delete: bool = False) -> int:
+    def check_or_delete_rows(self, soft_delete: bool = False) -> int:
         pass
 
     def _hit_bigquery(self, query: str) -> set[str]:
@@ -90,7 +90,7 @@ class DanglingFileRefManager(BQRowManager):
         """
         return self._hit_bigquery(query)
 
-    def check_or_remove_rows(self, soft_delete: bool = False) -> int:
+    def check_or_delete_rows(self, soft_delete: bool = False) -> int:
         """
         Check for any entities with project_id values that do not have a corresponding entry in the projects
         table
@@ -160,12 +160,14 @@ class DuplicatesManager(BQRowManager):
 
         return self._hit_bigquery(query)
 
-    def check_or_remove_rows(self, soft_delete: bool = False) -> int:
+    def check_or_delete_rows(self, soft_delete: bool = False) -> int:
         """
         Check and print the number of duplicates for each table in the dataset.
         :return: Number of duplicate rows to soft delete
         """
-        return self._check_or_delete_rows(self.get_all_table_names, self.get_rows, soft_delete=soft_delete,
+        return self._check_or_delete_rows(self.get_all_table_names,
+                                          self.get_rows,
+                                          soft_delete=soft_delete,
                                           issue="duplicate rows")
 
     def get_all_table_names(self) -> set[str]:
@@ -195,7 +197,7 @@ class NullFileRefManager(BQRowManager):
 
         return self._hit_bigquery(query)
 
-    def check_or_remove_rows(self, soft_delete: bool = False) -> int:
+    def check_or_delete_rows(self, soft_delete: bool = False) -> int:
         """
         Check/remove and print the number of null file references for each table in the dataset that has a `file_id`
         column.

@@ -3,7 +3,6 @@ from dataclasses import dataclass
 import logging
 from typing import Optional
 
-from cached_property import cached_property
 from data_repo_client import RepositoryApi
 
 from hca_manage import __version__ as hca_manage_version
@@ -65,7 +64,7 @@ class CheckManager:
     dataset: str
     data_repo_client: RepositoryApi
 
-    @cached_property
+    @property
     def soft_delete_manager(self) -> SoftDeleteManager:
         return SoftDeleteManager(environment=self.environment,
                                  dataset=self.dataset,
@@ -96,9 +95,9 @@ class CheckManager:
         :return: A named tuple with the counts of rows to soft delete
         """
         logging.info("Processing...")
-        duplicate_count = self.duplicate_manager.check_or_remove_rows()
-        null_file_ref_count = self.null_file_ref_manager.check_or_remove_rows()
-        dangling_proj_refs_count = self.dangling_file_ref_manager.check_or_remove_rows()
+        duplicate_count = self.duplicate_manager.check_or_delete_rows()
+        null_file_ref_count = self.null_file_ref_manager.check_or_delete_rows()
+        dangling_proj_refs_count = self.dangling_file_ref_manager.check_or_delete_rows()
         logging.info("Finished.")
         return ProblemCount(
             duplicates=duplicate_count,
@@ -113,8 +112,8 @@ class CheckManager:
         :return: A named tuple with the counts of rows to soft delete
         """
         logging.info("Processing, deleting as we find anything...")
-        duplicate_count = self.duplicate_manager.check_or_remove_rows(soft_delete=True)
-        null_file_ref_count = self.null_file_ref_manager.check_or_remove_rows(soft_delete=True)
+        duplicate_count = self.duplicate_manager.check_or_delete_rows(soft_delete=True)
+        null_file_ref_count = self.null_file_ref_manager.check_or_delete_rows(soft_delete=True)
         logging.info("Skipping any rows with dangling project refs, manual intervention required")
         logging.info("Finished.")
         return ProblemCount(
