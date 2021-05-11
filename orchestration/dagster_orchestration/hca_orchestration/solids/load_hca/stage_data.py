@@ -8,7 +8,7 @@ from hca_orchestration.support.typing import HcaStagingDatasetName
 
 
 @solid(
-    required_resource_keys={"storage_client", "scratch_config"},
+    required_resource_keys={"gcs", "scratch_config"},
 )
 def clear_scratch_dir(context: AbstractComputeExecutionContext) -> int:
     """
@@ -19,7 +19,7 @@ def clear_scratch_dir(context: AbstractComputeExecutionContext) -> int:
     scratch_bucket_name = context.resources.scratch_config.scratch_bucket_name
     scratch_prefix_name = context.resources.scratch_config.scratch_prefix_name
 
-    blobs = context.resources.storage_client.list_blobs(scratch_bucket_name, prefix=f"{scratch_prefix_name}/")
+    blobs = context.resources.gcs.list_blobs(scratch_bucket_name, prefix=f"{scratch_prefix_name}/")
     deletions_count = 0
     for blob in blobs:
         blob.delete()

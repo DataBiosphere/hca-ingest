@@ -1,5 +1,7 @@
 from dagster import ModeDefinition, pipeline
 
+from dagster_gcp.gcs import gcs_pickle_io_manager
+
 from dagster_utils.resources.beam import dataflow_beam_runner, local_beam_runner, test_beam_runner
 from dagster_utils.resources.bigquery import bigquery_client, noop_bigquery_client
 from dagster_utils.resources.google_storage import google_storage_client, mock_storage_client
@@ -17,9 +19,10 @@ prod_mode = ModeDefinition(
     name="prod",
     resource_defs={
         "beam_runner": preconfigure_resource_for_mode(dataflow_beam_runner, "prod"),
-        "storage_client": google_storage_client,
-        "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "prod"),
         "bigquery_client": bigquery_client,
+        "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "prod"),
+        "gcs": google_storage_client,
+        "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "prod"),
         "load_tag": load_tag,
         "scratch_config": scratch_config,
     }
@@ -29,9 +32,10 @@ dev_mode = ModeDefinition(
     name="dev",
     resource_defs={
         "beam_runner": preconfigure_resource_for_mode(dataflow_beam_runner, "dev"),
-        "storage_client": google_storage_client,
-        "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
         "bigquery_client": bigquery_client,
+        "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
+        "gcs": google_storage_client,
+        "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "dev"),
         "load_tag": load_tag,
         "scratch_config": scratch_config,
     }
@@ -41,9 +45,10 @@ local_mode = ModeDefinition(
     name="local",
     resource_defs={
         "beam_runner": local_beam_runner,
-        "storage_client": google_storage_client,
-        "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
         "bigquery_client": bigquery_client,
+        "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
+        "gcs": google_storage_client,
+        "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "dev"),
         "load_tag": load_tag,
         "scratch_config": scratch_config,
     }
@@ -53,7 +58,7 @@ test_mode = ModeDefinition(
     name="test",
     resource_defs={
         "beam_runner": test_beam_runner,
-        "storage_client": mock_storage_client,
+        "gcs": mock_storage_client,
         "data_repo_client": noop_data_repo_client,
         "bigquery_client": noop_bigquery_client,
         "load_tag": load_tag,
