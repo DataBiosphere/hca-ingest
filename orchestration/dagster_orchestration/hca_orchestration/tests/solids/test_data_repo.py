@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 from dagster import execute_solid, Failure, ModeDefinition
 from dagster_utils.resources.jade_data_repo import noop_data_repo_client
 
-from hca_manage.manage import JobId
+from hca_manage.common import JobId
 from hca_orchestration.solids.data_repo import base_wait_for_job_completion
 
 

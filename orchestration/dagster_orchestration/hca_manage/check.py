@@ -1,9 +1,17 @@
 import argparse
+from dataclasses import dataclass
+import logging
 from typing import Optional
 
+from data_repo_client import RepositoryApi
+
 from hca_manage import __version__ as hca_manage_version
-from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client, query_yes_no
-from hca_manage.manage import HcaManage
+from hca_manage.bq_managers import DanglingFileRefManager, DuplicatesManager, NullFileRefManager
+from hca_manage.common import DefaultHelpParser, ProblemCount, data_repo_host, get_api_client, query_yes_no
+from hca_manage.soft_delete import SoftDeleteManager
+
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def run(arguments: Optional[list[str]] = None) -> None:
@@ -38,12 +46,78 @@ def check_data(args: argparse.Namespace, host: str, parser: argparse.ArgumentPar
     else:
         project = args.project
 
-    hca = HcaManage(environment=args.env,
-                    project=project,
-                    dataset=args.dataset,
-                    data_repo_client=get_api_client(host=host))
+    hca = CheckManager(environment=args.env,
+                       project=project,
+                       dataset=args.dataset,
+                       data_repo_client=get_api_client(host))
 
     if remove:
         hca.remove_all()
     else:
         hca.check_for_all()
+
+
+@dataclass
+class CheckManager:
+    environment: str
+    project: str
+    dataset: str
+    data_repo_client: RepositoryApi
+
+    @property
+    def soft_delete_manager(self) -> SoftDeleteManager:
+        return SoftDeleteManager(environment=self.environment,
+                                 dataset=self.dataset,
+                                 project=self.project,
+                                 data_repo_client=self.data_repo_client)
+
+    @property
+    def duplicate_manager(self) -> DuplicatesManager:
+        return DuplicatesManager(dataset=self.dataset,
+                                 project=self.project,
+                                 soft_delete_manager=self.soft_delete_manager)
+
+    @property
+    def null_file_ref_manager(self) -> NullFileRefManager:
+        return NullFileRefManager(dataset=self.dataset,
+                                  project=self.project,
+                                  soft_delete_manager=self.soft_delete_manager)
+
+    @property
+    def dangling_file_ref_manager(self) -> DanglingFileRefManager:
+        return DanglingFileRefManager(dataset=self.dataset,
+                                      project=self.project,
+                                      soft_delete_manager=self.soft_delete_manager)
+
+    def check_for_all(self) -> ProblemCount:
+        """
+        Check and print the number of duplicates and null file references in all tables in the dataset.
+        :return: A named tuple with the counts of rows to soft delete
+        """
+        logging.info("Processing...")
+        duplicate_count = self.duplicate_manager.check_or_delete_rows()
+        null_file_ref_count = self.null_file_ref_manager.check_or_delete_rows()
+        dangling_proj_refs_count = self.dangling_file_ref_manager.check_or_delete_rows()
+        logging.info("Finished.")
+        return ProblemCount(
+            duplicates=duplicate_count,
+            null_file_refs=null_file_ref_count,
+            dangling_project_refs=dangling_proj_refs_count
+        )
+
+    def remove_all(self) -> ProblemCount:
+        """
+        Check and print the number of duplicates and null file references for each table in the dataset, then soft
+        delete the problematic rows.
+        :return: A named tuple with the counts of rows to soft delete
+        """
+        logging.info("Processing, deleting as we find anything...")
+        duplicate_count = self.duplicate_manager.check_or_delete_rows(soft_delete=True)
+        null_file_ref_count = self.null_file_ref_manager.check_or_delete_rows(soft_delete=True)
+        logging.info("Skipping any rows with dangling project refs, manual intervention required")
+        logging.info("Finished.")
+        return ProblemCount(
+            duplicates=duplicate_count,
+            null_file_refs=null_file_ref_count,
+            dangling_project_refs=0
+        )

@@ -87,11 +87,11 @@ class PipelinesTestCase(unittest.TestCase):
             "staging dataset should start with load tag prefix"
         )
 
-    @patch("hca_manage.manage.HcaManage.get_null_filerefs")
-    @patch("hca_manage.manage.HcaManage.get_file_table_names")
-    @patch("hca_manage.manage.HcaManage.get_duplicates")
-    @patch("hca_manage.manage.HcaManage.get_all_table_names")
-    @patch("hca_manage.manage.HcaManage.get_dangling_proj_refs")
+    @patch("hca_manage.bq_managers.NullFileRefManager.get_rows")
+    @patch("hca_manage.bq_managers.NullFileRefManager.get_file_table_names")
+    @patch("hca_manage.bq_managers.DuplicatesManager.get_rows")
+    @patch("hca_manage.bq_managers.DuplicatesManager.get_all_table_names")
+    @patch("hca_manage.bq_managers.DanglingFileRefManager.get_rows")
     def test_validate_egress(self, *mocks):
         """
         currently validate_egress is just a thin wrapper around
