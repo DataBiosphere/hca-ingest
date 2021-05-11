@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 from dagster import execute_solid
 from dagster_utils.testing.matchers import StringContaining
 
-from hca_manage.manage import ProblemCount
+from hca_manage.common import ProblemCount
 
 from hca_orchestration.pipelines.validate_egress import test_mode
 from hca_orchestration.solids.validate_egress import post_import_validate,\
@@ -12,11 +12,11 @@ from hca_orchestration.solids.validate_egress import post_import_validate,\
 
 
 class PostImportValidateTestCase(unittest.TestCase):
-    @patch("hca_manage.manage.HcaManage.get_dangling_proj_refs", return_value=set())
-    @patch("hca_manage.manage.HcaManage.get_null_filerefs", return_value=set())
-    @patch("hca_manage.manage.HcaManage.get_file_table_names", return_value=set())
-    @patch("hca_manage.manage.HcaManage.get_duplicates", return_value=set())
-    @patch("hca_manage.manage.HcaManage.get_all_table_names", return_value=set())
+    @patch("hca_manage.bq_managers.DanglingFileRefManager.get_rows", return_value=set())
+    @patch("hca_manage.bq_managers.NullFileRefManager.get_rows", return_value=set())
+    @patch("hca_manage.bq_managers.NullFileRefManager.get_file_table_names", return_value=set())
+    @patch("hca_manage.bq_managers.DuplicatesManager.get_rows", return_value=set())
+    @patch("hca_manage.bq_managers.DuplicatesManager.get_all_table_names", return_value=set())
     def test_post_import_validate(self, mock_all_table_names: Mock, mock_duplicates: Mock, mock_file_table_names: Mock,
                                   mock_null_filerefs: Mock, mock_dangling_proj_refs: Mock):
         """

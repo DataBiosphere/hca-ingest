@@ -1,9 +1,26 @@
 import argparse
+import csv
+from dataclasses import dataclass
 import sys
-from typing import NoReturn
+from typing import NoReturn, TextIO
 
 from dagster_utils.contrib.google import default_google_access_token
 from data_repo_client import ApiClient, Configuration, RepositoryApi
+
+
+# alias for str to make the return type for jade API calls a little clearer
+class JobId(str):
+    pass
+
+
+@dataclass
+class ProblemCount:
+    duplicates: int
+    null_file_refs: int
+    dangling_project_refs: int
+
+    def has_problems(self) -> bool:
+        return self.duplicates > 0 or self.null_file_refs > 0 or self.dangling_project_refs > 0
 
 
 data_repo_host = {
@@ -33,6 +50,28 @@ def get_api_client(host: str) -> RepositoryApi:
     client.client_side_validation = False
 
     return RepositoryApi(api_client=client)
+
+
+def get_dataset_id(dataset: str, data_repo_client: RepositoryApi) -> str:
+    """
+    Get the dataset ID of the provided dataset name.
+    :return: The dataset id.
+    """
+
+    response = data_repo_client.enumerate_datasets(filter=dataset)
+    return response.items[0].id  # type: ignore # data repo client has no type hints, since it's auto-generated
+
+
+def populate_row_id_csv(row_ids: set[str], temp_file: TextIO) -> None:
+    """
+    Create a csv locally with one column filled with row ids to soft delete.
+    :param row_ids: A set of row ids to soft delete.
+    :param temp_file: a temporary file to pass in
+    :return: The filename of the created csv.
+    """
+    sd_writer = csv.writer(temp_file, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL)
+
+    sd_writer.writerows([[rid] for rid in row_ids])
 
 
 def query_yes_no(question: str, default: str = "no") -> bool:
