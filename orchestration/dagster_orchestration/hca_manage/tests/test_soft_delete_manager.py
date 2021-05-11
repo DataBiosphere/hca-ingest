@@ -3,12 +3,12 @@ from tempfile import NamedTemporaryFile
 import unittest
 from unittest.mock import MagicMock, Mock, patch
 
+from dagster_utils.testing.matchers import ObjectOfType
 from data_repo_client import RepositoryApi, DataDeletionRequest
 
 from hca_manage.common import get_dataset_id
 from hca_manage.soft_delete import SoftDeleteManager
 from hca_orchestration.tests.support.gcs import FakeGCSClient
-from hca_orchestration.tests.support.matchers import ObjectOfType
 
 
 class SoftDeleteManagerTestCase(unittest.TestCase):

@@ -5,7 +5,6 @@ from dagster import execute_solid, Failure, ModeDefinition
 from dagster_utils.resources.jade_data_repo import noop_data_repo_client
 
 from hca_manage.common import JobId
-from hca_orchestration.resources.data_repo import noop_data_repo_client
 from hca_orchestration.solids.data_repo import base_wait_for_job_completion
 
 
@@ -47,7 +46,7 @@ class WaitForJobCompletionTestCase(unittest.TestCase):
             mock_job_status(True)
         ]
 
-        with patch('hca_orchestration.resources.data_repo.NoopDataRepoClient.retrieve_job',
+        with patch('dagster_utils.resources.jade_data_repo.NoopDataRepoClient.retrieve_job',
                    side_effect=job_status_sequence) as mocked_retrieve_job:
             result = execute_solid(
                 base_wait_for_job_completion,
@@ -71,7 +70,7 @@ class WaitForJobCompletionTestCase(unittest.TestCase):
             }
         }
 
-        with patch('hca_orchestration.resources.data_repo.NoopDataRepoClient.retrieve_job',
+        with patch('dagster_utils.resources.jade_data_repo.NoopDataRepoClient.retrieve_job',
                    return_value=mock_job_status(completed=True, successful=False)) as mocked_retrieve_job:
             with self.assertRaisesRegex(Failure, "Job did not complete successfully."):
                 result = execute_solid(
@@ -96,7 +95,7 @@ class WaitForJobCompletionTestCase(unittest.TestCase):
             }
         }
 
-        with patch('hca_orchestration.resources.data_repo.NoopDataRepoClient.retrieve_job',
+        with patch('dagster_utils.resources.jade_data_repo.NoopDataRepoClient.retrieve_job',
                    return_value=mock_job_status(False)):
             with self.assertRaisesRegex(Failure, "Exceeded max wait time"):
                 execute_solid(

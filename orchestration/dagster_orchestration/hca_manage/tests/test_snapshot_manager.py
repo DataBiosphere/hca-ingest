@@ -1,10 +1,10 @@
 import unittest
 from unittest.mock import MagicMock, Mock
 
+from dagster_utils.testing.matchers import StringMatchingRegex, ObjectWithAttributes
 from data_repo_client import RepositoryApi, SnapshotRequestModel
 
 from hca_manage.snapshot import SnapshotManager
-from hca_orchestration.tests.support.matchers import StringMatchingRegex, ObjectWithAttributes
 
 
 class SnapshotManagerTestCase(unittest.TestCase):

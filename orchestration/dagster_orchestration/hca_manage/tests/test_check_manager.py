@@ -3,11 +3,11 @@ from io import StringIO
 import unittest
 from unittest.mock import MagicMock, call, patch
 
+from dagster_utils.testing.matchers import StringContaining
 from data_repo_client import RepositoryApi
 
 from hca_manage.check import CheckManager
 from hca_manage.common import populate_row_id_csv
-from hca_orchestration.tests.support.matchers import StringContaining
 
 
 class CheckManagerTestCase(unittest.TestCase):

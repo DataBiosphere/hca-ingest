@@ -5,7 +5,6 @@ from dagster.core.execution.context.compute import AbstractComputeExecutionConte
 from dagster_utils.typing import DagsterConfigDict
 
 from hca_manage.common import JobId
-from hca_orchestration.support.typing import DagsterConfigDict
 
 
 @solid(

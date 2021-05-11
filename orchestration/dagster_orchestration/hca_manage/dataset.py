@@ -63,6 +63,11 @@ def create_dataset(args: argparse.Namespace, host: str) -> JobId:
     )
 
 
+def query_dataset(args: argparse.Namespace, host: str) -> None:
+    hca = DatasetManager(environment=args.env, data_repo_client=get_api_client(host=host))
+    print(hca.enumerate_dataset(dataset_name=args.dataset_name))
+
+
 @dataclass
 class DatasetManager:
     environment: str
@@ -119,7 +124,5 @@ class DatasetManager:
         logging.info(f"Dataset deletion job id: {delete_response_id}")
         return delete_response_id
 
-
-def query_dataset(args: argparse.Namespace, host: str) -> None:
-    hca = HcaManage(environment=args.env, data_repo_client=get_api_client(host=host), dataset=args.dataset_name)
-    print(hca.enumerate_dataset())
+    def enumerate_dataset(self, dataset_name: str) -> str:
+        return f"{self.data_repo_client.enumerate_datasets(filter=dataset_name)}"
