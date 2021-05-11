@@ -1,5 +1,0 @@
-scratch_bucket_name: fake_bucket_name
-scratch_prefix_name: fake_prefix
-scratch_bq_project: fake_bq_project
-scratch_dataset_prefix: fake_dataset_prefix
-scratch_table_expiration_ms: 1

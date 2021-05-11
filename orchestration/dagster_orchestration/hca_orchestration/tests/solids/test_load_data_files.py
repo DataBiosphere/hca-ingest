@@ -1,20 +1,17 @@
 import unittest
-
 from unittest.mock import Mock
 
 from dagster import execute_solid, ModeDefinition, SolidExecutionResult, ResourceDefinition, Failure
-from hca_orchestration.config import preconfigure_resource_for_mode
-from hca_orchestration.resources.config.hca_dataset import target_hca_dataset
-from hca_orchestration.resources.config.scratch import scratch_config
-from hca_orchestration.resources.load_tag import load_tag
+
+from dagster_utils.resources.bigquery import noop_bigquery_client
+from dagster_utils.resources.google_storage import mock_storage_client
+from data_repo_client.api import RepositoryApi
+from data_repo_client.models import JobModel
+from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
+from hca_orchestration.resources.config.scratch import ScratchConfig
 from hca_orchestration.solids.load_hca.load_data_files import diff_file_loads, run_bulk_file_ingest, \
     check_bulk_file_ingest_job_result, JobId
 from hca_orchestration.support.typing import HcaScratchDatasetName
-from dagster_utils.resources.bigquery import noop_bigquery_client
-from dagster_utils.resources.google_storage import mock_storage_client
-
-from data_repo_client.models import JobModel
-from data_repo_client.api import RepositoryApi
 
 
 class LoadDataFilesTestCase(unittest.TestCase):
@@ -24,9 +21,23 @@ class LoadDataFilesTestCase(unittest.TestCase):
             resource_defs={
                 "storage_client": mock_storage_client,
                 "bigquery_client": noop_bigquery_client,
-                "target_hca_dataset": preconfigure_resource_for_mode(target_hca_dataset, "test"),
-                "scratch_config": preconfigure_resource_for_mode(scratch_config, "test"),
-                "load_tag": preconfigure_resource_for_mode(load_tag, "test")
+                "target_hca_dataset": ResourceDefinition.hardcoded_resource(
+                    TargetHcaDataset(
+                        "fake_dataset_name",
+                        "1234abc",
+                        "fake_hca_project_id",
+                        "fake_billing_profile_id"
+                    )),
+                "scratch_config": ResourceDefinition.hardcoded_resource(
+                    ScratchConfig(
+                        "fake_bucket",
+                        "fake_prefix",
+                        "fake_bq_project",
+                        "fake_dataset_prefix",
+                        1
+                    )
+                ),
+                "load_tag": ResourceDefinition.hardcoded_resource("fake_load_tag")
             }
         )
 
