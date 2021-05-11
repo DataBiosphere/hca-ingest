@@ -13,6 +13,7 @@ from hca_orchestration.solids.load_hca.load_data_files import import_data_files
 from hca_orchestration.solids.load_hca.stage_data import clear_scratch_dir, pre_process_metadata, create_scratch_dataset
 
 from hca_orchestration.resources.config.scratch import scratch_config
+from hca_orchestration.resources.config.hca_dataset import target_hca_dataset
 
 
 prod_mode = ModeDefinition(
@@ -25,6 +26,7 @@ prod_mode = ModeDefinition(
         "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "prod"),
         "load_tag": load_tag,
         "scratch_config": scratch_config,
+        "target_hca_dataset": target_hca_dataset
     }
 )
 
@@ -38,6 +40,7 @@ dev_mode = ModeDefinition(
         "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "dev"),
         "load_tag": load_tag,
         "scratch_config": scratch_config,
+        "target_hca_dataset": target_hca_dataset
     }
 )
 
@@ -51,6 +54,7 @@ local_mode = ModeDefinition(
         "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "dev"),
         "load_tag": load_tag,
         "scratch_config": scratch_config,
+        "target_hca_dataset": target_hca_dataset
     }
 )
 
@@ -63,6 +67,7 @@ test_mode = ModeDefinition(
         "bigquery_client": noop_bigquery_client,
         "load_tag": load_tag,
         "scratch_config": scratch_config,
+        "target_hca_dataset": target_hca_dataset
     }
 )
 

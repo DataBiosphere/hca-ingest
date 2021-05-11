@@ -112,7 +112,7 @@ webencodings = "*"
 
 [[package]]
 name = "broad-dagster-utils"
-version = "0.2.2"
+version = "0.2.3"
 description = "Common utilities and objects for building Dagster pipelines"
 category = "main"
 optional = false
@@ -221,7 +221,7 @@ python-dateutil = "*"
 
 [[package]]
 name = "dagit"
-version = "0.11.6"
+version = "0.11.8"
 description = "Web UI for dagster."
 category = "dev"
 optional = false
@@ -229,15 +229,14 @@ python-versions = "*"
 
 [package.dependencies]
 click = ">=7.0"
-dagster = "0.11.6"
-dagster-graphql = "0.11.6"
+dagster = "0.11.8"
+dagster-graphql = "0.11.8"
 flask = ">=0.12.4"
 flask-cors = ">=3.0.6"
 Flask-GraphQL = ">=2.0.0"
 Flask-Sockets = ">=0.2.1"
 gevent = "*"
 gevent-websocket = ">=0.10.1"
-graphql-core = ">=2.1,<3"
 graphql-ws = ">=0.3.0"
 nbconvert = ">=5.4.0,<6.0.0"
 PyYAML = "*"
@@ -246,7 +245,7 @@ watchdog = ">=0.8.3"
 
 [[package]]
 name = "dagster"
-version = "0.11.6"
+version = "0.11.8"
 description = "A data orchestrator for machine learning, analytics, and ETL."
 category = "main"
 optional = false
@@ -268,7 +267,7 @@ psutil = {version = ">=1.0", markers = "platform_system == \"Windows\""}
 python-dateutil = "*"
 pywin32 = {version = "!=226", markers = "platform_system == \"Windows\""}
 PyYAML = ">=5.1"
-rx = "<=1.6.1"
+rx = ">=1.6,<2"
 sqlalchemy = ">=1.0"
 tabulate = "*"
 toposort = ">=1.0"
@@ -300,7 +299,7 @@ pyarrow = ["pyarrow"]
 
 [[package]]
 name = "dagster-graphql"
-version = "0.11.6"
+version = "0.11.8"
 description = "The GraphQL frontend to python dagster."
 category = "main"
 optional = false
@@ -309,12 +308,14 @@ python-versions = "*"
 [package.dependencies]
 gevent = "*"
 gevent-websocket = ">=0.10.1"
+gql = "<3"
 graphene = ">=2.1.3"
+graphql-core = ">=2.1,<3"
 requests = "*"
 
 [[package]]
 name = "dagster-k8s"
-version = "0.11.6"
+version = "0.11.8"
 description = "A Dagster integration for k8s"
 category = "main"
 optional = false
@@ -339,7 +340,7 @@ pandas = "*"
 
 [[package]]
 name = "dagster-postgres"
-version = "0.11.6"
+version = "0.11.8"
 description = "A Dagster integration for postgres"
 category = "main"
 optional = false
@@ -351,7 +352,7 @@ psycopg2-binary = "*"
 
 [[package]]
 name = "dagster-slack"
-version = "0.11.6"
+version = "0.11.8"
 description = "A Slack client resource for posting to Slack"
 category = "main"
 optional = false
@@ -707,6 +708,24 @@ protobuf = ">=3.12.0"
 
 [package.extras]
 grpc = ["grpcio (>=1.0.0)"]
+
+[[package]]
+name = "gql"
+version = "2.0.0"
+description = "GraphQL client for Python"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+graphql-core = ">=2.3.2,<3"
+promise = ">=2.3,<3"
+requests = ">=2.12,<3"
+six = ">=1.10.0"
+
+[package.extras]
+dev = ["flake8 (==3.8.1)", "isort (==4.3.21)", "black (==19.10b0)", "mypy (==0.770)", "check-manifest (>=0.42,<1)", "pytest (==5.4.2)", "pytest-asyncio (==0.11.0)", "pytest-cov (==2.8.1)", "mock (==4.0.2)", "vcrpy (==4.0.2)", "coveralls (==2.0.0)"]
+test = ["pytest (==5.4.2)", "pytest-asyncio (==0.11.0)", "pytest-cov (==2.8.1)", "mock (==4.0.2)", "vcrpy (==4.0.2)", "coveralls (==2.0.0)"]
 
 [[package]]
 name = "graphene"
@@ -1761,7 +1780,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.9"
-content-hash = "120c0afc448da70b2f068a31ee7c8597e10acf9188c87120b0fbcab76ad7fbf8"
+content-hash = "bcf5bc6ed7a8a9afba5414dcddece08f2e7eda26cd3a2e1eb79e812c633a5a6e"
 
 [metadata.files]
 aiohttp = [
@@ -1839,8 +1858,8 @@ bleach = [
     {file = "bleach-3.3.0.tar.gz", hash = "sha256:98b3170739e5e83dd9dc19633f074727ad848cbedb6026708c8ac2d3b697a433"},
 ]
 broad-dagster-utils = [
-    {file = "broad_dagster_utils-0.2.2-py3-none-any.whl", hash = "sha256:a4c3f1fde5205742df1d6172594cf596e68318ed8ddcf6029186e725542ede47"},
-    {file = "broad_dagster_utils-0.2.2.tar.gz", hash = "sha256:626c5e5968925f9c5381ffc233ebb7224083fc2d9622cf417407ee593beeac51"},
+    {file = "broad_dagster_utils-0.2.3-py3-none-any.whl", hash = "sha256:bbb5365da957d47383c7d7eeb28940e9e768ea292b54a5a1a4ed9d6ecde22de3"},
+    {file = "broad_dagster_utils-0.2.3.tar.gz", hash = "sha256:980b68075a921285131f2cd2ba59da47d2d3363929407f39417962224a575fbf"},
 ]
 cached-property = [
     {file = "cached-property-1.5.2.tar.gz", hash = "sha256:9fa5755838eecbb2d234c3aa390bd80fbd3ac6b6869109bfc1b499f7bd89a130"},
@@ -1918,36 +1937,36 @@ croniter = [
     {file = "croniter-1.0.13.tar.gz", hash = "sha256:57f36df4f5a1c31bbf50bbffa3551612c19f6156ab1e88e2e42342ccbb9f9b9a"},
 ]
 dagit = [
-    {file = "dagit-0.11.6-py3-none-any.whl", hash = "sha256:1bdd2398b207992300f1c02825ae2ff46569f365879e5450e7b908334fdca61a"},
-    {file = "dagit-0.11.6.tar.gz", hash = "sha256:7ace57380f88484836341623e241645e050add5d94b996ca4630d2736dca2c3a"},
+    {file = "dagit-0.11.8-py3-none-any.whl", hash = "sha256:734110499b5ae1f980b031383fea56bc6897eef323db52c3243118c034096ac9"},
+    {file = "dagit-0.11.8.tar.gz", hash = "sha256:dd4784586044f2c5612dff8235e1d244779a5370bf04a8c054cf06b13dc59209"},
 ]
 dagster = [
-    {file = "dagster-0.11.6-py3-none-any.whl", hash = "sha256:852e33f9d614472e1d8f40995db3c23547eea4f4c66cd99f5e0797300478949f"},
-    {file = "dagster-0.11.6.tar.gz", hash = "sha256:a4971b66b8fce7f083d707b5d239bda548c792688dc34f582c6708eb1cae0747"},
+    {file = "dagster-0.11.8-py3-none-any.whl", hash = "sha256:f9550d518f4bdd0bee760ff6ee8c1e902b6b0b487a095bb69207c3beceaeeed1"},
+    {file = "dagster-0.11.8.tar.gz", hash = "sha256:dca23adc261cb41ce01fb53714afc5a8da159d059f4a63f85aca81a9452e2f41"},
 ]
 dagster-gcp = [
     {file = "dagster-gcp-0.11.8.tar.gz", hash = "sha256:6fdec8f54930a2188214bd147a428d4a455a70fd44184f760cf56fa0d481d271"},
     {file = "dagster_gcp-0.11.8-py3-none-any.whl", hash = "sha256:e545d359b457929a517ec7ce64d7baaae2f6a2d4c632361e25875c5f97111416"},
 ]
 dagster-graphql = [
-    {file = "dagster-graphql-0.11.6.tar.gz", hash = "sha256:79b6f2ddcc90643bc5c2e8d0ec77edadded73975202c200ce1c5c4fdb2afb347"},
-    {file = "dagster_graphql-0.11.6-py3-none-any.whl", hash = "sha256:69f7bf833408726adcb115acd35735e61e82267a0115e994a9e2ae7eddd54e11"},
+    {file = "dagster-graphql-0.11.8.tar.gz", hash = "sha256:78cd186d3407cc0fdd9ff5958896622b635195365dad4c23ef83c0a019b2a052"},
+    {file = "dagster_graphql-0.11.8-py3-none-any.whl", hash = "sha256:0c4148c92d378e1d79048f9ad26be784475e0322cb877f9cae52023570ed450b"},
 ]
 dagster-k8s = [
-    {file = "dagster-k8s-0.11.6.tar.gz", hash = "sha256:a441e133c8d10f07a8c3a69cc83c19353ee60be9d7500c038e3b705f47d8f939"},
-    {file = "dagster_k8s-0.11.6-py3-none-any.whl", hash = "sha256:c36e1b478c7d02bb3501f40c69296e79e4a468b834ada380e3c14770b9163eaa"},
+    {file = "dagster-k8s-0.11.8.tar.gz", hash = "sha256:fe35255825badaa6fcedb3aaaeeedfef59fa05a6a8453f233ccf5d59e4a2e1dc"},
+    {file = "dagster_k8s-0.11.8-py3-none-any.whl", hash = "sha256:3c7e2ac41fb721636d58fee5595857b852ba63abd4edf02cfb51ba013acf5e2f"},
 ]
 dagster-pandas = [
     {file = "dagster-pandas-0.11.8.tar.gz", hash = "sha256:cadd974e8f815f6718b9dc09b02ebae500fafa35544269e3f4d38f801f6e0e28"},
     {file = "dagster_pandas-0.11.8-py3-none-any.whl", hash = "sha256:e8d74642654b1025f0faf5d6f8fb49234eb50c0a0344f5ebb060f83d72708bf9"},
 ]
 dagster-postgres = [
-    {file = "dagster-postgres-0.11.6.tar.gz", hash = "sha256:3d063c667228a076eb68d835cfba3c5e931f9c93277190b2a2990409c2123895"},
-    {file = "dagster_postgres-0.11.6-py3-none-any.whl", hash = "sha256:7fb974a76b06f13dd11c2c9d18df9a26c71d8dbb7ac4ed49bb47bfd6b2507f07"},
+    {file = "dagster-postgres-0.11.8.tar.gz", hash = "sha256:e29d5686c792ae4de0c4310a9f7ce85834f61fdc5d7155f92f1ccf19341fdedb"},
+    {file = "dagster_postgres-0.11.8-py3-none-any.whl", hash = "sha256:0fae99cc2e0146334944725b8cc3a8e886438fe25de24460ba104e28157ae136"},
 ]
 dagster-slack = [
-    {file = "dagster-slack-0.11.6.tar.gz", hash = "sha256:2c130e301277f212e3e89761d93203df12c3aa4149d4f4c70ea45d41fcde68c3"},
-    {file = "dagster_slack-0.11.6-py3-none-any.whl", hash = "sha256:b84d338668867a9ede93f0edb021eba317ef9d3b4a68d1249229b59643b46ada"},
+    {file = "dagster-slack-0.11.8.tar.gz", hash = "sha256:199ef9b33b06b5d081b50e5d5cd7a9755816a99ad54704a5b3005d1ac79d1fc2"},
+    {file = "dagster_slack-0.11.8-py3-none-any.whl", hash = "sha256:8148163c18263bf8766663679a7025fa9c76d85fb18f368532979fa977a29ce1"},
 ]
 data-repo-client = [
     {file = "data-repo-client-1.64.0.tar.gz", hash = "sha256:a5b2e224bda51a5023b2a846ac6a6f16dd6548488d3fd4392f4cd9bd289bd728"},
@@ -2098,6 +2117,10 @@ google-resumable-media = [
 googleapis-common-protos = [
     {file = "googleapis-common-protos-1.53.0.tar.gz", hash = "sha256:a88ee8903aa0a81f6c3cec2d5cf62d3c8aa67c06439b0496b49048fb1854ebf4"},
     {file = "googleapis_common_protos-1.53.0-py2.py3-none-any.whl", hash = "sha256:f6d561ab8fb16b30020b940e2dd01cd80082f4762fa9f3ee670f4419b4b8dbd0"},
+]
+gql = [
+    {file = "gql-2.0.0-py2.py3-none-any.whl", hash = "sha256:35032ddd4bfe6b8f3169f806b022168932385d751eacc5c5f7122e0b3f4d6b88"},
+    {file = "gql-2.0.0.tar.gz", hash = "sha256:fe8d3a08047f77362ddfcfddba7cae377da2dd66f5e61c59820419c9283d4fb5"},
 ]
 graphene = [
     {file = "graphene-2.1.8-py2.py3-none-any.whl", hash = "sha256:09165f03e1591b76bf57b133482db9be6dac72c74b0a628d3c93182af9c5a896"},

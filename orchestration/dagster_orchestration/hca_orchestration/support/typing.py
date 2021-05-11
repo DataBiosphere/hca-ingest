@@ -4,5 +4,5 @@ base can live here, for easy reference and descriptive naming.
 """
 
 
-class HcaStagingDatasetName(str):
+class HcaScratchDatasetName(str):
     pass
