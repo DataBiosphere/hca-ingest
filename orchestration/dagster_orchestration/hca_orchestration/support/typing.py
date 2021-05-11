@@ -7,9 +7,8 @@ from dagster import make_python_type_usable_as_dagster_type
 from dagster.core.types.dagster_type import String as DagsterString
 
 
-
 class HcaScratchDatasetName(str):
     pass
 
 
-make_python_type_usable_as_dagster_type(HcaStagingDatasetName, DagsterString)
+make_python_type_usable_as_dagster_type(HcaScratchDatasetName, DagsterString)
