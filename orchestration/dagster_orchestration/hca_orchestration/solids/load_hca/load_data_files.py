@@ -1,12 +1,15 @@
-from typing import Iterator
+from typing import Iterator, Optional
 
-from dagster import composite_solid, solid, Nothing, InputDefinition, Int, configured, Failure
+from dagster import composite_solid, solid, Nothing, Int, configured, Failure
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from dagster.experimental import DynamicOutput, DynamicOutputDefinition
-from data_repo_client import ApiException
-from data_repo_client import JobModel
 from google.cloud import bigquery
 from google.cloud.bigquery.client import RowIterator
+
+from dagster_utils.contrib.google import gs_path_from_bucket_prefix
+from dagster_utils.typing import DagsterConfigDict
+from data_repo_client import ApiException
+from data_repo_client import JobModel
 
 from hca_manage.manage import JobId
 from hca_orchestration.contrib.bigquery import build_query_job_using_external_schema, build_extract_job
@@ -15,9 +18,6 @@ from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
 from hca_orchestration.solids.data_repo import wait_for_job_completion
 from hca_orchestration.support.typing import HcaScratchDatasetName
-from dagster_utils.typing import DagsterConfigDict
-from dagster_utils.contrib.google import gs_path_from_bucket_prefix
-
 
 FILE_LOAD_TABLE_BQ_SCHEMA = [
     {
@@ -32,10 +32,11 @@ FILE_LOAD_TABLE_BQ_SCHEMA = [
     }
 ]
 
+FILE_LOAD_TABLE_NAME = 'file_load_requests'
+
 
 @solid(
     required_resource_keys={"bigquery_client", "scratch_config", "storage_client", "target_hca_dataset"},
-    input_defs=[InputDefinition("scratch_dataset_name", HcaScratchDatasetName)],
     output_defs=[DynamicOutputDefinition(name="control_file_path", dagster_type=str)]
 )
 def diff_file_loads(context: AbstractComputeExecutionContext,
@@ -48,7 +49,6 @@ def diff_file_loads(context: AbstractComputeExecutionContext,
     :return: Yields a list of control file blob names
     """
     target_hca_dataset = context.resources.target_hca_dataset
-    file_load_table_name = 'file_load_requests'
     bigquery_client = context.resources.bigquery_client
     scratch = context.resources.scratch_config
 
@@ -56,7 +56,7 @@ def diff_file_loads(context: AbstractComputeExecutionContext,
         bigquery_client,
         target_hca_dataset,
         scratch_dataset_name,
-        file_load_table_name,
+        FILE_LOAD_TABLE_NAME,
         scratch
     )
 
@@ -64,7 +64,7 @@ def diff_file_loads(context: AbstractComputeExecutionContext,
         bigquery_client,
         context.resources.scratch_config,
         scratch_dataset_name,
-        file_load_table_name
+        FILE_LOAD_TABLE_NAME
     )
 
     prefix = f'{scratch.scratch_prefix_name}/data-transfer-requests-deduped'
@@ -84,6 +84,10 @@ def _determine_files_to_load(
         file_load_table_name: str,
         scratch_config: ScratchConfig,
 ) -> RowIterator:
+    """
+    Joins against the load history in the given TDR dataset and outputs the files not present
+    to the given file_load_table_name parameter in the scratch dataset
+    """
     fq_dataset_id = target_hca_dataset.fully_qualified_jade_dataset_name()
     query = f"""
     WITH J AS (
@@ -132,7 +136,6 @@ def _extract_files_to_load_to_control_files(
 
 @solid(
     required_resource_keys={"data_repo_client", "scratch_config", "load_tag", "target_hca_dataset", "storage_client"},
-    input_defs=[InputDefinition("control_file_path", str)]
 )
 def run_bulk_file_ingest(context: AbstractComputeExecutionContext, control_file_path: str) -> JobId:
     """
@@ -159,9 +162,7 @@ def run_bulk_file_ingest(context: AbstractComputeExecutionContext, control_file_
         bulk_file_load=payload
     )
     context.log.info(f"bulk file ingest job id = {job_response.id}")
-    result = JobId(job_response.id)
-
-    return result
+    return JobId(job_response.id)
 
 
 @solid(
@@ -173,7 +174,7 @@ def run_bulk_file_ingest(context: AbstractComputeExecutionContext, control_file_
 )
 def _base_check_bulk_file_ingest_job_result(context: AbstractComputeExecutionContext, job_id: JobId) -> Nothing:
     # we need to poll on the endpoint as a workaround for a race condition in TDR (DR-1791)
-    def __fetch_job_results(jid: JobId) -> JobModel:
+    def __fetch_job_results(jid: JobId) -> Optional[JobModel]:
         try:
             return context.resources.data_repo_client.retrieve_job_result(jid)
         except ApiException as ae:
@@ -188,6 +189,8 @@ def _base_check_bulk_file_ingest_job_result(context: AbstractComputeExecutionCon
         is_truthy,
         job_id
     )
+    if not job_results:
+        raise Failure(f"No job results after polling bulk ingest, job_id = {job_id}")
 
     failed_files = job_results['failedFiles']
     if failed_files > 0:

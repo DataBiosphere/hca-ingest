@@ -1,5 +1,5 @@
 import time
-from typing import Any, Callable
+from typing import Any, Callable, TypeVar
 
 
 class RetryException(Exception):
@@ -16,8 +16,17 @@ def is_truthy(result: Any) -> bool:
     return bool(result)
 
 
-def retry(target_fn: Callable[..., Any], max_wait_time_seconds: int,
-          poll_interval_seconds: int, success_predicate: Callable[[Any], bool], *args: str) -> Any:
+T = TypeVar('T')
+
+
+def retry(
+        target_fn: Callable[..., T],
+        max_wait_time_seconds: int,
+        poll_interval_seconds: int,
+        success_predicate: Callable[[Any], bool],
+        *args: Any,
+        **kwargs: Any
+) -> T:
     """
     Retries the target function until max_wait_time is exceeded or success_predicate returns True
     :param max_wait_time_seconds:
@@ -30,7 +39,7 @@ def retry(target_fn: Callable[..., Any], max_wait_time_seconds: int,
     """
     time_waited = 0
     while time_waited < max_wait_time_seconds:
-        result = target_fn(*args)
+        result = target_fn(*args, **kwargs)
         if success_predicate(result):
             return result
 
