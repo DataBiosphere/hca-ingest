@@ -11,7 +11,7 @@ from dagster_utils.typing import DagsterConfigDict
 from data_repo_client import ApiException
 from data_repo_client import JobModel
 
-from hca_manage.manage import JobId
+from hca_manage.common import JobId
 from hca_orchestration.contrib.bigquery import build_query_job_using_external_schema, build_extract_job
 from hca_orchestration.contrib.retry import is_truthy, retry
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
