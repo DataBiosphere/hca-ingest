@@ -1,7 +1,7 @@
 from dagster import solid, Nothing, InputDefinition
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
-from hca_orchestration.solids.load_hca.stage_data import HcaStagingDatasetName
+from hca_orchestration.support.typing import HcaStagingDatasetName
 
 
 @solid(

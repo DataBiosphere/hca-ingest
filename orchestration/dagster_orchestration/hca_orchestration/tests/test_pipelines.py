@@ -8,6 +8,7 @@ import pytest
 from dagster import execute_pipeline, file_relative_path, PipelineDefinition, PipelineExecutionResult
 from dagster.utils import load_yaml_from_globs
 from dagster.utils.merger import deep_merge_dicts
+
 from hca_manage.diff_dirs import diff_dirs
 from hca_orchestration.pipelines import load_hca, validate_egress
 
@@ -53,9 +54,9 @@ class PipelinesTestCase(unittest.TestCase):
                         'working_dir': beam_runner_path()
                     }
                 },
-                'staging_bucket_config': {
+                'scratch_config': {
                     'config': {
-                        'staging_prefix_name': f'local-stage-data/{test_id}'
+                        'scratch_prefix_name': f'local-stage-data/{test_id}'
                     }
                 }
             }
@@ -80,9 +81,9 @@ class PipelinesTestCase(unittest.TestCase):
         result = self.run_pipeline(load_hca, config_name="test_load_hca_noop_resources.yaml")
 
         self.assertTrue(result.success)
-        staging_dataset_name = result.result_for_solid("create_staging_dataset").output_value("result")
+        scratch_dataset_name = result.result_for_solid("create_scratch_dataset").output_value("result")
         self.assertTrue(
-            staging_dataset_name.startswith("fake_bq_project.testing_dataset_prefix_fake_load_tag"),
+            scratch_dataset_name.startswith("fake_bq_project.testing_dataset_prefix_fake_load_tag"),
             "staging dataset should start with load tag prefix"
         )
 

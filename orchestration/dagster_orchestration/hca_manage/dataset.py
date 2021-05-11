@@ -21,6 +21,7 @@ def run(arguments: Optional[list[str]] = None) -> None:
     dataset_flags = parser.add_mutually_exclusive_group(required=True)
     dataset_flags.add_argument("-c", "--create", help="Flag to create a dataset", action="store_true")
     dataset_flags.add_argument("-r", "--remove", help="Flag to delete a dataset", action="store_true")
+    dataset_flags.add_argument("-q", "--query", help="Flag to query a dataset ID", action="store_true")
 
     # create
     dataset_create_args = parser.add_argument_group()
@@ -44,6 +45,8 @@ def run(arguments: Optional[list[str]] = None) -> None:
     elif args.create:
         if query_yes_no("This will create a dataset. Are you sure?"):
             create_dataset(args, host)
+    elif args.query:
+        query_dataset(args, host)
 
 
 def remove_dataset(args: argparse.Namespace, host: str) -> JobId:
@@ -115,3 +118,8 @@ class DatasetManager:
         delete_response_id: JobId = self.data_repo_client.delete_dataset(dataset_id).id
         logging.info(f"Dataset deletion job id: {delete_response_id}")
         return delete_response_id
+
+
+def query_dataset(args: argparse.Namespace, host: str) -> None:
+    hca = HcaManage(environment=args.env, data_repo_client=get_api_client(host=host), dataset=args.dataset_name)
+    print(hca.enumerate_dataset())

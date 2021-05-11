@@ -31,7 +31,7 @@ class CreateSnapshotSolidsTestCase(unittest.TestCase):
             submit_snap.assert_called_once_with('namityname')
 
     def test_make_snapshot_public_hits_correct_sam_path(self):
-        with patch('hca_orchestration.resources.sam.NoopSamClient.make_snapshot_public') as mock_make_public:
+        with patch('dagster_utils.resources.sam.NoopSamClient.make_snapshot_public') as mock_make_public:
             result = execute_solid(
                 make_snapshot_public,
                 run_config={},
