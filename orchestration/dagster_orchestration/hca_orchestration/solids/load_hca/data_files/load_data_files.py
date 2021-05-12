@@ -1,23 +1,20 @@
-from typing import Iterator, Optional
+from typing import Iterator
 
-from dagster import composite_solid, solid, Nothing, Int, configured, Failure
+from dagster import composite_solid, solid, Nothing
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from dagster.experimental import DynamicOutput, DynamicOutputDefinition
 from google.cloud import bigquery
 from google.cloud.bigquery.client import RowIterator
 
-from dagster_utils.contrib.google import gs_path_from_bucket_prefix
-from dagster_utils.typing import DagsterConfigDict
-from data_repo_client import ApiException
-from data_repo_client import JobModel
-
 from hca_manage.common import JobId
 from hca_orchestration.contrib.bigquery import build_query_job_using_external_schema, build_extract_job
-from hca_orchestration.contrib.retry import is_truthy, retry
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
 from hca_orchestration.solids.data_repo import wait_for_job_completion
+from hca_orchestration.solids.load_hca.poll_ingest_job import check_data_ingest_job_result
 from hca_orchestration.support.typing import HcaScratchDatasetName
+from data_repo_client import JobModel
+
 
 FILE_LOAD_TABLE_BQ_SCHEMA = [
     {
@@ -99,7 +96,7 @@ def _determine_files_to_load(
     """
 
     source_paths = [
-        f"{gs_path_from_bucket_prefix(scratch_config.scratch_bucket_name, scratch_config.scratch_prefix_name)}/data-transfer-requests/*"
+        f"{scratch_config.scratch_area()}/data-transfer-requests/*"
     ]
 
     query_job = build_query_job_using_external_schema(
@@ -122,12 +119,12 @@ def _extract_files_to_load_to_control_files(
 ) -> bigquery.ExtractJob:
     # dump the contents of our file load requests table to a file in GCS suitable for use as a
     # control file for jade bulk data ingest
-    out_prefix = gs_path_from_bucket_prefix(scratch_config.scratch_bucket_name, scratch_config.scratch_prefix_name)
-    out_path = f"{out_prefix}/data-transfer-requests-deduped/*"
+    out_path = f"{scratch_config.scratch_area()}/data-transfer-requests-deduped/*"
 
     extract_job = build_extract_job(
-        f"{scratch_dataset_name}.{file_load_table_name}",
+        file_load_table_name,
         out_path,
+        scratch_dataset_name,
         scratch_config.scratch_bq_project,
         bigquery_client
     )
@@ -165,50 +162,6 @@ def run_bulk_file_ingest(context: AbstractComputeExecutionContext, control_file_
     return JobId(job_response.id)
 
 
-@solid(
-    required_resource_keys={"data_repo_client"},
-    config_schema={
-        'max_wait_time_seconds': Int,
-        'poll_interval_seconds': Int,
-    }
-)
-def _base_check_bulk_file_ingest_job_result(context: AbstractComputeExecutionContext, job_id: JobId) -> Nothing:
-    # we need to poll on the endpoint as a workaround for a race condition in TDR (DR-1791)
-    def __fetch_job_results(jid: JobId) -> Optional[JobModel]:
-        try:
-            return context.resources.data_repo_client.retrieve_job_result(jid)
-        except ApiException as ae:
-            if ae == 500:
-                return None
-            raise
-
-    job_results = retry(
-        __fetch_job_results,
-        context.solid_config['max_wait_time_seconds'],
-        context.solid_config['poll_interval_seconds'],
-        is_truthy,
-        job_id
-    )
-    if not job_results:
-        raise Failure(f"No job results after polling bulk ingest, job_id = {job_id}")
-
-    failed_files = job_results['failedFiles']
-    if failed_files > 0:
-        raise Failure(f"Bulk file load (job_id = {job_id} had failedFiles = {failed_files})")
-
-
-@configured(_base_check_bulk_file_ingest_job_result)
-def check_bulk_file_ingest_job_result(config: DagsterConfigDict) -> DagsterConfigDict:
-    """
-    Polls the bulk file ingest results
-    Any files failed will fail the pipeline
-    """
-    return {
-        'max_wait_time_seconds': 300,  # 5 minutes
-        'poll_interval_seconds': 5
-    }
-
-
 @composite_solid
 def bulk_ingest(control_file_path: str) -> Nothing:
     """
@@ -218,7 +171,7 @@ def bulk_ingest(control_file_path: str) -> Nothing:
     """
     job_id = run_bulk_file_ingest(control_file_path)
     wait_for_job_completion(job_id)
-    check_bulk_file_ingest_job_result(job_id)
+    check_data_ingest_job_result(job_id)
 
 
 @composite_solid

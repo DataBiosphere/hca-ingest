@@ -9,8 +9,8 @@ from data_repo_client.api import RepositoryApi
 from data_repo_client.models import JobModel
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
-from hca_orchestration.solids.load_hca.load_data_files import diff_file_loads, run_bulk_file_ingest, \
-    check_bulk_file_ingest_job_result, JobId
+from hca_orchestration.solids.load_hca.data_files.load_data_files import diff_file_loads, run_bulk_file_ingest, \
+    check_data_ingest_job_result, JobId
 from hca_orchestration.support.typing import HcaScratchDatasetName
 
 
@@ -73,7 +73,7 @@ class LoadDataFilesTestCase(unittest.TestCase):
         self.assertTrue(result.success)
         self.assertEqual(result.output_values["result"], job_id, f"Job ID should be {job_id}")
 
-    def test_check_bulk_file_ingest_job_result_should_poll_jade(self):
+    def test_check_data_ingest_job_result_should_poll_jade(self):
         data_repo = Mock(spec=RepositoryApi)
         job_response = {
             "failedFiles": 0
@@ -83,7 +83,7 @@ class LoadDataFilesTestCase(unittest.TestCase):
             data_repo)
 
         result: SolidExecutionResult = execute_solid(
-            check_bulk_file_ingest_job_result,
+            check_data_ingest_job_result,
             mode_def=self.load_datafiles_test_mode,
             input_values={
                 'job_id': JobId('fake_job_id')
@@ -92,7 +92,7 @@ class LoadDataFilesTestCase(unittest.TestCase):
 
         self.assertTrue(result.success)
 
-    def test_check_bulk_file_ingest_job_result_failed_files(self):
+    def test_check_data_ingest_job_result_failed_files(self):
         data_repo = Mock(spec=RepositoryApi)
         job_response = {
             "failedFiles": 1
@@ -102,10 +102,10 @@ class LoadDataFilesTestCase(unittest.TestCase):
             data_repo)
 
         with self.assertRaises(
-                Failure, msg="Bulk ingest should fail if a file fails to ingest"
+            Failure, msg="Bulk ingest should fail if a file fails to ingest"
         ):
             execute_solid(
-                check_bulk_file_ingest_job_result,
+                check_data_ingest_job_result,
                 mode_def=self.load_datafiles_test_mode,
                 input_values={
                     'job_id': JobId('fake_job_id')
