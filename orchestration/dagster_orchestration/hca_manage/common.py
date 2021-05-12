@@ -4,6 +4,9 @@ from dataclasses import dataclass
 import sys
 from typing import NoReturn, TextIO
 
+from dagster import make_python_type_usable_as_dagster_type
+from dagster.core.types.dagster_type import String as DagsterString
+
 from dagster_utils.contrib.google import default_google_access_token
 from data_repo_client import ApiClient, Configuration, RepositoryApi
 
@@ -11,6 +14,9 @@ from data_repo_client import ApiClient, Configuration, RepositoryApi
 # alias for str to make the return type for jade API calls a little clearer
 class JobId(str):
     pass
+
+
+make_python_type_usable_as_dagster_type(JobId, DagsterString)
 
 
 @dataclass
