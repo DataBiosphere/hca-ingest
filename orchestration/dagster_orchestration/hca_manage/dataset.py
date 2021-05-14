@@ -95,7 +95,9 @@ class DatasetManager:
                     "name": dataset_name,
                     "description": description,
                     "defaultProfileId": billing_profile_id,
-                    "schema": parsed_schema
+                    "schema": parsed_schema,
+                    "region": "US",
+                    "cloudPlatform": "gcp"
                 }
             )
             job_id: JobId = response.id
