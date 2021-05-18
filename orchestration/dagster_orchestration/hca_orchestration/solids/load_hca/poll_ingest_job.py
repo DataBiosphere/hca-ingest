@@ -51,4 +51,3 @@ def check_data_ingest_job_result(config: DagsterConfigDict) -> DagsterConfigDict
         'max_wait_time_seconds': 600,  # 10 minutes
         'poll_interval_seconds': 5
     }
-

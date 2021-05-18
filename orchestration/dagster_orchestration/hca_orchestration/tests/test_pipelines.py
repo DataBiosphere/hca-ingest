@@ -78,7 +78,7 @@ class PipelinesTestCase(unittest.TestCase):
         )
         self.assertEqual(expected_blobs, output_blobs, "Output results differ from expected")
 
-    def test_load_data_noop_resources(self, *mocks):
+    def test_load_data_noop_resources(self):
         result = self.run_pipeline(load_hca, config_name="test_load_hca_noop_resources.yaml")
 
         self.assertTrue(result.success)
