@@ -21,6 +21,7 @@ class LoadDataFilesTestCase(unittest.TestCase):
             resource_defs={
                 "gcs": mock_storage_client,
                 "bigquery_client": noop_bigquery_client,
+                "bigquery_service": ResourceDefinition.mock_resource(),
                 "target_hca_dataset": ResourceDefinition.hardcoded_resource(
                     TargetHcaDataset(
                         "fake_dataset_name",

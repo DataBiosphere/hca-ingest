@@ -8,13 +8,12 @@ from dagster_utils.resources.google_storage import google_storage_client, mock_s
 from dagster_utils.resources.jade_data_repo import jade_data_repo_client, noop_data_repo_client
 
 from hca_orchestration.config import preconfigure_resource_for_mode
-from hca_orchestration.resources import load_tag
+from hca_orchestration.resources import load_tag, bigquery_service, mock_bigquery_service
 from hca_orchestration.solids.load_hca.data_files.load_data_metadata_files import file_metadata_fanout
 from hca_orchestration.solids.load_hca.data_files.load_data_files import import_data_files
 from hca_orchestration.solids.load_hca.stage_data import clear_scratch_dir, pre_process_metadata, create_scratch_dataset
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.config.hca_dataset import target_hca_dataset
-
 
 prod_mode = ModeDefinition(
     name="prod",
@@ -26,7 +25,8 @@ prod_mode = ModeDefinition(
         "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "prod"),
         "load_tag": load_tag,
         "scratch_config": scratch_config,
-        "target_hca_dataset": target_hca_dataset
+        "target_hca_dataset": target_hca_dataset,
+        "bigquery_service": bigquery_service
     }
 )
 
@@ -40,7 +40,8 @@ dev_mode = ModeDefinition(
         "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "dev"),
         "load_tag": load_tag,
         "scratch_config": scratch_config,
-        "target_hca_dataset": target_hca_dataset
+        "target_hca_dataset": target_hca_dataset,
+        "bigquery_service": bigquery_service
     }
 )
 
@@ -54,7 +55,8 @@ local_mode = ModeDefinition(
         "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "dev"),
         "load_tag": load_tag,
         "scratch_config": scratch_config,
-        "target_hca_dataset": target_hca_dataset
+        "target_hca_dataset": target_hca_dataset,
+        "bigquery_service": bigquery_service
     }
 )
 
@@ -67,7 +69,8 @@ test_mode = ModeDefinition(
         "bigquery_client": noop_bigquery_client,
         "load_tag": load_tag,
         "scratch_config": scratch_config,
-        "target_hca_dataset": target_hca_dataset
+        "target_hca_dataset": target_hca_dataset,
+        "bigquery_service": mock_bigquery_service
     }
 )
 

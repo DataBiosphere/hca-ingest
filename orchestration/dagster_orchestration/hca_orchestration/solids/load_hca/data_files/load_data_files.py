@@ -7,7 +7,7 @@ from google.cloud import bigquery
 from google.cloud.bigquery.client import RowIterator
 
 from hca_manage.common import JobId
-from hca_orchestration.contrib.bigquery import build_query_job_using_external_schema, build_extract_job
+from hca_orchestration.contrib.bigquery import BigQueryService
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
 from hca_orchestration.solids.data_repo import wait_for_job_completion
@@ -33,7 +33,7 @@ FILE_LOAD_TABLE_NAME = 'file_load_requests'
 
 
 @solid(
-    required_resource_keys={"bigquery_client", "scratch_config", "gcs", "target_hca_dataset"},
+    required_resource_keys={"bigquery_service", "scratch_config", "gcs", "target_hca_dataset"},
     output_defs=[DynamicOutputDefinition(name="control_file_path", dagster_type=str)]
 )
 def diff_file_loads(context: AbstractComputeExecutionContext,
@@ -46,11 +46,11 @@ def diff_file_loads(context: AbstractComputeExecutionContext,
     :return: Yields a list of control file blob names
     """
     target_hca_dataset = context.resources.target_hca_dataset
-    bigquery_client = context.resources.bigquery_client
+    bigquery_service = context.resources.bigquery_service
     scratch = context.resources.scratch_config
 
     _determine_files_to_load(
-        bigquery_client,
+        bigquery_service,
         target_hca_dataset,
         scratch_dataset_name,
         FILE_LOAD_TABLE_NAME,
@@ -58,7 +58,7 @@ def diff_file_loads(context: AbstractComputeExecutionContext,
     )
 
     _extract_files_to_load_to_control_files(
-        bigquery_client,
+        bigquery_service,
         context.resources.scratch_config,
         scratch_dataset_name,
         FILE_LOAD_TABLE_NAME
@@ -75,7 +75,7 @@ def diff_file_loads(context: AbstractComputeExecutionContext,
 
 
 def _determine_files_to_load(
-        bigquery_client: bigquery.client.Client,
+        bigquery_service: BigQueryService,
         target_hca_dataset: TargetHcaDataset,
         staging_dataset: HcaScratchDatasetName,
         file_load_table_name: str,
@@ -99,20 +99,19 @@ def _determine_files_to_load(
         f"{scratch_config.scratch_area()}/data-transfer-requests/*"
     ]
 
-    query_job = build_query_job_using_external_schema(
+    query_job = bigquery_service.build_query_job_using_external_schema(
         query,
         source_paths,
         FILE_LOAD_TABLE_BQ_SCHEMA,
         file_load_table_name,
         f"{staging_dataset}.{file_load_table_name}",
-        bigquery_client,
         scratch_config.scratch_bq_project
     )
     return query_job.result()
 
 
 def _extract_files_to_load_to_control_files(
-        bigquery_client: bigquery.client.Client,
+        bigquery_service: BigQueryService,
         scratch_config: ScratchConfig,
         scratch_dataset_name: HcaScratchDatasetName,
         file_load_table_name: str
@@ -121,12 +120,11 @@ def _extract_files_to_load_to_control_files(
     # control file for jade bulk data ingest
     out_path = f"{scratch_config.scratch_area()}/data-transfer-requests-deduped/*"
 
-    extract_job = build_extract_job(
+    extract_job = bigquery_service.build_extract_job(
         file_load_table_name,
         out_path,
         scratch_dataset_name,
         scratch_config.scratch_bq_project,
-        bigquery_client
     )
     return extract_job.result()
 

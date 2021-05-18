@@ -5,8 +5,7 @@ from google.cloud.bigquery import Client, DestinationFormat
 from google.cloud.bigquery.client import RowIterator
 
 from hca_manage.common import JobId
-from hca_orchestration.contrib.bigquery import build_query_job_using_external_schema, build_query_job, \
-    get_num_rows_in_table, build_extract_job
+from hca_orchestration.contrib.bigquery import BigQueryService
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
 from hca_orchestration.solids.data_repo import wait_for_job_completion
@@ -22,7 +21,7 @@ def _diff_hca_table(
         scratch_config: ScratchConfig,
         target_hca_dataset: TargetHcaDataset,
         scratch_dataset_name: HcaScratchDatasetName,
-        bigquery_client: Client
+        bigquery_service: BigQueryService
 
 ) -> None:
     datarepo_key = f"{primary_key} as datarepo_{primary_key}"
@@ -36,13 +35,12 @@ def _diff_hca_table(
     destination = f"{scratch_dataset_name}.{joined_table_name}"
     source_paths = [
         f"gs://{scratch_config.scratch_bucket_name}/{scratch_config.scratch_prefix_name}/file-metadata-with-ids/{file_metadata_type}/*"]
-    build_query_job_using_external_schema(
+    bigquery_service.build_query_job_using_external_schema(
         query,
         schema=None,
         source_paths=source_paths,
         table_name=file_metadata_type,
         destination=destination,
-        bigquery_client=bigquery_client,
         bigquery_project=scratch_config.scratch_bq_project
     ).result()
 
@@ -53,7 +51,7 @@ def _query_rows_to_append(
         scratch_config: ScratchConfig,
         scratch_dataset_name: HcaScratchDatasetName,
         joined_table_name: str,
-        bigquery_client: Client
+        bigquery_service: BigQueryService
 ) -> RowIterator:
     query = f"""
     SELECT * EXCEPT (datarepo_{primary_key}, datarepo_row_id)
@@ -62,10 +60,9 @@ def _query_rows_to_append(
     """
 
     target_table = f"{scratch_dataset_name}.{file_metadata_type}_values"
-    return build_query_job(
+    return bigquery_service.build_query_job(
         query,
         target_table,
-        bigquery_client,
         scratch_config.scratch_bq_project
     ).result()
 
@@ -76,27 +73,25 @@ def export_data(
         file_metadata_type: FileMetadataType,
         scratch_config: ScratchConfig,
         scratch_dataset_name: HcaScratchDatasetName,
-        bigquery_client: Client
+        bigquery_service: BigQueryService
 ) -> None:
     assert table_name_extension.startswith("_"), "Export data extension must start with _"
 
     source_table_name = f"{file_metadata_type}{table_name_extension}"
     out_path = f"{scratch_config.scratch_area()}/{operation_name}/{file_metadata_type}/*"
 
-    num_rows = get_num_rows_in_table(
+    num_rows = bigquery_service.get_num_rows_in_table(
         source_table_name,
-        scratch_dataset_name,
-        bigquery_client
+        scratch_dataset_name
     )
     if num_rows == 0:
         return
 
-    build_extract_job(
+    bigquery_service.build_extract_job(
         source_table=source_table_name,
         out_path=out_path,
         bigquery_dataset=scratch_dataset_name,
         bigquery_project=scratch_config.scratch_bq_project,
-        bigquery_client=bigquery_client
     ).result()
 
 
@@ -125,13 +120,13 @@ def _ingest_table(
 
 
 @solid(
-    required_resource_keys={"bigquery_client", "target_hca_dataset", "scratch_config", "data_repo_client"}
+    required_resource_keys={"bigquery_service", "target_hca_dataset", "scratch_config", "data_repo_client"}
 )
 def start_load(
         context: AbstractComputeExecutionContext,
         file_metadata_fanout_result: FileMetadataTypeFanoutResult
 ) -> JobId:
-    bigquery_client = context.resources.bigquery_client
+    bigquery_service = context.resources.bigquery_service
     target_hca_dataset = context.resources.target_hca_dataset
     scratch_config = context.resources.scratch_config
     file_metadata_type = file_metadata_fanout_result.file_metadata_type
@@ -147,7 +142,7 @@ def start_load(
         scratch_config=scratch_config,
         target_hca_dataset=target_hca_dataset,
         scratch_dataset_name=scratch_dataset_name,
-        bigquery_client=bigquery_client,
+        bigquery_service=bigquery_service,
 
     )
     _query_rows_to_append(
@@ -156,7 +151,7 @@ def start_load(
         scratch_config=scratch_config,
         scratch_dataset_name=scratch_dataset_name,
         joined_table_name=joined_table_name,
-        bigquery_client=bigquery_client
+        bigquery_service=bigquery_service
     )
 
     export_data(
@@ -165,7 +160,7 @@ def start_load(
         file_metadata_type=file_metadata_type,
         scratch_config=scratch_config,
         scratch_dataset_name=scratch_dataset_name,
-        bigquery_client=bigquery_client
+        bigquery_service=bigquery_service
     )
 
     # todo do not attempt to ingest if there are no rows
@@ -185,7 +180,7 @@ def _get_outdated_ids(
         scratch_config: ScratchConfig,
         scratch_dataset_name: HcaScratchDatasetName,
         outdated_ids_table_name: str,
-        bigquery_client: Client
+        bigquery_service: BigQueryService
 ) -> None:
     fq_dataset_id = target_hca_dataset.fully_qualified_jade_dataset_name()
     jade_table = f"{target_hca_dataset.project_id}.{fq_dataset_id}.{table_name}"
@@ -202,10 +197,9 @@ def _get_outdated_ids(
     WHERE J.version < L.latest_version
     """
 
-    build_query_job(
+    bigquery_service.build_query_job(
         query,
         destination,
-        bigquery_client,
         scratch_config.scratch_bq_project
     ).result()
 
@@ -215,28 +209,27 @@ def _export_outdated(
         outdated_ids_table_name: str,
         scratch_dataset_name: HcaScratchDatasetName,
         scratch_config: ScratchConfig,
-        bigquery_client: Client
+        bigquery_service: BigQueryService
 ) -> None:
     out_path = f"{scratch_config.scratch_area()}/outdated-ids/{file_metadata_type}/*"
-    build_extract_job(
+    bigquery_service.build_extract_job(
         source_table=outdated_ids_table_name,
         out_path=out_path,
         bigquery_dataset=scratch_dataset_name,
         bigquery_project=scratch_config.scratch_bq_project,
-        bigquery_client=bigquery_client,
         output_format=DestinationFormat.CSV
     ).result()
 
 
 @solid(
-    required_resource_keys={"bigquery_client", "target_hca_dataset", "scratch_config", "data_repo_client"}
+    required_resource_keys={"bigquery_service", "target_hca_dataset", "scratch_config", "data_repo_client"}
 )
 def clear_outdated(
         context: AbstractComputeExecutionContext,
         file_metadata_fanout_result: FileMetadataTypeFanoutResult
 ) -> JobId:
     file_metadata_type = file_metadata_fanout_result.file_metadata_type
-    bigquery_client = context.resources.bigquery_client
+    bigquery_service = context.resources.bigquery_service
     target_hca_dataset = context.resources.target_hca_dataset
     scratch_config = context.resources.scratch_config
     outdated_ids_table_name = f"{file_metadata_type}_outdated_ids"
@@ -247,14 +240,14 @@ def clear_outdated(
         scratch_config=scratch_config,
         scratch_dataset_name=file_metadata_fanout_result.scratch_dataset_name,
         outdated_ids_table_name=outdated_ids_table_name,
-        bigquery_client=bigquery_client
+        bigquery_service=bigquery_service
     )
     _export_outdated(
         file_metadata_type=file_metadata_type,
         outdated_ids_table_name=outdated_ids_table_name,
         scratch_dataset_name=file_metadata_fanout_result.scratch_dataset_name,
         scratch_config=scratch_config,
-        bigquery_client=bigquery_client
+        bigquery_service=bigquery_service
     )
     job_id: JobId = _soft_delete_outdated(
         data_repo_api_client=context.resources.data_repo_client,
