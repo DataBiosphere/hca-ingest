@@ -60,7 +60,7 @@ test_mode = ModeDefinition(
 
 
 @pipeline(
-    mode_defs=[prod_mode, local_mode, test_mode]
+    mode_defs=[prod_mode, local_mode, test_mode, dev_mode]
 )
 def validate_egress() -> None:
     notify_slack_of_egress_validation_results(post_import_validate())
