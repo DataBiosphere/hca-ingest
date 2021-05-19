@@ -16,14 +16,14 @@ from hca_orchestration.contrib.retry import is_truthy, retry
         'poll_interval_seconds': Int,
     }
 )
-def _base_check_data_ingest_job_result(context: AbstractComputeExecutionContext, job_id: JobId) -> Nothing:
+def base_check_data_ingest_job_result(context: AbstractComputeExecutionContext, job_id: JobId) -> Nothing:
     # we need to poll on the endpoint as a workaround for a race condition in TDR (DR-1791)
     def __fetch_job_results(jid: JobId) -> Optional[JobModel]:
         try:
             context.log.info(f"polling on job_id = {jid}")
             return context.resources.data_repo_client.retrieve_job_result(jid)
         except ApiException as ae:
-            if ae.status == 500:
+            if 500 <= ae.status <= 599:
                 return None
             raise
 
@@ -41,7 +41,7 @@ def _base_check_data_ingest_job_result(context: AbstractComputeExecutionContext,
         raise Failure(f"Bulk file load (job_id = {job_id} had failedFiles = {job_results['failedFiles']})")
 
 
-@configured(_base_check_data_ingest_job_result)
+@configured(base_check_data_ingest_job_result)
 def check_data_ingest_job_result(config: DagsterConfigDict) -> DagsterConfigDict:
     """
     Polls the bulk file ingest results

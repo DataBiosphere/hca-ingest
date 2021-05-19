@@ -180,5 +180,3 @@ def import_data_files(scratch_dataset_name: HcaScratchDatasetName) -> Nothing:
     """
     generated_file_loads = diff_file_loads(scratch_dataset_name)
     bulk_ingest_jobs = generated_file_loads.map(bulk_ingest)
-
-    # TODO implement rest of data file ingest (descriptors, etc.)

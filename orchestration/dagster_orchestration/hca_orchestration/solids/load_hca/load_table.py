@@ -34,7 +34,9 @@ def _diff_hca_table(
     """
     destination = f"{scratch_dataset_name}.{joined_table_name}"
     source_paths = [
-        f"gs://{scratch_config.scratch_bucket_name}/{scratch_config.scratch_prefix_name}/file-metadata-with-ids/{file_metadata_type}/*"]
+        f"gs://{scratch_config.scratch_area()}/file-metadata-with-ids/{file_metadata_type}/*"
+    ]
+
     bigquery_service.build_query_job_using_external_schema(
         query,
         schema=None,

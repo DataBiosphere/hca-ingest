@@ -70,7 +70,7 @@ def _inject_file_ids(
                 "type": "STRING"
             },
             {
-                "mode": "REQUIRED",  # todo <-- NOPE
+                "mode": "REQUIRED",
                 "name": "version",
                 "type": "TIMESTAMP"
             },
