@@ -26,7 +26,7 @@ def run(arguments: Optional[list[str]] = None) -> None:
     # create
     dataset_create_args = parser.add_argument_group()
     dataset_create_args.add_argument("-b", "--billing_profile_id", help="Billing profile ID")
-    dataset_create_args.add_argument("-j", "--schema_path", help="Path to table schema (JSON)", required=True)
+    dataset_create_args.add_argument("-j", "--schema_path", help="Path to table schema (JSON)")
 
     # delete
     dataset_delete_args = parser.add_mutually_exclusive_group(required=True)
