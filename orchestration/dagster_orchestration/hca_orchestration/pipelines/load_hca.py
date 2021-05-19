@@ -5,7 +5,7 @@ from dagster_gcp.gcs import gcs_pickle_io_manager
 from dagster_utils.resources.beam import dataflow_beam_runner, local_beam_runner, test_beam_runner
 from dagster_utils.resources.bigquery import bigquery_client, noop_bigquery_client
 from dagster_utils.resources.google_storage import google_storage_client, mock_storage_client
-from dagster_utils.resources.jade_data_repo import jade_data_repo_client, noop_data_repo_client
+from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client, noop_data_repo_client
 
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.resources import load_tag
