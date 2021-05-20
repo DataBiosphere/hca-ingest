@@ -23,7 +23,7 @@ def validate_json(blob: storage.Blob) -> Optional[Exception]:
         return e
 
 
-def validate_directory(path: str, bucket: storage.Client.bucket):
+def validate_directory(path: str, bucket: storage.Client.bucket) -> None:
     """
     Validate that the directory in the Google storage bucket is valid
     :param path: Google stage path name
@@ -46,7 +46,7 @@ def validate_directory(path: str, bucket: storage.Client.bucket):
         logging.info('File path and Json are valid')
 
 
-def run(arguments: Optional[list[str]] = None):
+def run(arguments: Optional[list[str]] = None) -> None:
     parser = DefaultHelpParser(description="CLI to manage validate GS path and json files.")
     parser.add_argument("-p", "--path", help="GS path to validate", required=True)
     parser.add_argument("-b", "--bucket", help="Bucket the GS path exists in", required=True)
