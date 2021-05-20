@@ -1,6 +1,7 @@
 target/
 .scalafmt.conf
 .idea
+.swp
 .metals/
 project/metals.sbt
 .bloop/
