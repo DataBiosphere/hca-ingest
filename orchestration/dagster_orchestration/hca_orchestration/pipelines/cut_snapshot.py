@@ -4,7 +4,7 @@ from dagster.core.execution.context.system import HookContext
 from dagster_gcp.gcs import gcs_pickle_io_manager
 
 from dagster_utils.resources.google_storage import google_storage_client
-from dagster_utils.resources.jade_data_repo import jade_data_repo_client, noop_data_repo_client
+from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client, noop_data_repo_client
 from dagster_utils.resources.sam import sam_client, noop_sam_client
 from dagster_utils.resources.slack import console_slack_client, live_slack_client
 

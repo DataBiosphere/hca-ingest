@@ -112,7 +112,7 @@ webencodings = "*"
 
 [[package]]
 name = "broad-dagster-utils"
-version = "0.3.2"
+version = "0.4.0"
 description = "Common utilities and objects for building Dagster pipelines"
 category = "main"
 optional = false
@@ -1778,7 +1778,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.9"
-content-hash = "9d3dcdb587baf605dd45095c8d981bfb2466093061f9632b14a22044094fc9a7"
+content-hash = "645a5ceb7216f8b0494168a03a6b436945ee15c5d869f9724b0e2c1314e325d1"
 
 [metadata.files]
 aiohttp = [
@@ -1856,8 +1856,8 @@ bleach = [
     {file = "bleach-3.3.0.tar.gz", hash = "sha256:98b3170739e5e83dd9dc19633f074727ad848cbedb6026708c8ac2d3b697a433"},
 ]
 broad-dagster-utils = [
-    {file = "broad_dagster_utils-0.3.2-py3-none-any.whl", hash = "sha256:854aab83a59b97aa8acc556f8ece0c3885c7ed3ce4e99de7046e08751c11b4a3"},
-    {file = "broad_dagster_utils-0.3.2.tar.gz", hash = "sha256:ee44c063cb395a42a7596695bdd65d098740c61f4d31f2a75287e031d1bcb87b"},
+    {file = "broad_dagster_utils-0.4.0-py3-none-any.whl", hash = "sha256:f6213657435d635c4d9330b8d1b289d11521d88756848591ff5a98828908f7b3"},
+    {file = "broad_dagster_utils-0.4.0.tar.gz", hash = "sha256:28d171c9ade3bceb918dc70d84e6b0c4b118de5bd053f5eaaa3bf4733ebec68a"},
 ]
 cached-property = [
     {file = "cached-property-1.5.2.tar.gz", hash = "sha256:9fa5755838eecbb2d234c3aa390bd80fbd3ac6b6869109bfc1b499f7bd89a130"},

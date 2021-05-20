@@ -3,7 +3,7 @@ from dagster import ModeDefinition, pipeline
 from dagster_gcp.gcs import gcs_pickle_io_manager
 
 from dagster_utils.resources.google_storage import google_storage_client, mock_storage_client
-from dagster_utils.resources.jade_data_repo import jade_data_repo_client, noop_data_repo_client
+from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client, noop_data_repo_client
 from dagster_utils.resources.slack import console_slack_client, live_slack_client
 
 from hca_orchestration.config import preconfigure_resource_for_mode
@@ -60,7 +60,7 @@ test_mode = ModeDefinition(
 
 
 @pipeline(
-    mode_defs=[prod_mode, local_mode, test_mode]
+    mode_defs=[prod_mode, local_mode, test_mode, dev_mode]
 )
 def validate_egress() -> None:
     notify_slack_of_egress_validation_results(post_import_validate())
