@@ -62,4 +62,5 @@ def run(arguments: Optional[list[str]] = None) -> None:
     validate_directory(path=args.path + '/metadata', bucket=bucket)
 
 
-run()
+if __name__ == "__main__":
+    run()
