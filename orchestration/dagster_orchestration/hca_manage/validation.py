@@ -10,14 +10,14 @@ from dataclasses import dataclass
 
 
 class SchemaFetcher:
-    def __init__(self):
+    def __init__(self) -> None:
         self._schema_cache = {}
 
-    def fetch_schema(self, path: str):
+    def fetch_schema(self, path: str) -> json:
         if path in self._schema_cache:
             return self._schema_cache[path]
 
-        raw_schema = requests.get(schema_path).json()
+        raw_schema = requests.get(path).json()
         self._schema_cache[path] = raw_schema
         return raw_schema
 
@@ -58,8 +58,9 @@ def validate_directory(path: str, bucket: storage.Client.bucket) -> None:
     """
     valid_files_in_dir = []
     invalid_files_in_dir = {}
+    schemas = SchemaFetcher
     for blob in bucket.list_blobs(prefix=path):
-        json_error = validate_json(blob, SchemaFetcher)
+        json_error = validate_json(blob, schemas)
         if json_error is None:
             valid_files_in_dir.append(blob.name)
         else:
