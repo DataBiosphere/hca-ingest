@@ -5,19 +5,46 @@ import json
 import requests
 from typing import Optional
 from hca_manage.common import DefaultHelpParser
+from urllib.parse import urlparse
+from dataclasses import dataclass
 
 
-def validate_json(blob: storage.Blob) -> Optional[Exception]:
+class SchemaFetcher:
+    def __init__(self):
+        self._schema_cache = {}
+
+    def fetch_schema(self, path: str):
+        if path in self._schema_cache:
+            return self._schema_cache[path]
+
+        raw_schema = requests.get(schema_path).json()
+        self._schema_cache[path] = raw_schema
+        return raw_schema
+
+
+@dataclass
+class GsBucketWithPrefix:
+    bucket: str
+    prefix: str
+
+
+def parse_gs_path(raw_gs_path: str) -> GsBucketWithPrefix:
+    url_result = urlparse(raw_gs_path)
+    return GsBucketWithPrefix(url_result.netloc, url_result.path[1:])
+
+
+def validate_json(blob: storage.Blob, schema_fetcher: SchemaFetcher) -> Optional[Exception]:
     """
     Validate that the JSON file blob follows the schema in the describedBy
     :param blob: JSON file blob to check
+    :param schema_fetcher: Schema Fetcher that contains a set of unique schemas
     :return: An exception if JSON is invalid, return None if valid
     """
     try:
-        data = json.loads(blob.download_as_string(client=None))
+        data = json.loads(blob.download_as_string())
         schema_path = data["describedBy"]
-        raw_schema = requests.get(schema_path).json()
-        validate(instance=data, schema=raw_schema)
+        schema = schema_fetcher.fetch_schema(schema_path)
+        validate(instance=data, schema=schema)
         return None
     except Exception as e:
         return e
@@ -32,8 +59,7 @@ def validate_directory(path: str, bucket: storage.Client.bucket) -> None:
     valid_files_in_dir = []
     invalid_files_in_dir = {}
     for blob in bucket.list_blobs(prefix=path):
-        # bucket_file = bucket.blob(blob.name)
-        json_error = validate_json(blob)
+        json_error = validate_json(blob, SchemaFetcher)
         if json_error is None:
             valid_files_in_dir.append(blob.name)
         else:
@@ -49,17 +75,15 @@ def validate_directory(path: str, bucket: storage.Client.bucket) -> None:
 def run(arguments: Optional[list[str]] = None) -> None:
     parser = DefaultHelpParser(description="CLI to manage validate GS path and json files.")
     parser.add_argument("-p", "--path", help="GS path to validate", required=True)
-    parser.add_argument("-b", "--bucket", help="Bucket the GS path exists in", required=True)
-
     args = parser.parse_args(arguments)
 
     storage_client = storage.Client()
-    bucket = storage_client.bucket(args.bucket)
+    gs_bucket = parse_gs_path(args.path)
+    bucket = storage_client.bucket(gs_bucket.bucket)
 
-    validate_directory(path=args.path + '/data', bucket=bucket)
-    validate_directory(path=args.path + '/descriptors', bucket=bucket)
-    validate_directory(path=args.path + '/links', bucket=bucket)
-    validate_directory(path=args.path + '/metadata', bucket=bucket)
+    well_known_dirs = {'/data', '/descriptors', '/links', '/metadata'}
+    for dir in well_known_dirs:
+        validate_directory(gs_bucket.prefix + dir, bucket)
 
 
 if __name__ == "__main__":
