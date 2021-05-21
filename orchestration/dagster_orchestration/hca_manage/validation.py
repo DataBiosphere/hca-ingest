@@ -3,7 +3,7 @@ import logging
 from jsonschema import validate
 import json
 import requests
-from typing import Optional
+from typing import Optional, Dict
 from hca_manage.common import DefaultHelpParser
 from urllib.parse import urlparse
 from dataclasses import dataclass
@@ -11,9 +11,9 @@ from dataclasses import dataclass
 
 class SchemaFetcher:
     def __init__(self) -> None:
-        self._schema_cache = {}
+        self._schema_cache: Dict[str,Dict] = {}
 
-    def fetch_schema(self, path: str) -> Dict:
+    def fetch_schema(self, path: str) -> dict:
         if path in self._schema_cache:
             return self._schema_cache[path]
 
@@ -33,7 +33,7 @@ def parse_gs_path(raw_gs_path: str) -> GsBucketWithPrefix:
     return GsBucketWithPrefix(url_result.netloc, url_result.path[1:])
 
 
-def validate_json(blob: storage.Blob, schema_fetcher: Type[SchemaFetcher]) -> Optional[Exception]:
+def validate_json(blob: storage.Blob, schema_fetcher: SchemaFetcher) -> Optional[Exception]:
     """
     Validate that the JSON file blob follows the schema in the describedBy
     :param blob: JSON file blob to check
@@ -50,7 +50,7 @@ def validate_json(blob: storage.Blob, schema_fetcher: Type[SchemaFetcher]) -> Op
         return e
 
 
-def validate_directory(path: str, bucket: storage.Client.bucket) -> None:
+def validate_directory(path: str, bucket: storage.Client.bucket, schema_fetcher: SchemaFetcher) -> None:
     """
     Validate that the directory in the Google storage bucket is valid
     :param path: Google stage path name
@@ -59,7 +59,7 @@ def validate_directory(path: str, bucket: storage.Client.bucket) -> None:
     valid_files_in_dir = []
     invalid_files_in_dir = {}
     for blob in bucket.list_blobs(prefix=path):
-        json_error = validate_json(blob, SchemaFetcher)
+        json_error = validate_json(blob, schema_fetcher)
         if json_error is None:
             valid_files_in_dir.append(blob.name)
         else:
@@ -80,10 +80,11 @@ def run(arguments: Optional[list[str]] = None) -> None:
     storage_client = storage.Client()
     gs_bucket = parse_gs_path(args.path)
     bucket = storage_client.bucket(gs_bucket.bucket)
+    schema_fetcher = SchemaFetcher()
 
     well_known_dirs = {'/data', '/descriptors', '/links', '/metadata'}
     for dir in well_known_dirs:
-        validate_directory(gs_bucket.prefix + dir, bucket)
+        validate_directory(gs_bucket.prefix + dir, bucket, schema_fetcher)
 
 
 if __name__ == "__main__":
