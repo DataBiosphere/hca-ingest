@@ -13,7 +13,7 @@ class SchemaFetcher:
     def __init__(self) -> None:
         self._schema_cache: Dict[str,Dict] = {}
 
-    def fetch_schema(self, path: str) -> dict:
+    def fetch_schema(self, path: str) -> dict[str,str]:
         if path in self._schema_cache:
             return self._schema_cache[path]
 
@@ -59,11 +59,14 @@ def validate_directory(path: str, bucket: storage.Client.bucket, schema_fetcher:
     valid_files_in_dir = []
     invalid_files_in_dir = {}
     for blob in bucket.list_blobs(prefix=path):
-        json_error = validate_json(blob, schema_fetcher)
-        if json_error is None:
-            valid_files_in_dir.append(blob.name)
+        if blob.name[-4:] == 'json':
+            json_error = validate_json(blob, schema_fetcher)
+            if json_error is None:
+                valid_files_in_dir.append(blob.name)
+            else:
+                invalid_files_in_dir[blob.name] = json_error
         else:
-            invalid_files_in_dir[blob.name] = json_error
+            valid_files_in_dir.append(blob.name)
     if len(valid_files_in_dir) == 0 and len(invalid_files_in_dir) == 0:
         logging.error(f"{path} File Path doesn't exist")
     elif len(invalid_files_in_dir) > 0:
