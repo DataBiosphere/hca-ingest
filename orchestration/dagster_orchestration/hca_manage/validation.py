@@ -33,7 +33,7 @@ def parse_gs_path(raw_gs_path: str) -> GsBucketWithPrefix:
     return GsBucketWithPrefix(url_result.netloc, url_result.path[1:])
 
 
-def validate_json(blob: storage.Blob, schema_fetcher: SchemaFetcher) -> Optional[Exception]:
+def validate_json(blob: storage.Blob, schema_fetcher: Type[SchemaFetcher]) -> Optional[Exception]:
     """
     Validate that the JSON file blob follows the schema in the describedBy
     :param blob: JSON file blob to check
@@ -58,9 +58,8 @@ def validate_directory(path: str, bucket: storage.Client.bucket) -> None:
     """
     valid_files_in_dir = []
     invalid_files_in_dir = {}
-    schemas = SchemaFetcher
     for blob in bucket.list_blobs(prefix=path):
-        json_error = validate_json(blob, schemas)
+        json_error = validate_json(blob, SchemaFetcher)
         if json_error is None:
             valid_files_in_dir.append(blob.name)
         else:
