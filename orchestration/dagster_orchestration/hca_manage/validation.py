@@ -13,7 +13,7 @@ class SchemaFetcher:
     def __init__(self) -> None:
         self._schema_cache = {}
 
-    def fetch_schema(self, path: str) -> json:
+    def fetch_schema(self, path: str) -> Dict:
         if path in self._schema_cache:
             return self._schema_cache[path]
 
