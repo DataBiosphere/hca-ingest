@@ -1,12 +1,14 @@
-from google.cloud import storage
-import logging
-from jsonschema import validate
+from dataclasses import dataclass
 import json
+from jsonschema import validate
+import logging
 import requests
 from typing import Optional, Dict, Any
-from hca_manage.common import DefaultHelpParser
+
+from google.cloud import storage
 from urllib.parse import urlparse
-from dataclasses import dataclass
+
+from hca_manage.common import DefaultHelpParser
 
 
 class SchemaFetcher:
