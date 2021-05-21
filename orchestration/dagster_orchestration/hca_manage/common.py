@@ -31,7 +31,8 @@ class ProblemCount:
 
 data_repo_host = {
     "dev": "https://jade.datarepo-dev.broadinstitute.org/",
-    "prod": "https://jade-terra.datarepo-prod.broadinstitute.org/"
+    "prod": "https://jade-terra.datarepo-prod.broadinstitute.org/",
+    "real_prod": "https://data.terra.bio/"
 }
 
 data_repo_profile_ids = {
