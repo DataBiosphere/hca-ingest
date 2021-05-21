@@ -25,22 +25,16 @@ from google.cloud import bigquery, storage
 from google.cloud.storage.client import Client
 from dagster_utils.contrib.google import get_credentials
 
+
+from hca_orchestration.solids.load_hca.data_files.load_data_metadata_files import FileMetadataTypes
+
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 
 @dataclass(frozen=True)
 class PathWithCrc:
     path: str
-    crc: str
-
-
-FILE_TYPES = {
-    'analysis_file',
-    'image_file',
-    'reference_file',
-    'sequence_file',
-    'supplementary_file'
-}
+    crc32c: str
 
 
 def get_staging_area_file_descriptors(storage_client: Client, staging_areas: set[str]) -> dict[str, set[PathWithCrc]]:
@@ -52,8 +46,8 @@ def get_staging_area_file_descriptors(storage_client: Client, staging_areas: set
     for staging_area in staging_areas:
         url = urlparse(staging_area)
 
-        for file_type in FILE_TYPES:
-            prefix = f"{url.path.lstrip('/')}/descriptors/{file_type}"
+        for file_type in FileMetadataTypes:
+            prefix = f"{url.path.lstrip('/')}/descriptors/{file_type.value}"
             blobs = list(storage_client.list_blobs(url.netloc, prefix=prefix))
             for blob in blobs:
                 parsed = json.loads(blob.download_as_text())
