@@ -16,7 +16,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 def run(arguments: Optional[list[str]] = None) -> None:
     parser = DefaultHelpParser(description="A simple CLI to manage TDR datasets.")
     parser.add_argument("-V", "--version", action="version", version="%(prog)s " + hca_manage_version)
-    parser.add_argument("-e", "--env", help="The Jade environment to target", choices=["dev", "prod"], required=True)
+    parser.add_argument("-e", "--env", help="The Jade environment to target",
+                        choices=["dev", "prod", "real_prod"], required=True)
 
     dataset_flags = parser.add_mutually_exclusive_group(required=True)
     dataset_flags.add_argument("-c", "--create", help="Flag to create a dataset", action="store_true")
@@ -35,7 +36,6 @@ def run(arguments: Optional[list[str]] = None) -> None:
 
     args = parser.parse_args(arguments)
     host = data_repo_host[args.env]
-
     if args.remove:
         if query_yes_no("Are you sure?"):
             remove_dataset(args, host)
@@ -128,3 +128,7 @@ class DatasetManager:
 
     def enumerate_dataset(self, dataset_name: str) -> str:
         return f"{self.data_repo_client.enumerate_datasets(filter=dataset_name)}"
+
+
+if __name__ == '__main__':
+    run()
