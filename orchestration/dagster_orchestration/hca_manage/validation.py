@@ -3,7 +3,7 @@ import logging
 from jsonschema import validate
 import json
 import requests
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 from hca_manage.common import DefaultHelpParser
 from urllib.parse import urlparse
 from dataclasses import dataclass
