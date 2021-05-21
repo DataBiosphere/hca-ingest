@@ -4,7 +4,7 @@ from typing import Iterator, Union
 
 from dateutil.tz import tzlocal
 
-from dagster import RunRequest, sensor, SensorExecutionContext, SkipReason
+from dagster import RunRequest, sensor, SensorExecutionContext, SkipReason, SensorDefinition
 
 from dagster_utils.contrib.argo_workflows import ArgoArchivedWorkflowsClient, ExtendedArgoWorkflow
 from dagster_utils.contrib.google import default_google_access_token
@@ -52,17 +52,29 @@ class ArgoHcaImportCompletionSensor(ArgoArchivedWorkflowsClient):
         )
 
 
-# TODO use execution context to avoid re-scanning old workflows
-@sensor(pipeline_name="validate_egress", mode="prod")
-def postvalidate_on_import_complete(_: SensorExecutionContext) -> Union[Iterator[RunRequest], SkipReason]:
-    sensor = ArgoHcaImportCompletionSensor(
-        argo_url=os.environ["HCA_ARGO_URL"],
-        access_token=default_google_access_token())
+def build_post_import_sensor(env: str) -> SensorDefinition:
+    """
+    Builds a post-validation sensor, responsible for determining the source argo workflow and
+    kicking off our post-import validation egress pipeline.
+    :param env: Environment in which this sensor runs, corresponds to the "mode" as defined in the
+    validate_egress module.
+    """
+    def _validate_on_import_complete(_: SensorExecutionContext) -> Union[Iterator[RunRequest], SkipReason]:
+        sensor = ArgoHcaImportCompletionSensor(
+            argo_url=os.environ["HCA_ARGO_URL"],
+            access_token=default_google_access_token())
 
-    workflows = sensor.successful_hca_import_workflows()
+        workflows = sensor.successful_hca_import_workflows()
 
-    if any(workflows):
-        for workflow in workflows:
-            yield sensor.generate_run_request(workflow)
-    else:
-        return SkipReason("No succeeded import-hca-total workflows returned by Argo.")
+        if any(workflows):
+            for workflow in workflows:
+                yield sensor.generate_run_request(workflow)
+        else:
+            return SkipReason("No succeeded import-hca-total workflows returned by Argo.")
+
+    return SensorDefinition(
+        name="post_import_validate_egress",
+        pipeline_name="validate_egress",
+        mode=env,
+        evaluation_fn=_validate_on_import_complete
+    )

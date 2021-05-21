@@ -9,8 +9,8 @@ from data_repo_client.api import RepositoryApi
 from data_repo_client.models import JobModel
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
-from hca_orchestration.solids.load_hca.load_data_files import diff_file_loads, run_bulk_file_ingest, \
-    check_bulk_file_ingest_job_result, JobId
+from hca_orchestration.solids.load_hca.data_files.load_data_files import diff_file_loads, run_bulk_file_ingest, \
+    check_data_ingest_job_result, JobId
 from hca_orchestration.support.typing import HcaScratchDatasetName
 
 
@@ -21,6 +21,7 @@ class LoadDataFilesTestCase(unittest.TestCase):
             resource_defs={
                 "gcs": mock_storage_client,
                 "bigquery_client": noop_bigquery_client,
+                "bigquery_service": ResourceDefinition.mock_resource(),
                 "target_hca_dataset": ResourceDefinition.hardcoded_resource(
                     TargetHcaDataset(
                         "fake_dataset_name",
@@ -72,42 +73,3 @@ class LoadDataFilesTestCase(unittest.TestCase):
 
         self.assertTrue(result.success)
         self.assertEqual(result.output_values["result"], job_id, f"Job ID should be {job_id}")
-
-    def test_check_bulk_file_ingest_job_result_should_poll_jade(self):
-        data_repo = Mock(spec=RepositoryApi)
-        job_response = {
-            "failedFiles": 0
-        }
-        data_repo.retrieve_job_result = Mock(return_value=job_response)
-        self.load_datafiles_test_mode.resource_defs["data_repo_client"] = ResourceDefinition.hardcoded_resource(
-            data_repo)
-
-        result: SolidExecutionResult = execute_solid(
-            check_bulk_file_ingest_job_result,
-            mode_def=self.load_datafiles_test_mode,
-            input_values={
-                'job_id': JobId('fake_job_id')
-            }
-        )
-
-        self.assertTrue(result.success)
-
-    def test_check_bulk_file_ingest_job_result_failed_files(self):
-        data_repo = Mock(spec=RepositoryApi)
-        job_response = {
-            "failedFiles": 1
-        }
-        data_repo.retrieve_job_result = Mock(return_value=job_response)
-        self.load_datafiles_test_mode.resource_defs["data_repo_client"] = ResourceDefinition.hardcoded_resource(
-            data_repo)
-
-        with self.assertRaises(
-                Failure, msg="Bulk ingest should fail if a file fails to ingest"
-        ):
-            execute_solid(
-                check_bulk_file_ingest_job_result,
-                mode_def=self.load_datafiles_test_mode,
-                input_values={
-                    'job_id': JobId('fake_job_id')
-                }
-            )

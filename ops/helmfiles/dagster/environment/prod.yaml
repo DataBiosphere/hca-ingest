@@ -3,6 +3,8 @@ env: &envConfig
   # including the dagit ui server and any pipeline executors
   HCA_ARGO_URL: https://hca-argo.monster-prod.broadinstitute.org/
 
+  # this is needed for setting a mode for automatically triggered pipelines (i.e., via sensors)
+  ENV: prod
 dagit:
   env: *envConfig
 dagsterDaemon:
