@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 class SchemaFetcher:
     def __init__(self) -> None:
-        self._schema_cache: Dict[str,Dict] = {}
+        self._schema_cache: dict[str,dict[str,str]] = {}
 
     def fetch_schema(self, path: str) -> dict[str,str]:
         if path in self._schema_cache:
@@ -59,7 +59,7 @@ def validate_directory(path: str, bucket: storage.Client.bucket, schema_fetcher:
     valid_files_in_dir = []
     invalid_files_in_dir = {}
     for blob in bucket.list_blobs(prefix=path):
-        if blob.name[-4:] == 'json':
+        if blob.name.endswith('json'):
             json_error = validate_json(blob, schema_fetcher)
             if json_error is None:
                 valid_files_in_dir.append(blob.name)
