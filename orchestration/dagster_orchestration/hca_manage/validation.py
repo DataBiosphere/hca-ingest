@@ -11,9 +11,9 @@ from dataclasses import dataclass
 
 class SchemaFetcher:
     def __init__(self) -> None:
-        self._schema_cache: dict[str,dict[str,str]] = {}
+        self._schema_cache: dict[str, dict[str, str]] = {}
 
-    def fetch_schema(self, path: str) -> dict[str,str]:
+    def fetch_schema(self, path: str) -> Any:
         if path in self._schema_cache:
             return self._schema_cache[path]
 
