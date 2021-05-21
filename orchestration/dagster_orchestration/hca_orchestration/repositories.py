@@ -2,10 +2,13 @@ from typing import Union
 
 from dagster import PipelineDefinition, repository, SensorDefinition
 
-from hca_orchestration.sensors import postvalidate_on_import_complete
+from hca_orchestration.sensors import build_post_import_sensor
 from hca_orchestration.pipelines import cut_snapshot, load_hca, validate_egress
+
+import os
 
 
 @repository
 def hca_orchestrationtype() -> list[Union[PipelineDefinition, SensorDefinition]]:
-    return [cut_snapshot, postvalidate_on_import_complete, load_hca, validate_egress]
+    defs = [cut_snapshot, load_hca, validate_egress, build_post_import_sensor(os.environ.get("ENV", "test"))]
+    return defs
