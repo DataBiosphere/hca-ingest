@@ -15,7 +15,7 @@ from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType
 
 def _diff_hca_table(
         metadata_type: MetadataType,
-        is_file_metadata: bool,
+        metadata_path: str,
         primary_key: str,
         joined_table_name: str,
         scratch_config: ScratchConfig,
@@ -34,7 +34,6 @@ def _diff_hca_table(
     """
     destination = f"{scratch_dataset_name}.{joined_table_name}"
 
-    metadata_path = "file-metadata-with-ids" if is_file_metadata else "metadata"
     source_paths = [
         f"gs://{scratch_config.scratch_area()}/{metadata_path}/{metadata_type}/*"
     ]
@@ -134,7 +133,7 @@ def start_load(
     target_hca_dataset = context.resources.target_hca_dataset
     scratch_config = context.resources.scratch_config
     metadata_type = metadata_fanout_result.metadata_type
-    is_file_metadata = metadata_fanout_result.is_file_metadata
+    metadata_path = metadata_fanout_result.path
     scratch_dataset_name = metadata_fanout_result.scratch_dataset_name
     data_repo_client = context.resources.data_repo_client
 
@@ -142,7 +141,7 @@ def start_load(
     joined_table_name = f"{metadata_type}_joined"
     _diff_hca_table(
         metadata_type=metadata_type,
-        is_file_metadata=is_file_metadata,
+        metadata_path=metadata_path,
         primary_key=pk,
         joined_table_name=joined_table_name,
         scratch_config=scratch_config,
@@ -297,8 +296,6 @@ def _soft_delete_outdated(
 def load_table(metadata_fanout_result: MetadataTypeFanoutResult) -> Nothing:
     """
     Composite solid that knows how to load a metadata table
-    :param metadata_fanout_result:
-    :return:
     """
     job_id = start_load(metadata_fanout_result)
     wait_for_job_completion(job_id)

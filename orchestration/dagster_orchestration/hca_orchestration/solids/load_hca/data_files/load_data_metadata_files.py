@@ -1,19 +1,21 @@
 from enum import Enum
-from typing import Iterator
 
-from dagster import solid, composite_solid, Nothing
+from dagster import solid, composite_solid, configured, Nothing
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
-from dagster.experimental import DynamicOutput, DynamicOutputDefinition
 from google.cloud.bigquery.client import RowIterator
 
 from hca_orchestration.contrib.bigquery import BigQueryService
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
+from hca_orchestration.solids.load_hca.ingest_metadata_type import ingest_metadata_type
 from hca_orchestration.solids.load_hca.load_table import load_table, export_data
 from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType, MetadataTypeFanoutResult
 
 
 class FileMetadataTypes(Enum):
+    """
+    This Enum captures MetadataTypes that are directly describing a file type in the HCA
+    """
     ANALYSIS_FILE = MetadataType('analysis_file')
     IMAGE_FILE = MetadataType('image_file')
     REFERENCE_FILE = MetadataType('reference_file')
@@ -21,22 +23,8 @@ class FileMetadataTypes(Enum):
     SUPPLEMENTARY_FILE = MetadataType('supplementary_file')
 
 
-@solid(
-    output_defs=[
-        DynamicOutputDefinition(name="table_fanout_result", dagster_type=MetadataTypeFanoutResult)
-    ]
-)
-def ingest_metadata_type(scratch_dataset_name: HcaScratchDatasetName) -> Iterator[MetadataTypeFanoutResult]:
-    """
-    For each file type, return a dynamic output over which we can later map
-    This saves us from hardcoding solids for each file type
-    """
-    for file_metadata_type in FileMetadataTypes:
-        yield DynamicOutput(
-            value=MetadataTypeFanoutResult(scratch_dataset_name, file_metadata_type.value, is_file_metadata=True),
-            mapping_key=file_metadata_type.value,
-            output_name="table_fanout_result"
-        )
+ingest_file_metadata_type = configured(ingest_metadata_type, name="ingest_file_metadata_type")(
+    {"metadata_types": FileMetadataTypes})
 
 
 def _inject_file_ids(
@@ -134,4 +122,4 @@ def ingest_metadata(file_metadata_fanout_result: MetadataTypeFanoutResult) -> No
 
 @composite_solid
 def file_metadata_fanout(scratch_dataset_name: HcaScratchDatasetName) -> Nothing:
-    ingest_metadata_type(scratch_dataset_name).map(ingest_metadata)
+    ingest_file_metadata_type(scratch_dataset_name).map(ingest_metadata)

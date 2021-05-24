@@ -1,14 +1,16 @@
 from enum import Enum
-from typing import Iterator
 
-from dagster import solid, composite_solid, Nothing
-from dagster.experimental import DynamicOutput, DynamicOutputDefinition
+from dagster import composite_solid, configured, Nothing
 
 from hca_orchestration.solids.load_hca.load_table import load_table
-from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType, MetadataTypeFanoutResult
+from hca_orchestration.solids.load_hca.ingest_metadata_type import ingest_metadata_type
+from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType
 
 
 class NonFileMetadataTypes(Enum):
+    """
+    This Enum captures MetadataTypes that are not directly describing a file type in the HCA
+    """
     AGGREGATE_GENERATION_PROTOCOL = MetadataType("aggregate_generation_protocol")
     ANALYSIS_PROCESS = MetadataType("analysis_process")
     ANALYSIS_PROTOCOL = MetadataType("analysis_protocol")
@@ -33,22 +35,8 @@ class NonFileMetadataTypes(Enum):
     LINKS = MetadataType("links")
 
 
-@solid(
-    output_defs=[
-        DynamicOutputDefinition(name="nonfile_table_fanout_result", dagster_type=MetadataTypeFanoutResult)
-    ]
-)
-def ingest_non_file_metadata_type(scratch_dataset_name: HcaScratchDatasetName) -> Iterator[MetadataTypeFanoutResult]:
-    """
-    For each metadata type, return a dynamic output over which we can later map
-    This saves us from hardcoding solids for each metadata type
-    """
-    for non_file_metadata_type in NonFileMetadataTypes:
-        yield DynamicOutput(
-            value=MetadataTypeFanoutResult(scratch_dataset_name, non_file_metadata_type.value),
-            mapping_key=non_file_metadata_type.value,
-            output_name="nonfile_table_fanout_result"
-        )
+ingest_non_file_metadata_type = configured(ingest_metadata_type, name="ingest_non_file_metadata_type")(
+    {"metadata_types": NonFileMetadataTypes})
 
 
 @composite_solid

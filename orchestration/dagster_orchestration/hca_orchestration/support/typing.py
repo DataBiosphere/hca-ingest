@@ -23,4 +23,4 @@ class MetadataType(str):
 class MetadataTypeFanoutResult(NamedTuple):
     scratch_dataset_name: HcaScratchDatasetName
     metadata_type: MetadataType
-    is_file_metadata: bool = False
+    path: str
