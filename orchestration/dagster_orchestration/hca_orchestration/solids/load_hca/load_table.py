@@ -9,13 +9,13 @@ from hca_orchestration.contrib.bigquery import BigQueryService
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
 from hca_orchestration.solids.data_repo import wait_for_job_completion
-from hca_orchestration.solids.load_hca.data_files.typing import FileMetadataType, FileMetadataTypeFanoutResult
 from hca_orchestration.solids.load_hca.poll_ingest_job import check_data_ingest_job_result
-from hca_orchestration.support.typing import HcaScratchDatasetName
+from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType, MetadataTypeFanoutResult
 
 
 def _diff_hca_table(
-        file_metadata_type: FileMetadataType,
+        metadata_type: MetadataType,
+        is_file_metadata: bool,
         primary_key: str,
         joined_table_name: str,
         scratch_config: ScratchConfig,
@@ -29,26 +29,28 @@ def _diff_hca_table(
 
     query = f"""
     SELECT J.datarepo_row_id, S.*, {datarepo_key}
-    FROM {file_metadata_type} S FULL JOIN {target_hca_dataset.project_id}.{fq_dataset_id}.{file_metadata_type} J
+    FROM {metadata_type} S FULL JOIN {target_hca_dataset.project_id}.{fq_dataset_id}.{metadata_type} J
     USING ({primary_key})
     """
     destination = f"{scratch_dataset_name}.{joined_table_name}"
+
+    metadata_path = "file-metadata-with-ids" if is_file_metadata else "metadata"
     source_paths = [
-        f"gs://{scratch_config.scratch_area()}/file-metadata-with-ids/{file_metadata_type}/*"
+        f"gs://{scratch_config.scratch_area()}/{metadata_path}/{metadata_type}/*"
     ]
 
     bigquery_service.build_query_job_using_external_schema(
         query,
         schema=None,
         source_paths=source_paths,
-        table_name=file_metadata_type,
+        table_name=metadata_type,
         destination=destination,
         bigquery_project=scratch_config.scratch_bq_project
     ).result()
 
 
 def _query_rows_to_append(
-        file_metadata_type: str,
+        metadata_type: str,
         primary_key: str,
         scratch_config: ScratchConfig,
         scratch_dataset_name: HcaScratchDatasetName,
@@ -61,7 +63,7 @@ def _query_rows_to_append(
     WHERE datarepo_row_id IS NULL AND {primary_key} IS NOT NULL
     """
 
-    target_table = f"{scratch_dataset_name}.{file_metadata_type}_values"
+    target_table = f"{scratch_dataset_name}.{metadata_type}_values"
     return bigquery_service.build_query_job(
         query,
         target_table,
@@ -72,15 +74,15 @@ def _query_rows_to_append(
 def export_data(
         operation_name: str,
         table_name_extension: str,
-        file_metadata_type: FileMetadataType,
+        metadata_type: MetadataType,
         scratch_config: ScratchConfig,
         scratch_dataset_name: HcaScratchDatasetName,
         bigquery_service: BigQueryService
 ) -> None:
     assert table_name_extension.startswith("_"), "Export data extension must start with _"
 
-    source_table_name = f"{file_metadata_type}{table_name_extension}"
-    out_path = f"{scratch_config.scratch_area()}/{operation_name}/{file_metadata_type}/*"
+    source_table_name = f"{metadata_type}{table_name_extension}"
+    out_path = f"{scratch_config.scratch_area()}/{operation_name}/{metadata_type}/*"
 
     num_rows = bigquery_service.get_num_rows_in_table(
         source_table_name,
@@ -126,19 +128,21 @@ def _ingest_table(
 )
 def start_load(
         context: AbstractComputeExecutionContext,
-        file_metadata_fanout_result: FileMetadataTypeFanoutResult
+        metadata_fanout_result: MetadataTypeFanoutResult
 ) -> JobId:
     bigquery_service = context.resources.bigquery_service
     target_hca_dataset = context.resources.target_hca_dataset
     scratch_config = context.resources.scratch_config
-    file_metadata_type = file_metadata_fanout_result.file_metadata_type
-    scratch_dataset_name = file_metadata_fanout_result.scratch_dataset_name
+    metadata_type = metadata_fanout_result.metadata_type
+    is_file_metadata = metadata_fanout_result.is_file_metadata
+    scratch_dataset_name = metadata_fanout_result.scratch_dataset_name
     data_repo_client = context.resources.data_repo_client
 
-    pk = f"{file_metadata_type}_id"
-    joined_table_name = f"{file_metadata_type}_joined"
+    pk = f"{metadata_type}_id"
+    joined_table_name = f"{metadata_type}_joined"
     _diff_hca_table(
-        file_metadata_type=file_metadata_type,
+        metadata_type=metadata_type,
+        is_file_metadata=is_file_metadata,
         primary_key=pk,
         joined_table_name=joined_table_name,
         scratch_config=scratch_config,
@@ -148,7 +152,7 @@ def start_load(
 
     )
     _query_rows_to_append(
-        file_metadata_type=file_metadata_type,
+        metadata_type=metadata_type,
         primary_key=pk,
         scratch_config=scratch_config,
         scratch_dataset_name=scratch_dataset_name,
@@ -159,7 +163,7 @@ def start_load(
     export_data(
         operation_name="new-rows",
         table_name_extension="_values",
-        file_metadata_type=file_metadata_type,
+        metadata_type=metadata_type,
         scratch_config=scratch_config,
         scratch_dataset_name=scratch_dataset_name,
         bigquery_service=bigquery_service
@@ -169,7 +173,7 @@ def start_load(
     job_id = _ingest_table(
         data_repo_client,
         target_hca_dataset,
-        file_metadata_type,
+        metadata_type,
         scratch_config
     )
 
@@ -207,13 +211,13 @@ def _get_outdated_ids(
 
 
 def _export_outdated(
-        file_metadata_type: FileMetadataType,
+        metadata_type: MetadataType,
         outdated_ids_table_name: str,
         scratch_dataset_name: HcaScratchDatasetName,
         scratch_config: ScratchConfig,
         bigquery_service: BigQueryService
 ) -> None:
-    out_path = f"{scratch_config.scratch_area()}/outdated-ids/{file_metadata_type}/*"
+    out_path = f"{scratch_config.scratch_area()}/outdated-ids/{metadata_type}/*"
     bigquery_service.build_extract_job(
         source_table=outdated_ids_table_name,
         out_path=out_path,
@@ -228,33 +232,33 @@ def _export_outdated(
 )
 def clear_outdated(
         context: AbstractComputeExecutionContext,
-        file_metadata_fanout_result: FileMetadataTypeFanoutResult
+        metadata_fanout_result: MetadataTypeFanoutResult
 ) -> JobId:
-    file_metadata_type = file_metadata_fanout_result.file_metadata_type
+    metadata_type = metadata_fanout_result.metadata_type
     bigquery_service = context.resources.bigquery_service
     target_hca_dataset = context.resources.target_hca_dataset
     scratch_config = context.resources.scratch_config
-    outdated_ids_table_name = f"{file_metadata_type}_outdated_ids"
+    outdated_ids_table_name = f"{metadata_type}_outdated_ids"
 
     _get_outdated_ids(
-        table_name=file_metadata_type,
+        table_name=metadata_type,
         target_hca_dataset=target_hca_dataset,
         scratch_config=scratch_config,
-        scratch_dataset_name=file_metadata_fanout_result.scratch_dataset_name,
+        scratch_dataset_name=metadata_fanout_result.scratch_dataset_name,
         outdated_ids_table_name=outdated_ids_table_name,
         bigquery_service=bigquery_service
     )
     _export_outdated(
-        file_metadata_type=file_metadata_type,
+        metadata_type=metadata_type,
         outdated_ids_table_name=outdated_ids_table_name,
-        scratch_dataset_name=file_metadata_fanout_result.scratch_dataset_name,
+        scratch_dataset_name=metadata_fanout_result.scratch_dataset_name,
         scratch_config=scratch_config,
         bigquery_service=bigquery_service
     )
     job_id: JobId = _soft_delete_outdated(
         data_repo_api_client=context.resources.data_repo_client,
         target_dataset=target_hca_dataset,
-        table_name=file_metadata_type,
+        table_name=metadata_type,
         scratch_config=scratch_config
     )
     return job_id
@@ -290,16 +294,16 @@ def _soft_delete_outdated(
 
 
 @composite_solid
-def load_table(file_metadata_fanout_result: FileMetadataTypeFanoutResult) -> Nothing:
+def load_table(metadata_fanout_result: MetadataTypeFanoutResult) -> Nothing:
     """
     Composite solid that knows how to load a metadata table
-    :param file_metadata_fanout_result:
+    :param metadata_fanout_result:
     :return:
     """
-    job_id = start_load(file_metadata_fanout_result)
+    job_id = start_load(metadata_fanout_result)
     wait_for_job_completion(job_id)
     check_data_ingest_job_result(job_id)
 
-    soft_delete_job_id = clear_outdated(file_metadata_fanout_result)
+    soft_delete_job_id = clear_outdated(metadata_fanout_result)
     wait_for_job_completion(soft_delete_job_id)
     check_data_ingest_job_result(soft_delete_job_id)

@@ -9,33 +9,31 @@ from google.cloud.bigquery.client import RowIterator
 from hca_orchestration.contrib.bigquery import BigQueryService
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
-from hca_orchestration.solids.load_hca.data_files.typing import FileMetadataType, \
-    FileMetadataTypeFanoutResult
 from hca_orchestration.solids.load_hca.load_table import load_table, export_data
-from hca_orchestration.support.typing import HcaScratchDatasetName
+from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType, MetadataTypeFanoutResult
 
 
 class FileMetadataTypes(Enum):
-    ANALYSIS_FILE = FileMetadataType('analysis_file')
-    IMAGE_FILE = FileMetadataType('image_file')
-    REFERENCE_FILE = FileMetadataType('reference_file')
-    SEQUENCE_FILE = FileMetadataType('sequence_file')
-    SUPPLEMENTARY_FILE = FileMetadataType('supplementary_file')
+    ANALYSIS_FILE = MetadataType('analysis_file')
+    IMAGE_FILE = MetadataType('image_file')
+    REFERENCE_FILE = MetadataType('reference_file')
+    SEQUENCE_FILE = MetadataType('sequence_file')
+    SUPPLEMENTARY_FILE = MetadataType('supplementary_file')
 
 
 @solid(
     output_defs=[
-        DynamicOutputDefinition(name="table_fanout_result", dagster_type=FileMetadataTypeFanoutResult)
+        DynamicOutputDefinition(name="table_fanout_result", dagster_type=MetadataTypeFanoutResult)
     ]
 )
-def ingest_metadata_type(scratch_dataset_name: HcaScratchDatasetName) -> Iterator[FileMetadataTypeFanoutResult]:
+def ingest_metadata_type(scratch_dataset_name: HcaScratchDatasetName) -> Iterator[MetadataTypeFanoutResult]:
     """
     For each file type, return a dynamic output over which we can later map
     This saves us from hardcoding solids for each file type
     """
     for file_metadata_type in FileMetadataTypes:
         yield DynamicOutput(
-            value=FileMetadataTypeFanoutResult(scratch_dataset_name, file_metadata_type.value),
+            value=MetadataTypeFanoutResult(scratch_dataset_name, file_metadata_type.value, is_file_metadata=True),
             mapping_key=file_metadata_type.value,
             output_name="table_fanout_result"
         )
@@ -103,25 +101,25 @@ def _inject_file_ids(
 )
 def ingest_metadata_for_file_type(
         context: AbstractComputeExecutionContext,
-        file_metadata_fanout_result: FileMetadataTypeFanoutResult
+        file_metadata_fanout_result: MetadataTypeFanoutResult
 ) -> None:
     bigquery_service = context.resources.bigquery_service
     target_hca_dataset = context.resources.target_hca_dataset
     scratch_config = context.resources.scratch_config
-    file_metadata_type = file_metadata_fanout_result.file_metadata_type
+    file_metadata_type = file_metadata_fanout_result.metadata_type
     scratch_dataset_name = file_metadata_fanout_result.scratch_dataset_name
 
     _inject_file_ids(
         target_hca_dataset=target_hca_dataset,
         scratch_config=scratch_config,
-        file_metadata_type=file_metadata_fanout_result.file_metadata_type,
+        file_metadata_type=file_metadata_fanout_result.metadata_type,
         scratch_dataset_name=file_metadata_fanout_result.scratch_dataset_name,
         bigquery_service=bigquery_service,
     )
     export_data(
         "file-metadata-with-ids",
         table_name_extension="_with_ids",
-        file_metadata_type=file_metadata_type,
+        metadata_type=file_metadata_type,
         scratch_config=scratch_config,
         scratch_dataset_name=scratch_dataset_name,
         bigquery_service=bigquery_service
@@ -129,7 +127,7 @@ def ingest_metadata_for_file_type(
 
 
 @composite_solid
-def ingest_metadata(file_metadata_fanout_result: FileMetadataTypeFanoutResult) -> Nothing:
+def ingest_metadata(file_metadata_fanout_result: MetadataTypeFanoutResult) -> Nothing:
     ingest_metadata_for_file_type(file_metadata_fanout_result)
     load_table(file_metadata_fanout_result)
 
