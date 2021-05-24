@@ -14,7 +14,7 @@ class CheckManagerTestCase(unittest.TestCase):
     def setUp(self):
         self.manager = CheckManager(
             environment='dev',
-            data_repo_client=MagicMock(autospec=RepositoryApi),
+            data_repo_client=MagicMock(spec=RepositoryApi),
             project='project-id',
             dataset='datasetname',
         )

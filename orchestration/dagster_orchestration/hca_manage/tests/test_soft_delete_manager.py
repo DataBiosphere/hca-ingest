@@ -15,7 +15,7 @@ class SoftDeleteManagerTestCase(unittest.TestCase):
     def setUp(self):
         self.manager = SoftDeleteManager(
             environment='dev',
-            data_repo_client=MagicMock(autospec=RepositoryApi),
+            data_repo_client=MagicMock(spec=RepositoryApi),
             project='project-id',
             dataset='datasetname',
         )

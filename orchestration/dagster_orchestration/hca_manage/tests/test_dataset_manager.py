@@ -10,7 +10,7 @@ class DatasetManagerTestCase(unittest.TestCase):
     def setUp(self):
         self.manager = DatasetManager(
             'dev',
-            MagicMock(autospec=RepositoryApi)
+            MagicMock(spec=RepositoryApi, instance=True)
         )
 
     def test_delete_dataset_fetches_id_if_missing(self):
@@ -35,3 +35,17 @@ class DatasetManagerTestCase(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             self.manager.delete_dataset()
+
+    def test_create_dataset_with_policy(self):
+        self.manager.data_repo_client.create_dataset = Mock()
+        self.manager.data_repo_client.retrieve_job_result = Mock(return_value={"id": "fake_dataset_id"})
+
+        self.manager.create_dataset_with_policy_members(
+            "example",
+            "fake_billing_id",
+            {"abc@example.com", "def@example.com"},
+            {"fake": "schema"}
+        )
+
+        self.manager.data_repo_client.create_dataset.assert_called_once()
+        self.assertEqual(self.manager.data_repo_client.add_dataset_policy_member.call_count, 2)
