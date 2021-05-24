@@ -19,7 +19,7 @@ speedups = ["aiodns", "brotlipy", "cchardet"]
 
 [[package]]
 name = "alembic"
-version = "1.6.2"
+version = "1.6.3"
 description = "A database migration tool for SQLAlchemy."
 category = "main"
 optional = false
@@ -112,20 +112,25 @@ webencodings = "*"
 
 [[package]]
 name = "broad-dagster-utils"
-version = "0.4.0"
+version = "0.3.2"
 description = "Common utilities and objects for building Dagster pipelines"
 category = "main"
 optional = false
-python-versions = ">=3.9,<3.10"
+python-versions = "~3.9"
+develop = true
 
 [package.dependencies]
-argo-workflows = ">=5.0.0,<6.0.0"
-dagster = ">=0.11.6,<0.12.0"
-data-repo-client = ">=1.64.0,<2.0.0"
-google-cloud-bigquery = ">=2.15.0,<3.0.0"
-google-cloud-storage = ">=1.38.0,<2.0.0"
-PyYAML = ">=5.4.1,<6.0.0"
-slackclient = ">=2.9.3,<3.0.0"
+argo-workflows = "^5.0.0"
+dagster = "^0.11.6"
+data-repo-client = "^1.64.0"
+google-cloud-bigquery = "^2.15.0"
+google-cloud-storage = "^1.38.0"
+PyYAML = "^5.4.1"
+slackclient = "^2.9.3"
+
+[package.source]
+type = "directory"
+url = "../../../dagster-utils"
 
 [[package]]
 name = "cached-property"
@@ -613,7 +618,7 @@ six = "*"
 
 [[package]]
 name = "google-cloud-bigquery"
-version = "2.16.1"
+version = "2.17.0"
 description = "Google BigQuery API client library"
 category = "main"
 optional = false
@@ -864,7 +869,7 @@ pyreadline = {version = "*", markers = "sys_platform == \"win32\""}
 
 [[package]]
 name = "identify"
-version = "2.2.4"
+version = "2.2.5"
 description = "File identification library for Python"
 category = "dev"
 optional = false
@@ -1208,7 +1213,7 @@ dev = ["pre-commit", "tox"]
 
 [[package]]
 name = "pre-commit"
-version = "2.12.1"
+version = "2.13.0"
 description = "A framework for managing and maintaining multi-language pre-commit hooks."
 category = "dev"
 optional = false
@@ -1712,7 +1717,7 @@ python-versions = "*"
 
 [[package]]
 name = "websocket-client"
-version = "1.0.0"
+version = "1.0.1"
 description = "WebSocket client for Python with low level API options"
 category = "main"
 optional = false
@@ -1778,7 +1783,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.9"
-content-hash = "0e6b55673e4f3d17c9ba88160086edfe368c21088d8841ea906876907151ebad"
+content-hash = "0604f81b687cf4624238a7f06fd547342e2cbebdf78a18d9393c0ee94bd2031f"
 
 [metadata.files]
 aiohttp = [
@@ -1821,7 +1826,8 @@ aiohttp = [
     {file = "aiohttp-3.7.4.post0.tar.gz", hash = "sha256:493d3299ebe5f5a7c66b9819eacdcfbbaaf1a8e84911ddffcdc48888497afecf"},
 ]
 alembic = [
-    {file = "alembic-1.6.2.tar.gz", hash = "sha256:fb9a39a7c68e55490be962fb5f70463d384d340e6563d6e3911447778e3b4576"},
+    {file = "alembic-1.6.3-py2.py3-none-any.whl", hash = "sha256:5a01e9ac338e7380aea1d8a038fcc927cf309cc0b90ede4472c601282054f1b3"},
+    {file = "alembic-1.6.3.tar.gz", hash = "sha256:6d243986586709e9358accdd5ba35d16dd7ca5572681f0d683638ced407504c8"},
 ]
 aniso8601 = [
     {file = "aniso8601-7.0.0-py2.py3-none-any.whl", hash = "sha256:d10a4bf949f619f719b227ef5386e31f49a2b6d453004b21f02661ccc8670c7b"},
@@ -1855,10 +1861,7 @@ bleach = [
     {file = "bleach-3.3.0-py2.py3-none-any.whl", hash = "sha256:6123ddc1052673e52bab52cdc955bcb57a015264a1c57d37bea2f6b817af0125"},
     {file = "bleach-3.3.0.tar.gz", hash = "sha256:98b3170739e5e83dd9dc19633f074727ad848cbedb6026708c8ac2d3b697a433"},
 ]
-broad-dagster-utils = [
-    {file = "broad_dagster_utils-0.4.0-py3-none-any.whl", hash = "sha256:f6213657435d635c4d9330b8d1b289d11521d88756848591ff5a98828908f7b3"},
-    {file = "broad_dagster_utils-0.4.0.tar.gz", hash = "sha256:28d171c9ade3bceb918dc70d84e6b0c4b118de5bd053f5eaaa3bf4733ebec68a"},
-]
+broad-dagster-utils = []
 cached-property = [
     {file = "cached-property-1.5.2.tar.gz", hash = "sha256:9fa5755838eecbb2d234c3aa390bd80fbd3ac6b6869109bfc1b499f7bd89a130"},
     {file = "cached_property-1.5.2-py2.py3-none-any.whl", hash = "sha256:df4f613cf7ad9a588cc381aaf4a512d26265ecebd5eb9e1ba12f1319eb85a6a0"},
@@ -2066,8 +2069,8 @@ google-auth-httplib2 = [
     {file = "google_auth_httplib2-0.1.0-py2.py3-none-any.whl", hash = "sha256:31e49c36c6b5643b57e82617cb3e021e3e1d2df9da63af67252c02fa9c1f4a10"},
 ]
 google-cloud-bigquery = [
-    {file = "google-cloud-bigquery-2.16.1.tar.gz", hash = "sha256:69ce0d64cf06e4163072898ed50623af30c4601fb11f972cbde85c355bb45a89"},
-    {file = "google_cloud_bigquery-2.16.1-py2.py3-none-any.whl", hash = "sha256:cb88d27522d88a2fb41e9f330d8f835c4abd9c341815fe1bf8fe4bb82d3436dd"},
+    {file = "google-cloud-bigquery-2.17.0.tar.gz", hash = "sha256:88ed16b2a5761ad2eebd4a6e23f7f022630291c92410c123b04f77bbda9ad469"},
+    {file = "google_cloud_bigquery-2.17.0-py2.py3-none-any.whl", hash = "sha256:922d8ed28262793b6a9d23e10ffc785963f3e574686c77a3ed57c93acdc42200"},
 ]
 google-cloud-core = [
     {file = "google-cloud-core-1.6.0.tar.gz", hash = "sha256:c6abb18527545379fc82efc4de75ce9a3772ccad2fc645adace593ba097cbb02"},
@@ -2257,8 +2260,8 @@ humanfriendly = [
     {file = "humanfriendly-9.1.tar.gz", hash = "sha256:066562956639ab21ff2676d1fda0b5987e985c534fc76700a19bd54bcb81121d"},
 ]
 identify = [
-    {file = "identify-2.2.4-py2.py3-none-any.whl", hash = "sha256:ad9f3fa0c2316618dc4d840f627d474ab6de106392a4f00221820200f490f5a8"},
-    {file = "identify-2.2.4.tar.gz", hash = "sha256:9bcc312d4e2fa96c7abebcdfb1119563b511b5e3985ac52f60d9116277865b2e"},
+    {file = "identify-2.2.5-py2.py3-none-any.whl", hash = "sha256:9c3ab58543c03bd794a1735e4552ef6dec49ec32053278130d525f0982447d47"},
+    {file = "identify-2.2.5.tar.gz", hash = "sha256:bc1705694253763a3160b943316867792ec00ba7a0ee40b46e20aebaf4e0c46a"},
 ]
 idna = [
     {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
@@ -2509,8 +2512,8 @@ pluggy = [
     {file = "pluggy-0.13.1.tar.gz", hash = "sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0"},
 ]
 pre-commit = [
-    {file = "pre_commit-2.12.1-py2.py3-none-any.whl", hash = "sha256:70c5ec1f30406250b706eda35e868b87e3e4ba099af8787e3e8b4b01e84f4712"},
-    {file = "pre_commit-2.12.1.tar.gz", hash = "sha256:900d3c7e1bf4cf0374bb2893c24c23304952181405b4d88c9c40b72bda1bb8a9"},
+    {file = "pre_commit-2.13.0-py2.py3-none-any.whl", hash = "sha256:b679d0fddd5b9d6d98783ae5f10fd0c4c59954f375b70a58cbe1ce9bcf9809a4"},
+    {file = "pre_commit-2.13.0.tar.gz", hash = "sha256:764972c60693dc668ba8e86eb29654ec3144501310f7198742a767bec385a378"},
 ]
 promise = [
     {file = "promise-2.3.tar.gz", hash = "sha256:dfd18337c523ba4b6a58801c164c1904a9d4d1b1747c7d5dbf45b693a49d93d0"},
@@ -2904,8 +2907,8 @@ webencodings = [
     {file = "webencodings-0.5.1.tar.gz", hash = "sha256:b36a1c245f2d304965eb4e0a82848379241dc04b865afcc4aab16748587e1923"},
 ]
 websocket-client = [
-    {file = "websocket-client-1.0.0.tar.gz", hash = "sha256:5051b38a2f4c27fbd7ca077ebb23ec6965a626ded5a95637f36be1b35b6c4f81"},
-    {file = "websocket_client-1.0.0-py2.py3-none-any.whl", hash = "sha256:57f876f1af4731cacb806cf54d02f5fbf75dee796053b9a5b94fd7c1d9621db9"},
+    {file = "websocket-client-1.0.1.tar.gz", hash = "sha256:3e2bf58191d4619b161389a95bdce84ce9e0b24eb8107e7e590db682c2d0ca81"},
+    {file = "websocket_client-1.0.1-py2.py3-none-any.whl", hash = "sha256:abf306dc6351dcef07f4d40453037e51cc5d9da2ef60d0fc5d0fe3bcda255372"},
 ]
 werkzeug = [
     {file = "Werkzeug-1.0.1-py2.py3-none-any.whl", hash = "sha256:2de2a5db0baeae7b2d2664949077c2ac63fbd16d98da0ff71837f7d1dea3fd43"},

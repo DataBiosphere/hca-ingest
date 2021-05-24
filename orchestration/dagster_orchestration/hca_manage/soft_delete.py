@@ -9,8 +9,9 @@ from data_repo_client import RepositoryApi, DataDeletionRequest
 import google.auth.credentials
 from google.cloud import storage
 
+from dagster_utils.contrib.data_repo.typing import JobId
 from hca_manage import __version__ as hca_manage_version
-from hca_manage.common import data_repo_host, DefaultHelpParser, JobId, get_api_client, get_dataset_id, query_yes_no
+from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client, get_dataset_id, query_yes_no
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

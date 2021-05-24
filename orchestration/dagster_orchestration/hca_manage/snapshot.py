@@ -5,9 +5,10 @@ import logging
 from typing import Optional
 
 from data_repo_client import RepositoryApi, SnapshotRequestModel, SnapshotRequestContentsModel
+from dagster_utils.contrib.data_repo.typing import JobId
 
 from hca_manage import __version__ as hca_manage_version
-from hca_manage.common import data_repo_host, data_repo_profile_ids, DefaultHelpParser, JobId, get_api_client,\
+from hca_manage.common import data_repo_host, data_repo_profile_ids, DefaultHelpParser, get_api_client,\
     query_yes_no
 
 

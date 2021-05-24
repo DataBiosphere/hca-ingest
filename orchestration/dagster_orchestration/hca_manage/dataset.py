@@ -2,14 +2,22 @@ import argparse
 from dataclasses import dataclass
 import json
 import logging
+import sys
 from typing import Optional
 
-from data_repo_client import RepositoryApi
+from data_repo_client import RepositoryApi, ApiException
+from dagster_utils.contrib.data_repo.typing import JobId
+from dagster_utils.contrib.data_repo.jobs import poll_job, JobPollException
 
 from hca_manage import __version__ as hca_manage_version
-from hca_manage.common import data_repo_host, DefaultHelpParser, JobId, get_api_client, query_yes_no
+from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client, query_yes_no
 
-
+MAX_DATASET_CREATE_POLL_SECONDS = 120
+DATASET_CREATE_POLL_INTERVAL_SECONDS = 120
+RUNNER_MEMBERS = {
+    "hca-dagster-runner@broad-dsp-monster-hca-dev.iam.gserviceaccount.com",
+    "hca-argo-runner@broad-dsp-monster-hca-dev.iam.gserviceaccount.com"
+}
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
@@ -38,34 +46,66 @@ def run(arguments: Optional[list[str]] = None) -> None:
     host = data_repo_host[args.env]
     if args.remove:
         if query_yes_no("Are you sure?"):
-            remove_dataset(args, host)
+            _exec_tdr_operation(_remove_dataset, args, host)
         else:
-            # TODO change to logger?
-            print("No deletion attempted.")
+            logging.info("No deletion attempted.")
     elif args.create:
         if query_yes_no("This will create a dataset. Are you sure?"):
-            create_dataset(args, host)
+            _exec_tdr_operation(_create_dataset, args, host)
     elif args.query:
-        query_dataset(args, host)
+        _exec_tdr_operation(_query_dataset, args, host)
 
 
-def remove_dataset(args: argparse.Namespace, host: str) -> JobId:
+def _exec_tdr_operation(op, *args, **kwargs):
+    try:
+        op(*args, **kwargs)
+    except ApiException as e:
+        if e.status == 401:
+            logging.error(f"Permission denied, check your gcloud credentials")
+            logging.error(e)
+
+
+def _remove_dataset(args: argparse.Namespace, host: str) -> None:
     hca = DatasetManager(environment=args.env, data_repo_client=get_api_client(host=host))
-    return hca.delete_dataset(dataset_name=args.dataset_name, dataset_id=args.dataset_id)
+    hca.delete_dataset(dataset_name=args.dataset_name, dataset_id=args.dataset_id)
 
 
-def create_dataset(args: argparse.Namespace, host: str) -> JobId:
-    hca = DatasetManager(environment=args.env, data_repo_client=get_api_client(host=host))
-    return hca.create_dataset(
+def _create_dataset(args: argparse.Namespace, host: str) -> None:
+    client = get_api_client(host=host)
+    hca = DatasetManager(environment=args.env, data_repo_client=client)
+    job_id = hca.create_dataset(
         dataset_name=args.dataset_name,
         billing_profile_id=args.billing_profile_id,
         schema_path=args.schema_path
     )
 
+    try:
+        poll_job(
+            job_id,
+            MAX_DATASET_CREATE_POLL_SECONDS,
+            DATASET_CREATE_POLL_INTERVAL_SECONDS,
+            client
+        )
+    except JobPollException:
+        job_result = client.retrieve_job_result(job_id)
+        logging.error("Create job failed, results =")
+        logging.error(job_result)
+        sys.exit(1)
 
-def query_dataset(args: argparse.Namespace, host: str) -> None:
+    job_result = client.retrieve_job_result(job_id)
+    dataset_id = job_result["dataset_id"]
+
+    for runner_email in RUNNER_MEMBERS:
+        client.add_dataset_policy_member(dataset_id, policy_name="steward", policy_member={
+            "email": runner_email
+        })
+
+
+def _query_dataset(args: argparse.Namespace, host: str) -> None:
     hca = DatasetManager(environment=args.env, data_repo_client=get_api_client(host=host))
-    print(hca.enumerate_dataset(dataset_name=args.dataset_name))
+    import pdb
+    pdb.set_trace()
+    logging.info(hca.enumerate_dataset(dataset_name=args.dataset_name))
 
 
 @dataclass
