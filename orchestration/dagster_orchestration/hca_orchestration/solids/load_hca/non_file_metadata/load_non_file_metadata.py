@@ -40,7 +40,7 @@ class NonFileMetadataTypes(Enum):
         DynamicOutputDefinition(name="table_fanout_result", dagster_type=NonFileMetadataTypeFanoutResult)
     ]
 )
-def ingest_metadata_type(scratch_dataset_name: HcaScratchDatasetName) -> Iterator[NonFileMetadataTypeFanoutResult]:
+def ingest_non_file_metadata_type(scratch_dataset_name: HcaScratchDatasetName) -> Iterator[NonFileMetadataTypeFanoutResult]:
     """
     For each metadata type, return a dynamic output over which we can later map
     This saves us from hardcoding solids for each metadata type
@@ -55,4 +55,4 @@ def ingest_metadata_type(scratch_dataset_name: HcaScratchDatasetName) -> Iterato
 
 @composite_solid
 def non_file_metadata_fanout(scratch_dataset_name: HcaScratchDatasetName) -> Nothing:
-    ingest_metadata_type(scratch_dataset_name).map(load_table)
+    ingest_non_file_metadata_type(scratch_dataset_name).map(load_table)
