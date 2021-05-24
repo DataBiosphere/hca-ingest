@@ -45,10 +45,10 @@ def ingest_metadata_type(scratch_dataset_name: HcaScratchDatasetName) -> Iterato
     For each metadata type, return a dynamic output over which we can later map
     This saves us from hardcoding solids for each metadata type
     """
-    for file_metadata_type in NonFileMetadataTypes:
+    for non_file_metadata_type in NonFileMetadataTypes:
         yield DynamicOutput(
-            value=NonFileMetadataTypeFanoutResult(scratch_dataset_name, file_metadata_type.value),
-            mapping_key=file_metadata_type.value,
+            value=NonFileMetadataTypeFanoutResult(scratch_dataset_name, non_file_metadata_type.value),
+            mapping_key=non_file_metadata_type.value,
             output_name="table_fanout_result"
         )
 
