@@ -10,6 +10,7 @@ from hca_orchestration.resources import load_tag, bigquery_service, mock_bigquer
 from hca_orchestration.resources.config.hca_dataset import target_hca_dataset
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.solids.load_hca.data_files.load_data_metadata_files import file_metadata_fanout
+from hca_orchestration.solids.load_hca.non_file_metadata.load_non_file_metadata import non_file_metadata_fanout
 from hca_orchestration.solids.load_hca.stage_data import clear_scratch_dir, pre_process_metadata, create_scratch_dataset
 
 prod_mode = ModeDefinition(
@@ -79,3 +80,4 @@ def load_hca() -> None:
     staging_dataset = create_scratch_dataset(pre_process_metadata(clear_scratch_dir()))
     # import_data_files(staging_dataset)
     file_metadata_fanout(staging_dataset)
+    non_file_metadata_fanout(staging_dataset)
