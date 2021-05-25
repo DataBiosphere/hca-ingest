@@ -2,13 +2,18 @@ import argparse
 from dataclasses import dataclass
 import json
 import logging
-from typing import Optional
+import sys
+from typing import Optional, Callable, Any
 
-from data_repo_client import RepositoryApi
+from data_repo_client import RepositoryApi, ApiException
+from dagster_utils.contrib.data_repo.typing import JobId
+from dagster_utils.contrib.data_repo.jobs import poll_job, JobPollException
 
 from hca_manage import __version__ as hca_manage_version
-from hca_manage.common import data_repo_host, DefaultHelpParser, JobId, get_api_client, query_yes_no
+from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client, query_yes_no
 
+MAX_DATASET_CREATE_POLL_SECONDS = 120
+DATASET_CREATE_POLL_INTERVAL_SECONDS = 2
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -28,6 +33,9 @@ def run(arguments: Optional[list[str]] = None) -> None:
     dataset_create_args = parser.add_argument_group()
     dataset_create_args.add_argument("-b", "--billing_profile_id", help="Billing profile ID")
     dataset_create_args.add_argument("-j", "--schema_path", help="Path to table schema (JSON)")
+    dataset_create_args.add_argument(
+        "-p", "--policy-members", help="CSV list of emails to grant steward access to this dataset"
+    )
 
     # delete
     dataset_delete_args = parser.add_mutually_exclusive_group(required=True)
@@ -38,34 +46,49 @@ def run(arguments: Optional[list[str]] = None) -> None:
     host = data_repo_host[args.env]
     if args.remove:
         if query_yes_no("Are you sure?"):
-            remove_dataset(args, host)
+            _exec_tdr_operation(_remove_dataset, args, host)
         else:
-            # TODO change to logger?
-            print("No deletion attempted.")
+            logging.info("No deletion attempted.")
     elif args.create:
         if query_yes_no("This will create a dataset. Are you sure?"):
-            create_dataset(args, host)
+            _exec_tdr_operation(_create_dataset, args, host)
     elif args.query:
-        query_dataset(args, host)
+        _exec_tdr_operation(_query_dataset, args, host)
 
 
-def remove_dataset(args: argparse.Namespace, host: str) -> JobId:
+def _exec_tdr_operation(op: Callable[..., None], *args: Any) -> None:
+    try:
+        op(*args)
+    except ApiException as e:
+        if e.status == 401:
+            logging.error(f"Permission denied, check your gcloud credentials")
+            logging.error(e)
+
+
+def _remove_dataset(args: argparse.Namespace, host: str) -> None:
     hca = DatasetManager(environment=args.env, data_repo_client=get_api_client(host=host))
-    return hca.delete_dataset(dataset_name=args.dataset_name, dataset_id=args.dataset_id)
+    hca.delete_dataset(dataset_name=args.dataset_name, dataset_id=args.dataset_id)
 
 
-def create_dataset(args: argparse.Namespace, host: str) -> JobId:
-    hca = DatasetManager(environment=args.env, data_repo_client=get_api_client(host=host))
-    return hca.create_dataset(
-        dataset_name=args.dataset_name,
-        billing_profile_id=args.billing_profile_id,
-        schema_path=args.schema_path
+def _create_dataset(args: argparse.Namespace, host: str) -> None:
+    policy_members = set(args.policy_members.split(','))
+    client = get_api_client(host=host)
+    with open(args.schema_path, "r") as f:
+        # verify that the schema is valid json
+        parsed_schema = json.load(f)
+
+    hca = DatasetManager(environment=args.env, data_repo_client=client)
+    hca.create_dataset_with_policy_members(
+        args.dataset_name,
+        args.billing_profile_id,
+        policy_members,
+        parsed_schema
     )
 
 
-def query_dataset(args: argparse.Namespace, host: str) -> None:
+def _query_dataset(args: argparse.Namespace, host: str) -> None:
     hca = DatasetManager(environment=args.env, data_repo_client=get_api_client(host=host))
-    print(hca.enumerate_dataset(dataset_name=args.dataset_name))
+    logging.info(hca.enumerate_dataset(dataset_name=args.dataset_name))
 
 
 @dataclass
@@ -73,36 +96,66 @@ class DatasetManager:
     environment: str
     data_repo_client: RepositoryApi
 
+    def create_dataset_with_policy_members(
+            self,
+            dataset_name: str,
+            billing_profile_id: str,
+            policy_members: set[str],
+            schema: dict[str, Any]
+    ) -> None:
+        job_id = self.create_dataset(
+            dataset_name=dataset_name,
+            billing_profile_id=billing_profile_id,
+            schema=schema
+        )
+
+        try:
+            poll_job(
+                job_id,
+                MAX_DATASET_CREATE_POLL_SECONDS,
+                DATASET_CREATE_POLL_INTERVAL_SECONDS,
+                self.data_repo_client
+            )
+        except JobPollException:
+            job_result = self.data_repo_client.retrieve_job_result(job_id)
+            logging.error("Create job failed, results =")
+            logging.error(job_result)
+            sys.exit(1)
+
+        job_result = self.data_repo_client.retrieve_job_result(job_id)
+        dataset_id = job_result["id"]
+        logging.info(f"Dataset created, id = {dataset_id}")
+        logging.info(f"Adding policy_members {policy_members}")
+        self.add_policy_members(dataset_id, policy_members, "steward")
+
     def create_dataset(
             self,
             dataset_name: str,
             billing_profile_id: str,
-            schema_path: str,
+            schema: dict[str, Any],
             description: Optional[str] = None) -> JobId:
         """
         Creates a dataset in the data repo.
         :param dataset_name:  Name of the dataset
         :param billing_profile_id: GCP billing profile ID
-        :param schema_path: Local path to a file containing a schema for the dataset
+        :param schema: Dict containing the dataset's schema
         :param description: Optional description for the dataset
         :return: Job ID of the dataset creation job
         """
-        with open(schema_path, "r") as f:
-            # verify that the schema is valid json
-            parsed_schema = json.load(f)
-            response = self.data_repo_client.create_dataset(
-                dataset={
-                    "name": dataset_name,
-                    "description": description,
-                    "defaultProfileId": billing_profile_id,
-                    "schema": parsed_schema,
-                    "region": "US",
-                    "cloudPlatform": "gcp"
-                }
-            )
-            job_id: JobId = response.id
-            logging.info(f"Dataset creation job id: {job_id}")
-            return job_id
+
+        response = self.data_repo_client.create_dataset(
+            dataset={
+                "name": dataset_name,
+                "description": description,
+                "defaultProfileId": billing_profile_id,
+                "schema": schema,
+                "region": "US",
+                "cloudPlatform": "gcp"
+            }
+        )
+        job_id: JobId = response.id
+        logging.info(f"Dataset creation job id: {job_id}")
+        return job_id
 
     def delete_dataset(self, dataset_name: Optional[str] = None, dataset_id: Optional[str] = None) -> JobId:
         """
@@ -127,7 +180,28 @@ class DatasetManager:
         return delete_response_id
 
     def enumerate_dataset(self, dataset_name: str) -> str:
+        """
+        Enumerates TDR datasets, filtering on the given dataset_name
+        """
         return f"{self.data_repo_client.enumerate_datasets(filter=dataset_name)}"
+
+    def add_policy_members(
+        self,
+        dataset_id: str,
+        policy_members: set[str],
+        policy_name: str
+    ) -> None:
+        """
+        Adds the supplied policy members (emails) to the given policy name
+        """
+        for member in policy_members:
+            self.data_repo_client.add_dataset_policy_member(
+                dataset_id,
+                policy_name=policy_name,
+                policy_member={
+                    "email": member
+                }
+            )
 
 
 if __name__ == '__main__':

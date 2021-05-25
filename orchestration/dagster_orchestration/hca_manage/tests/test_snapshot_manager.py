@@ -11,7 +11,7 @@ class SnapshotManagerTestCase(unittest.TestCase):
     def setUp(self):
         self.manager = SnapshotManager(
             environment='dev',
-            data_repo_client=MagicMock(autospec=RepositoryApi),
+            data_repo_client=MagicMock(spec=RepositoryApi),
             dataset='datasetname',
         )
 

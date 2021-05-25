@@ -20,10 +20,11 @@ def base_check_data_ingest_job_result(context: AbstractComputeExecutionContext, 
     # we need to poll on the endpoint as a workaround for a race condition in TDR (DR-1791)
     def __fetch_job_results(jid: JobId) -> Optional[JobModel]:
         try:
-            context.log.info(f"polling on job_id = {jid}")
+            context.log.info(f"Fetching job results for job_id = {jid}")
             return context.resources.data_repo_client.retrieve_job_result(jid)
         except ApiException as ae:
             if 500 <= ae.status <= 599:
+                context.log.info(f"Data repo returned error when fetching results for job_id = {jid}, scheduling retry")
                 return None
             raise
 

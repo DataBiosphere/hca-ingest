@@ -1,10 +1,10 @@
 from dagster import composite_solid, solid, Nothing
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
-from data_repo_client import RepositoryApi, JobModel
-from google.cloud.bigquery import Client, DestinationFormat
+from google.cloud.bigquery import DestinationFormat
 from google.cloud.bigquery.client import RowIterator
 
-from hca_manage.common import JobId
+from dagster_utils.contrib.data_repo.typing import JobId
+from data_repo_client import RepositoryApi, JobModel
 from hca_orchestration.contrib.bigquery import BigQueryService
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
