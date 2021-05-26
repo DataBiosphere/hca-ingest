@@ -24,7 +24,7 @@ class FileMetadataTypes(Enum):
 
 
 ingest_file_metadata_type = configured(ingest_metadata_type, name="ingest_file_metadata_type")(
-    {"metadata_types": FileMetadataTypes})
+    {"metadata_types": FileMetadataTypes, "path": "file-metadata-with-ids"})
 
 
 def _inject_file_ids(
