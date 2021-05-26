@@ -28,7 +28,7 @@ if [ $CURRENT_CLUSTER != "gke_mystical-slate-284720_us-central1-c_hca-cluster" ]
 fi
 
 echo "Importing to Staging Bucket: "$STAGING_BUCKET
-argo submit ../../orchestration/workflows/dev/run-import-hca-total.yaml \
+argo submit ../../orchestration/workflows/prod/run-import-hca-total.yaml \
      -p source-bucket-name="$SOURCE_BUCKET_NAME" \
      -p source-bucket-prefix="$SOURCE_BUCKET_PREFIX" \
      -p staging-bucket-prefix="$STAGING_BUCKET" \
