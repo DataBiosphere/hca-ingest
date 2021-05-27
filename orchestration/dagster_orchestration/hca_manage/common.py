@@ -123,12 +123,11 @@ def tdr_operation(func: F) -> F:
     @functools.wraps(func)
     def _tdr_wrapper(*args, **kwargs):  # type: ignore
         try:
-            result = func(*args, **kwargs)
+            return func(*args, **kwargs)
         except ApiException as e:
             if e.status == 401:
                 sys.stderr.write(f"Permission denied, check your gcloud credentials\n")
             else:
                 raise
-        return result
 
     return cast(F, _tdr_wrapper)

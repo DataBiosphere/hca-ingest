@@ -113,7 +113,7 @@ class DatasetManager:
             self,
             dataset_name: str,
             billing_profile_id: str,
-            policy_members: set[str],
+            policy_members: Optional[set[str]],
             schema: dict[str, Any]
     ) -> str:
         job_id = self.create_dataset(
