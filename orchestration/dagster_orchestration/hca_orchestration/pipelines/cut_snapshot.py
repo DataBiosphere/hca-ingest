@@ -76,8 +76,8 @@ test_mode = ModeDefinition(
 )
 def snapshot_start_notification(context: HookContext) -> None:
     message = (
-        f"Cutting snapshot '{context.resources.snapshot_config.snapshot_name}' "
-        f"for dataset '{context.resources.snapshot_config.dataset_name}'.\n"
+        f"Cutting snapshot `{context.resources.snapshot_config.snapshot_name}`\n"
+        f"Dataset: `{context.resources.snapshot_config.dataset_name}`\n"
         f"<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>"
     )
 
@@ -89,8 +89,8 @@ def snapshot_start_notification(context: HookContext) -> None:
 )
 def snapshot_job_failed_notification(context: HookContext) -> None:
     message = (
-        f"FAILED to cut snapshot '{context.resources.snapshot_config.snapshot_name}' "
-        f"for dataset '{context.resources.snapshot_config.dataset_name}!\n"
+        f"*FAILED to cut snapshot* `{context.resources.snapshot_config.snapshot_name}`\n"
+        f"Dataset `{context.resources.snapshot_config.dataset_name}`"
         f"<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>"
     )
 
@@ -102,8 +102,8 @@ def snapshot_job_failed_notification(context: HookContext) -> None:
 )
 def message_for_snapshot_done(context: HookContext) -> None:
     message = (
-        f"COMPLETED snapshot '{context.resources.snapshot_config.snapshot_name}' "
-        f"for dataset '{context.resources.snapshot_config.dataset_name}'.\n"
+        f"*COMPLETED snapshot* `{context.resources.snapshot_config.snapshot_name}`\n"
+        f"Dataset `{context.resources.snapshot_config.dataset_name}`\n"
         f"<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>"
     )
 

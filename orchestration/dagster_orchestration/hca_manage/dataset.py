@@ -2,6 +2,8 @@ import argparse
 from dataclasses import dataclass
 import json
 import logging
+import os
+import subprocess
 import sys
 from typing import Optional, Callable, Any
 
@@ -12,7 +14,7 @@ from dagster_utils.contrib.data_repo.jobs import poll_job, JobPollException
 from hca_manage import __version__ as hca_manage_version
 from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client, query_yes_no
 
-MAX_DATASET_CREATE_POLL_SECONDS = 120
+MAX_DATASET_CREATE_POLL_SECONDS = 240
 DATASET_CREATE_POLL_INTERVAL_SECONDS = 2
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -32,7 +34,7 @@ def run(arguments: Optional[list[str]] = None) -> None:
     # create
     dataset_create_args = parser.add_argument_group()
     dataset_create_args.add_argument("-b", "--billing_profile_id", help="Billing profile ID")
-    dataset_create_args.add_argument("-j", "--schema_path", help="Path to table schema (JSON)")
+    # dataset_create_args.add_argument("-j", "--schema_path", help="Path to table schema (JSON)")
     dataset_create_args.add_argument(
         "-p", "--policy-members", help="CSV list of emails to grant steward access to this dataset"
     )
@@ -73,16 +75,15 @@ def _remove_dataset(args: argparse.Namespace, host: str) -> None:
 def _create_dataset(args: argparse.Namespace, host: str) -> None:
     policy_members = set(args.policy_members.split(','))
     client = get_api_client(host=host)
-    with open(args.schema_path, "r") as f:
-        # verify that the schema is valid json
-        parsed_schema = json.load(f)
 
     hca = DatasetManager(environment=args.env, data_repo_client=client)
+    schema = hca.generate_schema()
+
     hca.create_dataset_with_policy_members(
         args.dataset_name,
         args.billing_profile_id,
         policy_members,
-        parsed_schema
+        schema
     )
 
 
@@ -96,13 +97,23 @@ class DatasetManager:
     environment: str
     data_repo_client: RepositoryApi
 
+    def generate_schema(self) -> dict:
+        cwd = os.path.join(os.path.dirname(__file__), "../../../")
+        subprocess.run(
+            ["sbt", f'generateJadeSchema'],
+            check=True,
+            cwd=cwd
+        )
+        with open(f"{cwd}/schema/target/schema.json") as f:
+            return json.load(f)
+
     def create_dataset_with_policy_members(
             self,
             dataset_name: str,
             billing_profile_id: str,
             policy_members: set[str],
             schema: dict[str, Any]
-    ) -> None:
+    ) -> str:
         job_id = self.create_dataset(
             dataset_name=dataset_name,
             billing_profile_id=billing_profile_id,
@@ -126,7 +137,11 @@ class DatasetManager:
         dataset_id = job_result["id"]
         logging.info(f"Dataset created, id = {dataset_id}")
         logging.info(f"Adding policy_members {policy_members}")
-        self.add_policy_members(dataset_id, policy_members, "steward")
+
+        if policy_members:
+            self.add_policy_members(dataset_id, policy_members, "steward")
+
+        return dataset_id
 
     def create_dataset(
             self,
@@ -186,10 +201,10 @@ class DatasetManager:
         return f"{self.data_repo_client.enumerate_datasets(filter=dataset_name)}"
 
     def add_policy_members(
-        self,
-        dataset_id: str,
-        policy_members: set[str],
-        policy_name: str
+            self,
+            dataset_id: str,
+            policy_members: set[str],
+            policy_name: str
     ) -> None:
         """
         Adds the supplied policy members (emails) to the given policy name
