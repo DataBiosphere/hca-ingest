@@ -9,11 +9,11 @@ from dagster_utils.resources.sam import sam_client, noop_sam_client
 from dagster_utils.resources.slack import console_slack_client, live_slack_client
 
 from hca_orchestration.config import preconfigure_resource_for_mode
-from hca_orchestration.solids.create_snapshot import get_completed_snapshot_info, make_snapshot_public, submit_snapshot_job
+from hca_orchestration.solids.create_snapshot import get_completed_snapshot_info, make_snapshot_public, \
+    submit_snapshot_job
 from hca_orchestration.solids.data_repo import wait_for_job_completion
 from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.data_repo import hca_manage_config, snapshot_creation_config
-
 
 prod_mode = ModeDefinition(
     name="prod",
@@ -71,43 +71,75 @@ test_mode = ModeDefinition(
 )
 
 
+def _base_slack_blocks(title: str, key_values: dict[str, str]) -> list[dict[str, object]]:
+    return [
+        {
+            "type": "section",
+            "text": {
+                'type': 'mrkdwn',
+                'text': f'*{title}*',
+            }
+        },
+        {
+            'type': 'divider'
+        },
+        {
+            'type': 'section',
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': '\n'.join(map(lambda keys: f'*{keys}*', key_values.keys())),
+                },
+                {
+                    'type': 'mrkdwn',
+                    'text': '\n'.join(key_values.values())
+                }
+            ]
+        }
+    ]
+
+
 @success_hook(
     required_resource_keys={'slack', 'snapshot_config', 'dagit_config'}
 )
 def snapshot_start_notification(context: HookContext) -> None:
-    message = (
-        f"Cutting snapshot '{context.resources.snapshot_config.snapshot_name}' "
-        f"for dataset '{context.resources.snapshot_config.dataset_name}'.\n"
-        f"<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>"
-    )
+    context.log.info(f"Solid output = {context.solid_output_values}")
+    job_id = context.solid_output_values["result"]
+    kvs = {
+        "Snapshot name": context.resources.snapshot_config.snapshot_name,
+        "Dataset": context.resources.snapshot_config.dataset_name,
+        "TDR Job ID": job_id,
+        "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
 
-    context.resources.slack.send_message(message)
+    }
+
+    context.resources.slack.send_message(blocks=_base_slack_blocks("HCA Starting Snapshot", key_values=kvs))
 
 
 @failure_hook(
     required_resource_keys={'slack', 'snapshot_config', 'dagit_config'}
 )
 def snapshot_job_failed_notification(context: HookContext) -> None:
-    message = (
-        f"FAILED to cut snapshot '{context.resources.snapshot_config.snapshot_name}' "
-        f"for dataset '{context.resources.snapshot_config.dataset_name}!\n"
-        f"<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>"
-    )
+    job_id = context.solid_output_values["result"]
+    kvs = {
+        "Snapshot name": context.resources.snapshot_config.snapshot_name,
+        "Dataset": context.resources.snapshot_config.dataset_name,
+        "TDR Job ID": job_id,
+        "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
+    }
 
-    context.resources.slack.send_message(message)
+    context.resources.slack.send_message(blocks=_base_slack_blocks("HCA Snapshot Failed", kvs))
 
 
 @success_hook(
     required_resource_keys={'slack', 'snapshot_config', 'dagit_config'}
 )
 def message_for_snapshot_done(context: HookContext) -> None:
-    message = (
-        f"COMPLETED snapshot '{context.resources.snapshot_config.snapshot_name}' "
-        f"for dataset '{context.resources.snapshot_config.dataset_name}'.\n"
-        f"<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>"
-    )
-
-    context.resources.slack.send_message(message)
+    context.resources.slack.send_message(blocks=_base_slack_blocks("HCA Snapshot Complete", {
+        "Snapshot name": context.resources.snapshot_config.snapshot_name,
+        "Dataset": context.resources.snapshot_config.dataset_name,
+        "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
+    }))
 
 
 @pipeline(
