@@ -83,7 +83,7 @@ def base_check_table_ingest_job_result(context: AbstractComputeExecutionContext,
     if not job_results:
         raise Failure(f"No job results after polling bulk ingest, job_id = {job_id}")
 
-    if job_results['job_status'] == 'succeeded':  # << TODO not always this key
+    if job_results['bad_row_count'] == '0':  # << TODO not always this key
         raise Failure(f"Bulk file load (job_id = {job_id} had failedFiles = {job_results['failedFiles']})")
 
 

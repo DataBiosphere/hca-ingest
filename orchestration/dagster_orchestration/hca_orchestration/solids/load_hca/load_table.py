@@ -139,13 +139,17 @@ def check_has_data(
     scratch_config = context.resources.scratch_config
     metadata_type = metadata_fanout_result.metadata_type
     metadata_path = metadata_fanout_result.path
+
     source_path = f"{scratch_config.scratch_prefix_name}/{metadata_path}/{metadata_type}/"
+    context.log.info(f"Checking for data to load at path {source_path}")
     blobs = [blob for blob in
              context.resources.gcs.list_blobs(scratch_config.scratch_bucket_name, prefix=source_path)]
 
     if len(blobs) > 0:
+        context.log.info(f"{metadata_type} has data to load")
         yield Output(True, "has_data")
     else:
+        context.log.info(f"{metadata_type} has no data to load")
         yield Output(False, "no_data")
     return False
 

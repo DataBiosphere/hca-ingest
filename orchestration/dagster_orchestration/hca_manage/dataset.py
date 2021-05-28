@@ -114,12 +114,14 @@ class DatasetManager:
             dataset_name: str,
             billing_profile_id: str,
             policy_members: Optional[set[str]],
-            schema: dict[str, Any]
+            schema: dict[str, Any],
+            description: Optional[str]
     ) -> str:
         job_id = self.create_dataset(
             dataset_name=dataset_name,
             billing_profile_id=billing_profile_id,
-            schema=schema
+            schema=schema,
+            description=description
         )
 
         try:
@@ -138,9 +140,9 @@ class DatasetManager:
         job_result = self.data_repo_client.retrieve_job_result(job_id)
         dataset_id: str = job_result["id"]
         logging.info(f"Dataset created, id = {dataset_id}")
-        logging.info(f"Adding policy_members {policy_members}")
 
         if policy_members:
+            logging.info(f"Adding policy_members {policy_members}")
             self.add_policy_members(dataset_id, policy_members, "steward")
 
         return dataset_id

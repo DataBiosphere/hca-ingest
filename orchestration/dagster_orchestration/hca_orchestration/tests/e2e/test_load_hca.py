@@ -3,19 +3,62 @@ import uuid
 
 import pytest
 from dagster import execute_pipeline
+from google.cloud.bigquery.client import Client, QueryJobConfig
 
 from hca_manage.common import data_repo_host, get_api_client
 from hca_manage.dataset import DatasetManager
 from hca_orchestration.pipelines import load_hca
+from dagster_utils.contrib.google import authorized_session
 
 
 @pytest.mark.e2e
-def test_load_hca(load_hca_run_config):
+def test_load_hca(load_hca_run_config, dataset_name, tdr_bigquery_client):
     execute_pipeline(
         load_hca,
         mode="local",
         run_config=load_hca_run_config
     )
+
+    sequence_file_rows = _query_metadata_table(
+        "sequence_file",
+        dataset_name,
+        tdr_bigquery_client
+    )
+    assert len(sequence_file_rows) > 0, "Should have sequence_file rows"
+
+    cell_suspension_rows = _query_metadata_table(
+        "cell_suspension",
+        dataset_name,
+        tdr_bigquery_client
+    )
+    assert len(cell_suspension_rows) > 0, "Should have cell suspension rows"
+
+
+def _query_metadata_table(metadata_type: str, dataset_name: str, client: Client):
+    query = f"""
+    SELECT * FROM `datarepo_{dataset_name}.{metadata_type}`
+    """
+    job_config = QueryJobConfig()
+    job_config.use_legacy_sql = False
+
+    query_job = client.query(
+        query,
+        job_config,
+        location="US",
+        project="broad-jade-dev-data"
+    )
+    result = query_job.result()
+    return [row for row in result]
+
+
+@pytest.fixture
+def tdr_bigquery_client():
+    return Client(_http=authorized_session())
+
+
+@pytest.fixture
+def delete_dataset_on_exit():
+    return True
 
 
 @pytest.fixture
@@ -24,21 +67,26 @@ def dataset_name() -> str:
 
 
 @pytest.fixture
-def dataset_id(dataset_name) -> str:
+def dataset_id(dataset_name, delete_dataset_on_exit) -> str:
     data_repo_client = get_api_client(data_repo_host["dev"])
     dataset_manager = DatasetManager("dev", data_repo_client)
     dataset_id = dataset_manager.create_dataset_with_policy_members(
         dataset_name,
         "390e7a85-d47f-4531-b612-165fc977d3bd",
         None,
-        dataset_manager.generate_schema()
+        dataset_manager.generate_schema(),
+        "MONSTER_DELETEME"
     )
 
     yield dataset_id
-    logging.info(f"Deleting dataset, name = {dataset_name}, id = {dataset_id}")
-    dataset_manager.delete_dataset(
-        dataset_id=dataset_id
-    )
+    if delete_dataset_on_exit:
+        logging.info(f"Deleting dataset, name = {dataset_name}, id = {dataset_id}")
+        dataset_manager.delete_dataset(
+            dataset_id=dataset_id
+        )
+    else:
+        logging.info("Leaving dataset in place, this will require manual cleanup.")
+        logging.info(f"name = {dataset_name}, id = {dataset_id}")
 
 
 @pytest.fixture
