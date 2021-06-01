@@ -1,16 +1,11 @@
-import logging
-import uuid
-
 import pytest
 from dagster import execute_pipeline
 from google.cloud.bigquery.client import Client, QueryJobConfig
 
-from hca_manage.common import data_repo_host, get_api_client
-from hca_manage.dataset import DatasetManager
 from hca_orchestration.pipelines import load_hca
-from dagster_utils.contrib.google import authorized_session
 
 
+@pytest.mark.skip
 @pytest.mark.e2e
 def test_load_hca(load_hca_run_config, dataset_name, tdr_bigquery_client):
     execute_pipeline(
@@ -31,7 +26,70 @@ def test_load_hca(load_hca_run_config, dataset_name, tdr_bigquery_client):
         dataset_name,
         tdr_bigquery_client
     )
-    assert len(cell_suspension_rows) > 0, "Should have cell suspension rows"
+    assert len(cell_suspension_rows) > 0, "Should have cell_suspension rows"
+
+    collection_protocol_rows = _query_metadata_table(
+        "collection_protocol",
+        dataset_name,
+        tdr_bigquery_client
+    )
+    assert len(collection_protocol_rows) > 0, "Should have collection_protocol rows"
+
+    dissociation_protocol_rows = _query_metadata_table(
+        "dissociation_protocol",
+        dataset_name,
+        tdr_bigquery_client
+    )
+    assert len(dissociation_protocol_rows) > 0, "Should have dissociation_protocol rows"
+
+    donor_organism_rows = _query_metadata_table(
+        "donor_organism",
+        dataset_name,
+        tdr_bigquery_client
+    )
+    assert len(donor_organism_rows) > 0, "Should have donor_organism rows"
+
+    library_preparation_protocol_rows = _query_metadata_table(
+        "library_preparation_protocol",
+        dataset_name,
+        tdr_bigquery_client
+    )
+    assert len(library_preparation_protocol_rows) > 0, "Should have library_preparation_protocol rows"
+
+    process_rows = _query_metadata_table(
+        "process",
+        dataset_name,
+        tdr_bigquery_client
+    )
+    assert len(process_rows) > 0, "Should have process rows"
+
+    project_rows = _query_metadata_table(
+        "process",
+        dataset_name,
+        tdr_bigquery_client
+    )
+    assert len(project_rows) > 0, "Should have project rows"
+
+    sequencing_protocol_rows = _query_metadata_table(
+        "sequencing_protocol",
+        dataset_name,
+        tdr_bigquery_client
+    )
+    assert len(sequencing_protocol_rows) > 0, "Should have sequencing_protocol rows"
+
+    specimen_from_organism_rows = _query_metadata_table(
+        "specimen_from_organism",
+        dataset_name,
+        tdr_bigquery_client
+    )
+    assert len(specimen_from_organism_rows) > 0, "Should have specimen_from_organism rows"
+
+    links_rows = _query_metadata_table(
+        "links",
+        dataset_name,
+        tdr_bigquery_client
+    )
+    assert len(links_rows) > 0, "Should have links rows"
 
 
 def _query_metadata_table(metadata_type: str, dataset_name: str, client: Client):
@@ -49,85 +107,3 @@ def _query_metadata_table(metadata_type: str, dataset_name: str, client: Client)
     )
     result = query_job.result()
     return [row for row in result]
-
-
-@pytest.fixture
-def tdr_bigquery_client():
-    return Client(_http=authorized_session())
-
-
-@pytest.fixture
-def delete_dataset_on_exit():
-    return True
-
-
-@pytest.fixture
-def dataset_name() -> str:
-    return f"monster_hca_test_{str(uuid.uuid4()).replace('-', '_')}"
-
-
-@pytest.fixture
-def dataset_id(dataset_name, delete_dataset_on_exit) -> str:
-    data_repo_client = get_api_client(data_repo_host["dev"])
-    dataset_manager = DatasetManager("dev", data_repo_client)
-    dataset_id = dataset_manager.create_dataset_with_policy_members(
-        dataset_name,
-        "390e7a85-d47f-4531-b612-165fc977d3bd",
-        None,
-        dataset_manager.generate_schema(),
-        "MONSTER_DELETEME"
-    )
-
-    yield dataset_id
-    if delete_dataset_on_exit:
-        logging.info(f"Deleting dataset, name = {dataset_name}, id = {dataset_id}")
-        dataset_manager.delete_dataset(
-            dataset_id=dataset_id
-        )
-    else:
-        logging.info("Leaving dataset in place, this will require manual cleanup.")
-        logging.info(f"name = {dataset_name}, id = {dataset_id}")
-
-
-@pytest.fixture
-def load_hca_run_config(dataset_name, dataset_id):
-    return {
-        "resources": {
-            "beam_runner": {
-                "config": {
-                    "working_dir": "../..",
-                    "target_class": "hca-transformation-pipeline"
-                }
-            },
-            "load_tag": {
-                "config": {
-                    "load_tag_prefix": "monster_test",
-                    "append_timestamp": True
-                }
-            },
-            "scratch_config": {
-                "config": {
-                    "scratch_bucket_name": "broad-dsp-monster-hca-dev-staging-storage",
-                    "scratch_prefix_name": f"{dataset_name}",
-                    "scratch_bq_project": "broad-dsp-monster-hca-dev",
-                    "scratch_dataset_prefix": f"e2e_test_{dataset_name}",
-                    "scratch_table_expiration_ms": 86400000
-                }
-            },
-            "target_hca_dataset": {
-                "config": {
-                    "dataset_name": dataset_name,
-                    "dataset_id": dataset_id,
-                    "project_id": "broad-jade-dev-data",
-                    "billing_profile_id": "390e7a85-d47f-4531-b612-165fc977d3bd",
-                }
-            }
-        },
-        "solids": {
-            "pre_process_metadata": {
-                "config": {
-                    "input_prefix": "gs://broad-dsp-monster-hca-dev-test-storage/integration/ebi_micro/test_data"
-                }
-            }
-        }
-    }

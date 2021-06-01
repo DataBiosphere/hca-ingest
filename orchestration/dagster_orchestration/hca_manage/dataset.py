@@ -78,7 +78,8 @@ def _create_dataset(args: argparse.Namespace) -> None:
         args.dataset_name,
         args.billing_profile_id,
         policy_members,
-        schema
+        schema,
+        None
     )
 
 

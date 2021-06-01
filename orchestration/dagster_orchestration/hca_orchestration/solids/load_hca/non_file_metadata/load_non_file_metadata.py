@@ -36,7 +36,7 @@ class NonFileMetadataTypes(Enum):
 
 
 ingest_non_file_metadata_type = configured(ingest_metadata_type, name="ingest_non_file_metadata_type")(
-    {"metadata_types": NonFileMetadataTypes})
+    {"metadata_types": NonFileMetadataTypes, "prefix": "metadata"})
 
 
 @composite_solid

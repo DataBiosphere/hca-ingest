@@ -6,7 +6,7 @@ from hca_manage.common import DefaultHelpParser, get_api_client, data_repo_host
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def fetch_job_info():
+def fetch_job_info() -> None:
     parser = DefaultHelpParser(description="A simple CLI to manage TDR datasets.")
 
     parser.add_argument("-e", "--env", help="The Jade environment to target",

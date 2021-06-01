@@ -19,7 +19,7 @@ python-dateutil = "^2.8.1"
 typing-extensions = "^3.7.4"
 pyyaml = "^5.3"
 dagster-gcp = "^0.11.10"
-broad-dagster-utils = "0.4.1"
+broad-dagster-utils = "0.4.2"
 
 
 [tool.poetry.dev-dependencies]
