@@ -1,15 +1,16 @@
 import argparse
 import csv
 from dataclasses import dataclass
+import functools
 import sys
-from typing import NoReturn, TextIO
+from typing import Any, Callable, NoReturn, TextIO, TypeVar, cast
 
 from dagster import make_python_type_usable_as_dagster_type
 from dagster.core.types.dagster_type import String as DagsterString
 
 from dagster_utils.contrib.google import default_google_access_token
 from dagster_utils.contrib.data_repo.typing import JobId
-from data_repo_client import ApiClient, Configuration, RepositoryApi
+from data_repo_client import ApiClient, Configuration, RepositoryApi, ApiException
 
 make_python_type_usable_as_dagster_type(JobId, DagsterString)
 
@@ -107,3 +108,27 @@ def query_yes_no(question: str, default: str = "no") -> bool:
         else:
             sys.stdout.write("Please respond with 'yes' or 'no' "
                              "(or 'y' or 'n').\n")
+
+
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def tdr_operation(func: F) -> F:
+    """
+    Wraps a TDR operation in exception handling for 401 errors
+    :param op:
+    :return:
+    """
+
+    @functools.wraps(func)
+    def _tdr_wrapper(*args, **kwargs):  # type: ignore
+        try:
+            result = func(*args, **kwargs)
+        except ApiException as e:
+            if e.status == 401:
+                sys.stderr.write(f"Permission denied, check your gcloud credentials\n")
+            else:
+                raise
+        return result
+
+    return cast(F, _tdr_wrapper)

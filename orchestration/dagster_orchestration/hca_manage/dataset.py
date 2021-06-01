@@ -1,16 +1,18 @@
 import argparse
-from dataclasses import dataclass
 import json
 import logging
+import os
+import subprocess
 import sys
-from typing import Optional, Callable, Any
+from dataclasses import dataclass
+from typing import Optional, Any
 
-from data_repo_client import RepositoryApi, ApiException
-from dagster_utils.contrib.data_repo.typing import JobId
 from dagster_utils.contrib.data_repo.jobs import poll_job, JobPollException
+from dagster_utils.contrib.data_repo.typing import JobId
+from data_repo_client import RepositoryApi
 
 from hca_manage import __version__ as hca_manage_version
-from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client, query_yes_no
+from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client, query_yes_no, tdr_operation
 
 MAX_DATASET_CREATE_POLL_SECONDS = 120
 DATASET_CREATE_POLL_INTERVAL_SECONDS = 2
@@ -23,70 +25,67 @@ def run(arguments: Optional[list[str]] = None) -> None:
     parser.add_argument("-V", "--version", action="version", version="%(prog)s " + hca_manage_version)
     parser.add_argument("-e", "--env", help="The Jade environment to target",
                         choices=["dev", "prod", "real_prod"], required=True)
-
-    dataset_flags = parser.add_mutually_exclusive_group(required=True)
-    dataset_flags.add_argument("-c", "--create", help="Flag to create a dataset", action="store_true")
-    dataset_flags.add_argument("-r", "--remove", help="Flag to delete a dataset", action="store_true")
-    dataset_flags.add_argument("-q", "--query", help="Flag to query a dataset ID", action="store_true")
+    subparsers = parser.add_subparsers()
 
     # create
-    dataset_create_args = parser.add_argument_group()
-    dataset_create_args.add_argument("-b", "--billing_profile_id", help="Billing profile ID")
-    dataset_create_args.add_argument("-j", "--schema_path", help="Path to table schema (JSON)")
-    dataset_create_args.add_argument(
+    dataset_create = subparsers.add_parser("create")
+    dataset_create.add_argument("-n", "--dataset_name", help="Name of dataset to create.")
+    dataset_create.add_argument("-b", "--billing_profile_id", help="Billing profile ID", required=True)
+    dataset_create.add_argument(
         "-p", "--policy-members", help="CSV list of emails to grant steward access to this dataset"
     )
+    dataset_create.set_defaults(func=_create_dataset)
 
-    # delete
-    dataset_delete_args = parser.add_mutually_exclusive_group(required=True)
-    dataset_delete_args.add_argument("-n", "--dataset_name", help="Name of dataset to delete.")
-    dataset_delete_args.add_argument("-i", "--dataset_id", help="ID of dataset to delete.")
+    # remove
+    dataset_remove = subparsers.add_parser("remove")
+    dataset_remove.add_argument("-n", "--dataset_name", help="Name of dataset to delete.")
+    dataset_remove.add_argument("-i", "--dataset_id", help="ID of dataset to delete.")
+    dataset_remove.set_defaults(func=_remove_dataset)
+
+    # query
+    dataset_query = subparsers.add_parser("query")
+    dataset_query.add_argument("-n", "--dataset_name", help="Name of dataset to delete.")
+    dataset_query.set_defaults(func=_query_dataset)
 
     args = parser.parse_args(arguments)
+    args.func(args)
+
+
+@tdr_operation
+def _remove_dataset(args: argparse.Namespace) -> None:
+    if not query_yes_no("Are you sure?"):
+        return
+
     host = data_repo_host[args.env]
-    if args.remove:
-        if query_yes_no("Are you sure?"):
-            _exec_tdr_operation(_remove_dataset, args, host)
-        else:
-            logging.info("No deletion attempted.")
-    elif args.create:
-        if query_yes_no("This will create a dataset. Are you sure?"):
-            _exec_tdr_operation(_create_dataset, args, host)
-    elif args.query:
-        _exec_tdr_operation(_query_dataset, args, host)
-
-
-def _exec_tdr_operation(op: Callable[..., None], *args: Any) -> None:
-    try:
-        op(*args)
-    except ApiException as e:
-        if e.status == 401:
-            logging.error(f"Permission denied, check your gcloud credentials")
-            logging.error(e)
-
-
-def _remove_dataset(args: argparse.Namespace, host: str) -> None:
     hca = DatasetManager(environment=args.env, data_repo_client=get_api_client(host=host))
     hca.delete_dataset(dataset_name=args.dataset_name, dataset_id=args.dataset_id)
 
 
-def _create_dataset(args: argparse.Namespace, host: str) -> None:
+@tdr_operation
+def _create_dataset(args: argparse.Namespace) -> None:
+    if not query_yes_no("Are you sure?"):
+        return
+
+    host = data_repo_host[args.env]
+
     policy_members = set(args.policy_members.split(','))
     client = get_api_client(host=host)
-    with open(args.schema_path, "r") as f:
-        # verify that the schema is valid json
-        parsed_schema = json.load(f)
 
     hca = DatasetManager(environment=args.env, data_repo_client=client)
+    schema = hca.generate_schema()
+
     hca.create_dataset_with_policy_members(
         args.dataset_name,
         args.billing_profile_id,
         policy_members,
-        parsed_schema
+        schema
     )
 
 
-def _query_dataset(args: argparse.Namespace, host: str) -> None:
+@tdr_operation
+def _query_dataset(args: argparse.Namespace) -> None:
+    host = data_repo_host[args.env]
+
     hca = DatasetManager(environment=args.env, data_repo_client=get_api_client(host=host))
     logging.info(hca.enumerate_dataset(dataset_name=args.dataset_name))
 
@@ -96,13 +95,27 @@ class DatasetManager:
     environment: str
     data_repo_client: RepositoryApi
 
+    def generate_schema(self) -> dict[str, object]:
+        cwd = os.path.join(os.path.dirname(__file__), "../../../")
+        schema_path = f"{cwd}/schema/target/schema.json"
+        if not os.path.exists(schema_path):
+            subprocess.run(
+                ["sbt", f'generateJadeSchema'],
+                check=True,
+                cwd=cwd
+            )
+
+        with open(schema_path) as f:
+            parsed: dict[str, object] = json.load(f)
+        return parsed
+
     def create_dataset_with_policy_members(
             self,
             dataset_name: str,
             billing_profile_id: str,
             policy_members: set[str],
             schema: dict[str, Any]
-    ) -> None:
+    ) -> str:
         job_id = self.create_dataset(
             dataset_name=dataset_name,
             billing_profile_id=billing_profile_id,
@@ -123,10 +136,14 @@ class DatasetManager:
             sys.exit(1)
 
         job_result = self.data_repo_client.retrieve_job_result(job_id)
-        dataset_id = job_result["id"]
+        dataset_id: str = job_result["id"]
         logging.info(f"Dataset created, id = {dataset_id}")
         logging.info(f"Adding policy_members {policy_members}")
-        self.add_policy_members(dataset_id, policy_members, "steward")
+
+        if policy_members:
+            self.add_policy_members(dataset_id, policy_members, "steward")
+
+        return dataset_id
 
     def create_dataset(
             self,
@@ -142,7 +159,6 @@ class DatasetManager:
         :param description: Optional description for the dataset
         :return: Job ID of the dataset creation job
         """
-
         response = self.data_repo_client.create_dataset(
             dataset={
                 "name": dataset_name,
@@ -186,10 +202,10 @@ class DatasetManager:
         return f"{self.data_repo_client.enumerate_datasets(filter=dataset_name)}"
 
     def add_policy_members(
-        self,
-        dataset_id: str,
-        policy_members: set[str],
-        policy_name: str
+            self,
+            dataset_id: str,
+            policy_members: set[str],
+            policy_name: str
     ) -> None:
         """
         Adds the supplied policy members (emails) to the given policy name
