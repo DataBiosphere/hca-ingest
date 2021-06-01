@@ -1,3 +1,7 @@
+"""
+TDR job inspection tool. Fetches the job status, and optionally the result
+"""
+
 import logging
 import json
 

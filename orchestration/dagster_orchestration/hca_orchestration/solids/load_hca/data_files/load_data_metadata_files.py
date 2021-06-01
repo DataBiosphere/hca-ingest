@@ -45,12 +45,9 @@ def _inject_file_ids(
     AND JSON_EXTRACT_SCALAR(S.descriptor, '$.crc32c') = J.checksum_crc32c
     AND '/' || JSON_EXTRACT_SCALAR(S.descriptor, '$.file_id') || '/' || JSON_EXTRACT_SCALAR(S.descriptor, '$.file_name') = J.target_path
     """
-    logging.info(f"INJECT_FILE_IDS, query=\n{query}")
 
     destination_table_name = f"{file_metadata_type}_with_ids"
     source_path = f"{scratch_config.scratch_area()}/metadata/{file_metadata_type}/*"
-    logging.info(f"INJECT_FILE_IDS, source_path=\n{source_path}")
-
     query_job = bigquery_service.build_query_job_using_external_schema(
         query,
         source_paths=[source_path],

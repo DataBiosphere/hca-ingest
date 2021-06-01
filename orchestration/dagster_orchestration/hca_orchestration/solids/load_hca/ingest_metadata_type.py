@@ -29,7 +29,8 @@ def ingest_metadata_type(context: AbstractComputeExecutionContext,
             value=MetadataTypeFanoutResult(
                 scratch_dataset_name,
                 file_metadata_type.value,
-                context.solid_config["prefix"]),
+                context.solid_config["prefix"]
+            ),
             mapping_key=file_metadata_type.value,
             output_name="table_fanout_result"
         )
