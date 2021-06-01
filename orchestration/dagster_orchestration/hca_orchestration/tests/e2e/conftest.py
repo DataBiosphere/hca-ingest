@@ -88,8 +88,8 @@ def load_hca_run_config(dataset_name, dataset_id):
             },
             "scratch_config": {
                 "config": {
-                    "scratch_bucket_name": "broad-dsp-monster-hca-dev-staging-storage",
-                    "scratch_prefix_name": f"{dataset_name}",
+                    "scratch_bucket_name": "broad-dsp-monster-hca-dev-test-storage",
+                    "scratch_prefix_name": f"e2e/{dataset_name}",
                     "scratch_bq_project": "broad-dsp-monster-hca-dev",
                     "scratch_dataset_prefix": f"e2e_test_{dataset_name}",
                     "scratch_table_expiration_ms": 86400000
