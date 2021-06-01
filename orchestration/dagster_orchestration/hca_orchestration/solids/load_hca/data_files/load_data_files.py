@@ -167,7 +167,7 @@ def bulk_ingest(control_file_path: str) -> JobId:
     to completion.
     :param control_file_path: GS path to the ingest control file
     """
-    job_id = run_bulk_file_ingest(control_file_path)
+    job_id: JobId = run_bulk_file_ingest(control_file_path)
     wait_for_job_completion(job_id)
     check_data_ingest_job_result(job_id)
     return job_id
@@ -176,11 +176,11 @@ def bulk_ingest(control_file_path: str) -> JobId:
 @composite_solid(
     output_defs=[DynamicOutputDefinition(name="result", dagster_type=JobId)]
 )
-def import_data_files(scratch_dataset_name: HcaScratchDatasetName):
+def import_data_files(scratch_dataset_name: HcaScratchDatasetName) -> list[JobId]:
     """
     Composite solid responsible for ingesting data files and related descriptors to TDR
     :param scratch_dataset_name: Scratch dataset that will hold temporary ingest data
     """
     generated_file_loads = diff_file_loads(scratch_dataset_name)
-    bulk_ingest_jobs = generated_file_loads.map(bulk_ingest)
+    bulk_ingest_jobs: list[JobId] = generated_file_loads.map(bulk_ingest)
     return bulk_ingest_jobs
