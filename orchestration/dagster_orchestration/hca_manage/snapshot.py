@@ -74,7 +74,7 @@ class SnapshotManager:
     def __post_init__(self) -> None:
         self.reader_list = {
             "dev": ["hca-snapshot-readers@dev.test.firecloud.org"],
-            "prod": ["hca-snapshot-readers@firecloud.org"]
+            "prod": ["hca-snapshot-readers@firecloud.org", "monster@firecloud.org"]
         }[self.environment]
 
     def submit_snapshot_request(
