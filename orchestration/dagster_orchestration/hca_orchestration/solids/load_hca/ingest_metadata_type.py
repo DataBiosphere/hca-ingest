@@ -5,6 +5,7 @@ from dagster.core.execution.context.compute import AbstractComputeExecutionConte
 from dagster.experimental import DynamicOutput, DynamicOutputDefinition
 
 from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataTypeFanoutResult
+from hca_manage.common import JobId
 
 
 @solid(
@@ -17,6 +18,7 @@ from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType
     ]
 )
 def ingest_metadata_type(context: AbstractComputeExecutionContext,
+                         result: list[JobId],
                          scratch_dataset_name: HcaScratchDatasetName) -> Iterator[MetadataTypeFanoutResult]:
     """
     For each file type, return a dynamic output over which we can later map

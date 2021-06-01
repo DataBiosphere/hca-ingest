@@ -161,7 +161,7 @@ def run_bulk_file_ingest(context: AbstractComputeExecutionContext, control_file_
 
 
 @composite_solid
-def bulk_ingest(control_file_path: str) -> Nothing:
+def bulk_ingest(control_file_path: str) -> JobId:
     """
     Composite solid that submits the given control file for ingest to TDR, then polls on the resulting job
     to completion.
@@ -170,13 +170,17 @@ def bulk_ingest(control_file_path: str) -> Nothing:
     job_id = run_bulk_file_ingest(control_file_path)
     wait_for_job_completion(job_id)
     check_data_ingest_job_result(job_id)
+    return job_id
 
 
-@composite_solid
-def import_data_files(scratch_dataset_name: HcaScratchDatasetName) -> Nothing:
+@composite_solid(
+    output_defs=[DynamicOutputDefinition(name="result", dagster_type=JobId)]
+)
+def import_data_files(scratch_dataset_name: HcaScratchDatasetName):
     """
     Composite solid responsible for ingesting data files and related descriptors to TDR
     :param scratch_dataset_name: Scratch dataset that will hold temporary ingest data
     """
     generated_file_loads = diff_file_loads(scratch_dataset_name)
     bulk_ingest_jobs = generated_file_loads.map(bulk_ingest)
+    return bulk_ingest_jobs

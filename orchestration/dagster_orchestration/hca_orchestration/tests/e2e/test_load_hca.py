@@ -5,7 +5,6 @@ from google.cloud.bigquery.client import Client, QueryJobConfig
 from hca_orchestration.pipelines import load_hca
 
 
-@pytest.mark.skip
 @pytest.mark.e2e
 def test_load_hca(load_hca_run_config, dataset_name, tdr_bigquery_client):
     execute_pipeline(
@@ -91,11 +90,31 @@ def test_load_hca(load_hca_run_config, dataset_name, tdr_bigquery_client):
     )
     assert len(links_rows) > 0, "Should have links rows"
 
+    sequence_files_loaded = _query_files_loaded(
+        "sequence_file",
+        dataset_name,
+        tdr_bigquery_client
+    )
+    assert len(sequence_files_loaded) > 0, "Should have loaded sequence_file data files"
+
 
 def _query_metadata_table(metadata_type: str, dataset_name: str, client: Client):
     query = f"""
     SELECT * FROM `datarepo_{dataset_name}.{metadata_type}`
     """
+    return _exec_query(query, client)
+
+
+def _query_files_loaded(file_type: str, dataset_name: str, client: Client):
+    query = f"""
+    SELECT * FROM `datarepo_{dataset_name}.{file_type}` f
+    INNER JOIN `datarepo_{dataset_name}.datarepo_load_history` dlh
+    ON dlh.file_id = f.file_id
+    """
+    return _exec_query(query, client)
+
+
+def _exec_query(query, client):
     job_config = QueryJobConfig()
     job_config.use_legacy_sql = False
 

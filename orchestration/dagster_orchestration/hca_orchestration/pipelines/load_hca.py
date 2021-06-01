@@ -79,6 +79,7 @@ test_mode = ModeDefinition(
 )
 def load_hca() -> None:
     staging_dataset = create_scratch_dataset(pre_process_metadata(clear_scratch_dir()))
-    import_data_files(staging_dataset)
-    file_metadata_fanout(staging_dataset)
-    non_file_metadata_fanout(staging_dataset)
+    result = import_data_files(staging_dataset).collect()
+
+    file_metadata_fanout(result, staging_dataset)
+    non_file_metadata_fanout(result, staging_dataset)
