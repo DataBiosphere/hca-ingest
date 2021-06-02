@@ -9,6 +9,7 @@ from google.cloud.bigquery import DestinationFormat
 from google.cloud.bigquery.client import RowIterator
 
 from hca_orchestration.contrib.bigquery import BigQueryService
+from hca_orchestration.contrib.gcs import path_has_any_data
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
 from hca_orchestration.solids.data_repo import wait_for_job_completion
@@ -146,11 +147,8 @@ def check_has_data(
 
     source_path = f"{scratch_config.scratch_prefix_name}/{metadata_path}/{metadata_type}/"
     context.log.info(f"Checking for data to load at path {source_path}")
-    blobs = [blob for blob in
-             context.resources.gcs.list_blobs(scratch_config.scratch_bucket_name, prefix=source_path)]
-    non_empty_metadata_file = any([blob.size > 0 for blob in blobs])
 
-    if non_empty_metadata_file > 0:
+    if path_has_any_data(scratch_config.scratch_bucket_name, source_path, context.resources.gcs):
         context.log.info(f"{metadata_type} has data to load")
         yield Output(True, "has_data")
     else:
@@ -171,6 +169,8 @@ def start_load(
         has_data: bool,
         metadata_fanout_result: MetadataTypeFanoutResult
 ) -> Iterable[Output]:
+    assert has_data, "Should not attempt to load data if no data is present"
+
     bigquery_service = context.resources.bigquery_service
     target_hca_dataset = context.resources.target_hca_dataset
     scratch_config = context.resources.scratch_config
@@ -279,17 +279,16 @@ def _export_outdated(
 )
 def check_has_outdated(
         context: AbstractComputeExecutionContext,
-        job_id: JobId,
+        parent_load_job_id: JobId,
         metadata_fanout_result: MetadataTypeFanoutResult
 ) -> Iterable[Output]:
+    assert parent_load_job_id, "Should not attempt to check for outdated rows if no parent job loaded data"
+
     scratch_config = context.resources.scratch_config
     metadata_type = metadata_fanout_result.metadata_type
     source_path = f"{scratch_config.scratch_prefix_name}/outdated-ids/{metadata_type}/"
-    blobs = [blob for blob in
-             context.resources.gcs.list_blobs(scratch_config.scratch_bucket_name, prefix=source_path)]
-    non_empty_file = any([blob.size > 0 for blob in blobs])
 
-    if non_empty_file:
+    if path_has_any_data(scratch_config.scratch_bucket_name, source_path, context.resources.gcs):
         yield Output(True, "has_outdated")
     else:
         yield Output(False, "no_outdated")
@@ -304,6 +303,8 @@ def clear_outdated(
         has_outdated: bool,
         metadata_fanout_result: MetadataTypeFanoutResult
 ) -> JobId:
+    assert has_outdated, "Should not attempt to clear outdated rows if none are present"
+
     metadata_type = metadata_fanout_result.metadata_type
     bigquery_service = context.resources.bigquery_service
     target_hca_dataset = context.resources.target_hca_dataset

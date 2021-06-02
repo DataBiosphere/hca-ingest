@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 
 def fetch_job_info() -> None:
-    parser = DefaultHelpParser(description="A simple CLI to manage TDR datasets.")
+    parser = DefaultHelpParser(description="A simple CLI to inspect TDR jobs.")
 
     parser.add_argument("-e", "--env", help="The Jade environment to target",
                         choices=["dev", "prod", "real_prod"], required=True)
