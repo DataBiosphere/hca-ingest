@@ -1,12 +1,11 @@
 import logging
-from typing import Iterable
 import uuid
+from typing import Iterable
 
 import pytest
-from dagster_utils.contrib.google import authorized_session
 from google.cloud.bigquery.client import Client
 
-from hca_manage.common import data_repo_host, get_api_client
+from hca_manage.common import data_repo_host, get_api_client, data_repo_profile_ids
 from hca_manage.dataset import DatasetManager
 
 MONSTER_TEST_DATASET_SENTINEL = "MONSTER_TEST_DELETEME"
@@ -14,12 +13,12 @@ MONSTER_TEST_DATASET_SENTINEL = "MONSTER_TEST_DELETEME"
 
 @pytest.fixture
 def tdr_bigquery_client():
-    return Client(_http=authorized_session())
+    return Client()
 
 
 @pytest.fixture
 def delete_dataset_on_exit():
-    return True
+    return False
 
 
 @pytest.fixture
@@ -37,6 +36,7 @@ def dataset_id(dataset_name, delete_dataset_on_exit, existing_dataset_id) -> Ite
     data_repo_client = get_api_client(data_repo_host["dev"])
     dataset_manager = DatasetManager("dev", data_repo_client)
 
+    # setup, either create the dataset or re-use the existing one if passed in as a fixture
     if existing_dataset_id:
         logging.info(f"Existing dataset ID = {existing_dataset_id}")
         logging.info("This dataset will not be deleted at the end of the test")
@@ -45,7 +45,7 @@ def dataset_id(dataset_name, delete_dataset_on_exit, existing_dataset_id) -> Ite
         logging.info("No existing dataset ID passed, creating new dataset")
         dataset_id = dataset_manager.create_dataset_with_policy_members(
             dataset_name,
-            "390e7a85-d47f-4531-b612-165fc977d3bd",
+            data_repo_profile_ids["dev"],
             None,
             dataset_manager.generate_schema(),
             MONSTER_TEST_DATASET_SENTINEL
@@ -53,6 +53,7 @@ def dataset_id(dataset_name, delete_dataset_on_exit, existing_dataset_id) -> Ite
 
     yield dataset_id
 
+    # clean up
     if delete_dataset_on_exit:
         logging.info(f"Deleting dataset, name = {dataset_name}, id = {dataset_id}")
         dataset_manager.delete_dataset(
@@ -100,7 +101,7 @@ def load_hca_run_config(dataset_name, dataset_id):
                     "dataset_name": dataset_name,
                     "dataset_id": dataset_id,
                     "project_id": "broad-jade-dev-data",
-                    "billing_profile_id": "390e7a85-d47f-4531-b612-165fc977d3bd",
+                    "billing_profile_id": data_repo_profile_ids["dev"],
                 }
             }
         },
