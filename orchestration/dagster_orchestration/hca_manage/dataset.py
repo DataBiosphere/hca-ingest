@@ -9,7 +9,7 @@ from typing import Optional, Any
 
 from dagster_utils.contrib.data_repo.jobs import poll_job, JobPollException
 from dagster_utils.contrib.data_repo.typing import JobId
-from data_repo_client import RepositoryApi
+from data_repo_client import RepositoryApi, EnumerateDatasetModel
 
 from hca_manage import __version__ as hca_manage_version
 from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client, query_yes_no, tdr_operation
@@ -17,7 +17,7 @@ from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client,
 MAX_DATASET_CREATE_POLL_SECONDS = 120
 DATASET_CREATE_POLL_INTERVAL_SECONDS = 2
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 
 def run(arguments: Optional[list[str]] = None) -> None:
@@ -29,11 +29,12 @@ def run(arguments: Optional[list[str]] = None) -> None:
 
     # create
     dataset_create = subparsers.add_parser("create")
-    dataset_create.add_argument("-n", "--dataset_name", help="Name of dataset to create.")
+    dataset_create.add_argument("-n", "--dataset_name", help="Name of dataset to create.", required=True)
     dataset_create.add_argument("-b", "--billing_profile_id", help="Billing profile ID", required=True)
     dataset_create.add_argument(
         "-p", "--policy-members", help="CSV list of emails to grant steward access to this dataset"
     )
+    dataset_create.add_argument("-s", "--schema_path", help="Path to JSON schema", required=False)
     dataset_create.set_defaults(func=_create_dataset)
 
     # remove
@@ -44,7 +45,7 @@ def run(arguments: Optional[list[str]] = None) -> None:
 
     # query
     dataset_query = subparsers.add_parser("query")
-    dataset_query.add_argument("-n", "--dataset_name", help="Name of dataset to delete.")
+    dataset_query.add_argument("-n", "--dataset_name", help="Name of dataset to filter for")
     dataset_query.set_defaults(func=_query_dataset)
 
     args = parser.parse_args(arguments)
@@ -72,7 +73,12 @@ def _create_dataset(args: argparse.Namespace) -> None:
     client = get_api_client(host=host)
 
     hca = DatasetManager(environment=args.env, data_repo_client=client)
-    schema = hca.generate_schema()
+
+    if args.schema_path:
+        with open(args.schema_path, "r") as f:
+            schema = json.load(f)
+    else:
+        schema = hca.generate_schema()
 
     hca.create_dataset_with_policy_members(
         args.dataset_name,
@@ -159,15 +165,16 @@ class DatasetManager:
         :param description: Optional description for the dataset
         :return: Job ID of the dataset creation job
         """
+        payload = {
+            "name": dataset_name,
+            "description": description,
+            "defaultProfileId": billing_profile_id,
+            "schema": schema,
+            "region": "US",
+            "cloudPlatform": "gcp"
+        }
         response = self.data_repo_client.create_dataset(
-            dataset={
-                "name": dataset_name,
-                "description": description,
-                "defaultProfileId": billing_profile_id,
-                "schema": schema,
-                "region": "US",
-                "cloudPlatform": "gcp"
-            }
+            dataset=payload
         )
         job_id: JobId = response.id
         logging.info(f"Dataset creation job id: {job_id}")
@@ -195,11 +202,11 @@ class DatasetManager:
         logging.info(f"Dataset deletion job id: {delete_response_id}")
         return delete_response_id
 
-    def enumerate_dataset(self, dataset_name: str) -> str:
+    def enumerate_dataset(self, dataset_name: str) -> EnumerateDatasetModel:
         """
         Enumerates TDR datasets, filtering on the given dataset_name
         """
-        return f"{self.data_repo_client.enumerate_datasets(filter=dataset_name)}"
+        return self.data_repo_client.enumerate_datasets(filter=dataset_name)
 
     def add_policy_members(
             self,
