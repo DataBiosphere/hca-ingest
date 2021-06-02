@@ -1,6 +1,7 @@
 import argparse
 import csv
 from dataclasses import dataclass
+import logging
 import functools
 import sys
 from typing import Any, Callable, NoReturn, TextIO, TypeVar, cast
@@ -14,6 +15,17 @@ from data_repo_client import ApiClient, Configuration, RepositoryApi, ApiExcepti
 
 make_python_type_usable_as_dagster_type(JobId, DagsterString)
 
+data_repo_host = {
+    "dev": "https://jade.datarepo-dev.broadinstitute.org/",
+    "prod": "https://jade-terra.datarepo-prod.broadinstitute.org/",
+    "real_prod": "https://data.terra.bio/"
+}
+
+data_repo_profile_ids = {
+    "dev": "390e7a85-d47f-4531-b612-165fc977d3bd",
+    "prod": "db61c343-6dfe-4d14-84e9-60ddf97ea73f"
+}
+
 
 @dataclass
 class ProblemCount:
@@ -25,16 +37,8 @@ class ProblemCount:
         return self.duplicates > 0 or self.null_file_refs > 0 or self.dangling_project_refs > 0
 
 
-data_repo_host = {
-    "dev": "https://jade.datarepo-dev.broadinstitute.org/",
-    "prod": "https://jade-terra.datarepo-prod.broadinstitute.org/",
-    "real_prod": "https://data.terra.bio/"
-}
-
-data_repo_profile_ids = {
-    "dev": "390e7a85-d47f-4531-b612-165fc977d3bd",
-    "prod": "db61c343-6dfe-4d14-84e9-60ddf97ea73f"
-}
+def setup_cli_logging_format() -> None:
+    logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 
 class DefaultHelpParser(argparse.ArgumentParser):
