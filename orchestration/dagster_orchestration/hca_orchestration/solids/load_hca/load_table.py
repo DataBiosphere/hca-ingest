@@ -375,12 +375,14 @@ def load_table(metadata_fanout_result: MetadataTypeFanoutResult) -> Nothing:
     no_data, has_data = check_has_data(metadata_fanout_result)
     no_job, job_id = start_load(has_data, metadata_fanout_result)
 
-    wait_for_job_completion(job_id)
-    check_table_ingest_job_result(job_id)
-
     # skip checking for outdated if a "load job id" was never returned (i.e., we loaded
     # no data, so there is no possibility of outdated rows)
-    no_outdated, has_outdated = check_has_outdated(job_id, metadata_fanout_result)
-    soft_delete_job_id = clear_outdated(has_outdated, metadata_fanout_result)
-    wait_for_job_completion(soft_delete_job_id)
-    check_data_ingest_job_result(soft_delete_job_id)
+    no_outdated, has_outdated = check_has_outdated(
+        check_table_ingest_job_result(wait_for_job_completion(job_id)),
+        metadata_fanout_result
+    )
+    check_data_ingest_job_result(
+        wait_for_job_completion(
+            clear_outdated(has_outdated, metadata_fanout_result)
+        )
+    )

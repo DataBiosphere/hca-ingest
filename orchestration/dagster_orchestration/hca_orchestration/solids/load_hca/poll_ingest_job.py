@@ -16,7 +16,7 @@ from hca_orchestration.contrib.retry import is_truthy, retry
         'poll_interval_seconds': Int,
     }
 )
-def base_check_data_ingest_job_result(context: AbstractComputeExecutionContext, job_id: JobId) -> Nothing:
+def base_check_data_ingest_job_result(context: AbstractComputeExecutionContext, job_id: JobId) -> JobId:
     job_results = _base_check_jade_job_result(
         context.solid_config['max_wait_time_seconds'],
         context.solid_config['poll_interval_seconds'],
@@ -26,6 +26,8 @@ def base_check_data_ingest_job_result(context: AbstractComputeExecutionContext, 
     )
     if job_results['failedFiles'] > 0:
         raise Failure(f"Bulk file load (job_id = {job_id} had failedFiles = {job_results['failedFiles']})")
+
+    return job_id
 
 
 @configured(base_check_data_ingest_job_result)
@@ -47,7 +49,7 @@ def check_data_ingest_job_result(config: DagsterConfigDict) -> DagsterConfigDict
         'poll_interval_seconds': Int,
     }
 )
-def check_table_ingest_result(context: AbstractComputeExecutionContext, job_id: JobId) -> Nothing:
+def check_table_ingest_result(context: AbstractComputeExecutionContext, job_id: JobId) -> JobId:
     job_results = _base_check_jade_job_result(
         context.solid_config['max_wait_time_seconds'],
         context.solid_config['poll_interval_seconds'],
@@ -57,6 +59,8 @@ def check_table_ingest_result(context: AbstractComputeExecutionContext, job_id: 
     )
     if job_results['bad_row_count'] == '0':
         raise Failure(f"Bulk file load (job_id = {job_id} had failedFiles = {job_results['failedFiles']})")
+
+    return job_id
 
 
 @configured(check_table_ingest_result)
