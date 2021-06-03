@@ -16,7 +16,12 @@ def run(arguments: Optional[list[str]] = None) -> None:
     setup_cli_logging_format()
     parser = DefaultHelpParser(description="A simple CLI to manage TDR snapshots.")
     parser.add_argument("-V", "--version", action="version", version="%(prog)s " + hca_manage_version)
-    parser.add_argument("-e", "--env", help="The Jade environment to target", choices=["dev", "prod"], required=True)
+    parser.add_argument(
+        "-e",
+        "--env",
+        help="The Jade environment to target",
+        choices=data_repo_host.keys(),
+        required=True)
     subparsers = parser.add_subparsers()
 
     # create

@@ -11,7 +11,7 @@ from dagster.core.types.dagster_type import String as DagsterString
 
 from dagster_utils.contrib.google import default_google_access_token
 from dagster_utils.contrib.data_repo.typing import JobId
-from data_repo_client import ApiClient, Configuration, RepositoryApi, ApiException
+from data_repo_client import ApiClient, Configuration, RepositoryApi, ApiException, ResourcesApi
 
 make_python_type_usable_as_dagster_type(JobId, DagsterString)
 
@@ -49,14 +49,22 @@ class DefaultHelpParser(argparse.ArgumentParser):
         sys.exit(2)
 
 
-def get_api_client(host: str) -> RepositoryApi:
+def _build_base_api_client(host: str) -> ApiClient:
     # create API client
     config = Configuration(host=host)
     config.access_token = default_google_access_token()
     client = ApiClient(configuration=config)
     client.client_side_validation = False
 
-    return RepositoryApi(api_client=client)
+    return client
+
+
+def get_api_client(host: str) -> RepositoryApi:
+    return RepositoryApi(api_client=_build_base_api_client(host))
+
+
+def get_resources_api_client(host: str) -> ResourcesApi:
+    return ResourcesApi(api_client=_build_base_api_client(host))
 
 
 def get_dataset_id(dataset: str, data_repo_client: RepositoryApi) -> str:
