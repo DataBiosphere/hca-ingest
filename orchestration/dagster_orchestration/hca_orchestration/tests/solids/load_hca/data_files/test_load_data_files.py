@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock
 
-from dagster import execute_solid, ModeDefinition, SolidExecutionResult, ResourceDefinition, Failure
+from dagster import execute_solid, ModeDefinition, SolidExecutionResult, ResourceDefinition
 
 from dagster_utils.resources.bigquery import noop_bigquery_client
 from dagster_utils.resources.google_storage import mock_storage_client
@@ -9,8 +9,7 @@ from data_repo_client.api import RepositoryApi
 from data_repo_client.models import JobModel
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
-from hca_orchestration.solids.load_hca.data_files.load_data_files import diff_file_loads, run_bulk_file_ingest, \
-    check_data_ingest_job_result, JobId
+from hca_orchestration.solids.load_hca.data_files.load_data_files import diff_file_loads, run_bulk_file_ingest
 from hca_orchestration.support.typing import HcaScratchDatasetName
 
 

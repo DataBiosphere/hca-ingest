@@ -3,7 +3,7 @@ from dagster_utils.contrib.data_repo.typing import JobId
 
 from hca_orchestration.pipelines.load_hca import test_mode
 from hca_orchestration.solids.load_hca.non_file_metadata.load_non_file_metadata import non_file_metadata_fanout
-from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType, MetadataTypeFanoutResult
+from hca_orchestration.support.typing import HcaScratchDatasetName
 
 
 run_config = {
