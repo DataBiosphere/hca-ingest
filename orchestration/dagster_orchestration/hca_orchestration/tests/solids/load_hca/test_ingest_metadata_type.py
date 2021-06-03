@@ -2,6 +2,7 @@ from enum import Enum
 import unittest
 
 from dagster import SolidExecutionResult, execute_solid
+from dagster_utils.contrib.data_repo.typing import JobId
 
 from hca_orchestration.pipelines.load_hca import test_mode
 from hca_orchestration.solids.load_hca.ingest_metadata_type import ingest_metadata_type
@@ -30,7 +31,10 @@ class IngestMetadataTypeSolidTestCase(unittest.TestCase):
                     "ingest_metadata_type": {
                         "config": {
                             "metadata_types": FakeEnum,
-                            "path": "fakepath"
+                            "prefix": "fakepath"
+                        },
+                        "inputs": {
+                            "result": [JobId("abcdef")]
                         }
                     }
                 }
