@@ -1,4 +1,5 @@
 from enum import Enum
+import logging
 
 from dagster import solid, composite_solid, configured, Nothing
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
@@ -10,6 +11,7 @@ from hca_orchestration.resources.config.scratch import ScratchConfig
 from hca_orchestration.solids.load_hca.ingest_metadata_type import ingest_metadata_type
 from hca_orchestration.solids.load_hca.load_table import load_table, export_data
 from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType, MetadataTypeFanoutResult
+from hca_manage.common import JobId
 
 
 class FileMetadataTypes(Enum):
@@ -24,7 +26,7 @@ class FileMetadataTypes(Enum):
 
 
 ingest_file_metadata_type = configured(ingest_metadata_type, name="ingest_file_metadata_type")(
-    {"metadata_types": FileMetadataTypes})
+    {"metadata_types": FileMetadataTypes, "prefix": "file-metadata-with-ids"})
 
 
 def _inject_file_ids(
@@ -121,5 +123,5 @@ def ingest_metadata(file_metadata_fanout_result: MetadataTypeFanoutResult) -> No
 
 
 @composite_solid
-def file_metadata_fanout(scratch_dataset_name: HcaScratchDatasetName) -> Nothing:
-    ingest_file_metadata_type(scratch_dataset_name).map(ingest_metadata)
+def file_metadata_fanout(result: list[JobId], scratch_dataset_name: HcaScratchDatasetName) -> Nothing:
+    ingest_file_metadata_type(result, scratch_dataset_name).map(ingest_metadata)

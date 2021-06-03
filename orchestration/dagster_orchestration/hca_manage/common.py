@@ -126,6 +126,7 @@ def tdr_operation(func: F) -> F:
 
     @functools.wraps(func)
     def _tdr_wrapper(*args, **kwargs):  # type: ignore
+        result = None
         try:
             result = func(*args, **kwargs)
         except ApiException as e:

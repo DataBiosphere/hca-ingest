@@ -1,15 +1,20 @@
-from dagster import composite_solid, solid, Nothing
+import logging
+from typing import Iterable
+
+from dagster import composite_solid, solid, Nothing, OutputDefinition, Output
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
+from dagster_utils.contrib.data_repo.typing import JobId
+from data_repo_client import RepositoryApi, JobModel
 from google.cloud.bigquery import DestinationFormat
 from google.cloud.bigquery.client import RowIterator
 
-from dagster_utils.contrib.data_repo.typing import JobId
-from data_repo_client import RepositoryApi, JobModel
 from hca_orchestration.contrib.bigquery import BigQueryService
+from hca_orchestration.contrib.gcs import path_has_any_data
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
 from hca_orchestration.solids.data_repo import wait_for_job_completion
-from hca_orchestration.solids.load_hca.poll_ingest_job import check_data_ingest_job_result
+from hca_orchestration.solids.load_hca.poll_ingest_job import check_data_ingest_job_result, \
+    check_table_ingest_job_result
 from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType, MetadataTypeFanoutResult
 
 
@@ -35,7 +40,7 @@ def _diff_hca_table(
     destination = f"{scratch_dataset_name}.{joined_table_name}"
 
     source_paths = [
-        f"gs://{scratch_config.scratch_area()}/{metadata_path}/{metadata_type}/*"
+        f"{scratch_config.scratch_area()}/{metadata_path}/{metadata_type}/*"
     ]
 
     bigquery_service.build_query_job_using_external_schema(
@@ -77,18 +82,19 @@ def export_data(
         scratch_config: ScratchConfig,
         scratch_dataset_name: HcaScratchDatasetName,
         bigquery_service: BigQueryService
-) -> None:
+) -> int:
     assert table_name_extension.startswith("_"), "Export data extension must start with _"
 
     source_table_name = f"{metadata_type}{table_name_extension}"
     out_path = f"{scratch_config.scratch_area()}/{operation_name}/{metadata_type}/*"
 
+    logging.info(f"Exporting data to {out_path}")
     num_rows = bigquery_service.get_num_rows_in_table(
         source_table_name,
         scratch_dataset_name
     )
     if num_rows == 0:
-        return
+        return num_rows
 
     bigquery_service.build_extract_job(
         source_table=source_table_name,
@@ -97,6 +103,8 @@ def export_data(
         bigquery_project=scratch_config.scratch_bq_project,
     ).result()
 
+    return num_rows
+
 
 def _ingest_table(
         data_repo_api_client: RepositoryApi,
@@ -104,7 +112,7 @@ def _ingest_table(
         table_name: str,
         scratch_config: ScratchConfig
 ) -> JobId:
-    source_path = f"gs://{scratch_config.scratch_area()}/new-rows/{table_name}/*"
+    source_path = f"{scratch_config.scratch_area()}/new-rows/{table_name}/*"
 
     payload = {
         "format": "json",
@@ -123,12 +131,46 @@ def _ingest_table(
 
 
 @solid(
-    required_resource_keys={"bigquery_service", "target_hca_dataset", "scratch_config", "data_repo_client"}
+    required_resource_keys={"bigquery_service", "target_hca_dataset", "scratch_config", "data_repo_client", "gcs"},
+    output_defs=[
+        OutputDefinition(name="no_data", is_required=False),
+        OutputDefinition(name="has_data", is_required=False),
+    ]
+)
+def check_has_data(
+    context: AbstractComputeExecutionContext,
+    metadata_fanout_result: MetadataTypeFanoutResult
+) -> Iterable[Output]:
+    scratch_config = context.resources.scratch_config
+    metadata_type = metadata_fanout_result.metadata_type
+    metadata_path = metadata_fanout_result.path
+
+    source_path = f"{scratch_config.scratch_prefix_name}/{metadata_path}/{metadata_type}/"
+    context.log.info(f"Checking for data to load at path {source_path}")
+
+    if path_has_any_data(scratch_config.scratch_bucket_name, source_path, context.resources.gcs):
+        context.log.info(f"{metadata_type} has data to load")
+        yield Output(True, "has_data")
+    else:
+        context.log.info(f"{metadata_type} has no data to load")
+        yield Output(False, "no_data")
+    return False
+
+
+@solid(
+    required_resource_keys={"bigquery_service", "target_hca_dataset", "scratch_config", "data_repo_client"},
+    output_defs=[
+        OutputDefinition(name="no_job", is_required=False),
+        OutputDefinition(name="job_id", is_required=False),
+    ]
 )
 def start_load(
         context: AbstractComputeExecutionContext,
+        has_data: bool,
         metadata_fanout_result: MetadataTypeFanoutResult
-) -> JobId:
+) -> Iterable[Output]:
+    assert has_data, "Should not attempt to load data if no data is present"
+
     bigquery_service = context.resources.bigquery_service
     target_hca_dataset = context.resources.target_hca_dataset
     scratch_config = context.resources.scratch_config
@@ -159,7 +201,7 @@ def start_load(
         bigquery_service=bigquery_service
     )
 
-    export_data(
+    num_new_rows = export_data(
         operation_name="new-rows",
         table_name_extension="_values",
         metadata_type=metadata_type,
@@ -168,15 +210,17 @@ def start_load(
         bigquery_service=bigquery_service
     )
 
-    # todo do not attempt to ingest if there are no rows
-    job_id = _ingest_table(
-        data_repo_client,
-        target_hca_dataset,
-        metadata_type,
-        scratch_config
-    )
+    if num_new_rows > 0:
+        context.log.info(f"{num_new_rows} for {metadata_type}")
+        job_id = _ingest_table(
+            data_repo_client,
+            target_hca_dataset,
+            metadata_type,
+            scratch_config
+        )
+        yield Output(job_id, "job_id")
 
-    return job_id
+    yield Output("no_job", "no_job")
 
 
 def _get_outdated_ids(
@@ -227,12 +271,40 @@ def _export_outdated(
 
 
 @solid(
+    required_resource_keys={"bigquery_service", "target_hca_dataset", "scratch_config", "data_repo_client", "gcs"},
+    output_defs=[
+        OutputDefinition(name="no_outdated", is_required=False),
+        OutputDefinition(name="has_outdated", is_required=False),
+    ]
+)
+def check_has_outdated(
+        context: AbstractComputeExecutionContext,
+        parent_load_job_id: JobId,
+        metadata_fanout_result: MetadataTypeFanoutResult
+) -> Iterable[Output]:
+    assert parent_load_job_id, "Should not attempt to check for outdated rows if no parent job loaded data"
+
+    scratch_config = context.resources.scratch_config
+    metadata_type = metadata_fanout_result.metadata_type
+    source_path = f"{scratch_config.scratch_prefix_name}/outdated-ids/{metadata_type}/"
+
+    if path_has_any_data(scratch_config.scratch_bucket_name, source_path, context.resources.gcs):
+        yield Output(True, "has_outdated")
+    else:
+        yield Output(False, "no_outdated")
+    return False
+
+
+@solid(
     required_resource_keys={"bigquery_service", "target_hca_dataset", "scratch_config", "data_repo_client"}
 )
 def clear_outdated(
         context: AbstractComputeExecutionContext,
+        has_outdated: bool,
         metadata_fanout_result: MetadataTypeFanoutResult
 ) -> JobId:
+    assert has_outdated, "Should not attempt to clear outdated rows if none are present"
+
     metadata_type = metadata_fanout_result.metadata_type
     bigquery_service = context.resources.bigquery_service
     target_hca_dataset = context.resources.target_hca_dataset
@@ -269,8 +341,7 @@ def _soft_delete_outdated(
         table_name: str,
         scratch_config: ScratchConfig
 ) -> JobId:
-    # todo don't exec if outdated = 0
-    outdated_ids_path = f"gs://{scratch_config.scratch_area()}/outdated-ids/{table_name}/*"
+    outdated_ids_path = f"{scratch_config.scratch_area()}/outdated-ids/{table_name}/*"
     payload = {
         "deleteType": "soft",
         "specType": "gcsFile",
@@ -297,10 +368,21 @@ def load_table(metadata_fanout_result: MetadataTypeFanoutResult) -> Nothing:
     """
     Composite solid that knows how to load a metadata table
     """
-    job_id = start_load(metadata_fanout_result)
-    wait_for_job_completion(job_id)
-    check_data_ingest_job_result(job_id)
 
-    soft_delete_job_id = clear_outdated(metadata_fanout_result)
-    wait_for_job_completion(soft_delete_job_id)
-    check_data_ingest_job_result(soft_delete_job_id)
+    # these jobs return two values, to reflect whether data was loaded in each step
+    # dagster will not dispatch downstream solids if the needed "data was loaded"
+    # output is never returned, hence we have conditional branching
+    no_data, has_data = check_has_data(metadata_fanout_result)
+    no_job, job_id = start_load(has_data, metadata_fanout_result)
+
+    # skip checking for outdated if a "load job id" was never returned (i.e., we loaded
+    # no data, so there is no possibility of outdated rows)
+    no_outdated, has_outdated = check_has_outdated(
+        check_table_ingest_job_result(wait_for_job_completion(job_id)),
+        metadata_fanout_result
+    )
+    check_data_ingest_job_result(
+        wait_for_job_completion(
+            clear_outdated(has_outdated, metadata_fanout_result)
+        )
+    )

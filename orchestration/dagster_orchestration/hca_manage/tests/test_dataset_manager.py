@@ -44,7 +44,8 @@ class DatasetManagerTestCase(unittest.TestCase):
             "example",
             "fake_billing_id",
             {"abc@example.com", "def@example.com"},
-            {"fake": "schema"}
+            {"fake": "schema"},
+            None
         )
 
         self.manager.data_repo_client.create_dataset.assert_called_once()
