@@ -1,15 +1,12 @@
 import os
 import unittest
-import uuid
 from typing import Any
 from unittest.mock import patch
 
-import pytest
 from dagster import execute_pipeline, file_relative_path, PipelineDefinition, PipelineExecutionResult
 from dagster.utils import load_yaml_from_globs
 from dagster.utils.merger import deep_merge_dicts
 
-from hca_manage.diff_dirs import diff_dirs
 from hca_orchestration.pipelines import load_hca, validate_egress
 
 
@@ -27,11 +24,11 @@ def beam_runner_path() -> str:
 
 class PipelinesTestCase(unittest.TestCase):
     def run_pipeline(
-        self,
-        pipeline: PipelineDefinition,
-        config_name: str,
-        extra_config: dict[str, Any] = {},
-        pipeline_mode='test'
+            self,
+            pipeline: PipelineDefinition,
+            config_name: str,
+            extra_config: dict[str, Any] = {},
+            pipeline_mode='test'
     ) -> PipelineExecutionResult:
         config_dict = load_yaml_from_globs(
             config_path(config_name)
@@ -43,40 +40,6 @@ class PipelinesTestCase(unittest.TestCase):
             run_config=config_dict,
             mode=pipeline_mode
         )
-
-    @pytest.mark.skip
-    @pytest.mark.e2e
-    def test_load_hca_local_e2e(self):
-        test_id = f'test-{uuid.uuid4()}'
-        runtime_config = {
-            'resources': {
-                'beam_runner': {
-                    'config': {
-                        'working_dir': beam_runner_path()
-                    }
-                },
-                'scratch_config': {
-                    'config': {
-                        'scratch_prefix_name': f'local-stage-data/{test_id}'
-                    }
-                }
-            }
-        }
-
-        self.run_pipeline(
-            load_hca,
-            'test_load_hca_local_e2e.yaml',
-            extra_config=runtime_config,
-            pipeline_mode='local')
-
-        expected_blobs, output_blobs = diff_dirs(
-            'broad-dsp-monster-hca-dev',
-            'broad-dsp-monster-hca-dev-test-storage',
-            'integration/ebi_small/expected_output',
-            'broad-dsp-monster-hca-dev-temp-storage',
-            f'local-stage-data/{test_id}',
-        )
-        self.assertEqual(expected_blobs, output_blobs, "Output results differ from expected")
 
     def test_load_data_noop_resources(self):
         result = self.run_pipeline(load_hca, config_name="test_load_hca_noop_resources.yaml")

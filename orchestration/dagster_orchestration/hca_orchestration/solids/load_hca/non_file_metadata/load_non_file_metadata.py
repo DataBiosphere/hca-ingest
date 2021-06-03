@@ -5,6 +5,7 @@ from dagster import composite_solid, configured, Nothing
 from hca_orchestration.solids.load_hca.load_table import load_table
 from hca_orchestration.solids.load_hca.ingest_metadata_type import ingest_metadata_type
 from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType
+from hca_manage.common import JobId
 
 
 class NonFileMetadataTypes(Enum):
@@ -36,9 +37,9 @@ class NonFileMetadataTypes(Enum):
 
 
 ingest_non_file_metadata_type = configured(ingest_metadata_type, name="ingest_non_file_metadata_type")(
-    {"metadata_types": NonFileMetadataTypes, "path": "metadata"})
+    {"metadata_types": NonFileMetadataTypes, "prefix": "metadata"})
 
 
 @composite_solid
-def non_file_metadata_fanout(scratch_dataset_name: HcaScratchDatasetName) -> Nothing:
-    ingest_non_file_metadata_type(scratch_dataset_name).map(load_table)
+def non_file_metadata_fanout(result: list[JobId], scratch_dataset_name: HcaScratchDatasetName) -> Nothing:
+    ingest_non_file_metadata_type(result, scratch_dataset_name).map(load_table)

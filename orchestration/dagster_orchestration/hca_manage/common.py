@@ -1,28 +1,19 @@
 import argparse
 import csv
 from dataclasses import dataclass
+import logging
+import functools
 import sys
-from typing import NoReturn, TextIO
+from typing import Any, Callable, NoReturn, TextIO, TypeVar, cast
 
 from dagster import make_python_type_usable_as_dagster_type
 from dagster.core.types.dagster_type import String as DagsterString
 
 from dagster_utils.contrib.google import default_google_access_token
 from dagster_utils.contrib.data_repo.typing import JobId
-from data_repo_client import ApiClient, Configuration, RepositoryApi
+from data_repo_client import ApiClient, Configuration, RepositoryApi, ApiException, ResourcesApi
 
 make_python_type_usable_as_dagster_type(JobId, DagsterString)
-
-
-@dataclass
-class ProblemCount:
-    duplicates: int
-    null_file_refs: int
-    dangling_project_refs: int
-
-    def has_problems(self) -> bool:
-        return self.duplicates > 0 or self.null_file_refs > 0 or self.dangling_project_refs > 0
-
 
 data_repo_host = {
     "dev": "https://jade.datarepo-dev.broadinstitute.org/",
@@ -36,6 +27,20 @@ data_repo_profile_ids = {
 }
 
 
+@dataclass
+class ProblemCount:
+    duplicates: int
+    null_file_refs: int
+    dangling_project_refs: int
+
+    def has_problems(self) -> bool:
+        return self.duplicates > 0 or self.null_file_refs > 0 or self.dangling_project_refs > 0
+
+
+def setup_cli_logging_format() -> None:
+    logging.basicConfig(level=logging.INFO, format='%(message)s')
+
+
 class DefaultHelpParser(argparse.ArgumentParser):
     def error(self, message: str) -> NoReturn:
         """Print help message by default."""
@@ -44,14 +49,22 @@ class DefaultHelpParser(argparse.ArgumentParser):
         sys.exit(2)
 
 
-def get_api_client(host: str) -> RepositoryApi:
+def _build_base_api_client(host: str) -> ApiClient:
     # create API client
     config = Configuration(host=host)
     config.access_token = default_google_access_token()
     client = ApiClient(configuration=config)
     client.client_side_validation = False
 
-    return RepositoryApi(api_client=client)
+    return client
+
+
+def get_api_client(host: str) -> RepositoryApi:
+    return RepositoryApi(api_client=_build_base_api_client(host))
+
+
+def get_resources_api_client(host: str) -> ResourcesApi:
+    return ResourcesApi(api_client=_build_base_api_client(host))
 
 
 def get_dataset_id(dataset: str, data_repo_client: RepositoryApi) -> str:
@@ -107,3 +120,28 @@ def query_yes_no(question: str, default: str = "no") -> bool:
         else:
             sys.stdout.write("Please respond with 'yes' or 'no' "
                              "(or 'y' or 'n').\n")
+
+
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def tdr_operation(func: F) -> F:
+    """
+    Wraps a TDR operation in exception handling for 401 errors
+    :param op:
+    :return:
+    """
+
+    @functools.wraps(func)
+    def _tdr_wrapper(*args, **kwargs):  # type: ignore
+        result = None
+        try:
+            result = func(*args, **kwargs)
+        except ApiException as e:
+            if e.status == 401:
+                sys.stderr.write(f"Permission denied, check your gcloud credentials\n")
+            else:
+                raise
+        return result
+
+    return cast(F, _tdr_wrapper)
