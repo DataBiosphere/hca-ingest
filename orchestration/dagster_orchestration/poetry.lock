@@ -221,7 +221,7 @@ python-dateutil = "*"
 
 [[package]]
 name = "dagit"
-version = "0.11.11"
+version = "0.11.12"
 description = "Web UI for dagster."
 category = "dev"
 optional = false
@@ -229,8 +229,8 @@ python-versions = "*"
 
 [package.dependencies]
 click = ">=7.0,<8.0"
-dagster = "0.11.11"
-dagster-graphql = "0.11.11"
+dagster = "0.11.12"
+dagster-graphql = "0.11.12"
 flask = ">=0.12.4,<2.0.0"
 flask-cors = ">=3.0.6"
 Flask-GraphQL = ">=2.0.0"
@@ -246,7 +246,7 @@ Werkzeug = "<2.0.0"
 
 [[package]]
 name = "dagster"
-version = "0.11.11"
+version = "0.11.12"
 description = "A data orchestrator for machine learning, analytics, and ETL."
 category = "main"
 optional = false
@@ -283,7 +283,7 @@ test = ["astroid (>=2.3.3,<2.5)", "black (==20.8b1)", "coverage (==5.3)", "docke
 
 [[package]]
 name = "dagster-gcp"
-version = "0.11.11"
+version = "0.11.12"
 description = "Package for GCP-specific Dagster framework solid and resource components."
 category = "main"
 optional = false
@@ -302,7 +302,7 @@ pyarrow = ["pyarrow"]
 
 [[package]]
 name = "dagster-graphql"
-version = "0.11.11"
+version = "0.11.12"
 description = "The GraphQL frontend to python dagster."
 category = "main"
 optional = false
@@ -318,7 +318,7 @@ requests = "*"
 
 [[package]]
 name = "dagster-k8s"
-version = "0.11.11"
+version = "0.11.12"
 description = "A Dagster integration for k8s"
 category = "main"
 optional = false
@@ -331,7 +331,7 @@ kubernetes = "*"
 
 [[package]]
 name = "dagster-pandas"
-version = "0.11.11"
+version = "0.11.12"
 description = "Utilities and examples for working with pandas and dagster, an opinionated framework for expressing data pipelines"
 category = "main"
 optional = false
@@ -343,7 +343,7 @@ pandas = "*"
 
 [[package]]
 name = "dagster-postgres"
-version = "0.11.11"
+version = "0.11.12"
 description = "A Dagster integration for postgres"
 category = "main"
 optional = false
@@ -355,7 +355,7 @@ psycopg2-binary = "*"
 
 [[package]]
 name = "dagster-slack"
-version = "0.11.11"
+version = "0.11.12"
 description = "A Slack client resource for posting to Slack"
 category = "main"
 optional = false
@@ -544,7 +544,7 @@ gevent = "*"
 
 [[package]]
 name = "google-api-core"
-version = "1.28.0"
+version = "1.29.0"
 description = "Google API client core library"
 category = "main"
 optional = false
@@ -866,7 +866,7 @@ pyreadline = {version = "*", markers = "sys_platform == \"win32\""}
 
 [[package]]
 name = "identify"
-version = "2.2.7"
+version = "2.2.8"
 description = "File identification library for Python"
 category = "dev"
 optional = false
@@ -1254,7 +1254,7 @@ testing = ["google-api-core[grpc] (>=1.22.2)"]
 
 [[package]]
 name = "protobuf"
-version = "3.17.1"
+version = "3.17.2"
 description = "Protocol Buffers"
 category = "main"
 optional = false
@@ -1788,7 +1788,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.9"
-content-hash = "2243be4aefe4f930260eabb77bcc3bcf84a21b3a4409627a08abb7ea3ff36107"
+content-hash = "c6b60f83fee70315e43d12c3d9bfca9f4c6e07c7fb20d9d6f49c61abe28f6f2e"
 
 [metadata.files]
 aiohttp = [
@@ -1946,36 +1946,36 @@ croniter = [
     {file = "croniter-1.0.13.tar.gz", hash = "sha256:57f36df4f5a1c31bbf50bbffa3551612c19f6156ab1e88e2e42342ccbb9f9b9a"},
 ]
 dagit = [
-    {file = "dagit-0.11.11-py3-none-any.whl", hash = "sha256:1de746d07fb5732ff9a81e229cdc3040b83889798b1b4800b5e8709e42250e09"},
-    {file = "dagit-0.11.11.tar.gz", hash = "sha256:3b02e6dd5e38c1ca4a4173db043db544a49e1874f1c4c0044d57ff802f8565b1"},
+    {file = "dagit-0.11.12-py3-none-any.whl", hash = "sha256:16e97ce3e3aebc91e7984437db4d50ac7a0d333a5ba3b5d5191ed45dbab58b4d"},
+    {file = "dagit-0.11.12.tar.gz", hash = "sha256:afb38e4b1d2214459cd0232ddd4d95dcd7607d669e9b90db88bd80e6883c1eb2"},
 ]
 dagster = [
-    {file = "dagster-0.11.11-py3-none-any.whl", hash = "sha256:bd259e7307efab6f52cfd19747436a522d7a3ab747c5543fa1307440962a814b"},
-    {file = "dagster-0.11.11.tar.gz", hash = "sha256:e3005a8936e32e1b89ad5635510adcfb3d3f7b1302a324c3276e20f0245aca1b"},
+    {file = "dagster-0.11.12-py3-none-any.whl", hash = "sha256:9c8c0391dd58fc63c3e55555c99fa002dc903fc4ee4b0c817eaf5f6696ed45e5"},
+    {file = "dagster-0.11.12.tar.gz", hash = "sha256:5fc332228be5e1e08296697c7a32e21f930cc27f1e7a23a3e06764ec3e17492e"},
 ]
 dagster-gcp = [
-    {file = "dagster-gcp-0.11.11.tar.gz", hash = "sha256:cece8b1d315ac218cfae54bee26a404f1a77a1544e993691cedd9ade29e7e542"},
-    {file = "dagster_gcp-0.11.11-py3-none-any.whl", hash = "sha256:940e65beb594459e86063f918f31236145f161044a2bb97e70b626f62f68bc9c"},
+    {file = "dagster-gcp-0.11.12.tar.gz", hash = "sha256:69556b40052287435ccc1ceb5a9e877f4932e26056586f7c6d793b51843ef764"},
+    {file = "dagster_gcp-0.11.12-py3-none-any.whl", hash = "sha256:9db4ad71c5ddaa9094ade2f9a1f8c8516d9b555bf4582340a05c277e1580ad2d"},
 ]
 dagster-graphql = [
-    {file = "dagster-graphql-0.11.11.tar.gz", hash = "sha256:b950100e5c302ede9737e19fc61367485110c9865c2ccbf2212920ba33620fd6"},
-    {file = "dagster_graphql-0.11.11-py3-none-any.whl", hash = "sha256:cb1ab14d55207ade401a338a84b249e0da3c9d1b5a324f507d790624638c78a7"},
+    {file = "dagster-graphql-0.11.12.tar.gz", hash = "sha256:aef3663509239dd7edb480708fa84dcc8788036ba5fb259b6a6306b2fd5ee5f0"},
+    {file = "dagster_graphql-0.11.12-py3-none-any.whl", hash = "sha256:58ff7db69f807f8f05b33f47c787cd2881077bcbfef4b173facd091ad7d5a2c1"},
 ]
 dagster-k8s = [
-    {file = "dagster-k8s-0.11.11.tar.gz", hash = "sha256:5a01772b438262e8d6f9f9db27c67f4d9f17110388d13c8374e500527b4917a8"},
-    {file = "dagster_k8s-0.11.11-py3-none-any.whl", hash = "sha256:bc6af71aab359478499bd736e66d198fafff77328ae70f91d9461fb963a10b3d"},
+    {file = "dagster-k8s-0.11.12.tar.gz", hash = "sha256:2530e4b591cb502d4d25f4f24410ca2f2560c997c265702002dfb09d5bf0b8b2"},
+    {file = "dagster_k8s-0.11.12-py3-none-any.whl", hash = "sha256:b344e7dc0815775e7b34cca9e000d5b173de00d6171bf7b42fc5b4b6cc75f0f6"},
 ]
 dagster-pandas = [
-    {file = "dagster-pandas-0.11.11.tar.gz", hash = "sha256:83a14483b1a610d15b51909637abdb78286f7a4d69b93136ebc5317b781d6d76"},
-    {file = "dagster_pandas-0.11.11-py3-none-any.whl", hash = "sha256:a203fe91e28efcfcdc36241189c00c21afa03d3bb64f4d9cf0f125d087e13fdc"},
+    {file = "dagster-pandas-0.11.12.tar.gz", hash = "sha256:32478d6045ec4dc442a7a821ad697a073fac038381e2752ef4cfe5ec8d8bfc03"},
+    {file = "dagster_pandas-0.11.12-py3-none-any.whl", hash = "sha256:290355d08218be617f6b044b9b27c3833b9117298156c9d8e202615bbeb7e25f"},
 ]
 dagster-postgres = [
-    {file = "dagster-postgres-0.11.11.tar.gz", hash = "sha256:11cb7c1767b71580b5a6d8898738b9d7da85dca71ed8d645d3dcc316028e2119"},
-    {file = "dagster_postgres-0.11.11-py3-none-any.whl", hash = "sha256:199e0f4257789deb569161563da85a689c89a32a8fa6899b0e6ba34c9a712187"},
+    {file = "dagster-postgres-0.11.12.tar.gz", hash = "sha256:dc9af08c1ddb1458365c429e4d719d979e41b02d9ee27c40303df8f6b86086f8"},
+    {file = "dagster_postgres-0.11.12-py3-none-any.whl", hash = "sha256:0fa208c72e4709de45c693e95a74baba9adbb6fa686e9539929bcd41347cf3d3"},
 ]
 dagster-slack = [
-    {file = "dagster-slack-0.11.11.tar.gz", hash = "sha256:b1d140d3b91cb4b3aaaa53d21bb4c1174c2c00925ed30ff0a4dde23f7eb1dc7b"},
-    {file = "dagster_slack-0.11.11-py3-none-any.whl", hash = "sha256:32e2a31a2ffb18e5a91f762d4b3f6d7e166624ac5b9cb87c1e6ef119ab17b296"},
+    {file = "dagster-slack-0.11.12.tar.gz", hash = "sha256:46af67c780099c416143fca8068ab63b5e9b08f0b6ee0135b1eab357af2efc20"},
+    {file = "dagster_slack-0.11.12-py3-none-any.whl", hash = "sha256:8bdd23f1705c45a96f9b5b5ececc4b915f1a713d8893d208d20cb725db60f2fa"},
 ]
 data-repo-client = [
     {file = "data-repo-client-1.64.0.tar.gz", hash = "sha256:a5b2e224bda51a5023b2a846ac6a6f16dd6548488d3fd4392f4cd9bd289bd728"},
@@ -2061,8 +2061,8 @@ gevent-websocket = [
     {file = "gevent_websocket-0.10.1-py3-none-any.whl", hash = "sha256:17b67d91282f8f4c973eba0551183fc84f56f1c90c8f6b6b30256f31f66f5242"},
 ]
 google-api-core = [
-    {file = "google-api-core-1.28.0.tar.gz", hash = "sha256:02646803bd728e12dd1f45ee1dcc31c12614c9a1ac451b9a1ce26aa65df9b957"},
-    {file = "google_api_core-1.28.0-py2.py3-none-any.whl", hash = "sha256:a658a4e367511a444c7daf2c58855ff6fd7f7d138c154e5b17186c1f8154c8cb"},
+    {file = "google-api-core-1.29.0.tar.gz", hash = "sha256:dbe885011111a9afd9ea9a347db6a9c608e82e5c7648c1f7fabf2b4079a579b5"},
+    {file = "google_api_core-1.29.0-py2.py3-none-any.whl", hash = "sha256:f83118319d2a28806ec3399671cbe4af5351bd0dac54c40a0395da6162ebe324"},
 ]
 google-api-python-client = [
     {file = "google-api-python-client-1.12.8.tar.gz", hash = "sha256:f3b9684442eec2cfe9f9bb48e796ef919456b82142c7528c5fd527e5224f08bb"},
@@ -2268,8 +2268,8 @@ humanfriendly = [
     {file = "humanfriendly-9.1.tar.gz", hash = "sha256:066562956639ab21ff2676d1fda0b5987e985c534fc76700a19bd54bcb81121d"},
 ]
 identify = [
-    {file = "identify-2.2.7-py2.py3-none-any.whl", hash = "sha256:92d6ad08eca19ceb17576733759944b94c0761277ddc3acf65e75e57ef190e32"},
-    {file = "identify-2.2.7.tar.gz", hash = "sha256:c29e74c3671fe9537715cb695148231d777170ca1498e1c30c675d4ea782afe9"},
+    {file = "identify-2.2.8-py2.py3-none-any.whl", hash = "sha256:3a74cf41f1a0bde21e2f196a1727a608629339d9897226bad07b22e0bbde6faa"},
+    {file = "identify-2.2.8.tar.gz", hash = "sha256:7d4a73d58869a484d4ba8892793c80e30aa699e77707f26c1049486ef9be415f"},
 ]
 idna = [
     {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
@@ -2531,29 +2531,29 @@ proto-plus = [
     {file = "proto_plus-1.18.1-py3-none-any.whl", hash = "sha256:600e2793ec1a0bf2b9e5ba18cd9eccbc1bc690a03c73b571bbe59789fbaaeecc"},
 ]
 protobuf = [
-    {file = "protobuf-3.17.1-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:6e48c9b26d8e262331c79b208c4bf6b499a71912b1213d77b63c5ca248fc2a4e"},
-    {file = "protobuf-3.17.1-cp27-cp27mu-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:d06ef0f7873e04e2d1a2bfa0701d063e4dde5242b2946c6f071a442e4cb3be0b"},
-    {file = "protobuf-3.17.1-cp35-cp35m-macosx_10_9_intel.whl", hash = "sha256:437d4681160ac5310457c4dc8ab973ec56769a236c479393c53fa71a26dfb38f"},
-    {file = "protobuf-3.17.1-cp35-cp35m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:4ef4865ee740d5b45adfc96481adf1fcbfbb454bd51b86f4c4a5065262d0b08b"},
-    {file = "protobuf-3.17.1-cp35-cp35m-win32.whl", hash = "sha256:5057744a363d65d2780dc01fa751bb14e860c507b2598b22af241aabb28a0ae9"},
-    {file = "protobuf-3.17.1-cp35-cp35m-win_amd64.whl", hash = "sha256:94be4d5c2ba372ff159b2cc804d274acbaa7ebf361966f5619f99880c7c09a3c"},
-    {file = "protobuf-3.17.1-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:fea786428b34385b073ef619d896282889b432b87dc043c0b815c72d35d64025"},
-    {file = "protobuf-3.17.1-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:2c6ad26f079301bcf9f1b5d5b4b2dbac0e2e7c0111c6fbecf94f558952c78ee0"},
-    {file = "protobuf-3.17.1-cp36-cp36m-win32.whl", hash = "sha256:ad17d3dd80f3377fc70a9dd677ec51231a892f9f65783cf7d2d24ee381f0feca"},
-    {file = "protobuf-3.17.1-cp36-cp36m-win_amd64.whl", hash = "sha256:0f237c1e84e46747397a3e8173edb3116e81163b2878fc944a5193b05876eaee"},
-    {file = "protobuf-3.17.1-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:c1631570af7aae611f1cd7c6918fe4a7154507169ef30e8c5f380eba36ee2659"},
-    {file = "protobuf-3.17.1-cp37-cp37m-manylinux2014_aarch64.whl", hash = "sha256:8a509097ba25452c9b44198843b0df67f921bd36f37adcbcfaaf6ee5cbe09132"},
-    {file = "protobuf-3.17.1-cp37-cp37m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:cbd132f0aa7180f099d3c47fecfbcdca1590ef3b7da8346146192ba580c9b24e"},
-    {file = "protobuf-3.17.1-cp37-cp37m-win32.whl", hash = "sha256:762faa8873d0569466cf66128bdbadd5e500600bdf2f87cf039493ed9d2725b6"},
-    {file = "protobuf-3.17.1-cp37-cp37m-win_amd64.whl", hash = "sha256:27c7c933b838a0837eb1f429e7994310ee8577a7b69abc38e84d5db97a2650a2"},
-    {file = "protobuf-3.17.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:1fcace96670b8512e805d6e275bd59b860967a7648e05cfad35ec1e7c03d7262"},
-    {file = "protobuf-3.17.1-cp38-cp38-manylinux2014_aarch64.whl", hash = "sha256:2a88be54fce118d69f083b847554afd1852053c0869bdac396678ec9ec6a94d5"},
-    {file = "protobuf-3.17.1-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:ad8cdbc594c886483970ac274b5af98483b272e873b7c5dac60aa3a7222301b3"},
-    {file = "protobuf-3.17.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:b92f95994ff27a6992ea2cf3f369476ad0065986eb00252b760d0bc55c5454a8"},
-    {file = "protobuf-3.17.1-cp39-cp39-manylinux2014_aarch64.whl", hash = "sha256:40bf764b63f06a816b1c079f7718184fdd8dbfd9dad3cd1a446382492ca00b3e"},
-    {file = "protobuf-3.17.1-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:a15898d88307dba0363767b30960396a2dec74b8ffe7bcb4e885312a569eda3f"},
-    {file = "protobuf-3.17.1-py2.py3-none-any.whl", hash = "sha256:36d306dda3c159a5fe0025ba0e9728aac00dd69523dd12ee3fb7b1717cd80e7d"},
-    {file = "protobuf-3.17.1.tar.gz", hash = "sha256:25bc4f1c23aced9b3a9e70eef7f03e63bcbd6cfbd881a91b5688412dce8992e1"},
+    {file = "protobuf-3.17.2-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:c49e673436e24e925022c090a98905cfe88d056cb5dde67a8e20ae339acd8140"},
+    {file = "protobuf-3.17.2-cp27-cp27mu-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:4e62be28dcaab52c7e8e8e3fb9a7005dec6374e698f3b22d79276d95c13151e5"},
+    {file = "protobuf-3.17.2-cp35-cp35m-macosx_10_9_intel.whl", hash = "sha256:c2038dec269b65683f16057886c09ca7526471793029bdd43259282e1e0fb668"},
+    {file = "protobuf-3.17.2-cp35-cp35m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:b667ddbb77ff619fdbd18be75445d4448ee68493c9bddd1b4d0b177025e2f6f6"},
+    {file = "protobuf-3.17.2-cp35-cp35m-win32.whl", hash = "sha256:993814b0199f22523a227696a8e20d2cd4b9cda60c76d2fb3969ce0c77eb9e0f"},
+    {file = "protobuf-3.17.2-cp35-cp35m-win_amd64.whl", hash = "sha256:38b2c6e2204731cfebdb2452ffb7addf0367172b35cff8ccda338ccea9e7c87a"},
+    {file = "protobuf-3.17.2-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:42239d47f213f1ce12ddca62c0c70856efbac09797d715e5d606b3fbc3f16c44"},
+    {file = "protobuf-3.17.2-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:4da073b6c1a83e4ff1294156844f21343c5094e295c194d8ecc94703c7a6f42a"},
+    {file = "protobuf-3.17.2-cp36-cp36m-win32.whl", hash = "sha256:c303ce92c60d069237cfbd41790fde3d00066ca9500fac464454e20c2f12250c"},
+    {file = "protobuf-3.17.2-cp36-cp36m-win_amd64.whl", hash = "sha256:751d71dc6559dd794d309811d8dcf179d6a128b38a1655ae7137530f33895cb4"},
+    {file = "protobuf-3.17.2-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:f3f057ad59cd4d5ea2b1bb88d36c6f009b8043007cf03d96cbd3b9c06859d4fa"},
+    {file = "protobuf-3.17.2-cp37-cp37m-manylinux2014_aarch64.whl", hash = "sha256:c5b512c1982f8b427a302db094cf79f8f235284014d01b23fba461aa2c1459a0"},
+    {file = "protobuf-3.17.2-cp37-cp37m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:9dc01ddc3b195c4538942790c4b195cf17b52d3785a60c1f6f25b794f51e2071"},
+    {file = "protobuf-3.17.2-cp37-cp37m-win32.whl", hash = "sha256:45cc0197e9f9192693c8a4dbcba8c9227a53a2720fc3826dfe791113d9ff5e5e"},
+    {file = "protobuf-3.17.2-cp37-cp37m-win_amd64.whl", hash = "sha256:816fe5e8b73c29adb13a57e1653da15f24cbb90e86ea92e6f08abe6d8c0cbdb4"},
+    {file = "protobuf-3.17.2-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:557e16884d7276caf92c1fb188fe6dfbec47891d3507d4982db1e3d89ffd22de"},
+    {file = "protobuf-3.17.2-cp38-cp38-manylinux2014_aarch64.whl", hash = "sha256:89613ec119fdcad992f65d7a5bfe3170c17edc839982d0089fc0c9242fb8e517"},
+    {file = "protobuf-3.17.2-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:744f5c9a3b9e7538c4c70f2b0e46f86858b684f5d17bf78643a19a6c21c7936f"},
+    {file = "protobuf-3.17.2-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:1e08da38d56b74962d9cb05d86ca5f25d2e5b78f05fd00db7900cad3faa6de00"},
+    {file = "protobuf-3.17.2-cp39-cp39-manylinux2014_aarch64.whl", hash = "sha256:6388e7f300010ea7ac77113c7491c5622645d2447fdf701cbfe026b832d728cd"},
+    {file = "protobuf-3.17.2-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:0b5a73fa43efda0df0191c162680ec40cef45463fa8ff69fbeaeeddda4c760f5"},
+    {file = "protobuf-3.17.2-py2.py3-none-any.whl", hash = "sha256:50c657a54592c1bec7b24521fdbbbd2f7b51325ba23ab505ed03e8ebf3a5aeff"},
+    {file = "protobuf-3.17.2.tar.gz", hash = "sha256:5a3450acf046716e4a4f02a3f7adfb7b86f1b5b3ae392cec759915e79538d40d"},
 ]
 psutil = [
     {file = "psutil-5.8.0-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:0066a82f7b1b37d334e68697faba68e5ad5e858279fd6351c8ca6024e8d6ba64"},
