@@ -19,6 +19,8 @@ spec:
           {{- $bqDataset := "{{inputs.parameters.bq-dataset}}" }}
           - name: data-repo-name
           {{- $dataRepoName := "{{inputs.parameters.data-repo-name}}" }}
+          - name: data-repo-project
+          {{- $dataRepoProject := "{{inputs.parameters.data-repo-project}}" }}
           - name: dataset-id
           {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
       dag:
@@ -46,7 +48,7 @@ spec:
                   - name: staging-bq-dataset
                     value: {{ $bqDataset | quote }}
                   - name: jade-bq-project
-                    value: {{ .Values.bigquery.jadeData.project }}
+                    value: {{ $dataRepoProject | quote }}
                   - name: jade-bq-dataset
                     value: {{ $dataRepoName | quote }}
                   - name: diff-full-history
@@ -154,6 +156,7 @@ spec:
           - name: staging-bq-dataset
           {{- $bqDataset := "{{inputs.parameters.staging-bq-dataset}}" }}
           - name: data-repo-name
+          - name: data-repo-project
       script:
         image: google/cloud-sdk:slim
         env:
@@ -164,7 +167,7 @@ spec:
           - name: STAGING_DATASET
             value: {{ $bqDataset | quote }}
           - name: JADE_PROJECT
-            value: {{ .Values.bigquery.jadeData.project }}
+            value: {{ $dataRepoProject | quote }}
           - name: JADE_DATASET
             value: {{ $dataRepoName | quote }}
         command: [bash]

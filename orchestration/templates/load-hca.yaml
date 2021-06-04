@@ -11,6 +11,8 @@ spec:
         parameters:
           - name: data-repo-name
             {{- $dataRepoName := "{{inputs.parameters.data-repo-name}}" }}
+          - name: data-repo-project
+            {{- $dataRepoProject := "{{inputs.parameters.data-repo-project}}" }}
           - name: dataset-id
             {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
           - name: staging-bucket-prefix
@@ -189,6 +191,7 @@ spec:
           - name: staging-bq-dataset
           {{- $bqDataset := "{{inputs.parameters.staging-bq-dataset}}" }}
           - name: data-repo-name
+          - name: data-repo-project
       script:
         image: google/cloud-sdk:slim
         env:
@@ -201,7 +204,7 @@ spec:
           - name: STAGING_DATASET
             value: {{ $bqDataset | quote }}
           - name: JADE_PROJECT
-            value: {{ .Values.bigquery.jadeData.project }}
+            value: {{ $dataRepoProject | quote }}
           - name: JADE_DATASET
             value: {{ $dataRepoName | quote }}
         command: [bash]
@@ -451,6 +454,7 @@ spec:
           - name: bq-dataset
           {{- $bqDataset := "{{inputs.parameters.bq-dataset}}" }}
           - name: data-repo-name
+          - name: data-repo-project
           - name: source-prefix
           {{- $sourcePrefix := "{{inputs.parameters.source-prefix}}" }}
       script:
@@ -467,7 +471,7 @@ spec:
           - name: STAGING_DATASET
             value: {{ $bqDataset | quote }}
           - name: JADE_PROJECT
-            value: {{ .Values.bigquery.jadeData.project }}
+            value: {{ $dataRepoProject | quote }}
           - name: JADE_DATASET
             value: {{ $dataRepoName | quote }}
         command: [bash]
