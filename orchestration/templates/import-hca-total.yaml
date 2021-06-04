@@ -8,6 +8,8 @@ spec:
     parameters:
       - name: data-repo-name
         {{- $dataRepoName := "{{workflow.parameters.data-repo-name}}" }}
+      - name: data-repo-project
+        {{- $dataRepoProject := "{{workflow.parameters.data-repo-project}}" }}
       - name: dataset-id
         {{- $datasetId := "{{workflow.parameters.dataset-id}}" }}
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
@@ -48,6 +50,8 @@ spec:
               parameters:
                 - name: data-repo-name
                   value: {{ $dataRepoName | quote }}
+                - name: data-repo-project
+                  value: { { $dataRepoProject | quote } }
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: staging-bucket-prefix

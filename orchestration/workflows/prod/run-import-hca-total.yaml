@@ -13,6 +13,7 @@ spec:
       - name: staging-bucket-prefix
       - name: dataset-id
       - name: data-repo-name
+      - name: data-repo-project
   templates:
     - name: main
       templateRef:
