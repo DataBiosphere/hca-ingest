@@ -51,7 +51,7 @@ spec:
                 - name: data-repo-name
                   value: {{ $dataRepoName | quote }}
                 - name: data-repo-project
-                  value: { { $dataRepoProject | quote } }
+                  value: {{ $dataRepoProject | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: staging-bucket-prefix
