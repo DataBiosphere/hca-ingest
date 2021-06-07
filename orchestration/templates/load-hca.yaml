@@ -280,6 +280,10 @@ spec:
                   value: 0
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
+                - name: data-repo-url
+                  value: {{ $dataRepoUrl | quote }}
+                - name: data-repo-billing-profile-id
+                  value: {{ $dataRepoBillingProfileId | quote }}
           {{- $jobId := "{{tasks.submit.outputs.result}}" }}
 
           - name: poll
@@ -323,6 +327,8 @@ spec:
           - name: max-failures
           {{- $maxFailures := "{{inputs.parameters.max-failures}}" }}
           - name: dataset-id
+          - name: data-repo-url
+          - name: data-repo-billing-profile-id
       volumes:
         - name: sa-secret-volume
           secret:
