@@ -263,7 +263,9 @@ spec:
           {{- $totalFileCount := "{{inputs.parameters.total-file-count}}" }}
           - name: dataset-id
           - name: data-repo-url
+          {{- $dataRepoUrl := "{{inputs.parameters.data-repo-url}}" }}
           - name: data-repo-billing-profile-id
+          {{- $dataRepoBillingProfileId := "{{inputs.parameters.data-repo-billing-profile-id}}" }}
       dag:
         tasks:
           - name: submit
