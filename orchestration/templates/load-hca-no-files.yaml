@@ -13,6 +13,8 @@ spec:
             {{- $dataRepoName := "{{inputs.parameters.data-repo-name}}" }}
           - name: data-repo-project
             {{- $dataRepoProject := "{{inputs.parameters.data-repo-project}}" }}
+          - name: data-repo-url
+            {{- $dataRepoUrl := "{{inputs.parameters.data-repo-url}}" }}
           - name: dataset-id
             {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
           - name: staging-bucket-prefix

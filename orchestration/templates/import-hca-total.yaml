@@ -10,6 +10,10 @@ spec:
         {{- $dataRepoName := "{{workflow.parameters.data-repo-name}}" }}
       - name: data-repo-project
         {{- $dataRepoProject := "{{workflow.parameters.data-repo-project}}" }}
+      - name: data-repo-url
+        {{- $dataRepoUrl := "{{workflow.parameters.data-repo-url}}" }}
+      - name: data-repo-billing-profile-id
+        {{- $dataRepoBillingProfileId := "{{workflow.parameters.data-repo-billing-profile-id}}" }}
       - name: dataset-id
         {{- $datasetId := "{{workflow.parameters.dataset-id}}" }}
   serviceAccountName: {{ .Values.serviceAccount.k8sName }}
@@ -52,6 +56,10 @@ spec:
                   value: {{ $dataRepoName | quote }}
                 - name: data-repo-project
                   value: {{ $dataRepoProject | quote }}
+                - name: data-repo-url
+                  value: {{ $dataRepoUrl | quote }}
+                - name: data-repo-billing-profile-id
+                  value: {{ $dataRepoBillingProfileId | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: staging-bucket-prefix

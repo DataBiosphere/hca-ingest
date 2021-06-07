@@ -21,6 +21,8 @@ spec:
           {{- $dataRepoName := "{{inputs.parameters.data-repo-name}}" }}
           - name: data-repo-project
           {{- $dataRepoProject := "{{inputs.parameters.data-repo-project}}" }}
+          - name: data-repo-url
+          {{- $dataRepoUrl := "{{inputs.parameters.data-repo-url}}" }}
           - name: dataset-id
           {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
       dag:
@@ -71,7 +73,7 @@ spec:
                     value: {{ .Values.gcs.stagingBucketName }}
                   {{- with .Values.repo }}
                   - name: url
-                    value: {{ .url }}
+                    value: {{ $dataRepoUrl | quote }}
                   - name: dataset-id
                     value: {{ $datasetId | quote }}
                   - name: timeout
@@ -135,7 +137,7 @@ spec:
                     value: {{ .Values.gcs.stagingBucketName }}
                   {{- with .Values.repo }}
                   - name: url
-                    value: {{ .url }}
+                    value: {{ $dataRepoUrl | quote }}
                   - name: dataset-id
                     value: {{ $datasetId | quote }}
                   - name: timeout
