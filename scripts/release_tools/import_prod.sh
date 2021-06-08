@@ -33,4 +33,7 @@ argo submit ../../orchestration/workflows/prod/run-import-hca-total.yaml \
      -p source-bucket-prefix="$SOURCE_BUCKET_PREFIX" \
      -p staging-bucket-prefix="$STAGING_BUCKET" \
      -p dataset-id="d30e68f8-c826-4639-88f3-ae35f00d4185" \
-     -p data-repo-name="datarepo_hca_prod_20201120_dcp2"
+     -p data-repo-name="datarepo_hca_prod_20201120_dcp2" \
+     -p data-repo-project="broad-datarepo-terra-prod-hca2" \
+     -p data-repo-billing-profile-id="db61c343-6dfe-4d14-84e9-60ddf97ea73f" \
+     -p data-repo-url="https://jade-terra.datarepo-prod.broadinstitute.org"

@@ -13,6 +13,9 @@ spec:
       - name: staging-bucket-prefix
       - name: dataset-id
       - name: data-repo-name
+      - name: data-repo-project
+      - name: data-repo-url
+      - name: data-repo-billing-profile-id
   templates:
     - name: main
       templateRef:

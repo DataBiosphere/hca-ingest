@@ -11,8 +11,14 @@ spec:
         parameters:
           - name: data-repo-name
             {{- $dataRepoName := "{{inputs.parameters.data-repo-name}}" }}
+          - name: data-repo-project
+            {{- $dataRepoProject := "{{inputs.parameters.data-repo-project}}" }}
           - name: dataset-id
             {{- $datasetId := "{{inputs.parameters.dataset-id}}" }}
+          - name: data-repo-url
+            {{- $dataRepoUrl := "{{inputs.parameters.data-repo-url}}" }}
+          - name: data-repo-billing-profile-id
+            {{- $dataRepoBillingProfileId := "{{inputs.parameters.data-repo-billing-profile-id}}" }}
           - name: staging-bucket-prefix
           {{- $stagingPrefix := "{{inputs.parameters.staging-bucket-prefix}}" }}
           - name: source-bucket-name
@@ -85,6 +91,10 @@ spec:
                   value: {{ $datasetName | quote }}
                 - name: data-repo-name
                   value: {{ $dataRepoName | quote }}
+                - name: data-repo-project
+                  value: {{ $dataRepoProject | quote }}
+                - name: data-repo-url
+                  value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
 
@@ -103,6 +113,8 @@ spec:
                   value: {{ $datasetName | quote }}
                 - name: data-repo-name
                   value: {{ $dataRepoName | quote }}
+                - name: data-repo-project
+                  value: {{ $dataRepoProject | quote }}
 
           {{- $outputFileLoadPrefix := printf "%s/data-transfer-requests-deduped" $stagingPrefix }}
           - name: extract-file-loads
@@ -151,6 +163,10 @@ spec:
                   value: {{ $totalLoadCount | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
+                - name: data-repo-url
+                  value: {{ $dataRepoUrl | quote }}
+                - name: data-repo-billing-profile-id
+                  value: {{ $dataRepoBillingProfileId | quote }}
 
           - name: ingest-file-metadata
             dependencies: [ingest-data-files]
@@ -171,6 +187,8 @@ spec:
                   value: {{ $datasetName | quote }}
                 - name: data-repo-name
                   value: {{ $dataRepoName | quote }}
+                - name: data-repo-project
+                  value: {{ $dataRepoProject | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: source-prefix
@@ -189,6 +207,7 @@ spec:
           - name: staging-bq-dataset
           {{- $bqDataset := "{{inputs.parameters.staging-bq-dataset}}" }}
           - name: data-repo-name
+          - name: data-repo-project
       script:
         image: google/cloud-sdk:slim
         env:
@@ -201,7 +220,7 @@ spec:
           - name: STAGING_DATASET
             value: {{ $bqDataset | quote }}
           - name: JADE_PROJECT
-            value: {{ .Values.bigquery.jadeData.project }}
+            value: {{ $dataRepoProject | quote }}
           - name: JADE_DATASET
             value: {{ $dataRepoName | quote }}
         command: [bash]
@@ -243,6 +262,10 @@ spec:
           - name: total-file-count
           {{- $totalFileCount := "{{inputs.parameters.total-file-count}}" }}
           - name: dataset-id
+          - name: data-repo-url
+          {{- $dataRepoUrl := "{{inputs.parameters.data-repo-url}}" }}
+          - name: data-repo-billing-profile-id
+          {{- $dataRepoBillingProfileId := "{{inputs.parameters.data-repo-billing-profile-id}}" }}
       dag:
         tasks:
           - name: submit
@@ -257,6 +280,10 @@ spec:
                   value: 0
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
+                - name: data-repo-url
+                  value: {{ $dataRepoUrl | quote }}
+                - name: data-repo-billing-profile-id
+                  value: {{ $dataRepoBillingProfileId | quote }}
           {{- $jobId := "{{tasks.submit.outputs.result}}" }}
 
           - name: poll
@@ -268,7 +295,7 @@ spec:
                   value: {{ $jobId | quote }}
                 {{- with .Values.repo }}
                 - name: api-url
-                  value: {{ .url }}
+                  value: {{ $dataRepoUrl | quote }}
                 - name: timeout
                   value: {{ .pollTimeout | quote }}
                 - name: sa-secret
@@ -284,6 +311,8 @@ spec:
               parameters:
                 - name: job-id
                   value: {{ $jobId | quote }}
+                - name: data-repo-url
+                  value: {{ $dataRepoUrl | quote }}
 
     ##
     ## Submit a bulk-file ingest using a request staged in GCS.
@@ -298,6 +327,8 @@ spec:
           - name: max-failures
           {{- $maxFailures := "{{inputs.parameters.max-failures}}" }}
           - name: dataset-id
+          - name: data-repo-url
+          - name: data-repo-billing-profile-id
       volumes:
         - name: sa-secret-volume
           secret:
@@ -316,11 +347,11 @@ spec:
             value: {{ $maxFailures | quote }}
           {{- with .Values.repo }}
           - name: API_URL
-            value: {{ .url }}
+            value: {{ $dataRepoUrl | quote }}
           - name: DATASET_ID
             value: {{ $datasetId | quote }}
           - name: PROFILE_ID
-            value: {{ .profileId }}
+            value: {{ $dataRepoBillingProfileId | quote }}
           - name: GOOGLE_APPLICATION_CREDENTIALS
             value: {{ printf "/secret/%s" .accessKey.secretKey }}
           {{- end }}
@@ -354,7 +385,7 @@ spec:
           - name: JOB_ID
             value: {{ $jobId | quote }}
           - name: API_URL
-            value: {{ .Values.repo.url }}
+            value: {{ $dataRepoUrl | quote }}
           - name: GOOGLE_APPLICATION_CREDENTIALS
             value: {{ printf "/secret/%s" .Values.repo.accessKey.secretKey }}
         command: [python]
@@ -374,6 +405,7 @@ spec:
           - name: bq-dataset
           {{- $bqDataset := "{{inputs.parameters.bq-dataset}}" }}
           - name: data-repo-name
+          - name: data-repo-project
           - name: dataset-id
           - name: source-prefix
           {{- $sourcePrefix := "{{inputs.parameters.source-prefix}}" }}
@@ -391,6 +423,8 @@ spec:
                   value: {{ $bqDataset | quote }}
                 - name: data-repo-name
                   value: {{ $dataRepoName | quote }}
+                - name: data-repo-project
+                  value: {{ $dataRepoProject | quote }}
                 - name: source-prefix
                   value: {{ $sourcePrefix | quote }}
           {{- $fileIdsTable := "{{tasks.inject-file-ids.outputs.result}}" }}
@@ -435,6 +469,10 @@ spec:
                   value: {{ $bqDataset | quote }}
                 - name: data-repo-name
                   value: {{ $dataRepoName | quote }}
+                - name: data-repo-project
+                  value: {{ $dataRepoProject | quote }}
+                - name: data-repo-url
+                  value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
 
@@ -451,6 +489,7 @@ spec:
           - name: bq-dataset
           {{- $bqDataset := "{{inputs.parameters.bq-dataset}}" }}
           - name: data-repo-name
+          - name: data-repo-project
           - name: source-prefix
           {{- $sourcePrefix := "{{inputs.parameters.source-prefix}}" }}
       script:
@@ -467,7 +506,7 @@ spec:
           - name: STAGING_DATASET
             value: {{ $bqDataset | quote }}
           - name: JADE_PROJECT
-            value: {{ .Values.bigquery.jadeData.project }}
+            value: {{ $dataRepoProject | quote }}
           - name: JADE_DATASET
             value: {{ $dataRepoName | quote }}
         command: [bash]
