@@ -1,6 +1,8 @@
 from dagster import ModeDefinition, pipeline
 from dagster_gcp.gcs import gcs_pickle_io_manager
-from dagster_utils.resources.beam import dataflow_beam_runner, local_beam_runner, test_beam_runner
+from dagster_utils.resources.beam.k8s_beam_runner import k8s_dataflow_beam_runner
+from dagster_utils.resources.beam.local_beam_runner import local_beam_runner
+from dagster_utils.resources.beam.noop_beam_runner import noop_beam_runner
 from dagster_utils.resources.bigquery import bigquery_client, noop_bigquery_client
 from dagster_utils.resources.google_storage import google_storage_client, mock_storage_client
 from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client, noop_data_repo_client
@@ -17,7 +19,7 @@ from hca_orchestration.solids.load_hca.stage_data import clear_scratch_dir, pre_
 prod_mode = ModeDefinition(
     name="prod",
     resource_defs={
-        "beam_runner": preconfigure_resource_for_mode(dataflow_beam_runner, "prod"),
+        "beam_runner": preconfigure_resource_for_mode(k8s_dataflow_beam_runner, "prod"),
         "bigquery_client": bigquery_client,
         "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "prod"),
         "gcs": google_storage_client,
@@ -32,7 +34,7 @@ prod_mode = ModeDefinition(
 dev_mode = ModeDefinition(
     name="dev",
     resource_defs={
-        "beam_runner": preconfigure_resource_for_mode(dataflow_beam_runner, "dev"),
+        "beam_runner": preconfigure_resource_for_mode(k8s_dataflow_beam_runner, "dev"),
         "bigquery_client": bigquery_client,
         "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
         "gcs": google_storage_client,
@@ -62,7 +64,7 @@ local_mode = ModeDefinition(
 test_mode = ModeDefinition(
     name="test",
     resource_defs={
-        "beam_runner": test_beam_runner,
+        "beam_runner": noop_beam_runner,
         "gcs": mock_storage_client,
         "data_repo_client": noop_data_repo_client,
         "bigquery_client": noop_bigquery_client,
