@@ -1,6 +1,6 @@
 from typing import Iterator
 
-from dagster import Any, Field, solid
+from dagster import Any, Field, String, solid
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from dagster.experimental import DynamicOutput, DynamicOutputDefinition
 
@@ -21,16 +21,16 @@ def ingest_metadata_type(context: AbstractComputeExecutionContext,
                          result: list[JobId],
                          scratch_dataset_name: HcaScratchDatasetName) -> Iterator[MetadataTypeFanoutResult]:
     """
-    For each file type, return a dynamic output over which we can later map
-    This saves us from hardcoding solids for each file type
+    For each metadata type, return a dynamic output over which we can later map
+    This saves us from hardcoding solids for each type
     """
-    for file_metadata_type in context.solid_config["metadata_types"]:
+    for metadata_type in context.solid_config["metadata_types"]:
         yield DynamicOutput(
             value=MetadataTypeFanoutResult(
                 scratch_dataset_name,
-                file_metadata_type.value,
+                metadata_type.value,
                 context.solid_config["prefix"]
             ),
-            mapping_key=file_metadata_type.value,
+            mapping_key=metadata_type.value,
             output_name="table_fanout_result"
         )

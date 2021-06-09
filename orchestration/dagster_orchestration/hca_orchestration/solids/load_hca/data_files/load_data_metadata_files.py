@@ -1,5 +1,4 @@
 from enum import Enum
-import logging
 
 from dagster import solid, composite_solid, configured, Nothing
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext

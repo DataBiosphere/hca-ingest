@@ -34,6 +34,9 @@ class FakeGoogleBlob:
     def download_to_file(self, file_object):
         file_object.write(self.content.encode('UTF8'))
 
+    def delete(self):
+        pass
+
 
 class HexBlobInfo(TypedDict):
     hex_md5: str
@@ -90,8 +93,8 @@ class FakeGoogleBucket:
 
 
 class FakeGCSClient:
-    def __init__(self):
-        self._buckets = {}
+    def __init__(self, buckets: dict[str, FakeGoogleBucket] = {}):
+        self._buckets = buckets
 
     def get_bucket(self, bucket_name):
         if bucket_name not in self._buckets:
@@ -101,5 +104,5 @@ class FakeGCSClient:
     def bucket(self, bucket_name):
         return self.get_bucket(bucket_name)
 
-    def list_blobs(self, bucket):
+    def list_blobs(self, bucket, prefix=None):
         return self._buckets[bucket]._blobs.values()
