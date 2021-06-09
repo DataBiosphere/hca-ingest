@@ -48,6 +48,7 @@ def dataset_id(dataset_name, delete_dataset_on_exit, existing_dataset_id) -> Ite
             data_repo_profile_ids["dev"],
             None,
             dataset_manager.generate_schema(),
+            "US",
             MONSTER_TEST_DATASET_SENTINEL
         )
 
