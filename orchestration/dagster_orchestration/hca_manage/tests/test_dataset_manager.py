@@ -45,6 +45,7 @@ class DatasetManagerTestCase(unittest.TestCase):
             "fake_billing_id",
             {"abc@example.com", "def@example.com"},
             {"fake": "schema"},
+            "us-east4",
             None
         )
 

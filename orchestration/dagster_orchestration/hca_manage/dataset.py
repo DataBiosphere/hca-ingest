@@ -36,6 +36,7 @@ def run(arguments: Optional[list[str]] = None) -> None:
         "-p", "--policy-members", help="CSV list of emails to grant steward access to this dataset"
     )
     dataset_create.add_argument("-s", "--schema_path", help="Path to JSON schema", required=False)
+    dataset_create.add_argument("-r", "--region", help="GCP region for the dataset", required=True)
     dataset_create.set_defaults(func=_create_dataset)
 
     # remove
@@ -69,6 +70,7 @@ def _create_dataset(args: argparse.Namespace) -> None:
         return
 
     host = data_repo_host[args.env]
+    region = args.region
 
     policy_members = set(args.policy_members.split(','))
     client = get_api_client(host=host)
@@ -86,6 +88,7 @@ def _create_dataset(args: argparse.Namespace) -> None:
         args.billing_profile_id,
         policy_members,
         schema,
+        region,
         None
     )
 
@@ -123,13 +126,15 @@ class DatasetManager:
             billing_profile_id: str,
             policy_members: Optional[set[str]],
             schema: dict[str, Any],
+            region: str,
             description: Optional[str]
     ) -> str:
         job_id = self.create_dataset(
             dataset_name=dataset_name,
             billing_profile_id=billing_profile_id,
             schema=schema,
-            description=description
+            description=description,
+            region=region
         )
 
         try:
@@ -160,6 +165,7 @@ class DatasetManager:
             dataset_name: str,
             billing_profile_id: str,
             schema: dict[str, Any],
+            region: str,
             description: Optional[str] = None) -> JobId:
         """
         Creates a dataset in the data repo.
@@ -167,6 +173,7 @@ class DatasetManager:
         :param billing_profile_id: GCP billing profile ID
         :param schema: Dict containing the dataset's schema
         :param description: Optional description for the dataset
+        :param region GCP region in which to create this dataset
         :return: Job ID of the dataset creation job
         """
         payload = {
@@ -174,7 +181,7 @@ class DatasetManager:
             "description": description,
             "defaultProfileId": billing_profile_id,
             "schema": schema,
-            "region": "US",
+            "region": region,
             "cloudPlatform": "gcp"
         }
         response = self.data_repo_client.create_dataset(
