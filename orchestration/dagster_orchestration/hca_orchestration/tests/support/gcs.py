@@ -34,6 +34,9 @@ class FakeGoogleBlob:
     def download_to_file(self, file_object):
         file_object.write(self.content.encode('UTF8'))
 
+    def delete(self):
+        pass
+
 
 class HexBlobInfo(TypedDict):
     hex_md5: str
