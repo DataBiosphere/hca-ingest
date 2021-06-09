@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 import json
+from functools import cache
+
 from jsonschema import validate
 import logging
 import requests
@@ -11,17 +13,10 @@ from urllib.parse import urlparse
 from hca_manage.common import DefaultHelpParser
 
 
-class SchemaFetcher:
-    def __init__(self) -> None:
-        self._schema_cache: dict[str, dict[str, str]] = {}
-
-    def fetch_schema(self, path: str) -> Any:
-        if path in self._schema_cache:
-            return self._schema_cache[path]
-
-        raw_schema = requests.get(path).json()
-        self._schema_cache[path] = raw_schema
-        return raw_schema
+@cache
+def fetch_schema(path: str) -> Any:
+    raw_schema = requests.get(path).json()
+    return raw_schema
 
 
 @dataclass
@@ -35,7 +30,7 @@ def parse_gs_path(raw_gs_path: str) -> GsBucketWithPrefix:
     return GsBucketWithPrefix(url_result.netloc, url_result.path[1:])
 
 
-def validate_json(blob: storage.Blob, schema_fetcher: SchemaFetcher) -> Optional[Exception]:
+def validate_json(blob: storage.Blob) -> Optional[Exception]:
     """
     Validate that the JSON file blob follows the schema in the describedBy
     :param blob: JSON file blob to check
@@ -45,14 +40,14 @@ def validate_json(blob: storage.Blob, schema_fetcher: SchemaFetcher) -> Optional
     try:
         data = json.loads(blob.download_as_string())
         schema_path = data["describedBy"]
-        schema = schema_fetcher.fetch_schema(schema_path)
+        schema = fetch_schema(schema_path)
         validate(instance=data, schema=schema)
         return None
     except Exception as e:
         return e
 
 
-def validate_directory(path: str, bucket: storage.Client.bucket, schema_fetcher: SchemaFetcher) -> None:
+def validate_directory(path: str, bucket: storage.Client.bucket) -> None:
     """
     Validate that the directory in the Google storage bucket is valid
     :param path: Google stage path name
@@ -62,7 +57,7 @@ def validate_directory(path: str, bucket: storage.Client.bucket, schema_fetcher:
     invalid_files_in_dir = {}
     for blob in bucket.list_blobs(prefix=path):
         if blob.name.endswith('json'):
-            json_error = validate_json(blob, schema_fetcher)
+            json_error = validate_json(blob)
             if json_error is None:
                 valid_files_in_dir.append(blob.name)
             else:
@@ -85,11 +80,10 @@ def run(arguments: Optional[list[str]] = None) -> None:
     storage_client = storage.Client()
     gs_bucket = parse_gs_path(args.path)
     bucket = storage_client.bucket(gs_bucket.bucket)
-    schema_fetcher = SchemaFetcher()
 
     well_known_dirs = {'/data', '/descriptors', '/links', '/metadata'}
     for dir in well_known_dirs:
-        validate_directory(gs_bucket.prefix + dir, bucket, schema_fetcher)
+        validate_directory(gs_bucket.prefix + dir, bucket)
 
 
 if __name__ == "__main__":
