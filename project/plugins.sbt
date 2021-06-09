@@ -14,4 +14,4 @@ resolvers += Resolver.url(
 // useful when testing ingest-utils locally
 resolvers += Resolver.mavenLocal
 
-addSbtPlugin("org.broadinstitute.monster" % "ingest-sbt-plugins" % "2.1.10")
+addSbtPlugin("org.broadinstitute.monster" % "ingest-sbt-plugins" % "2.1.11")
