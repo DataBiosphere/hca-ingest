@@ -11,4 +11,7 @@ resolvers += Resolver.url(
   new URL("https://broadinstitute.jfrog.io/broadinstitute/libs-release/")
 )(publishPatterns)
 
-addSbtPlugin("org.broadinstitute.monster" % "ingest-sbt-plugins" % "2.1.8")
+// useful when testing ingest-utils locally
+resolvers += Resolver.mavenLocal
+
+addSbtPlugin("org.broadinstitute.monster" % "ingest-sbt-plugins" % "2.1.11")
