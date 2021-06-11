@@ -28,9 +28,9 @@ def fetch_job_info() -> None:
 
     if args.fetch_result:
         result = data_repo_client.retrieve_job_result(args.job_id)
+        logging.info(json.dumps(result, indent=4))
     else:
-        result = data_repo_client.retrieve_job(args.job_id)
-    logging.info(json.dumps(result, indent=4))
+        logging.info(data_repo_client.retrieve_job(args.job_id))
 
 
 if __name__ == '__main__':
