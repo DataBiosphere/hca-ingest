@@ -1,3 +1,4 @@
+.autoenv.zsh
 target/
 .scalafmt.conf
 .idea

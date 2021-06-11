@@ -5,12 +5,11 @@ TDR job inspection tool. Fetches the job status, and optionally the result
 import logging
 import json
 
-from hca_manage.common import DefaultHelpParser, get_api_client, data_repo_host
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+from hca_manage.common import DefaultHelpParser, get_api_client, data_repo_host, setup_cli_logging_format
 
 
 def fetch_job_info() -> None:
+    setup_cli_logging_format()
     parser = DefaultHelpParser(description="A simple CLI to inspect TDR jobs.")
 
     parser.add_argument("-e", "--env", help="The Jade environment to target",
