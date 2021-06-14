@@ -79,7 +79,6 @@ def load_hca_run_config(dataset_name, dataset_id):
             "beam_runner": {
                 "config": {
                     "working_dir": "../..",
-                    "target_class": "hca-transformation-pipeline"
                 }
             },
             "load_tag": {
