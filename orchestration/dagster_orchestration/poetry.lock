@@ -116,21 +116,16 @@ version = "0.5.1"
 description = "Common utilities and objects for building Dagster pipelines"
 category = "main"
 optional = false
-python-versions = "~3.9"
-develop = true
+python-versions = ">=3.9,<3.10"
 
 [package.dependencies]
-argo-workflows = "^5.0.0"
-dagster = "^0.11.13"
-data-repo-client = "^1.64.0"
-google-cloud-bigquery = "^2.15.0"
-google-cloud-storage = "^1.38.0"
-PyYAML = "^5.4.1"
-slackclient = "^2.9.3"
-
-[package.source]
-type = "directory"
-url = "../../../dagster-utils"
+argo-workflows = ">=5.0.0,<6.0.0"
+dagster = ">=0.11.13,<0.12.0"
+data-repo-client = ">=1.64.0,<2.0.0"
+google-cloud-bigquery = ">=2.15.0,<3.0.0"
+google-cloud-storage = ">=1.38.0,<2.0.0"
+PyYAML = ">=5.4.1,<6.0.0"
+slackclient = ">=2.9.3,<3.0.0"
 
 [[package]]
 name = "cached-property"
@@ -1793,7 +1788,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.9"
-content-hash = "78b2183179f69898d58ff6facb3c6ea6be310abcd19d93f1b4cbd65657c612ff"
+content-hash = "7a273afef73d577a7df6258ebf5a967d055075614ccaa61825c13c1967cf218b"
 
 [metadata.files]
 aiohttp = [
@@ -1871,7 +1866,10 @@ bleach = [
     {file = "bleach-3.3.0-py2.py3-none-any.whl", hash = "sha256:6123ddc1052673e52bab52cdc955bcb57a015264a1c57d37bea2f6b817af0125"},
     {file = "bleach-3.3.0.tar.gz", hash = "sha256:98b3170739e5e83dd9dc19633f074727ad848cbedb6026708c8ac2d3b697a433"},
 ]
-broad-dagster-utils = []
+broad-dagster-utils = [
+    {file = "broad_dagster_utils-0.5.1-py3-none-any.whl", hash = "sha256:f57f43613b3506a96ffa8147653efb402a5b86f21352c4715a82cfcc637b6b0e"},
+    {file = "broad_dagster_utils-0.5.1.tar.gz", hash = "sha256:36102d49fba1a4e322ab03116ccaa286f43725622d1d54be9b803b1429308a43"},
+]
 cached-property = [
     {file = "cached-property-1.5.2.tar.gz", hash = "sha256:9fa5755838eecbb2d234c3aa390bd80fbd3ac6b6869109bfc1b499f7bd89a130"},
     {file = "cached_property-1.5.2-py2.py3-none-any.whl", hash = "sha256:df4f613cf7ad9a588cc381aaf4a512d26265ecebd5eb9e1ba12f1319eb85a6a0"},
