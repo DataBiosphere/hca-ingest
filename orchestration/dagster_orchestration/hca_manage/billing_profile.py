@@ -20,6 +20,9 @@ def run(arguments: Optional[list[str]] = None) -> None:
     billing_profile_create.add_argument("-n", "--profile_name", required=True)
     billing_profile_create.set_defaults(func=_create_billing_profile)
 
+    billing_profile_query = subparsers.add_parser("enumerate")
+    billing_profile_query.set_defaults(func=_enumerate_billing_profiles)
+
     args = parser.parse_args(arguments)
     args.func(args)
 
@@ -42,6 +45,15 @@ def _create_billing_profile(args: argparse.Namespace) -> None:
     )
 
     logging.info(f"Billing profile creation response = {response}")
+
+
+def _enumerate_billing_profiles(args: argparse.Namespace) -> None:
+    host = data_repo_host[args.env]
+    resources_api_client = get_resources_api_client(host)
+
+    response = resources_api_client.enumerate_profiles()
+
+    logging.info(response)
 
 
 if __name__ == '__main__':
