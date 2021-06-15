@@ -1,5 +1,5 @@
 from dagster import ModeDefinition, pipeline, success_hook, failure_hook
-from dagster.core.execution.context.system import HookContext
+from dagster import HookContext
 
 from dagster_gcp.gcs import gcs_pickle_io_manager
 

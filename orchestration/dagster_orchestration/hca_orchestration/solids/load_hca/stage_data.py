@@ -3,6 +3,8 @@ import re
 from dagster import solid, InputDefinition, Nothing, String
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from google.cloud.bigquery import Dataset
+
+from dagster_utils.resources.beam.beam_runner import BeamRunner
 from hca_orchestration.support.typing import HcaScratchDatasetName
 
 
@@ -46,10 +48,16 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
 
     kebabified_output_prefix = re.sub(r"[^A-Za-z0-9]", "-", prefix_name)
 
-    context.resources.beam_runner.run(
+    beam_runner: BeamRunner = context.resources.beam_runner
+    args_dict = {
+        "inputPrefix": context.solid_config["input_prefix"],
+        "outputPrefix": f'gs://{bucket_name}/{prefix_name}',
+    }
+    beam_runner.run(
+        run_arg_dict=args_dict,
         job_name=f"hca-stage-metadata-{kebabified_output_prefix}",
-        input_prefix=context.solid_config["input_prefix"],
-        output_prefix=f'gs://{bucket_name}/{prefix_name}'
+        target_class="org.broadinstitute.monster.hca.HcaPipeline",
+        scala_project="hca-transformation-pipeline",
     )
 
 

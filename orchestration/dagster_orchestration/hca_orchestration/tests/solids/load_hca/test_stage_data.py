@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 
 from dagster import ModeDefinition, ResourceDefinition, SolidExecutionResult, execute_solid
-from dagster_utils.resources.beam import LocalBeamRunner
+from dagster_utils.resources.beam.local_beam_runner import LocalBeamRunner
 from google.cloud.bigquery import Client
 
 from hca_orchestration.pipelines.load_hca import test_mode
