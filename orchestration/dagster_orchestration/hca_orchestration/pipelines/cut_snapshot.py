@@ -15,6 +15,22 @@ from hca_orchestration.solids.data_repo import wait_for_job_completion
 from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.data_repo import hca_manage_config, snapshot_creation_config
 
+
+real_prod_mode = ModeDefinition(
+    name="real_prod",
+    resource_defs={
+        "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "real_prod"),
+        "gcs": google_storage_client,
+        "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, "prod"),
+        "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "prod"),
+        "sam_client": preconfigure_resource_for_mode(sam_client, "prod"),
+        "slack": preconfigure_resource_for_mode(live_slack_client, "prod"),
+        "snapshot_config": snapshot_creation_config,
+        "dagit_config": preconfigure_resource_for_mode(dagit_config, "prod"),
+    }
+)
+
+
 prod_mode = ModeDefinition(
     name="prod",
     resource_defs={

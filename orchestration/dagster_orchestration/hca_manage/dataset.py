@@ -17,8 +17,6 @@ from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client,
 MAX_DATASET_CREATE_POLL_SECONDS = 120
 DATASET_CREATE_POLL_INTERVAL_SECONDS = 2
 
-logging.basicConfig(level=logging.INFO, format='%(message)s')
-
 
 def run(arguments: Optional[list[str]] = None) -> None:
     setup_cli_logging_format()
