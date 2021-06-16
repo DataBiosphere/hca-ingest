@@ -372,6 +372,8 @@ spec:
         parameters:
           - name: job-id
           {{- $jobId := "{{inputs.parameters.job-id}}" }}
+          - name: data-repo-url
+          {{- $dataRepoUrl := "{{inputs.parameters.data-repo-url}}" }}
       volumes:
         - name: sa-secret-volume
           secret:
