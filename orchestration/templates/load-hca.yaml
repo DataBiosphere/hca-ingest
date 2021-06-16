@@ -189,6 +189,8 @@ spec:
                   value: {{ $dataRepoName | quote }}
                 - name: data-repo-project
                   value: {{ $dataRepoProject | quote }}
+                - name: data-repo-url
+                  value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: source-prefix
@@ -409,6 +411,7 @@ spec:
           - name: data-repo-name
           - name: data-repo-project
           - name: dataset-id
+          - name: data-repo-url
           - name: source-prefix
           {{- $sourcePrefix := "{{inputs.parameters.source-prefix}}" }}
       dag:
