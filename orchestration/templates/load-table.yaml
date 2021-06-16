@@ -182,3 +182,4 @@ spec:
     ## Inject common template used to poll TDR jobs.
     ##
     {{- include "argo.poll-ingest-job" . | indent 4 }}
+
