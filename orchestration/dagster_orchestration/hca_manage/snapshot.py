@@ -16,6 +16,7 @@ from hca_manage.common import data_repo_host, data_repo_profile_ids, DefaultHelp
 MAX_SNAPSHOT_CREATE_POLL_SECONDS = 120
 SNAPSHOT_CREATE_POLL_INTERVAL_SECONDS = 2
 
+
 def run(arguments: Optional[list[str]] = None) -> None:
     setup_cli_logging_format()
     parser = DefaultHelpParser(description="A simple CLI to manage TDR snapshots.")
