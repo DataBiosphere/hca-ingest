@@ -2,14 +2,19 @@ import argparse
 from dataclasses import dataclass, field
 from datetime import datetime, date
 import logging
+import sys
 from typing import Optional
 
 from data_repo_client import RepositoryApi, SnapshotRequestModel, SnapshotRequestContentsModel, EnumerateSnapshotModel
+from dagster_utils.contrib.data_repo.jobs import poll_job, JobPollException
 from dagster_utils.contrib.data_repo.typing import JobId
 
 from hca_manage import __version__ as hca_manage_version
 from hca_manage.common import data_repo_host, data_repo_profile_ids, DefaultHelpParser, get_api_client, \
     query_yes_no, tdr_operation, setup_cli_logging_format
+
+MAX_SNAPSHOT_DELETE_POLL_SECONDS = 120
+SNAPSHOT_DELETE_POLL_INTERVAL_SECONDS = 2
 
 
 def run(arguments: Optional[list[str]] = None) -> None:
@@ -153,6 +158,18 @@ class SnapshotManager:
             raise ValueError("You must provide either snapshot_name or snapshot_id, and cannot provide neither/both.")
         job_id: JobId = self.data_repo_client.delete_snapshot(snapshot_id).id
         logging.info(f"Snapshot deletion job id: {job_id}")
+        try:
+            poll_job(
+                job_id,
+                MAX_SNAPSHOT_DELETE_POLL_SECONDS,
+                SNAPSHOT_DELETE_POLL_INTERVAL_SECONDS,
+                self.data_repo_client
+            )
+        except JobPollException:
+            job_result = self.data_repo_client.retrieve_job_result(job_id)
+            logging.error("Delete Snapshot failed, results =")
+            logging.error(job_result)
+            sys.exit(1)
         return job_id
 
     def query_snapshot(self, snapshot_name: Optional[str] = None) -> EnumerateSnapshotModel:
