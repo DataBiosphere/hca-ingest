@@ -87,6 +87,7 @@ def _create_dataset(args: argparse.Namespace) -> None:
         policy_members,
         schema,
         region,
+        args.env,
         None
     )
 
@@ -125,6 +126,7 @@ class DatasetManager:
             policy_members: Optional[set[str]],
             schema: dict[str, Any],
             region: str,
+            env: str,
             description: Optional[str]
     ) -> str:
         job_id = self.create_dataset(
@@ -132,7 +134,8 @@ class DatasetManager:
             billing_profile_id=billing_profile_id,
             schema=schema,
             description=description,
-            region=region
+            region=region,
+            env=env
         )
 
         try:
@@ -164,6 +167,7 @@ class DatasetManager:
             billing_profile_id: str,
             schema: dict[str, Any],
             region: str,
+            env: str,
             description: Optional[str] = None) -> JobId:
         """
         Creates a dataset in the data repo.
@@ -172,6 +176,7 @@ class DatasetManager:
         :param schema: Dict containing the dataset's schema
         :param description: Optional description for the dataset
         :param region GCP region in which to create this dataset
+        :param: Jade env (prod, dev, real_prod, etc.)
         :return: Job ID of the dataset creation job
         """
         payload = {
@@ -182,6 +187,12 @@ class DatasetManager:
             "region": region,
             "cloudPlatform": "gcp"
         }
+
+        if env == "prod":
+            # Jade "prod" does not support these args
+            payload.pop("region")
+            payload.pop("cloudPlatform")
+
         response = self.data_repo_client.create_dataset(
             dataset=payload
         )
@@ -215,7 +226,7 @@ class DatasetManager:
         """
         Enumerates TDR datasets, filtering on the given dataset_name
         """
-        return self.data_repo_client.enumerate_datasets(filter=dataset_name)
+        return self.data_repo_client.enumerate_datasets(filter=dataset_name, limit=1000)
 
     def add_policy_members(
             self,
