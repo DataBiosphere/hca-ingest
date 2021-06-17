@@ -226,7 +226,7 @@ class DatasetManager:
         """
         Enumerates TDR datasets, filtering on the given dataset_name
         """
-        return self.data_repo_client.enumerate_datasets(filter=dataset_name)
+        return self.data_repo_client.enumerate_datasets(filter=dataset_name, limit=1000)
 
     def add_policy_members(
             self,
