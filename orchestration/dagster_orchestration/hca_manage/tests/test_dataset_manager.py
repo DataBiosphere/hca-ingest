@@ -46,6 +46,7 @@ class DatasetManagerTestCase(unittest.TestCase):
             {"abc@example.com", "def@example.com"},
             {"fake": "schema"},
             "us-east4",
+            "dev",
             None
         )
 
