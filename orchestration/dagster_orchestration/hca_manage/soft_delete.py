@@ -11,13 +11,13 @@ from google.cloud import storage
 
 from dagster_utils.contrib.data_repo.typing import JobId
 from hca_manage import __version__ as hca_manage_version
-from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client, get_dataset_id, query_yes_no
-
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client, get_dataset_id, query_yes_no, \
+    setup_cli_logging_format
 
 
 def run(arguments: Optional[list[str]] = None) -> None:
+    setup_cli_logging_format()
+
     parser = DefaultHelpParser(description="A simple CLI to soft delete rows in a TDR dataset.")
     parser.add_argument("-V", "--version", action="version", version="%(prog)s " + hca_manage_version)
     parser.add_argument("-e", "--env", help="The Jade environment to target", choices=["dev", "prod"], required=True)
@@ -55,6 +55,7 @@ class SoftDeleteManager:
     def __post_init__(self) -> None:
         self.filename_template = f"sd-{self.project}-{self.dataset}-{uuid.uuid4()}-{{table}}.csv"
         self.bucket_project = {"prod": "mystical-slate-284720",
+                               "real_prod": "mystical-slate-284720",
                                "dev": "broad-dsp-monster-hca-dev"}[self.environment]
         self.bucket = f"broad-dsp-monster-hca-{self.environment}-staging-storage"
 

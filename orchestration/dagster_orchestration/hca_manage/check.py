@@ -7,17 +7,18 @@ from data_repo_client import RepositoryApi
 
 from hca_manage import __version__ as hca_manage_version
 from hca_manage.bq_managers import DanglingFileRefManager, DuplicatesManager, NullFileRefManager
-from hca_manage.common import DefaultHelpParser, ProblemCount, data_repo_host, get_api_client, query_yes_no
+from hca_manage.common import DefaultHelpParser, ProblemCount, data_repo_host, get_api_client, query_yes_no, \
+    setup_cli_logging_format
 from hca_manage.soft_delete import SoftDeleteManager
 
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-
 def run(arguments: Optional[list[str]] = None) -> None:
+    setup_cli_logging_format()
+
     parser = DefaultHelpParser(description="A simple CLI to check for issues in a TDR dataset.")
     parser.add_argument("-V", "--version", action="version", version="%(prog)s " + hca_manage_version)
-    parser.add_argument("-e", "--env", help="The Jade environment to target", choices=["dev", "prod"], required=True)
+    parser.add_argument("-e", "--env", help="The Jade environment to target",
+                        choices=["dev", "prod", "real_prod"], required=True)
 
     parser.add_argument("-p", "--project", help="The Jade project to target")
     parser.add_argument("-d", "--dataset", help="The Jade dataset to target", required=True)
@@ -121,3 +122,7 @@ class CheckManager:
             null_file_refs=null_file_ref_count,
             dangling_project_refs=0
         )
+
+
+if __name__ == '__main__':
+    run()

@@ -189,6 +189,8 @@ spec:
                   value: {{ $dataRepoName | quote }}
                 - name: data-repo-project
                   value: {{ $dataRepoProject | quote }}
+                - name: data-repo-url
+                  value: {{ $dataRepoUrl | quote }}
                 - name: dataset-id
                   value: {{ $datasetId | quote }}
                 - name: source-prefix
@@ -372,6 +374,8 @@ spec:
         parameters:
           - name: job-id
           {{- $jobId := "{{inputs.parameters.job-id}}" }}
+          - name: data-repo-url
+          {{- $dataRepoUrl := "{{inputs.parameters.data-repo-url}}" }}
       volumes:
         - name: sa-secret-volume
           secret:
@@ -407,6 +411,7 @@ spec:
           - name: data-repo-name
           - name: data-repo-project
           - name: dataset-id
+          - name: data-repo-url
           - name: source-prefix
           {{- $sourcePrefix := "{{inputs.parameters.source-prefix}}" }}
       dag:
