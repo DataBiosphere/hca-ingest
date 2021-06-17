@@ -188,7 +188,7 @@ class DatasetManager:
             "cloudPlatform": "gcp"
         }
 
-        if env == 'prod':
+        if env == "prod":
             # Jade "prod" does not support these args
             payload.pop("region")
             payload.pop("cloudPlatform")

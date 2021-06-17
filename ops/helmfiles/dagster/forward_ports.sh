@@ -1,6 +1,7 @@
 #!/bin/bash
 # This script forwards port 8080 to the Kubernetes cluster running our Dagster install so you can access
 # the Dagit dashboard from your machine.
+set -e
 ENV=${1:-dev}
 
 echo $ENV
