@@ -19,7 +19,7 @@ python-dateutil = "^2.8.1"
 typing-extensions = "^3.7.4"
 pyyaml = "^5.3"
 dagster-gcp = "^0.11.13"
-broad-dagster-utils = "0.5.2"
+broad-dagster-utils =   { url = "https://test-files.pythonhosted.org/packages/01/f2/8a6b9d7b5e12855f46186aed453624c29c87f1aa2a17628f1873c0e7c68b/broad_dagster_utils-0.5.3.post3.tar.gz" }
 
 
 [tool.poetry.dev-dependencies]
