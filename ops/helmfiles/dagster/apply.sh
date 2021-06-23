@@ -10,4 +10,47 @@
 # this command will always use the version of the helm chart you have saved locally.
 export TARGET_HEAD=${2:-HEAD}
 export COMMAND=${3:-apply}
-ENV=${1:-dev} GIT_SHORTHASH=$(git rev-parse --short $TARGET_HEAD) helmfile $COMMAND
+export ENV=${1:-dev}
+export GIT_SHORTHASH=$(git rev-parse --short $TARGET_HEAD)
+
+function fire_slack_deployment_notification () {
+  local -r environment=$1 rev=$2
+  local -r user=$(git config user.email)
+  local -r token=$(vault read -field=oauth-token secret/dsde/monster/dev/slack-notifier)
+  curl --silent --output /dev/null \
+    --location --request POST 'https://slack.com/api/chat.postMessage' \
+    --header "Authorization: Bearer ${token}" \
+    --header "Content-Type: application/json" \
+    --data-raw "{
+        'channel': 'monster-deploy',
+        'text': 'Deployment',
+        'blocks': [
+            {
+                'type': 'section',
+                'text': {
+                    'type': 'mrkdwn',
+                    'text': '*Deployment Complete*'
+                }
+            },
+            {
+                'type': 'divider'
+            },
+            {
+                'type': 'section',
+                'fields': [
+                    {
+                        'type': 'mrkdwn',
+                        'text': '*Artifact*\n*Environment*\n*Revision*\n*User*'
+                    },
+                    {
+                        'type': 'mrkdwn',
+                        'text': 'HCA (dagster) \n${environment}\n${rev}\n${user}'
+                    }
+                ]
+            }
+        ]
+    }"
+}
+
+helmfile $COMMAND
+fire_slack_deployment_notification ${ENV} ${GIT_SHORTHASH}
