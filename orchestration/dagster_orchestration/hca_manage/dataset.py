@@ -65,14 +65,14 @@ def _remove_dataset(args: argparse.Namespace) -> None:
 
 
 # validate provided name against dataset name regex from the spec
-def validate_dataset_name(dataset_name: str) -> None:
-    if not (search(DATASET_NAME_REGEX, dataset_name)):
+def _validate_dataset_name(dataset_name: str) -> None:
+    if not search(DATASET_NAME_REGEX, dataset_name):
         raise ValueError("The provided dataset name is not up to spec.")
 
 
 @tdr_operation
 def _create_dataset(args: argparse.Namespace) -> None:
-    validate_dataset_name(args.dataset_name)
+    _validate_dataset_name(args.dataset_name)
     if not query_yes_no("Are you sure?"):
         return
 
