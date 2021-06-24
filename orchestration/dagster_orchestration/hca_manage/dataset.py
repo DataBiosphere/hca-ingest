@@ -17,7 +17,8 @@ from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client,
 
 MAX_DATASET_CREATE_POLL_SECONDS = 120
 DATASET_CREATE_POLL_INTERVAL_SECONDS = 2
-DATASET_NAME_REGEX = "^hca_(dev|prod|staging)_(\d{4})(\d{2})(\d{2})(_[a-zA-Z][a-zA-Z0-9]{0,13})?$"
+DATASET_NAME_REGEX = "^hca_(dev|prod|staging)_(\\d{4})(\\d{2})(\\d{2})(_[a-zA-Z][a-zA-Z0-9]{0,13})?$"
+
 
 def run(arguments: Optional[list[str]] = None) -> None:
     setup_cli_logging_format()
@@ -63,11 +64,15 @@ def _remove_dataset(args: argparse.Namespace) -> None:
     hca.delete_dataset(dataset_name=args.dataset_name, dataset_id=args.dataset_id)
 
 
+# validate provided name against dataset name regex from the spec
+def validate_dataset_name(dataset_name: str) -> None:
+    if not (search(DATASET_NAME_REGEX, dataset_name)):
+        raise ValueError("The provided dataset name is not up to spec.")
+
+
 @tdr_operation
 def _create_dataset(args: argparse.Namespace) -> None:
-    # validate provided name against dataset name regex from the spec
-    if not (search(DATASET_NAME_REGEX, args.dataset_name)):
-        raise ValueError("The provided dataset name is not up to spec.")
+    validate_dataset_name(args.dataset_name)
     if not query_yes_no("Are you sure?"):
         return
 

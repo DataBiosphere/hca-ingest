@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, Mock
 
 from data_repo_client import RepositoryApi
 
-from hca_manage.dataset import DatasetManager
+from hca_manage.dataset import DatasetManager, validate_dataset_name
 
 
 class DatasetManagerTestCase(unittest.TestCase):
@@ -52,3 +52,13 @@ class DatasetManagerTestCase(unittest.TestCase):
 
         self.manager.data_repo_client.create_dataset.assert_called_once()
         self.assertEqual(self.manager.data_repo_client.add_dataset_policy_member.call_count, 2)
+
+    def test_validate_dataset_name(self):
+        with self.assertRaises(ValueError):
+            validate_dataset_name(
+                "fake_dataset_name"
+            )
+
+        validate_dataset_name(
+            "hca_dev_20200812_dssAllNoData"
+        )
