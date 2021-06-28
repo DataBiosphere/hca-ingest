@@ -1,33 +1,20 @@
-from dataclasses import dataclass
 import json
-from functools import cache
-
-from jsonschema import validate
 import logging
-import requests
-from typing import Optional, Dict, Any
+from functools import cache
+from typing import Optional, Any
 
+import requests
 from google.cloud import storage
-from urllib.parse import urlparse
+from jsonschema import validate
 
 from hca_manage.common import DefaultHelpParser
+from hca_orchestration.contrib.gcs import parse_gs_path
 
 
 @cache
 def fetch_schema(path: str) -> Any:
     raw_schema = requests.get(path).json()
     return raw_schema
-
-
-@dataclass
-class GsBucketWithPrefix:
-    bucket: str
-    prefix: str
-
-
-def parse_gs_path(raw_gs_path: str) -> GsBucketWithPrefix:
-    url_result = urlparse(raw_gs_path)
-    return GsBucketWithPrefix(url_result.netloc, url_result.path[1:])
 
 
 def validate_json(blob: storage.Blob) -> Optional[Exception]:

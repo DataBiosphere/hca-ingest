@@ -1,0 +1,7 @@
+google_project: broad-dsp-monster-hca-dev
+working_dir: ../../
+region: us-central1
+worker_machine_type: n1-standard-1
+autoscaling_algorithm: THROUGHPUT_BASED
+num_workers: 4
+max_num_workers: 8
