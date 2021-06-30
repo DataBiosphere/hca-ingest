@@ -6,7 +6,7 @@ from hca_orchestration.pipelines.load_hca import load_hca
 def submit_dagster_job(dataset_name: str, dataset_id: str, input_prefix: str) -> None:
     execute_pipeline(
         load_hca,
-        mode="dev",
+        mode="local",
         run_config=_load_hca_run_config(dataset_id, dataset_name, input_prefix)
     )
 
