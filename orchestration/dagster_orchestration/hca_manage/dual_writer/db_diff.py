@@ -16,7 +16,21 @@ class DbDiffWorkItem:
     except_fields: list[str]
 
 
-def diff_tables(work_item: DbDiffWorkItem) -> None:
+def _diff_data(
+    table_names: list[str],
+    dagster_dataset_name: str,
+    argo_dataset_name: str,
+        except_clause: list[str]) -> None:
+    work_items = [
+        DbDiffWorkItem(dagster_dataset_name, argo_dataset_name, table_name, except_clause)
+        for table_name in table_names
+    ]
+
+    with Pool(4) as p:
+        p.map(_diff_tables, work_items)
+
+
+def _diff_tables(work_item: DbDiffWorkItem) -> None:
     bigquery_client = Client(_http=authorized_session())
 
     table_name = work_item.table_name
@@ -45,25 +59,11 @@ def diff_tables(work_item: DbDiffWorkItem) -> None:
 
 
 def diff_dbs(args: argparse.Namespace) -> None:
-    diff_file_data(args.dagster_dataset_name, args.argo_dataset_name)
-    diff_non_file_data(args.dagster_dataset_name, args.argo_dataset_name)
-
-
-def diff_file_data(dagster_dataset_name: str, argo_dataset_name: str) -> None:
-    work_items = [
-        DbDiffWorkItem(dagster_dataset_name, argo_dataset_name, data_type.value, ["datarepo_row_id", "file_id"])
-        for data_type in FileMetadataTypes
+    data_file_tables = [
+        data_type.value for data_type in FileMetadataTypes
     ]
-
-    with Pool(4) as p:
-        p.map(diff_tables, work_items)
-
-
-def diff_non_file_data(dagster_dataset_name: str, argo_dataset_name: str) -> None:
-    work_items = [
-        DbDiffWorkItem(dagster_dataset_name, argo_dataset_name, data_type.value, ["datarepo_row_id"])
-        for data_type in NonFileMetadataTypes
+    metadata_tables = [
+        data_type.value for data_type in NonFileMetadataTypes
     ]
-
-    with Pool(4) as p:
-        p.map(diff_tables, work_items)
+    _diff_data(data_file_tables, args.dagster_dataset_name, args.argo_dataset_name, ["datarepo_row_id", "file_id"])
+    _diff_data(metadata_tables, args.dagster_dataset_name, args.argo_dataset_name, ["datarepo_row_id"])

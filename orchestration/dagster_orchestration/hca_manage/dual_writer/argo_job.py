@@ -9,6 +9,8 @@ from hca_orchestration.contrib.gcs import GsBucketWithPrefix
 def submit_argo_job(dataset_id: str, dataset_name: str, gs_bucket_with_prefix: GsBucketWithPrefix) -> None:
     path = file_relative_path(__file__, '../../../workflows/dev/run-import-hca-total.yaml')
 
+    # there is a --wait arg that theoretically blocks exit of the submit process until the workflow completes,
+    # but it does not work in our testing (in my version at least). So, we fire-and-forget
     argo_params = [
         'argo',
         'submit',
