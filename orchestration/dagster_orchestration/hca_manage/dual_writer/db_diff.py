@@ -6,6 +6,7 @@ from dagster_utils.contrib.google import authorized_session
 
 from hca_orchestration.solids.load_hca.data_files.load_data_metadata_files import FileMetadataTypes
 from hca_orchestration.solids.load_hca.non_file_metadata.load_non_file_metadata import NonFileMetadataTypes
+from hca_orchestration.support.typing import MetadataType
 
 
 @dataclass
@@ -17,7 +18,7 @@ class DbDiffWorkItem:
 
 
 def _diff_data(
-    table_names: list[str],
+    table_names: list[MetadataType],
     dagster_dataset_name: str,
     argo_dataset_name: str,
         except_clause: list[str]) -> None:
