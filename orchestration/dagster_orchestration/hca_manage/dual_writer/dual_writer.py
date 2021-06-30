@@ -1,3 +1,12 @@
+"""
+Dispatches HCA import jobs to both dagster and argo, for the purpose of verifying the new dagster import
+pipeline.
+
+This tool operates in two modes:
+1. Dispatching ingest jobs to both dagster and argo, against two datasets.
+2. Diffing the DBs against each other, looking for any row-level differences.
+"""
+
 import argparse
 from multiprocessing import Process
 
@@ -9,12 +18,19 @@ from hca_orchestration.contrib.gcs import parse_gs_path
 
 def _submit_jobs(args: argparse.Namespace) -> None:
     gs_bucket_with_path = parse_gs_path(args.input_prefix)
-    argo_process = Process(target=submit_argo_job,
-                           args=(args.argo_dataset_id, args.argo_dataset_name, gs_bucket_with_path))
-    dagster_process = Process(target=submit_dagster_job,
-                              args=(args.dagster_dataset_name, args.dagster_dataset_id, args.input_prefix))
+    argo_process = Process(
+        target=submit_argo_job,
+        args=(args.argo_dataset_id, args.argo_dataset_name, gs_bucket_with_path)
+    )
+    dagster_process = Process(
+        target=submit_dagster_job,
+        args=(args.dagster_dataset_name, args.dagster_dataset_id, args.input_prefix)
+    )
     argo_process.start()
     dagster_process.start()
+
+    # do not join() on the argo process as its output is difficult to parse and the --wait arg is broken
+    # for now, just assume it works and wait for the dagster pipeline to finish
     dagster_process.join()
 
 
