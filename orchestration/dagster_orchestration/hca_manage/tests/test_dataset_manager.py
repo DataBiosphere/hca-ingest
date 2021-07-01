@@ -51,7 +51,7 @@ class DatasetManagerTestCase(unittest.TestCase):
         )
 
         self.manager.data_repo_client.create_dataset.assert_called_once()
-        self.assertEqual(self.manager.data_repo_client.add_dataset_policy_member.call_count, 2)
+        self.assertEqual(self.manager.data_repo_client.add_dataset_policy_member.call_count, 3)
 
     def test_valid_dataset_name(self):
         _validate_dataset_name(

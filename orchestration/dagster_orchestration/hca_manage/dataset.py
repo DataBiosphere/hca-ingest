@@ -4,7 +4,7 @@ import logging
 import os
 import subprocess
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, Any
 from re import search
 
@@ -33,7 +33,8 @@ def run(arguments: Optional[list[str]] = None) -> None:
     dataset_create.add_argument("-n", "--dataset_name", help="Name of dataset to create.", required=True)
     dataset_create.add_argument("-b", "--billing_profile_id", help="Billing profile ID", required=True)
     dataset_create.add_argument(
-        "-p", "--policy-members", help="CSV list of emails to grant steward access to this dataset"
+        "-p", "--policy-members", default='monster@firecloud.org',
+        help="CSV list of emails to grant steward access to this dataset (default: monster@firecloud.org)"
     )
     dataset_create.add_argument("-s", "--schema_path", help="Path to JSON schema", required=False)
     dataset_create.add_argument("-r", "--region", help="GCP region for the dataset", required=True)
@@ -113,6 +114,13 @@ def _query_dataset(args: argparse.Namespace) -> None:
 class DatasetManager:
     environment: str
     data_repo_client: RepositoryApi
+    steward_list: list[str] = field(init=False)
+
+    def __post_init__(self) -> None:
+        self.steward_list = {
+            "dev": ["monster@firecloud.org"],
+            "prod": ["monster@firecloud.org"]
+        }[self.environment]
 
     def generate_schema(self) -> dict[str, object]:
         cwd = os.path.join(os.path.dirname(__file__), "../../../")
@@ -164,8 +172,10 @@ class DatasetManager:
         dataset_id: str = job_result["id"]
         logging.info(f"Dataset created, id = {dataset_id}")
 
+        # if policy-members are provided in the CLI args, add the monster team email (default without provided arg)
         if policy_members:
             logging.info(f"Adding policy_members {policy_members}")
+            self.add_policy_members(dataset_id, self.steward_list, "steward")
             self.add_policy_members(dataset_id, policy_members, "steward")
 
         return dataset_id
