@@ -24,13 +24,11 @@ def _analysis_file_cte(table_name: str, fully_qualified_dataset_name: str, proje
           ON {table_name}.file_id = dlh.file_id
       WHERE project_id = '{project_id}' AND
       dlh.state = 'succeeded'
-  )""".strip()
+    )""".strip()
     return query
 
 
-def _trace_areas(bq_project, dataset_name: str, project_id: str):
-    setup_cli_logging_format()
-
+def _build_base_query(bq_project: str, dataset_name: str, project_id: str):
     data_file_tables_queries = [
         _analysis_file_cte(
             data_type.value,
@@ -49,18 +47,29 @@ def _trace_areas(bq_project, dataset_name: str, project_id: str):
     WITH {joined_ctes},
     all_files as (
         {union_all}
-    ),
+    )
+    """
+
+    return query
+
+
+def _trace_areas(bq_project, dataset_name: str, project_id: str, show_query=False):
+    base_query = _build_base_query(bq_project, dataset_name, project_id)
+    query = f"""
+    {base_query},
     all_staging_areas AS (
         SELECT regexp_extract(source_name, r'(gs:\/\/.*\/)data\/.*') AS staging_area FROM all_files
     )
-    SELECT DISTINCT staging_area FROM all_staging_areas;
-
-
-        """
+    SELECT DISTINCT staging_area FROM all_staging_areas
+    ORDER BY staging_area;
+    """
     bigquery_client = Client(_http=authorized_session())
     query_job = bigquery_client.query(
         query
     )
+
+    if show_query:
+        logging.info(query)
 
     [
         logging.info(f"staging area = {row['staging_area']}")
@@ -68,14 +77,44 @@ def _trace_areas(bq_project, dataset_name: str, project_id: str):
     ]
 
 
+def _trace_files(bq_project, dataset_name: str, project_id: str, show_query=False):
+    base_query = _build_base_query(bq_project, dataset_name, project_id)
+    query = f"""
+    {base_query},
+    all_source_names AS (
+        SELECT source_name FROM all_files
+    )
+    SELECT DISTINCT source_name FROM all_source_names
+    ORDER BY source_name;
+    """
+    bigquery_client = Client(_http=authorized_session())
+    query_job = bigquery_client.query(
+        query
+    )
+
+    if show_query:
+        logging.info(query)
+
+    [
+        logging.info(f"source_file = {row['source_name']}")
+        for row in query_job.result()
+    ]
+
+
 def run():
+    setup_cli_logging_format()
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--dataset-id", required=True)
     parser.add_argument("-p", "--project-id", required=True)
     parser.add_argument("-b", "--bq-project", required=True)
+    parser.add_argument("-f", "--trace-files", required=False, default=False, action="store_true")
+    parser.add_argument("-q", "--show-query", required=False, default=False, action="store_true")
 
     args = parser.parse_args()
-    _trace_areas(args.bq_project, args.dataset_id, args.project_id)
+    if args.trace_files:
+        _trace_files(args.bq_project, args.dataset_id, args.project_id, args.show_queru)
+    else:
+        _trace_areas(args.bq_project, args.dataset_id, args.project_id, args.show_query)
 
 
 if __name__ == '__main__':

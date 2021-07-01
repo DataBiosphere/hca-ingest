@@ -38,7 +38,7 @@ class ProblemCount:
 
 
 def setup_cli_logging_format() -> None:
-    logging.basicConfig(level=logging.INFO, format='%(message)s')
+    logging.basicConfig(level=logging.INFO, format='%(message)s', stream=sys.stdout)
 
 
 class DefaultHelpParser(argparse.ArgumentParser):
