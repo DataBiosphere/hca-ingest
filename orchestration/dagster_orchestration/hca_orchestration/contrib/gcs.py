@@ -1,4 +1,3 @@
-
 from urllib.parse import urlparse
 
 from dataclasses import dataclass
