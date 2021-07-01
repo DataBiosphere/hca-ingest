@@ -1,0 +1,2 @@
+region: us-central1
+worker_machine_type: n1-standard-4
