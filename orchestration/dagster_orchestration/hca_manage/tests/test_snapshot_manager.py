@@ -1,27 +1,34 @@
+
 import unittest
 from unittest.mock import MagicMock, Mock
 
 from dagster_utils.testing.matchers import StringMatchingRegex, ObjectWithAttributes
 from data_repo_client import RepositoryApi, SnapshotRequestModel
 
-from hca_manage.snapshot import SnapshotManager
+from hca_manage.snapshot import SnapshotManager, InvalidSnapshotNameException
 
 
 class SnapshotManagerTestCase(unittest.TestCase):
     def setUp(self):
+        self.dataset_name = "hca_dev_20201120_dcp2"
         self.manager = SnapshotManager(
             environment='dev',
             data_repo_client=MagicMock(spec=RepositoryApi),
-            dataset='datasetname',
+            dataset=self.dataset_name,
         )
 
+    def test_submit_snapshot_request_raises_error_if_invalid_name(self):
+        with self.assertRaises(InvalidSnapshotNameException):
+            self.manager.submit_snapshot_request_with_name("hca_dev_20201120_dcp2__20210701_dcp7")
+
     def test_submit_snapshot_request_ignores_qualifier_if_not_present(self):
-        self.manager.submit_snapshot_request(qualifier=None)
+
+        self.manager.submit_snapshot_request()
 
         self.manager.data_repo_client.create_snapshot.assert_called_once_with(
             snapshot=ObjectWithAttributes(
                 SnapshotRequestModel,
-                name=StringMatchingRegex(r'datasetname___\d{8}'))
+                name=StringMatchingRegex(f'{self.dataset_name}___\\d{{8}}'))
         )
 
     def test_submit_snapshot_request_uses_qualifier_if_present(self):
@@ -30,7 +37,7 @@ class SnapshotManagerTestCase(unittest.TestCase):
         self.manager.data_repo_client.create_snapshot.assert_called_once_with(
             snapshot=ObjectWithAttributes(
                 SnapshotRequestModel,
-                name=StringMatchingRegex(r'datasetname___\d{8}_steve'))
+                name=StringMatchingRegex(f'{self.dataset_name}___\\d{{8}}_steve'))
         )
 
     def test_delete_snapshot_fetches_id_if_missing(self):
