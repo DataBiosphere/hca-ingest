@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock, Mock, call
 
 from data_repo_client import RepositoryApi
 
@@ -51,7 +51,12 @@ class DatasetManagerTestCase(unittest.TestCase):
         )
 
         self.manager.data_repo_client.create_dataset.assert_called_once()
-        self.assertEqual(self.manager.data_repo_client.add_dataset_policy_member.call_count, 2)
+        calls = [
+            call('fake_dataset_id', policy_name='steward', policy_member={'email': 'monster@firecloud.org'}),
+            call('fake_dataset_id', policy_name='steward', policy_member={'email': 'abc@example.com'}),
+            call('fake_dataset_id', policy_name='steward', policy_member={'email': 'def@example.com'}),
+        ]
+        self.manager.data_repo_client.add_dataset_policy_member.assert_has_calls(calls, any_order=True)
 
     def test_valid_dataset_name(self):
         _validate_dataset_name(
