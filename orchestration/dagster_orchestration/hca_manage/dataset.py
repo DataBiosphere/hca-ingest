@@ -114,12 +114,12 @@ def _query_dataset(args: argparse.Namespace) -> None:
 class DatasetManager:
     environment: str
     data_repo_client: RepositoryApi
-    steward_list: list[str] = field(init=False)
+    stewards: set[str] = field(init=False)
 
     def __post_init__(self) -> None:
-        self.steward_list = {
-            "dev": ["monster@firecloud.org"],
-            "prod": ["monster@firecloud.org"]
+        self.stewards = {
+            "dev": {"monster@firecloud.org"},
+            "prod": {"monster@firecloud.org"}
         }[self.environment]
 
     def generate_schema(self) -> dict[str, object]:
@@ -175,7 +175,7 @@ class DatasetManager:
         # if policy-members are provided in the CLI args, add the monster team email (default without provided arg)
         if policy_members:
             logging.info(f"Adding policy_members {policy_members}")
-            self.add_policy_members(dataset_id, self.steward_list, "steward")
+            self.add_policy_members(dataset_id, self.stewards, "steward")
             self.add_policy_members(dataset_id, policy_members, "steward")
 
         return dataset_id
