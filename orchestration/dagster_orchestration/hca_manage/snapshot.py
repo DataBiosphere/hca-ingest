@@ -2,7 +2,7 @@ import argparse
 from dataclasses import dataclass, field
 from datetime import datetime, date
 import logging
-import re
+from re import search
 import sys
 from typing import Optional
 
@@ -16,7 +16,7 @@ from hca_manage.common import data_repo_host, data_repo_profile_ids, DefaultHelp
 
 MAX_SNAPSHOT_DELETE_POLL_SECONDS = 120
 SNAPSHOT_DELETE_POLL_INTERVAL_SECONDS = 2
-VALIDATE_SNAPSHOT_NAME_REGEX = r"^hca_(dev|prod|staging)_(\d{4})(\d{2})(\d{2})(_[a-zA-Z][a-zA-Z0-9]{0,13})?_([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})?__(\d{4})(\d{2})(\d{2})(?:_([a-zA-Z][a-zA-Z0-9]{0,13}))?$"
+SNAPSHOT_NAME_REGEX = r"^hca_(dev|prod|staging)_(\d{4})(\d{2})(\d{2})(_[a-zA-Z][a-zA-Z0-9]{0,13})?_([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})?__(\d{4})(\d{2})(\d{2})(?:_([a-zA-Z][a-zA-Z0-9]{0,13}))?$"
 
 
 class InvalidSnapshotNameException(ValueError):
@@ -116,7 +116,7 @@ class SnapshotManager:
         :param snapshot_name: name of snapshot to create
         :return: Job ID of the snapshot creation job
         """
-        if not re.findall(VALIDATE_SNAPSHOT_NAME_REGEX, snapshot_name):
+        if not search(SNAPSHOT_NAME_REGEX, snapshot_name):
             raise InvalidSnapshotNameException(f"Snapshot name {snapshot_name} is invalid")
 
         snapshot_request = SnapshotRequestModel(

@@ -20,6 +20,10 @@ DATASET_CREATE_POLL_INTERVAL_SECONDS = 2
 DATASET_NAME_REGEX = "^hca_(dev|prod|staging)_(\\d{4})(\\d{2})(\\d{2})(_[a-zA-Z][a-zA-Z0-9]{0,13})?$"
 
 
+class InvalidDatasetNameException(ValueError):
+    pass
+
+
 def run(arguments: Optional[list[str]] = None) -> None:
     setup_cli_logging_format()
     parser = DefaultHelpParser(description="A simple CLI to manage TDR datasets.")
@@ -67,7 +71,7 @@ def _remove_dataset(args: argparse.Namespace) -> None:
 # validate provided name against dataset name regex from the spec
 def _validate_dataset_name(dataset_name: str) -> None:
     if not search(DATASET_NAME_REGEX, dataset_name):
-        raise ValueError("The provided dataset name is not up to spec.")
+        raise InvalidDatasetNameException(f"Dataset name {dataset_name} is invalid")
 
 
 @tdr_operation
