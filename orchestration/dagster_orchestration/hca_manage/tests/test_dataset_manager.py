@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, Mock, call
 
 from data_repo_client import RepositoryApi
 
-from hca_manage.dataset import DatasetManager, _validate_dataset_name
+from hca_manage.dataset import DatasetManager, _validate_dataset_name, InvalidDatasetNameException
 
 
 class DatasetManagerTestCase(unittest.TestCase):
@@ -64,7 +64,7 @@ class DatasetManagerTestCase(unittest.TestCase):
         )
 
     def test_invalid_dataset_name(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(InvalidDatasetNameException):
             _validate_dataset_name(
                 "fake_dataset_name"
             )
