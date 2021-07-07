@@ -20,6 +20,7 @@ typing-extensions = "^3.7.4"
 pyyaml = "^5.3"
 dagster-gcp = "^0.11.14"
 broad-dagster-utils = "0.5.3"
+hca-import-validation = "^0.0.1"
 
 
 [tool.poetry.dev-dependencies]
