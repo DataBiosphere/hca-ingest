@@ -9,7 +9,7 @@ from jsonschema import validate
 
 from hca_manage.common import DefaultHelpParser
 from hca_orchestration.contrib.gcs import parse_gs_path
-from hca_import_validation.hca.staging_area_validator import StagingAreaValidator
+from hca.staging_area_validator import StagingAreaValidator
 
 
 @cache
@@ -64,27 +64,18 @@ def validate_staging_area(path: str) -> None:
     Run the UCSC pre-checks on the staging area to identify potential snapshot or indexing failures
     :param path: Google stage path name
     """
-    valid_staging_areas = []
-    invalid_staging_areas = []
-    for blob in bucket.list_blobs(prefix=path):
-        adapter = StagingAreaValidator(
-            staging_area=blob,
-            ignore_dangling_inputs=False,
-            # should I check to look for .json files for this flag?
-            validate_json=True
-        )
-        # run validation
-        exit_code = adapter.main()
-        if exit_code is None:
-            valid_staging_areas.append(blob.name)
-        else:
-            invalid_staging_areas[blob.name] = exit_code
-    if len(valid_staging_areas) == 0 and len(invalid_staging_areas) == 0:
-        logging.error(f"{path} File Path doesn't exist")
-    elif len(invalid_staging_areas) > 0:
-        logging.error(f"List of invalid staging areas {invalid_staging_areas}")
-    else:
+    adapter = StagingAreaValidator(
+        staging_area=path,
+        ignore_dangling_inputs=False,
+        validate_json=True
+    )
+    # should I exit or capture the error code?
+    #sys.exit(adapter.main())
+    exit_code = adapter.main()
+    if exit_code is None:
         logging.info('Staging area is valid')
+    else:
+        logging.error('Staging area is invalid')
 
 def run(arguments: Optional[list[str]] = None) -> None:
     parser = DefaultHelpParser(description="CLI to manage validate GS path and json files.")
@@ -96,9 +87,10 @@ def run(arguments: Optional[list[str]] = None) -> None:
     bucket = storage_client.bucket(gs_bucket.bucket)
 
     well_known_dirs = {'/data', '/descriptors', '/links', '/metadata'}
+    validate_staging_area(args.path)
+
     for dir in well_known_dirs:
         validate_directory(gs_bucket.prefix + dir, bucket)
-        validate_staging_area(gs_bucket.prefix + dir)
 
 
 if __name__ == "__main__":
