@@ -144,7 +144,7 @@ def snapshot_job_failed_notification(context: HookContext) -> None:
         "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
     }
 
-    context.resources.slack.send_message(blocks=_base_slack_blocks("HCA Snapshot Failed", kvs))
+    context.resources.slack.send_message(blocks=_base_slack_blocks("HCA Snapshot Failed", key_values=kvs))
 
 
 @success_hook(
