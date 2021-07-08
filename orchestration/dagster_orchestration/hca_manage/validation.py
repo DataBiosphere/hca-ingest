@@ -59,6 +59,7 @@ def validate_directory(path: str, bucket: storage.Client.bucket) -> None:
     else:
         logging.info('File path and Json are valid')
 
+
 def validate_staging_area(path: str) -> None:
     """
     Run the UCSC pre-checks on the staging area to identify potential snapshot or indexing failures
@@ -69,13 +70,12 @@ def validate_staging_area(path: str) -> None:
         ignore_dangling_inputs=False,
         validate_json=True
     )
-    # should I exit or capture the error code?
-    #sys.exit(adapter.main())
     exit_code = adapter.main()
     if exit_code is None:
         logging.info('Staging area is valid')
     else:
         logging.error('Staging area is invalid')
+
 
 def run(arguments: Optional[list[str]] = None) -> None:
     parser = DefaultHelpParser(description="CLI to manage validate GS path and json files.")
