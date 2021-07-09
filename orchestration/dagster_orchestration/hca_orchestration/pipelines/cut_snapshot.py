@@ -136,7 +136,11 @@ def snapshot_start_notification(context: HookContext) -> None:
     required_resource_keys={'slack', 'snapshot_config', 'dagit_config'}
 )
 def snapshot_job_failed_notification(context: HookContext) -> None:
-    job_id = context.solid_output_values["result"]
+    if "result" in context.solid_output_values:
+        job_id = context.solid_output_values["result"]
+    else:
+        job_id = "NA"
+
     kvs = {
         "Snapshot name": context.resources.snapshot_config.snapshot_name,
         "Dataset": context.resources.snapshot_config.dataset_name,
