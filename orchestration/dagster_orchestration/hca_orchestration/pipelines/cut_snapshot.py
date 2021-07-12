@@ -139,7 +139,7 @@ def snapshot_job_failed_notification(context: HookContext) -> None:
     if "result" in context.solid_output_values:
         job_id = context.solid_output_values["result"]
     else:
-        job_id = "NA"
+        job_id = "N/A"
 
     kvs = {
         "Snapshot name": context.resources.snapshot_config.snapshot_name,
