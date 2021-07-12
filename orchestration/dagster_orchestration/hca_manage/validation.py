@@ -80,7 +80,7 @@ def validate_staging_area(path: str, ignore_inputs: bool) -> None:
 def run(arguments: Optional[list[str]] = None) -> None:
     parser = DefaultHelpParser(description="CLI to manage validate GS path and json files.")
     parser.add_argument("-p", "--path", help="GS path to validate", required=True)
-    parser.add_argument("-p", "--ignore_inputs", help="Ignore input metadata files", default=False)
+    parser.add_argument("-i", "--ignore_inputs", help="Ignore input metadata files", default=False)
     args = parser.parse_args(arguments)
 
     storage_client = storage.Client()
