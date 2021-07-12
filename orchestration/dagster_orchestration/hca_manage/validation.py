@@ -9,6 +9,7 @@ from jsonschema import validate
 
 from hca_manage.common import DefaultHelpParser
 from hca_orchestration.contrib.gcs import parse_gs_path
+from hca.staging_area_validator import StagingAreaValidator
 
 
 @cache
@@ -59,9 +60,27 @@ def validate_directory(path: str, bucket: storage.Client.bucket) -> None:
         logging.info('File path and Json are valid')
 
 
+def validate_staging_area(path: str, ignore_inputs: bool) -> None:
+    """
+    Run the UCSC pre-checks on the staging area to identify potential snapshot or indexing failures
+    :param path: Google stage path name
+    """
+    adapter = StagingAreaValidator(
+        staging_area=path,
+        ignore_dangling_inputs=ignore_inputs,
+        validate_json=True
+    )
+    exit_code = adapter.main()
+    if exit_code is None:
+        logging.info('Staging area is valid')
+    else:
+        logging.error('Staging area is invalid')
+
+
 def run(arguments: Optional[list[str]] = None) -> None:
     parser = DefaultHelpParser(description="CLI to manage validate GS path and json files.")
     parser.add_argument("-p", "--path", help="GS path to validate", required=True)
+    parser.add_argument("-i", "--ignore_inputs", help="Ignore input metadata files", default=False)
     args = parser.parse_args(arguments)
 
     storage_client = storage.Client()
@@ -69,6 +88,8 @@ def run(arguments: Optional[list[str]] = None) -> None:
     bucket = storage_client.bucket(gs_bucket.bucket)
 
     well_known_dirs = {'/data', '/descriptors', '/links', '/metadata'}
+    validate_staging_area(args.path, args.ignore_inputs)
+
     for dir in well_known_dirs:
         validate_directory(gs_bucket.prefix + dir, bucket)
 
