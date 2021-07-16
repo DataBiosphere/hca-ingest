@@ -6,7 +6,8 @@ from re import search
 import sys
 from typing import Optional
 
-from data_repo_client import RepositoryApi, SnapshotRequestModel, SnapshotRequestContentsModel, EnumerateSnapshotModel, PolicyMemberRequest
+from data_repo_client import RepositoryApi, SnapshotRequestModel, SnapshotRequestContentsModel, \
+    EnumerateSnapshotModel, PolicyMemberRequest, PolicyResponse
 from dagster_utils.contrib.data_repo.jobs import poll_job, JobPollException
 from dagster_utils.contrib.data_repo.typing import JobId
 
@@ -230,12 +231,11 @@ class SnapshotManager:
     def query_snapshot(self, snapshot_name: Optional[str] = None) -> EnumerateSnapshotModel:
         return self.data_repo_client.enumerate_snapshots(filter=snapshot_name, limit=1000)
 
-    def add_policy_member(self, policy_member: str, policy_name: str, snapshot_id: str) -> None:
+    def add_policy_member(self, policy_member: str, policy_name: str, snapshot_id: str) -> PolicyResponse:
         payload = PolicyMemberRequest(email=policy_member)
-        response = self.data_repo_client.add_snapshot_policy_member(snapshot_id, policy_name, policy_member=payload)
-        return response
+        return self.data_repo_client.add_snapshot_policy_member(snapshot_id, policy_name, policy_member=payload)
 
-    def retrieve_policies(self, snapshot_id: str):
+    def retrieve_policies(self, snapshot_id: str) -> PolicyResponse:
         return self.data_repo_client.retrieve_snapshot_policies(id=snapshot_id)
 
 
