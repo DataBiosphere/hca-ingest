@@ -143,8 +143,21 @@ class SnapshotManager:
     reader_list: list[str] = field(init=False)
 
     def __post_init__(self) -> None:
-        self.reader_list = {
-            "dev": ["hca-snapshot-readers@dev.test.firecloud.org", "monster-dev@dev.test.firecloud.org"],
+        self.managed_access_reader_list = {
+            "dev": [
+                "hca-snapshot-readers@dev.test.firecloud.org",
+                "monster-dev@dev.test.firecloud.org",
+                "azul-dev@dev.test.firecloud.org"
+            ],
+            "prod": ["hca-snapshot-readers@firecloud.org", "monster@firecloud.org"]
+        }[self.environment]
+        self.publc_access_reader_list = {
+            "dev": [
+                "hca-snapshot-readers@dev.test.firecloud.org",
+                "monster-dev@dev.test.firecloud.org",
+                "azul-dev@dev.test.firecloud.org",
+                "azul-public-dev@dev.test.firecloud.org"
+            ],
             "prod": ["hca-snapshot-readers@firecloud.org", "monster@firecloud.org"]
         }[self.environment]
 
@@ -156,21 +169,23 @@ class SnapshotManager:
         snapshot_date = snapshot_date or datetime.today().date()
         return self.submit_snapshot_request_with_name(self.snapshot_name(qualifier, snapshot_date))
 
-    def submit_snapshot_request_with_name(self, snapshot_name: str) -> JobId:
+    def submit_snapshot_request_with_name(self, snapshot_name: str, managed_access: bool = False) -> JobId:
         """
         Submit a snapshot creation request.
-        :param snapshot_name: name of snapshot to create
+        :param snapshot_name: name of snapshot to created
+        :param managed_access: Determine which set of readers to grant access to this snapshot (default = False)
         :return: Job ID of the snapshot creation job
         """
         if not search(SNAPSHOT_NAME_REGEX, snapshot_name):
             raise InvalidSnapshotNameException(f"Snapshot name {snapshot_name} is invalid")
 
+        reader_list = self.managed_access_reader_list if managed_access else self.publc_access_reader_list
         snapshot_request = SnapshotRequestModel(
             name=snapshot_name,
             profile_id=self.data_repo_profile_id,
             description=f"Create snapshot {snapshot_name}",
             contents=[SnapshotRequestContentsModel(dataset_name=self.dataset, mode="byFullView")],
-            readers=self.reader_list
+            readers=reader_list
         )
 
         logging.info(snapshot_request)

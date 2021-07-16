@@ -20,7 +20,8 @@ class CreateSnapshotSolidsTestCase(unittest.TestCase):
                         'snapshot_config': {
                             'config': {
                                 'dataset_name': 'badset',
-                                'snapshot_name': 'namityname'
+                                'snapshot_name': 'namityname',
+                                'managed_access': False
                             }
                         }
                     }
@@ -28,7 +29,7 @@ class CreateSnapshotSolidsTestCase(unittest.TestCase):
             )
             self.assertTrue(result.success)
             self.assertEqual(result.output_value(), JobId('abcde'))
-            submit_snap.assert_called_once_with('namityname')
+            submit_snap.assert_called_once_with('namityname', False)
 
     def test_make_snapshot_public_hits_correct_sam_path(self):
         with patch('dagster_utils.resources.sam.NoopSamClient.make_snapshot_public') as mock_make_public:

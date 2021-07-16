@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from dagster import resource, String
+from dagster import resource, String, Bool
 from dagster.core.execution.context.init import InitResourceContext
 
 
@@ -8,11 +8,13 @@ from dagster.core.execution.context.init import InitResourceContext
 class SnapshotCreationConfig:
     dataset_name: str
     snapshot_name: str
+    managed_access: bool
 
 
 @resource({
     'dataset_name': String,
     'snapshot_name': String,
+    'managed_access': Bool
 })
 def snapshot_creation_config(init_context: InitResourceContext) -> SnapshotCreationConfig:
     return SnapshotCreationConfig(**init_context.resource_config)

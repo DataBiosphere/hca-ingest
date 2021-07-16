@@ -16,7 +16,10 @@ def submit_snapshot_job(context: AbstractComputeExecutionContext) -> JobId:
         dataset=context.resources.snapshot_config.dataset_name,
         data_repo_client=context.resources.data_repo_client,
         data_repo_profile_id=data_repo_profile_ids[context.resources.hca_manage_config.gcp_env],
-    ).submit_snapshot_request_with_name(context.resources.snapshot_config.snapshot_name)
+    ).submit_snapshot_request_with_name(
+        context.resources.snapshot_config.snapshot_name,
+        context.resources.snapshot_config.managed_access
+    )
 
 
 @solid(
