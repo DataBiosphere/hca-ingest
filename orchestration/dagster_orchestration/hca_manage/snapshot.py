@@ -6,7 +6,7 @@ from re import search
 import sys
 from typing import Optional
 
-from data_repo_client import RepositoryApi, SnapshotRequestModel, SnapshotRequestContentsModel, EnumerateSnapshotModel
+from data_repo_client import RepositoryApi, SnapshotRequestModel, SnapshotRequestContentsModel, EnumerateSnapshotModel, PolicyMemberRequest
 from dagster_utils.contrib.data_repo.jobs import poll_job, JobPollException
 from dagster_utils.contrib.data_repo.typing import JobId
 
@@ -51,8 +51,53 @@ def run(arguments: Optional[list[str]] = None) -> None:
     snapshot_query.add_argument("-n", "--snapshot_name", help="Name of snapshot to filter for")
     snapshot_query.set_defaults(func=_query_snapshot)
 
+    snapshot_add_policy_member = subparsers.add_parser("add_policy_member")
+    snapshot_add_policy_member.add_argument(
+        "-p",
+        "--policy_member",
+        help="Email address of user to add as a policy member",
+        required=True)
+    snapshot_add_policy_member.add_argument("-i", "--snapshot_id", help="Id of snapshot", required=True)
+    snapshot_add_policy_member.add_argument(
+        "-n",
+        "--policy_name",
+        help="Name of policy (one of steward, reader, discoverer)",
+        required=True)
+    snapshot_add_policy_member.set_defaults(func=_add_policy_member)
+
+    snapshot_retrieve_policies = subparsers.add_parser("retrieve_snapshot_policies")
+    snapshot_retrieve_policies.add_argument("-i", "--snapshot_id", help="Id of snapshot", required=True)
+    snapshot_retrieve_policies.set_defaults(func=_retrieve_policies)
+
     args = parser.parse_args(arguments)
     args.func(args)
+
+
+@tdr_operation
+def _retrieve_policies(args: argparse.Namespace) -> None:
+    host = data_repo_host[args.env]
+
+    snapshot_id = args.snapshot_id
+    hca = SnapshotManager(environment=args.env, data_repo_client=get_api_client(host=host))
+    response = hca.retrieve_policies(snapshot_id=snapshot_id)
+    logging.info(response)
+
+
+@tdr_operation
+def _add_policy_member(args: argparse.Namespace) -> None:
+    host = data_repo_host[args.env]
+
+    policy_member = args.policy_member
+    snapshot_id = args.snapshot_id
+    policy_name = args.policy_name
+
+    if not query_yes_no(
+            f"This will add {policy_member} as a {policy_name} to snapshot id = {snapshot_id}, are you sure?"):
+        return
+
+    hca = SnapshotManager(environment=args.env, data_repo_client=get_api_client(host=host))
+    response = hca.add_policy_member(policy_member, policy_name, snapshot_id)
+    logging.info(response)
 
 
 @tdr_operation
@@ -183,7 +228,15 @@ class SnapshotManager:
         return job_id
 
     def query_snapshot(self, snapshot_name: Optional[str] = None) -> EnumerateSnapshotModel:
-        return self.data_repo_client.enumerate_snapshots(filter=snapshot_name)
+        return self.data_repo_client.enumerate_snapshots(filter=snapshot_name, limit=1000)
+
+    def add_policy_member(self, policy_member: str, policy_name: str, snapshot_id: str) -> None:
+        payload = PolicyMemberRequest(email=policy_member)
+        response = self.data_repo_client.add_snapshot_policy_member(snapshot_id, policy_name, policy_member=payload)
+        return response
+
+    def retrieve_policies(self, snapshot_id: str):
+        return self.data_repo_client.retrieve_snapshot_policies(id=snapshot_id)
 
 
 if __name__ == '__main__':
