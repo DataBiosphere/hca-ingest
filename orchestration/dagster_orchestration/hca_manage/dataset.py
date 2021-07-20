@@ -10,7 +10,7 @@ from re import search
 
 from dagster_utils.contrib.data_repo.jobs import poll_job, JobPollException
 from dagster_utils.contrib.data_repo.typing import JobId
-from data_repo_client import RepositoryApi, EnumerateDatasetModel
+from data_repo_client import RepositoryApi, EnumerateDatasetModel, DatasetModel
 
 from hca_manage import __version__ as hca_manage_version
 from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client, query_yes_no, tdr_operation, setup_cli_logging_format
@@ -54,6 +54,11 @@ def run(arguments: Optional[list[str]] = None) -> None:
     dataset_query = subparsers.add_parser("query")
     dataset_query.add_argument("-n", "--dataset_name", help="Name of dataset to filter for")
     dataset_query.set_defaults(func=_query_dataset)
+
+    # retrieve
+    dataset_retrieve = subparsers.add_parser("retrieve")
+    dataset_retrieve.add_argument("-i", "--id", help="UUID of dataset to retrieve")
+    dataset_retrieve.set_defaults(func=_retrieve_dataset)
 
     args = parser.parse_args(arguments)
     args.func(args)
@@ -112,6 +117,14 @@ def _query_dataset(args: argparse.Namespace) -> None:
 
     hca = DatasetManager(environment=args.env, data_repo_client=get_api_client(host=host))
     logging.info(hca.enumerate_dataset(dataset_name=args.dataset_name))
+
+
+@tdr_operation
+def _retrieve_dataset(args: argparse.Namespace) -> None:
+    host = data_repo_host[args.env]
+
+    hca = DatasetManager(environment=args.env, data_repo_client=get_api_client(host=host))
+    logging.info(hca.retrieve_dataset(uuid=args.id))
 
 
 @dataclass
@@ -250,6 +263,9 @@ class DatasetManager:
         Enumerates TDR datasets, filtering on the given dataset_name
         """
         return self.data_repo_client.enumerate_datasets(filter=dataset_name, limit=1000)
+
+    def retrieve_dataset(self, uuid: int) -> DatasetModel:
+        return self.data_repo_client.retrieve_dataset(uuid)
 
     def add_policy_members(
             self,
