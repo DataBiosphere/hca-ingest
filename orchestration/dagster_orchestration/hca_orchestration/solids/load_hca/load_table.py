@@ -34,7 +34,7 @@ def _diff_hca_table(
 
     query = f"""
     SELECT J.datarepo_row_id, S.*, {datarepo_key}
-    FROM {metadata_type} S FULL JOIN {target_hca_dataset.project_id}.{fq_dataset_id}.{metadata_type} J
+    FROM {metadata_type} S FULL JOIN `{target_hca_dataset.project_id}.{fq_dataset_id}.{metadata_type}` J
     USING ({primary_key})
     """
     destination = f"{scratch_dataset_name}.{joined_table_name}"
