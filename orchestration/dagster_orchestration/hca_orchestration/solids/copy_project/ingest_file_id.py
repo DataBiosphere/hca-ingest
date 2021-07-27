@@ -3,6 +3,7 @@ from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
 
+
 @solid(
     required_resource_keys={"snapshot_config", "gcs", "data_repo_client"}
 )

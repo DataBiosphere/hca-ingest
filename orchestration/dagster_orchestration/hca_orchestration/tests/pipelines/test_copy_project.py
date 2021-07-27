@@ -3,7 +3,7 @@ from dagster import execute_pipeline
 from hca_orchestration.pipelines.copy_project import copy_project
 
 
-def test_copy_project():
+def test_copy_project() -> None:
     result = execute_pipeline(
         copy_project,
         mode="test",

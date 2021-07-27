@@ -23,7 +23,7 @@ test_mode = ModeDefinition(
 @pipeline(
     mode_defs=[test_mode]
 )
-def copy_project():
+def copy_project() -> str:
     ingest_data_files(
         inject_file_ids(
             copy_data_files(
