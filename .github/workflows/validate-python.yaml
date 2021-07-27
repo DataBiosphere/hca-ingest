@@ -15,7 +15,7 @@ jobs:
       ENV: test
     steps:
     - uses: actions/checkout@v2
-    - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+    - uses: google-github-actions/setup-gcloud@master
       with:
         project_id: ${{ secrets.DEV_PROJECT_ID }}
         service_account_key: ${{ secrets.GCP_TEST_KEY }}
