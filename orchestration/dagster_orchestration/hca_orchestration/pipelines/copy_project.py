@@ -1,11 +1,11 @@
 from dagster import ModeDefinition, pipeline, ResourceDefinition
 
 from hca_orchestration.solids.copy_project.create_scratch_area import create_scratch_area
-from hca_orchestration.solids.copy_project.subgraph_hydration import create_subgraph_hydration
-from hca_orchestration.solids.copy_project.tabular_data_ingestion import create_tabular_ingestion
-from hca_orchestration.solids.copy_project.data_file_copy import create_data_file_copy
-from hca_orchestration.solids.copy_project.ingest_file_id import create_ingest_file_id
-from hca_orchestration.solids.copy_project.data_file_ingestion import create_data_file_ingestion
+from hca_orchestration.solids.copy_project.subgraph_hydration import hydrate_subgraphs
+from hca_orchestration.solids.copy_project.tabular_data_ingestion import ingest_tabular_data
+from hca_orchestration.solids.copy_project.data_file_copy import copy_data_files
+from hca_orchestration.solids.copy_project.ingest_file_id import inject_file_ids
+from hca_orchestration.solids.copy_project.data_file_ingestion import ingest_data_files
 
 test_mode = ModeDefinition(
     name="test",
@@ -24,4 +24,9 @@ test_mode = ModeDefinition(
     mode_defs=[test_mode]
 )
 def copy_project():
-    create_data_file_ingestion(create_ingest_file_id(create_data_file_copy(create_tabular_ingestion(create_subgraph_hydration(create_scratch_area())))))
+    ingest_data_files(
+        inject_file_ids(
+            copy_data_files(
+                ingest_tabular_data(
+                    hydrate_subgraphs(
+                        create_scratch_area())))))

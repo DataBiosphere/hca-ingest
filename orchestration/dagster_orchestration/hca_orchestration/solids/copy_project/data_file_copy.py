@@ -7,7 +7,7 @@ from dagster.core.execution.context.compute import (
 @solid(
     required_resource_keys={"snapshot_config", "bigquery_service", "gcs", "data_repo_client"}
 )
-def create_data_file_copy(context: AbstractComputeExecutionContext, scratch_bucket_name: str):
+def copy_data_files(context: AbstractComputeExecutionContext, scratch_bucket_name: str) -> str:
     snapshot_config = context.resources.snapshot_config
     bigquery_service = context.resources.bigquery_service
     gcs = context.resources.gcs

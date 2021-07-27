@@ -7,7 +7,7 @@ from dagster.core.execution.context.compute import (
 @solid(
     required_resource_keys={"snapshot_config", "gcs", "data_repo_client"}
 )
-def create_scratch_area(context: AbstractComputeExecutionContext):
+def create_scratch_area(context: AbstractComputeExecutionContext) -> str:
     snapshot_config = context.resources.snapshot_config
     gcs = context.resources.gcs
     data_repo_client = context.resources.data_repo_client

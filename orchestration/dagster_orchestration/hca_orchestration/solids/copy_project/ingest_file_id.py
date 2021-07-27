@@ -6,7 +6,7 @@ from dagster.core.execution.context.compute import (
 @solid(
     required_resource_keys={"snapshot_config", "gcs", "data_repo_client"}
 )
-def create_ingest_file_id(context: AbstractComputeExecutionContext, scratch_bucket_name: str):
+def inject_file_ids(context: AbstractComputeExecutionContext, scratch_bucket_name: str) -> str:
     snapshot_config = context.resources.snapshot_config
     gcs = context.resources.gcs
     data_repo_client = context.resources.data_repo_client
