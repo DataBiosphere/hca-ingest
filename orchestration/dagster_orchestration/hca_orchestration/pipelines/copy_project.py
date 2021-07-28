@@ -6,6 +6,9 @@ from hca_orchestration.solids.copy_project.tabular_data_ingestion import ingest_
 from hca_orchestration.solids.copy_project.data_file_copy import copy_data_files
 from hca_orchestration.solids.copy_project.ingest_file_id import inject_file_ids
 from hca_orchestration.solids.copy_project.data_file_ingestion import ingest_data_files
+from hca_orchestration.resources.hca_project_config import hca_project_config
+from hca_orchestration.resources.snaphot_config import snapshot_config
+
 
 test_mode = ModeDefinition(
     name="test",
@@ -15,7 +18,8 @@ test_mode = ModeDefinition(
         "gcs": ResourceDefinition.mock_resource(),
         "scratch_config": ResourceDefinition.mock_resource(),
         "bigquery_service": ResourceDefinition.mock_resource(),
-        "snapshot_config": ResourceDefinition.mock_resource()
+        "snapshot_config": snapshot_config,
+        "hca_project_config": hca_project_config,
     }
 )
 

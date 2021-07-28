@@ -9,11 +9,15 @@ def test_copy_project() -> None:
         mode="test",
         run_config={
             'resources': {
-                'snapshot_config': {
-                    'config': {
-                        'dataset_name': 'badset',
-                        'snapshot_name': 'namityname',
-                        'managed_access': False
+                "snapshot_config": {
+                    "config": {
+                        "snapshot_name": "foo_snapshot_name",
+                        "bigquery_project_id": "fake_bq_project_id"
+                    }
+                },
+                "hca_project_config": {
+                    "config": {
+                        "project_id": "fake_project_id"
                     }
                 }
             }
