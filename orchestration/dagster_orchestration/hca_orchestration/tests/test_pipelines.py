@@ -18,7 +18,7 @@ def config_path(relative_path: str) -> str:
 
 
 def beam_runner_path() -> str:
-    path: str = file_relative_path(__file__, '../../../../')
+    path: str = file_relative_path(__file__, '../../../')
     return path
 
 
