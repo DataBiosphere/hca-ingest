@@ -1,15 +1,15 @@
 import json
-import re
 from collections import defaultdict
 from dataclasses import dataclass
 
-from dagster import solid, ResourceDefinition
+from dagster import solid
 from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
 from google.cloud.bigquery import ArrayQueryParameter
 
 from hca_orchestration.contrib.bigquery import BigQueryService
+from hca_orchestration.resources.scratch_config import ScratchConfig
 from hca_orchestration.resources.snaphot_config import SnapshotConfig
 
 
@@ -27,7 +27,7 @@ class MetadataEntity:
         "scratch_config"
     }
 )
-def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> str:
+def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> None:
     # 1. given a project ID, query the links table for all rows associated with the project
     # 2. find all process entries assoc. with the links
     # 3. find all other entities assoc. with the links
@@ -84,7 +84,6 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> str:
         snapshot_config.snapshot_name,
         bigquery_service
     )
-    return scratch_bucket_name
 
 
 def _extract_entities_to_path(
@@ -125,5 +124,6 @@ def _extract_entities_to_path(
         query_params = [
             ArrayQueryParameter("entity_ids", "STRING", entity_ids)
         ]
-        query_job = bigquery_service.build_query_job_returning_data(fetch_entities_query, bigquery_project_id, query_params)
+        query_job = bigquery_service.build_query_job_returning_data(
+            fetch_entities_query, bigquery_project_id, query_params)
         query_job.result()
