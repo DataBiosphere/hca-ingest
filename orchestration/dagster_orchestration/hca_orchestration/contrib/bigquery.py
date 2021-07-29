@@ -37,7 +37,7 @@ class BigQueryService:
             self,
             query: str,
             bigquery_project: str,
-            query_params: list[ArrayQueryParameter]
+            query_params: list[ArrayQueryParameter]=[]
     ) -> QueryJob:
         job_config = QueryJobConfig()
         if query_params:
