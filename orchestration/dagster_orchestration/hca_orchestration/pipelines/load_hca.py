@@ -1,4 +1,6 @@
-from dagster import ModeDefinition, pipeline
+from dagster import ModeDefinition, pipeline, success_hook, failure_hook
+from dagster import HookContext
+
 from dagster_gcp.gcs import gcs_pickle_io_manager
 from dagster_utils.resources.beam.noop_beam_runner import noop_beam_runner
 from dagster_utils.resources.beam.k8s_beam_runner import k8s_dataflow_beam_runner
@@ -7,15 +9,18 @@ from dagster_utils.resources.beam.dataflow_beam_runner import dataflow_beam_runn
 from dagster_utils.resources.bigquery import bigquery_client, noop_bigquery_client
 from dagster_utils.resources.google_storage import google_storage_client, mock_storage_client
 from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client, noop_data_repo_client
+from dagster_utils.resources.slack import console_slack_client, live_slack_client
 
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.resources import load_tag, bigquery_service, mock_bigquery_service
+from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.hca_dataset import target_hca_dataset
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.solids.load_hca.data_files.load_data_files import import_data_files
 from hca_orchestration.solids.load_hca.data_files.load_data_metadata_files import file_metadata_fanout
 from hca_orchestration.solids.load_hca.non_file_metadata.load_non_file_metadata import non_file_metadata_fanout
 from hca_orchestration.solids.load_hca.stage_data import clear_scratch_dir, pre_process_metadata, create_scratch_dataset
+
 
 prod_mode = ModeDefinition(
     name="prod",
@@ -28,7 +33,9 @@ prod_mode = ModeDefinition(
         "load_tag": load_tag,
         "scratch_config": scratch_config,
         "target_hca_dataset": target_hca_dataset,
-        "bigquery_service": bigquery_service
+        "bigquery_service": bigquery_service,
+        "slack": preconfigure_resource_for_mode(live_slack_client, "prod"),
+        "dagit_config": preconfigure_resource_for_mode(dagit_config, "prod")
     }
 )
 
@@ -43,7 +50,9 @@ dev_mode = ModeDefinition(
         "load_tag": load_tag,
         "scratch_config": scratch_config,
         "target_hca_dataset": target_hca_dataset,
-        "bigquery_service": bigquery_service
+        "bigquery_service": bigquery_service,
+        "slack": preconfigure_resource_for_mode(live_slack_client, "dev"),
+        "dagit_config": preconfigure_resource_for_mode(dagit_config, "dev")
     }
 )
 
@@ -58,7 +67,9 @@ local_mode = ModeDefinition(
         "load_tag": load_tag,
         "scratch_config": scratch_config,
         "target_hca_dataset": target_hca_dataset,
-        "bigquery_service": bigquery_service
+        "bigquery_service": bigquery_service,
+        "slack": preconfigure_resource_for_mode(live_slack_client, "local"),
+        "dagit_config": preconfigure_resource_for_mode(dagit_config, "local")
     }
 )
 
@@ -72,17 +83,96 @@ test_mode = ModeDefinition(
         "load_tag": load_tag,
         "scratch_config": scratch_config,
         "target_hca_dataset": target_hca_dataset,
-        "bigquery_service": mock_bigquery_service
+        "bigquery_service": mock_bigquery_service,
+        "slack": console_slack_client,
+        "dagit_config": preconfigure_resource_for_mode(dagit_config, "test")
     }
 )
+
+
+def _base_slack_blocks(title: str, key_values: dict[str, str]) -> list[dict[str, object]]:
+    return [
+        {
+            "type": "section",
+            "text": {
+                'type': 'mrkdwn',
+                'text': f'*{title}*',
+            }
+        },
+        {
+            'type': 'divider'
+        },
+        {
+            'type': 'section',
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': '\n'.join(map(lambda keys: f'*{keys}*', key_values.keys())),
+                },
+                {
+                    'type': 'mrkdwn',
+                    'text': '\n'.join(key_values.values())
+                }
+            ]
+        }
+    ]
+
+
+@success_hook(
+    required_resource_keys={'slack', 'target_hca_dataset', 'dagit_config'}
+)
+def import_start_notification(context: HookContext) -> None:
+    context.log.info(f"Solid output = {context.solid_output_values}")
+    job_id = context.solid_output_values["result"]
+    kvs = {
+        "Staging Area": context.solids.pre_process_metadata.input_prefix,
+        "Target Dataset": context.resources.target_hca_dataset.dataset_name,
+        "Jade Project": context.resources.target_hca_dataset.project_id,
+        "TDR Job ID": job_id,
+        "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
+    }
+
+    context.resources.slack.send_message(blocks=_base_slack_blocks("HCA Starting Import", key_values=kvs))
+
+
+@failure_hook(
+    required_resource_keys={'slack', 'target_hca_dataset', 'dagit_config'}
+)
+def import_failed_notification(context: HookContext) -> None:
+    if "result" in context.solid_output_values:
+        job_id = context.solid_output_values["result"]
+    else:
+        job_id = "N/A"
+
+    kvs = {
+        "Staging Area": context.solids.pre_process_metadata.input_prefix,
+        "Target Dataset": context.resources.target_hca_dataset.dataset_name,
+        "Jade Project": context.resources.target_hca_dataset.project_id,
+        "TDR Job ID": job_id,
+        "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
+    }
+
+    context.resources.slack.send_message(blocks=_base_slack_blocks("HCA Import Failed", key_values=kvs))
+
+
+@success_hook(
+    required_resource_keys={'slack', 'target_hca_dataset', 'dagit_config'}
+)
+def message_for_import_done(context: HookContext) -> None:
+    context.resources.slack.send_message(blocks=_base_slack_blocks("HCA Import Complete", {
+        "Staging Area": context.solids.pre_process_metadata.input_prefix,
+        "Target Dataset": context.resources.target_hca_dataset.dataset_name,
+        "Jade Project": context.resources.target_hca_dataset.project_id,
+        "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
+    }))
 
 
 @pipeline(
     mode_defs=[prod_mode, dev_mode, local_mode, test_mode]
 )
 def load_hca() -> None:
-    staging_dataset = create_scratch_dataset(pre_process_metadata(clear_scratch_dir()))
-    result = import_data_files(staging_dataset).collect()
+    hooked_staging_dataset = create_scratch_dataset(pre_process_metadata(clear_scratch_dir())).with_hooks({import_start_notification})
+    hooked_result = import_data_files(hooked_staging_dataset).collect().with_hooks({import_failed_notification})
 
-    file_metadata_fanout(result, staging_dataset)
-    non_file_metadata_fanout(result, staging_dataset)
+    file_metadata_fanout(result, staging_dataset).with_hooks({import_failed_notification})
+    non_file_metadata_fanout(result, staging_dataset).with_hooks({import_failed_notification}).with_hooks({message_for_import_done})
