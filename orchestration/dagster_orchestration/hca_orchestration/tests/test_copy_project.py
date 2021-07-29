@@ -9,6 +9,12 @@ def test_copy_project() -> None:
         mode="test",
         run_config={
             'resources': {
+                "scratch_config": {
+                    "config": {
+                        "bucket": "fake_bucket_name",
+                        "prefix": "fake_prefix"
+                    }
+                },
                 "snapshot_config": {
                     "config": {
                         "snapshot_name": "foo_snapshot_name",

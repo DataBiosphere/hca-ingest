@@ -1,4 +1,5 @@
 import json
+import re
 from collections import defaultdict
 from dataclasses import dataclass
 
@@ -22,10 +23,11 @@ class MetadataEntity:
     required_resource_keys={
         "snapshot_config",
         "bigquery_service",
-        "hca_project_config"
+        "hca_project_config",
+        "scratch_config"
     }
 )
-def hydrate_subgraphs(context: AbstractComputeExecutionContext, scratch_bucket_name: str) -> str:
+def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> str:
     # 1. given a project ID, query the links table for all rows associated with the project
     # 2. find all process entries assoc. with the links
     # 3. find all other entities assoc. with the links
@@ -33,6 +35,9 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext, scratch_bucket_n
     bigquery_service: BigQueryService = context.resources.bigquery_service
     hca_project_config = context.resources.hca_project_config
     project_id = hca_project_config.project_id
+    scratch_config: ScratchConfig = context.resources.scratch_config
+
+    scratch_bucket_name = f"{scratch_config.bucket}/{scratch_config.prefix}"
 
     query = f"""
       SELECT *
@@ -97,7 +102,7 @@ def _extract_entities_to_path(
         if data_file:
             fetch_entities_query = f"""
                 EXPORT DATA OPTIONS(
-                  uri='{destination_path}/{entity_type}/*',
+                  uri='gs://{destination_path}/{entity_type}/*',
                   format='JSON',
                   overwrite=true
                 ) AS
@@ -108,7 +113,7 @@ def _extract_entities_to_path(
         else:
             fetch_entities_query = f"""
                 EXPORT DATA OPTIONS(
-                  uri='{destination_path}/{entity_type}/*',
+                  uri='gs://{destination_path}/{entity_type}/*',
                   format='JSON',
                   overwrite=true
                 ) AS
@@ -120,5 +125,5 @@ def _extract_entities_to_path(
         query_params = [
             ArrayQueryParameter("entity_ids", "STRING", entity_ids)
         ]
-        query_job = bigquery_service.build_query_job_returning_data(fetch_entities_query, query_params)
+        query_job = bigquery_service.build_query_job_returning_data(fetch_entities_query, bigquery_project_id, query_params)
         query_job.result()
