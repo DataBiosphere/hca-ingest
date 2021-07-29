@@ -16,16 +16,21 @@ def clear_scratch_dir(context: AbstractComputeExecutionContext) -> int:
     Given a staging bucket + prefix, deletes all blobs present at that path
     :return: Number of deletions
     """
-
     scratch_bucket_name = context.resources.scratch_config.scratch_bucket_name
     scratch_prefix_name = context.resources.scratch_config.scratch_prefix_name
 
-    blobs = context.resources.gcs.list_blobs(scratch_bucket_name, prefix=f"{scratch_prefix_name}/")
+    context.log.info(f"Clearing scratch dir at {scratch_prefix_name}")
+    deletions_count = clear_dir(scratch_bucket_name, scratch_prefix_name, context.resources.gcs)
+    context.log.info(f"Deleted {deletions_count} blobs under {scratch_prefix_name}")
+    return deletions_count
+
+
+def clear_dir(bucket, prefix, gcs):
+    blobs = gcs.list_blobs(bucket, prefix=f"{prefix}/")
     deletions_count = 0
     for blob in blobs:
         blob.delete()
         deletions_count += 1
-    context.log.debug(f"--clear_scratch_dir deleted {deletions_count} blobs under {scratch_prefix_name}")
     return deletions_count
 
 

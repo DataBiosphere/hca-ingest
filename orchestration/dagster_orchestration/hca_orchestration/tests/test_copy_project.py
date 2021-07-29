@@ -19,8 +19,11 @@ def test_copy_project() -> None:
                 },
                 "scratch_config": {
                     "config": {
-                        "bucket": "fake_bucket_name",
-                        "prefix": "fake_prefix"
+                        "scratch_bq_project": "NA",
+                        "scratch_bucket_name": "ignore",
+                        "scratch_dataset_prefix": "NA",
+                        "scratch_prefix_name": "ignore",
+                        "scratch_table_expiration_ms": 0
                     }
                 },
                 "snapshot_config": {
