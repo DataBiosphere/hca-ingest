@@ -19,7 +19,6 @@ from hca_orchestration.resources.config.scratch import ScratchConfig
     required_resource_keys={"gcs", "data_repo_client", "scratch_config", "target_hca_dataset"}
 )
 def ingest_data_files(context: AbstractComputeExecutionContext, data_file_paths: set[str]) -> None:
-    return
     storage_client = context.resources.gcs
     data_repo_client = context.resources.data_repo_client
     scratch_config: ScratchConfig = context.resources.scratch_config

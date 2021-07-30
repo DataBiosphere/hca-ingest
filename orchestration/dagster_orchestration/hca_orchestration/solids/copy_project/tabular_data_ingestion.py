@@ -54,7 +54,7 @@ def _ingest_tabular_data_to_tdr(context, data_repo_client, entity_types, target_
         poll_job(job_id, 300, 2, data_repo_client)
 
 
-def _find_entities_for_ingestion(context, gcs, scratch_config: ScratchConfig):
+def _find_entities_for_ingestion(context, gcs, scratch_config: ScratchConfig) -> dict[str, str]:
     result = gcs.list_blobs(
         scratch_config.scratch_bucket_name,
         prefix=scratch_config.scratch_prefix_name +
