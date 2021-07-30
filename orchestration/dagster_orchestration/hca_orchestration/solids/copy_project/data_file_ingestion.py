@@ -34,7 +34,7 @@ def _bulk_ingest_to_tdr(context, control_file_path, data_repo_client,
     payload = {
         "profileId": target_hca_dataset.billing_profile_id,
         "loadControlFile": f"gs://{scratch_config.scratch_bucket_name}/{control_file_path}",
-        "loadTag": "arh_testing",
+        "loadTag": "arh_testing2",
         "maxFailedFileLoads": 0
     }
     context.log.info(f'Bulk file ingest payload = {payload}')

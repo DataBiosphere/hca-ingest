@@ -56,11 +56,15 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataEntit
         WHERE project_id = "{project_id}"
     """
     query_job = bigquery_service.build_query_job_returning_data(query, snapshot_config.bigquery_project_id)
-    subgraphs = [json.loads(row["content"])["links"] for row in query_job.result()]
+    nodes = defaultdict(list)
+    subgraphs = []
+    for row in query_job.result():
+        subgraphs.append(json.loads(row["content"])["links"])
+        nodes["links"].append(MetadataEntity("link", row["links_id"]))
 
     context.log.info("Hydrating subgraphs...")
-    nodes = defaultdict(list)
     for subgraph in subgraphs:
+
         for link in subgraph:
             link_type = link["link_type"]
             if link_type == 'process_link':
@@ -188,7 +192,7 @@ def _extract_entities_to_path(
         ]
         print(f"**** Saved tabular data ingest to gs://{destination_path}/{entity_type}/*")
         query_job = bigquery_service.build_query_job_returning_data(
-            fetch_entities_query, bigquery_project_id, query_params)
+            fetch_entities_query, bigquery_project_id, query_params, location='US')
         query_job.result()
 
 

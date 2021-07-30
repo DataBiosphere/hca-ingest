@@ -37,7 +37,8 @@ class BigQueryService:
             self,
             query: str,
             bigquery_project: str,
-            query_params: list[ArrayQueryParameter]=[]
+            query_params: list[ArrayQueryParameter] = [],
+            location='US'
     ) -> QueryJob:
         job_config = QueryJobConfig()
         if query_params:
@@ -46,7 +47,7 @@ class BigQueryService:
         query_job = self.bigquery_client.query(
             query,
             job_config=job_config,
-            location='US',
+            location=location,
             project=bigquery_project
         )
         return query_job

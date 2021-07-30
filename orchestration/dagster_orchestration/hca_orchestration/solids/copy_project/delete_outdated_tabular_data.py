@@ -67,5 +67,6 @@ def _extract_dupes_to_scratch_area(bigquery_service, context, dupes_path, entity
             SELECT datarepo_row_id FROM rows_ordered_by_version WHERE rank > 1;
 
         """
-    query_job = bigquery_service.build_query_job_returning_data(query, target_hca_dataset.project_id)
+    query_job = bigquery_service.build_query_job_returning_data(
+        query, target_hca_dataset.project_id, location='us-central1')
     query_job.result()
