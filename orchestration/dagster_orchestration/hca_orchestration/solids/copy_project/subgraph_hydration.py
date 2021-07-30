@@ -17,6 +17,12 @@ from hca_orchestration.resources.config.scratch import ScratchConfig
 from hca_orchestration.resources.snaphot_config import SnapshotConfig
 
 
+@dataclass(eq=True, frozen=True)
+class DataEntity:
+    path: str
+    hca_file_id: str
+
+
 @dataclass
 class MetadataEntity:
     entity_type: str
@@ -32,7 +38,7 @@ class MetadataEntity:
     },
     input_defs=[InputDefinition("start", Nothing)]
 )
-def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[str]:
+def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataEntity]:
     # 1. given a project ID, query the links table for all rows associated with the project
     # 2. find all process entries assoc. with the links
     # 3. find all other entities assoc. with the links
@@ -99,6 +105,7 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[str]:
                                  bigquery_service)
 
     drs_objects = {}
+    entity_file_ids = {}
     for entity_type, entities in entity_rows.items():
         if not entity_type.endswith("_file"):
             continue
@@ -106,21 +113,22 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[str]:
             file_id = entity['file_id']
             drs_object = urlparse(file_id).path[1:]
             drs_objects[drs_object] = urlparse(file_id).netloc
+            entity_file_ids[drs_object] = entity[f"{entity_type}_id"]
 
     # get the actual GS path for the DRS object
     context.log.info("Resolving DRS object GCS paths...")
-    paths = set()
+    data_entities = set()
     with requests.Session() as s:
         creds = _get_credentials()
         s.headers = {
             "Authorization": f"Bearer {creds.token}"
         }
         [
-            paths.add(_fetch_drs_access_info(drs_host, drs_object, s))
+            data_entities.add(DataEntity(_fetch_drs_access_info(drs_host, drs_object, s), entity_file_ids[drs_object]))
             for drs_object, drs_host in drs_objects.items()
         ]
 
-    return paths
+    return data_entities
 
 
 def _get_credentials():
