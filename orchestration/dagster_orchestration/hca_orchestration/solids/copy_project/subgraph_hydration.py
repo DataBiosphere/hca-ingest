@@ -1,20 +1,20 @@
 import json
-import requests
 from collections import defaultdict
 from dataclasses import dataclass
 from urllib.parse import urlparse
 
+import requests
 from dagster import solid, InputDefinition, Nothing
 from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
 from dagster_utils.contrib.google import get_credentials
-from google.cloud.bigquery import ArrayQueryParameter
 from google.auth.transport.requests import Request
+from google.cloud.bigquery import ArrayQueryParameter
 
 from hca_orchestration.contrib.bigquery import BigQueryService
 from hca_orchestration.resources.config.scratch import ScratchConfig
-from hca_orchestration.resources.snaphot_config import SnapshotConfig
+from hca_orchestration.resources.hca_project_config import HcaProjectCopyingConfig
 
 
 @dataclass(eq=True, frozen=True)
@@ -31,7 +31,6 @@ class MetadataEntity:
 
 @solid(
     required_resource_keys={
-        "snapshot_config",
         "bigquery_service",
         "hca_project_copying_config",
         "scratch_config"
@@ -42,20 +41,19 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataEntit
     # 1. given a project ID, query the links table for all rows associated with the project
     # 2. find all process entries assoc. with the links
     # 3. find all other entities assoc. with the links
-    snapshot_config: SnapshotConfig = context.resources.snapshot_config
     bigquery_service: BigQueryService = context.resources.bigquery_service
-    hca_project_config = context.resources.hca_project_copying_config
-    project_id = hca_project_config.project_id
+    hca_project_config: HcaProjectCopyingConfig = context.resources.hca_project_copying_config
+    project_id = hca_project_config.source_hca_project_id
     scratch_config: ScratchConfig = context.resources.scratch_config
 
     scratch_bucket_name = f"{scratch_config.scratch_bucket_name}/{scratch_config.scratch_prefix_name}"
 
     query = f"""
       SELECT *
-        FROM {snapshot_config.bigquery_project_id}.{snapshot_config.snapshot_name}.links
+        FROM {hca_project_config.source_bigquery_project_id}.{hca_project_config.source_snapshot_name}.links
         WHERE project_id = "{project_id}"
     """
-    query_job = bigquery_service.build_query_job(query, snapshot_config.bigquery_project_id)
+    query_job = bigquery_service.build_query_job(query, hca_project_config.source_bigquery_project_id)
     nodes = defaultdict(list)
     subgraphs = []
     for row in query_job.result():
@@ -97,15 +95,15 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataEntit
     _extract_entities_to_path(
         nodes,
         f"{scratch_bucket_name}/tabular_data_for_ingest",
-        snapshot_config.bigquery_project_id,
-        snapshot_config.snapshot_name,
+        hca_project_config.source_bigquery_project_id,
+        hca_project_config.source_snapshot_name,
         bigquery_service
     )
 
     context.log.info("Determining files to load...")
     entity_rows = fetch_entities(nodes,
-                                 snapshot_config.bigquery_project_id,
-                                 snapshot_config.snapshot_name,
+                                 hca_project_config.source_bigquery_project_id,
+                                 hca_project_config.source_snapshot_name,
                                  bigquery_service)
 
     drs_objects = {}

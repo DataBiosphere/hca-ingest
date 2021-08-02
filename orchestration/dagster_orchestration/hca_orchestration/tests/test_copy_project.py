@@ -26,15 +26,11 @@ def test_copy_project() -> None:
                         "scratch_table_expiration_ms": 0
                     }
                 },
-                "snapshot_config": {
-                    "config": {
-                        "snapshot_name": "foo_snapshot_name",
-                        "bigquery_project_id": "fake_bq_project_id"
-                    }
-                },
                 "hca_project_copying_config": {
                     "config": {
-                        "project_id": "fake_project_id"
+                        "source_snapshot_name": "fake_source_snapshot_name",
+                        "source_bigquery_project_id": "fake_source_bq_project_id",
+                        "source_hca_project_id": "fake_project_id"
                     }
                 }
             }

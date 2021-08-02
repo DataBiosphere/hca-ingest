@@ -61,12 +61,12 @@ def _extract_dupes_to_scratch_area(bigquery_service, context, dupes_path, entity
                 SELECT datarepo_row_id, {entity_type}_id, version, rank() OVER (
                     PARTITION BY {entity_type}_id ORDER BY version ASC, datarepo_row_id ASC
                 ) AS rank
-                FROM `{target_hca_dataset.project_id}.datarepo_{target_hca_dataset.dataset_name}.{entity_type}`
+                FROM `{target_hca_dataset.source_hca_project_id}.datarepo_{target_hca_dataset.dataset_name}.{entity_type}`
                           ORDER BY {entity_type}_id
             )
             SELECT datarepo_row_id FROM rows_ordered_by_version WHERE rank > 1;
 
         """
     query_job = bigquery_service.build_query_job(
-        query, target_hca_dataset.project_id, location='us-central1')
+        query, target_hca_dataset.source_hca_project_id, location='us-central1')
     query_job.result()

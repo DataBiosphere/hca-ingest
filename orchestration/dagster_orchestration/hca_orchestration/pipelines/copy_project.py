@@ -24,7 +24,6 @@ dev_mode = ModeDefinition(
         "gcs": google_storage_client,
         "scratch_config": scratch_config,
         "bigquery_service": bigquery_service,
-        "snapshot_config": snapshot_config,
         "hca_project_copying_config": hca_project_copying_config,
         "target_hca_dataset": target_hca_dataset
     }
@@ -38,7 +37,6 @@ test_mode = ModeDefinition(
         "gcs": ResourceDefinition.mock_resource(),
         "scratch_config": scratch_config,
         "bigquery_service": ResourceDefinition.mock_resource(),
-        "snapshot_config": snapshot_config,
         "hca_project_copying_config": hca_project_copying_config,
         "target_hca_dataset": target_hca_dataset
     }
