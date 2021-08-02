@@ -258,7 +258,8 @@ class DatasetManager:
 
         from datetime import datetime
         logging.info(f"SUBMITTING DELETE DATASET REQUEST, ts = {datetime.now().isoformat()}")
-        delete_response_id: JobId = self.data_repo_client.delete_dataset(dataset_id).id
+        delete_response = self.data_repo_client.delete_dataset(dataset_id, _request_timeout=30)
+        delete_response_id = JobId(delete_response.id)
         logging.info(f"Dataset deletion job id: {delete_response_id}, ts = {datetime.now().isoformat()}")
         return delete_response_id
 
