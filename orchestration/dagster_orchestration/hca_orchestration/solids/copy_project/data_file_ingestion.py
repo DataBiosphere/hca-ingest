@@ -11,4 +11,4 @@ def ingest_data_files(context: AbstractComputeExecutionContext, scratch_bucket_n
     snapshot_config = context.resources.snapshot_config
     gcs = context.resources.gcs
     data_repo_client = context.resources.data_repo_client
-    return "scratch_bucket_name"
+    return "scratch_bucket_name  "
