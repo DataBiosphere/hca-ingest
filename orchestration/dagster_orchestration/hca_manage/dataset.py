@@ -243,6 +243,7 @@ class DatasetManager:
         :param dataset_id: ID of the dataset
         :return: Job ID of the dataset deletion job
         """
+        logging.info(f"IN DELETE DATASET, dataset_id = {dataset_id}")
         if dataset_name and not dataset_id:
             response = self.data_repo_client.enumerate_datasets(filter=dataset_name)
             try:
@@ -254,6 +255,7 @@ class DatasetManager:
         else:
             # can't have both/neither provided
             raise ValueError("You must provide either dataset_name or dataset_id, and cannot provide neither/both.")
+        logging.info("SUBMITTING DELETE DATASET REQUEST")
         delete_response_id: JobId = self.data_repo_client.delete_dataset(dataset_id).id
         logging.info(f"Dataset deletion job id: {delete_response_id}")
         return delete_response_id
