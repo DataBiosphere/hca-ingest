@@ -1,8 +1,8 @@
 name: PR Validation
 on:
-  pull_request:
+  push:
     branches:
-      - master
+      - ignore-me
 jobs:
   pr-validation:
     runs-on: ubuntu-latest
