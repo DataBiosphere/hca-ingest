@@ -29,13 +29,13 @@ def ingest_tabular_data(context: AbstractComputeExecutionContext) -> set[str]:
     target_hca_dataset: TargetHcaDataset = context.resources.target_hca_dataset
 
     entity_types = _find_entities_for_ingestion(context, gcs, scratch_config)
-    _ingest_tabular_data_to_tdr(context, data_repo_client, entity_types, target_hca_dataset)
+    ingest_tabular_data_to_tdr(context, data_repo_client, entity_types, target_hca_dataset)
 
     return set(entity_types.keys())
 
 
-def _ingest_tabular_data_to_tdr(context: AbstractComputeExecutionContext, data_repo_client: RepositoryApi,
-                                entity_types: dict[str, str], target_hca_dataset: TargetHcaDataset) -> None:
+def ingest_tabular_data_to_tdr(context: AbstractComputeExecutionContext, data_repo_client: RepositoryApi,
+                               entity_types: dict[str, str], target_hca_dataset: TargetHcaDataset) -> None:
     for entity_type, path in entity_types.items():
         payload = {
             "format": "json",

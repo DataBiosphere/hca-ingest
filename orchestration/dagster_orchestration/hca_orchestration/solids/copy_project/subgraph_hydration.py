@@ -116,10 +116,11 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
         if not entity_type.endswith("_file"):
             continue
         for row in rows:
-            file_id = row['file_id']
-            drs_object = urlparse(file_id).path[1:]
-            drs_objects[drs_object] = urlparse(file_id).netloc
-            entity_file_ids[drs_object] = row[f"{entity_type}_id"]
+            tdr_file_id = row['file_id']
+            drs_object = urlparse(tdr_file_id).path[1:]
+            drs_objects[drs_object] = urlparse(tdr_file_id).netloc
+
+            entity_file_ids[drs_object] = row[f"target_path"]
 
     # get the actual GS path for the DRS object
     context.log.info("Resolving DRS object GCS paths...")
@@ -209,11 +210,18 @@ def fetch_entities(
         bigquery_service: BigQueryService) -> dict[str, list[Row]]:
     result: dict[str, list[Row]] = defaultdict(list[Row])
     for entity_type, entities in entities_by_type.items():
-        fetch_entities_query = f"""
-        SELECT * EXCEPT (datarepo_row_id)
-        FROM {bigquery_project_id}.{snapshot_name}.{entity_type} WHERE {entity_type}_id IN
-        UNNEST(@entity_ids)
-        """
+        if not entity_type.endswith("_file"):
+            fetch_entities_query = f"""
+            SELECT * EXCEPT (datarepo_row_id)
+            FROM {bigquery_project_id}.{snapshot_name}.{entity_type} WHERE {entity_type}_id IN
+            UNNEST(@entity_ids)
+            """
+        else:
+            fetch_entities_query = f"""
+            SELECT '/' || JSON_EXTRACT_SCALAR(descriptor, '$.file_id') || '/' || JSON_EXTRACT_SCALAR(descriptor, '$.file_name') as target_path, * EXCEPT (datarepo_row_id)
+            FROM {bigquery_project_id}.{snapshot_name}.{entity_type} WHERE {entity_type}_id IN
+            UNNEST(@entity_ids)
+            """
         entity_ids = [entity.entity_id for entity in entities]
         query_params = [
             ArrayQueryParameter("entity_ids", "STRING", entity_ids)

@@ -76,12 +76,8 @@ def _generate_control_file(context: AbstractComputeExecutionContext,
     ingest_items = []
     for data_entity in data_entities:
         file_bucket_and_prefix = parse_gs_path(data_entity.path)
-        source_bucket = Bucket(storage_client, file_bucket_and_prefix.bucket)
-
-        blob = Blob(file_bucket_and_prefix.prefix, source_bucket)
-        target_path = f"{blob.name.split('/')[-1]}"
         ingest_items.append(
-            f'{{"sourcePath":"{data_entity.path}", "targetPath":"/{data_entity.hca_file_id}/{target_path}"}}')
+            f'{{"sourcePath":"{data_entity.path}", "targetPath":"{data_entity.hca_file_id}"}}')
 
     # write out a JSONL control file for TDR to consume
     control_file_str = "\n".join(ingest_items)

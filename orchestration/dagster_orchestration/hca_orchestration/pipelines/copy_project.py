@@ -48,8 +48,8 @@ test_mode = ModeDefinition(
     mode_defs=[test_mode, dev_mode]
 )
 def copy_project() -> None:
-    inject_file_ids(
-        delete_outdated_tabular_data(
+    delete_outdated_tabular_data(
+        inject_file_ids(
             ingest_tabular_data(
                 ingest_data_files(
                     hydrate_subgraphs(
@@ -58,4 +58,5 @@ def copy_project() -> None:
                 )
             )
         )
+
     )
