@@ -38,7 +38,7 @@ class BigQueryService:
             query: str,
             bigquery_project: str,
             query_params: list[ArrayQueryParameter] = [],
-            location='US'
+            location: str = 'US'
     ) -> QueryJob:
         """
         Performs a bigquery query, with no external destination (table or otherwise)

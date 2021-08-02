@@ -4,14 +4,14 @@ from dagster.core.execution.context.compute import (
 )
 from dagster_utils.contrib.data_repo.jobs import poll_job
 from dagster_utils.contrib.data_repo.typing import JobId
-from data_repo_client import JobModel
+from data_repo_client import JobModel, RepositoryApi
+from google.cloud.storage import Client
 from google.cloud.storage.blob import Blob
 from google.cloud.storage.bucket import Bucket
 
 from hca_orchestration.contrib.gcs import parse_gs_path
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
-from hca_orchestration.resources.hca_project_config import HcaProjectCopyingConfig
 from hca_orchestration.solids.copy_project.subgraph_hydration import DataFileEntity
 
 
@@ -47,9 +47,12 @@ def ingest_data_files(context: AbstractComputeExecutionContext, data_entities: s
         load_tag)
 
 
-def _bulk_ingest_to_tdr(context, control_file_path, data_repo_client,
-                        scratch_config: ScratchConfig, target_hca_dataset,
-                        load_tag: str):
+def _bulk_ingest_to_tdr(context: AbstractComputeExecutionContext,
+                        control_file_path: str,
+                        data_repo_client: RepositoryApi,
+                        scratch_config: ScratchConfig,
+                        target_hca_dataset: TargetHcaDataset,
+                        load_tag: str) -> None:
     payload = {
         "profileId": target_hca_dataset.billing_profile_id,
         "loadControlFile": f"gs://{scratch_config.scratch_bucket_name}/{control_file_path}",
@@ -66,7 +69,10 @@ def _bulk_ingest_to_tdr(context, control_file_path, data_repo_client,
     poll_job(job_id, 86400, 2, data_repo_client)
 
 
-def _generate_control_file(context, data_entities: set[DataFileEntity], scratch_config: ScratchConfig, storage_client):
+def _generate_control_file(context: AbstractComputeExecutionContext,
+                           data_entities: set[DataFileEntity],
+                           scratch_config: ScratchConfig,
+                           storage_client: Client) -> str:
     ingest_items = []
     for data_entity in data_entities:
         file_bucket_and_prefix = parse_gs_path(data_entity.path)

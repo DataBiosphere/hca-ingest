@@ -10,7 +10,9 @@ from dagster.core.execution.context.compute import (
 )
 from dagster_utils.contrib.google import get_credentials
 from google.auth.transport.requests import Request
-from google.cloud.bigquery import ArrayQueryParameter
+from google.cloud.bigquery import ArrayQueryParameter, Row
+from google.oauth2.credentials import Credentials
+from requests.structures import CaseInsensitiveDict
 
 from hca_orchestration.contrib.bigquery import BigQueryService
 from hca_orchestration.resources.config.scratch import ScratchConfig
@@ -103,31 +105,31 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
     )
 
     context.log.info("Determining files to load...")
-    entity_rows = fetch_entities(nodes,
-                                 hca_project_config.source_bigquery_project_id,
-                                 hca_project_config.source_snapshot_name,
-                                 bigquery_service)
+    entity_rows: dict[str, list[Row]] = fetch_entities(nodes,
+                                                       hca_project_config.source_bigquery_project_id,
+                                                       hca_project_config.source_snapshot_name,
+                                                       bigquery_service)
 
     drs_objects = {}
     entity_file_ids = {}
-    for entity_type, entities in entity_rows.items():
+    for entity_type, rows in entity_rows.items():
         if not entity_type.endswith("_file"):
             continue
-        for entity in entities:
-            file_id = entity['file_id']
+        for row in rows:
+            file_id = row['file_id']
             drs_object = urlparse(file_id).path[1:]
             drs_objects[drs_object] = urlparse(file_id).netloc
-            entity_file_ids[drs_object] = entity[f"{entity_type}_id"]
+            entity_file_ids[drs_object] = row[f"{entity_type}_id"]
 
     # get the actual GS path for the DRS object
     context.log.info("Resolving DRS object GCS paths...")
     data_entities = set()
     with requests.Session() as s:
         creds = _get_credentials()
-        s.headers = {
-            "Authorization": f"Bearer {creds.token}"
-        }
-        [
+        s.headers = CaseInsensitiveDict[str]()
+        s.headers["Authorization"] = f"Bearer {creds.token}"
+
+        for drs_object, drs_host in drs_objects.items():
             data_entities.add(
                 DataFileEntity(
                     _fetch_drs_access_info(
@@ -135,26 +137,24 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
                         drs_object,
                         s),
                     entity_file_ids[drs_object]))
-            for drs_object, drs_host in drs_objects.items()
-        ]
 
     return data_entities
 
 
-def _get_credentials():
+def _get_credentials() -> Credentials:
     creds = get_credentials()
     creds.refresh(Request())
     return creds
 
 
-def _fetch_drs_access_info(drs_host: str, drs_object: str, session: requests.Session):
+def _fetch_drs_access_info(drs_host: str, drs_object: str, session: requests.Session) -> str:
     # direct call via python requests as the jade client throws a validation error on an empty/null
     # "self_uri" field in all responses
     drs_url = f"https://{drs_host}/ga4gh/drs/v1/objects/{drs_object}?expand=false"
     response = session.get(drs_url).json()
     for method in response['access_methods']:
         if method['type'] == 'gs':
-            return method['access_url']['url']
+            return str(method['access_url']['url'])
     raise Exception("No GS access method found")
 
 
@@ -164,7 +164,7 @@ def _extract_entities_to_path(
         bigquery_project_id: str,
         snapshot_name: str,
         bigquery_service: BigQueryService
-):
+) -> None:
     for entity_type, entities in nodes.items():
         data_file = False
         if entity_type.endswith("_file"):
@@ -203,11 +203,11 @@ def _extract_entities_to_path(
 
 
 def fetch_entities(
-        entities_by_type: dict[str, list],
+        entities_by_type: dict[str, list[MetadataEntity]],
         bigquery_project_id: str,
         snapshot_name: str,
-        bigquery_service: BigQueryService):
-    result = defaultdict(list)
+        bigquery_service: BigQueryService) -> dict[str, list[Row]]:
+    result: dict[str, list[Row]] = defaultdict(list[Row])
     for entity_type, entities in entities_by_type.items():
         fetch_entities_query = f"""
         SELECT * EXCEPT (datarepo_row_id)

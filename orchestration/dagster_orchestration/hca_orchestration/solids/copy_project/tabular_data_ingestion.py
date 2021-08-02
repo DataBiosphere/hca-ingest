@@ -6,7 +6,8 @@ from dagster.core.execution.context.compute import (
 )
 from dagster_utils.contrib.data_repo.jobs import poll_job
 from dagster_utils.contrib.data_repo.typing import JobId
-from data_repo_client import JobModel
+from data_repo_client import JobModel, RepositoryApi
+from google.cloud.storage.client import Client
 
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
@@ -33,7 +34,8 @@ def ingest_tabular_data(context: AbstractComputeExecutionContext) -> set[str]:
     return set(entity_types.keys())
 
 
-def _ingest_tabular_data_to_tdr(context, data_repo_client, entity_types, target_hca_dataset):
+def _ingest_tabular_data_to_tdr(context: AbstractComputeExecutionContext, data_repo_client: RepositoryApi,
+                                entity_types: dict[str, str], target_hca_dataset: TargetHcaDataset) -> None:
     for entity_type, path in entity_types.items():
         payload = {
             "format": "json",
@@ -54,7 +56,8 @@ def _ingest_tabular_data_to_tdr(context, data_repo_client, entity_types, target_
         poll_job(job_id, 300, 2, data_repo_client)
 
 
-def _find_entities_for_ingestion(context, gcs, scratch_config: ScratchConfig) -> dict[str, str]:
+def _find_entities_for_ingestion(context: AbstractComputeExecutionContext, gcs: Client,
+                                 scratch_config: ScratchConfig) -> dict[str, str]:
     result = gcs.list_blobs(
         scratch_config.scratch_bucket_name,
         prefix=scratch_config.scratch_prefix_name +

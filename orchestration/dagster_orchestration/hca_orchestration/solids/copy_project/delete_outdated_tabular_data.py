@@ -52,7 +52,8 @@ def delete_outdated_tabular_data(context: AbstractComputeExecutionContext, entit
         poll_job(job_id, 240, 2, data_repo_client)
 
 
-def _extract_dupes_to_scratch_area(bigquery_service, dupes_path, entity_type, target_hca_dataset):
+def _extract_dupes_to_scratch_area(bigquery_service: BigQueryService, dupes_path: str,
+                                   entity_type: str, target_hca_dataset: TargetHcaDataset) -> None:
     """
     For all rows in a given HCA table, returns all but the latest version; in the event of duplicate
     latest versions, returns the duplicates as well
@@ -67,11 +68,11 @@ def _extract_dupes_to_scratch_area(bigquery_service, dupes_path, entity_type, ta
                 SELECT datarepo_row_id, {entity_type}_id, version, rank() OVER (
                     PARTITION BY {entity_type}_id ORDER BY version ASC, datarepo_row_id ASC
                 ) AS rank
-                FROM `{target_hca_dataset.source_hca_project_id}.datarepo_{target_hca_dataset.dataset_name}.{entity_type}`
+                FROM `{target_hca_dataset.project_id}.datarepo_{target_hca_dataset.dataset_name}.{entity_type}`
                           ORDER BY {entity_type}_id
             )
             SELECT datarepo_row_id FROM rows_ordered_by_version WHERE rank > 1;
         """
     query_job = bigquery_service.build_query_job(
-        query, target_hca_dataset.source_hca_project_id, location='us-central1')
+        query, target_hca_dataset.project_id, location='us-central1')
     query_job.result()
