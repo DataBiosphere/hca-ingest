@@ -7,7 +7,7 @@ import sys
 from typing import Optional
 
 from data_repo_client import RepositoryApi, SnapshotRequestModel, SnapshotRequestContentsModel, \
-    EnumerateSnapshotModel, PolicyMemberRequest, PolicyResponse
+    EnumerateSnapshotModel, PolicyMemberRequest, PolicyResponse, SnapshotModel
 from dagster_utils.contrib.data_repo.jobs import poll_job, JobPollException
 from dagster_utils.contrib.data_repo.typing import JobId
 
@@ -69,6 +69,10 @@ def run(arguments: Optional[list[str]] = None) -> None:
     snapshot_retrieve_policies = subparsers.add_parser("retrieve_snapshot_policies")
     snapshot_retrieve_policies.add_argument("-i", "--snapshot_id", help="Id of snapshot", required=True)
     snapshot_retrieve_policies.set_defaults(func=_retrieve_policies)
+
+    retrieve_snapshots = subparsers.add_parser("retrieve_snapshot")
+    retrieve_snapshots.add_argument("-i", "--snapshot_id", help="Id of snapshot", required=True)
+    retrieve_snapshots.set_defaults(func=_retrieve_snapshot)
 
     args = parser.parse_args(arguments)
     args.func(args)
@@ -132,6 +136,14 @@ def _query_snapshot(args: argparse.Namespace) -> None:
 
     hca = SnapshotManager(environment=args.env, data_repo_client=get_api_client(host=host))
     logging.info(hca.query_snapshot(snapshot_name=args.snapshot_name))
+
+
+@tdr_operation
+def _retrieve_snapshot(args: argparse.Namespace) -> None:
+    host = data_repo_host[args.env]
+
+    hca = SnapshotManager(environment=args.env, data_repo_client=get_api_client(host=host))
+    logging.info(hca.retrieve_snapshot(snapshot_id=args.snapshot_id))
 
 
 @dataclass
@@ -253,6 +265,8 @@ class SnapshotManager:
     def retrieve_policies(self, snapshot_id: str) -> PolicyResponse:
         return self.data_repo_client.retrieve_snapshot_policies(id=snapshot_id)
 
+    def retrieve_snapshot(self, snapshot_id: str) -> SnapshotModel:
+        return self.data_repo_client.retrieve_snapshot(snapshot_id)
 
 if __name__ == '__main__':
     run()
