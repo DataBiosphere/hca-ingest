@@ -18,13 +18,15 @@ from hca_orchestration.resources.hca_project_config import HcaProjectCopyingConf
 
 
 @dataclass(eq=True, frozen=True)
-class DataEntity:
+class DataFileEntity:
+    """Represents an HCA data file"""
     path: str
     hca_file_id: str
 
 
 @dataclass
 class MetadataEntity:
+    """Represents an HCA metadata entity"""
     entity_type: str
     entity_id: str
 
@@ -37,7 +39,7 @@ class MetadataEntity:
     },
     input_defs=[InputDefinition("start", Nothing)]
 )
-def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataEntity]:
+def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileEntity]:
     # 1. given a project ID, query the links table for all rows associated with the project
     # 2. find all process entries assoc. with the links
     # 3. find all other entities assoc. with the links
@@ -126,7 +128,13 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataEntit
             "Authorization": f"Bearer {creds.token}"
         }
         [
-            data_entities.add(DataEntity(_fetch_drs_access_info(drs_host, drs_object, s), entity_file_ids[drs_object]))
+            data_entities.add(
+                DataFileEntity(
+                    _fetch_drs_access_info(
+                        drs_host,
+                        drs_object,
+                        s),
+                    entity_file_ids[drs_object]))
             for drs_object, drs_host in drs_objects.items()
         ]
 

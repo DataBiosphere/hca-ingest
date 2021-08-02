@@ -16,6 +16,8 @@ from hca_orchestration.resources.config.scratch import ScratchConfig
     input_defs=[InputDefinition("entity_types", set[str])]
 )
 def delete_outdated_tabular_data(context: AbstractComputeExecutionContext, entity_types: set[str]) -> None:
+    """Soft-deletes outdated and duplicate data in each entity type table"""
+
     target_hca_dataset: TargetHcaDataset = context.resources.target_hca_dataset
     bigquery_service: BigQueryService = context.resources.bigquery_service
     scratch_config: ScratchConfig = context.resources.scratch_config
@@ -24,7 +26,7 @@ def delete_outdated_tabular_data(context: AbstractComputeExecutionContext, entit
     destination_path = f"{scratch_config.scratch_bucket_name}/{scratch_config.scratch_prefix_name}"
     for entity_type in entity_types:
         dupes_path = f"gs://{destination_path}/outdated_row_ids/{entity_type}/*"
-        _extract_dupes_to_scratch_area(bigquery_service, context, dupes_path, entity_type, target_hca_dataset)
+        _extract_dupes_to_scratch_area(bigquery_service, dupes_path, entity_type, target_hca_dataset)
         payload = {
             "deleteType": "soft",
             "specType": "gcsFile",
@@ -50,7 +52,11 @@ def delete_outdated_tabular_data(context: AbstractComputeExecutionContext, entit
         poll_job(job_id, 240, 2, data_repo_client)
 
 
-def _extract_dupes_to_scratch_area(bigquery_service, context, dupes_path, entity_type, target_hca_dataset):
+def _extract_dupes_to_scratch_area(bigquery_service, dupes_path, entity_type, target_hca_dataset):
+    """
+    For all rows in a given HCA table, returns all but the latest version; in the event of duplicate
+    latest versions, returns the duplicates as well
+    """
     query = f"""
             EXPORT DATA OPTIONS(
                 uri='{dupes_path}',
@@ -65,7 +71,6 @@ def _extract_dupes_to_scratch_area(bigquery_service, context, dupes_path, entity
                           ORDER BY {entity_type}_id
             )
             SELECT datarepo_row_id FROM rows_ordered_by_version WHERE rank > 1;
-
         """
     query_job = bigquery_service.build_query_job(
         query, target_hca_dataset.source_hca_project_id, location='us-central1')
