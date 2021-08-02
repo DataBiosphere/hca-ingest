@@ -91,7 +91,7 @@ def _inject_file_ids(
 def ingest_metadata_for_file_type(
         context: AbstractComputeExecutionContext,
         file_metadata_fanout_result: MetadataTypeFanoutResult
-) -> None:
+) -> MetadataTypeFanoutResult:
     bigquery_service = context.resources.bigquery_service
     target_hca_dataset = context.resources.target_hca_dataset
     scratch_config = context.resources.scratch_config
@@ -114,11 +114,12 @@ def ingest_metadata_for_file_type(
         bigquery_service=bigquery_service
     )
 
+    return file_metadata_fanout_result
+
 
 @composite_solid
 def ingest_metadata(file_metadata_fanout_result: MetadataTypeFanoutResult) -> Nothing:
-    ingest_metadata_for_file_type(file_metadata_fanout_result)
-    load_table(file_metadata_fanout_result)
+    return load_table(ingest_metadata_for_file_type(file_metadata_fanout_result))
 
 
 @composite_solid
