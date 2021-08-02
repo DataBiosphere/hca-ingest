@@ -42,7 +42,7 @@ jobs:
       run: poetry install
       working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
      - name: Run E2E test suite
-     run: poetry run pytest -v -m e2e
+       run: poetry run pytest -v -m e2e
 #    - name: Enforce coding style guide
 #      run: poetry run autopep8 --recursive --diff --exit-code .
 #      working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
