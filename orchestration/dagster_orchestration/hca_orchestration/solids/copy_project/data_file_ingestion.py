@@ -13,24 +13,39 @@ from google.cloud.storage.bucket import Bucket
 from hca_orchestration.contrib.gcs import parse_gs_path
 from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
+from hca_orchestration.resources.hca_project_config import HcaProjectCopyingConfig
 from hca_orchestration.solids.copy_project.subgraph_hydration import DataEntity
 
 
 @solid(
-    required_resource_keys={"gcs", "data_repo_client", "scratch_config", "target_hca_dataset"}
+    required_resource_keys={
+        "gcs",
+        "data_repo_client",
+        "scratch_config",
+        "target_hca_dataset",
+        "hca_project_copying_config"
+    }
 )
 def ingest_data_files(context: AbstractComputeExecutionContext, data_entities: set[DataEntity]) -> None:
     storage_client = context.resources.gcs
     data_repo_client = context.resources.data_repo_client
     scratch_config: ScratchConfig = context.resources.scratch_config
     target_hca_dataset: TargetHcaDataset = context.resources.target_hca_dataset
+    hca_project_config: HcaProjectCopyingConfig = context.resources.hca_project_copying_config
 
     control_file_path = _generate_control_file(context, data_entities, scratch_config, storage_client)
-    _bulk_ingest_to_tdr(context, control_file_path, data_repo_client, scratch_config, target_hca_dataset)
+    _bulk_ingest_to_tdr(
+        context,
+        control_file_path,
+        data_repo_client,
+        scratch_config,
+        target_hca_dataset,
+        hca_project_config.load_tag)
 
 
 def _bulk_ingest_to_tdr(context, control_file_path, data_repo_client,
-                        scratch_config: ScratchConfig, target_hca_dataset):
+                        scratch_config: ScratchConfig, target_hca_dataset,
+                        load_tag: str):
     payload = {
         "profileId": target_hca_dataset.billing_profile_id,
         "loadControlFile": f"gs://{scratch_config.scratch_bucket_name}/{control_file_path}",
