@@ -255,9 +255,11 @@ class DatasetManager:
         else:
             # can't have both/neither provided
             raise ValueError("You must provide either dataset_name or dataset_id, and cannot provide neither/both.")
-        logging.info("SUBMITTING DELETE DATASET REQUEST")
+
+        from datetime import datetime
+        logging.info(f"SUBMITTING DELETE DATASET REQUEST, ts = {datetime.now().isoformat()}")
         delete_response_id: JobId = self.data_repo_client.delete_dataset(dataset_id).id
-        logging.info(f"Dataset deletion job id: {delete_response_id}")
+        logging.info(f"Dataset deletion job id: {delete_response_id}, ts = {datetime.now().isoformat()}")
         return delete_response_id
 
     def enumerate_dataset(self, dataset_name: str) -> EnumerateDatasetModel:
