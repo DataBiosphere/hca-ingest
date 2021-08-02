@@ -101,3 +101,4 @@ To ensure that HCA snapshots only ever contain the latest version of each docume
 of the importer uses BigQuery jobs to detect and export the TDR IDs of "outdated" rows. It then
 soft-deletes those IDs. Once the step completes, the dataset will be in a valid state for a "full view"
 snapshot.
+
