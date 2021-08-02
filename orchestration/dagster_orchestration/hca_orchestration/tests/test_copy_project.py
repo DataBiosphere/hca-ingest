@@ -31,7 +31,12 @@ def test_copy_project() -> None:
                         "source_snapshot_name": "fake_source_snapshot_name",
                         "source_bigquery_project_id": "fake_source_bq_project_id",
                         "source_hca_project_id": "fake_project_id",
-                        "load_tag": "fake_load_tag"
+                    }
+                },
+                "load_tag": {
+                    "config": {
+                        "append_timestamp": True,
+                        "load_tag_prefix": "fake_load_tag"
                     }
                 }
             }

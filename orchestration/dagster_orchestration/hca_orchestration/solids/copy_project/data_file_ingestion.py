@@ -21,7 +21,7 @@ from hca_orchestration.solids.copy_project.subgraph_hydration import DataFileEnt
         "data_repo_client",
         "scratch_config",
         "target_hca_dataset",
-        "hca_project_copying_config"
+        "load_tag"
     }
 )
 def ingest_data_files(context: AbstractComputeExecutionContext, data_entities: set[DataFileEntity]) -> None:
@@ -35,7 +35,7 @@ def ingest_data_files(context: AbstractComputeExecutionContext, data_entities: s
     data_repo_client = context.resources.data_repo_client
     scratch_config: ScratchConfig = context.resources.scratch_config
     target_hca_dataset: TargetHcaDataset = context.resources.target_hca_dataset
-    hca_project_config: HcaProjectCopyingConfig = context.resources.hca_project_copying_config
+    load_tag = context.resources.load_tag
 
     control_file_path = _generate_control_file(context, data_entities, scratch_config, storage_client)
     _bulk_ingest_to_tdr(
@@ -44,7 +44,7 @@ def ingest_data_files(context: AbstractComputeExecutionContext, data_entities: s
         data_repo_client,
         scratch_config,
         target_hca_dataset,
-        hca_project_config.load_tag)
+        load_tag)
 
 
 def _bulk_ingest_to_tdr(context, control_file_path, data_repo_client,

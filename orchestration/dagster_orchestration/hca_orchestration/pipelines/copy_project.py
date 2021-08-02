@@ -4,11 +4,10 @@ from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_clie
 from dagster_utils.resources.google_storage import google_storage_client
 
 from hca_orchestration.config import preconfigure_resource_for_mode
-from hca_orchestration.resources import bigquery_service
+from hca_orchestration.resources import bigquery_service, load_tag
 from hca_orchestration.resources.config.hca_dataset import target_hca_dataset
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.hca_project_config import hca_project_copying_config
-from hca_orchestration.resources.snaphot_config import snapshot_config
 from hca_orchestration.solids.copy_project.data_file_ingestion import ingest_data_files
 from hca_orchestration.solids.copy_project.delete_outdated_tabular_data import delete_outdated_tabular_data
 from hca_orchestration.solids.copy_project.inject_file_ids import inject_file_ids
@@ -25,7 +24,8 @@ dev_mode = ModeDefinition(
         "scratch_config": scratch_config,
         "bigquery_service": bigquery_service,
         "hca_project_copying_config": hca_project_copying_config,
-        "target_hca_dataset": target_hca_dataset
+        "target_hca_dataset": target_hca_dataset,
+        "load_tag": load_tag
     }
 )
 
@@ -38,7 +38,8 @@ test_mode = ModeDefinition(
         "scratch_config": scratch_config,
         "bigquery_service": ResourceDefinition.mock_resource(),
         "hca_project_copying_config": hca_project_copying_config,
-        "target_hca_dataset": target_hca_dataset
+        "target_hca_dataset": target_hca_dataset,
+        "load_tag": load_tag
     }
 )
 
