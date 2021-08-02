@@ -9,7 +9,7 @@ from google.cloud.bigquery import ExternalConfig, WriteDisposition, QueryJob, Ar
 class BigQueryService:
     bigquery_client: bigquery.client.Client
 
-    def build_query_job(
+    def build_query_job_with_destination(
             self,
             query: str,
             destination_table: str,
@@ -33,13 +33,16 @@ class BigQueryService:
 
         return query_job
 
-    def build_query_job_returning_data(
+    def build_query_job(
             self,
             query: str,
             bigquery_project: str,
             query_params: list[ArrayQueryParameter] = [],
             location='US'
     ) -> QueryJob:
+        """
+        Performs a bigquery query, with no external destination (table or otherwise)
+        """
         job_config = QueryJobConfig()
         if query_params:
             job_config.query_parameters = query_params

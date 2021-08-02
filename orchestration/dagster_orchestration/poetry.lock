@@ -35,7 +35,7 @@ SQLAlchemy = ">=1.3.0"
 name = "aniso8601"
 version = "7.0.0"
 description = "A library for parsing ISO 8601 strings."
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 
@@ -116,7 +116,7 @@ webencodings = "*"
 
 [[package]]
 name = "broad-dagster-utils"
-version = "0.5.3"
+version = "0.6.0"
 description = "Common utilities and objects for building Dagster pipelines"
 category = "main"
 optional = false
@@ -124,7 +124,7 @@ python-versions = ">=3.9,<3.10"
 
 [package.dependencies]
 argo-workflows = ">=5.0.0,<6.0.0"
-dagster = ">=0.11.13,<0.12.0"
+dagster = ">=0.12.2,<0.13.0"
 data-repo-client = ">=1.64.0,<2.0.0"
 google-cloud-bigquery = ">=2.15.0,<3.0.0"
 google-cloud-storage = ">=1.38.0,<2.0.0"
@@ -236,7 +236,7 @@ python-dateutil = "*"
 
 [[package]]
 name = "dagit"
-version = "0.11.14"
+version = "0.12.3"
 description = "Web UI for dagster."
 category = "dev"
 optional = false
@@ -244,8 +244,8 @@ python-versions = "*"
 
 [package.dependencies]
 click = ">=7.0,<8.0"
-dagster = "0.11.14"
-dagster-graphql = "0.11.14"
+dagster = "0.12.3"
+dagster-graphql = "0.12.3"
 flask = ">=0.12.4,<2.0.0"
 flask-cors = ">=3.0.6"
 Flask-GraphQL = ">=2.0.0"
@@ -261,7 +261,7 @@ Werkzeug = "<2.0.0"
 
 [[package]]
 name = "dagster"
-version = "0.11.14"
+version = "0.12.3"
 description = "A data orchestrator for machine learning, analytics, and ETL."
 category = "main"
 optional = false
@@ -272,7 +272,7 @@ alembic = ">=1.2.1,<1.6.3 || >1.6.3"
 click = ">=5.0,<8.0"
 coloredlogs = ">=6.1,<=14.0"
 croniter = ">=0.3.34"
-docstring-parser = "0.7.1"
+docstring-parser = "*"
 future = "*"
 grpcio = ">=1.32.0"
 grpcio-health-checking = ">=1.32.0"
@@ -294,19 +294,19 @@ watchdog = ">=0.8.3"
 
 [package.extras]
 docker = ["docker"]
-test = ["astroid (>=2.3.3,<2.5)", "black (==20.8b1)", "coverage (==5.3)", "docker", "flake8 (>=3.7.8)", "freezegun (>=0.3.15)", "grpcio-tools (==1.32.0)", "isort (>=4.3.21,<5)", "mock (==3.0.5)", "protobuf (==3.13.0)", "pylint (==2.6.0)", "pytest-cov (==2.10.1)", "pytest-dependency (==0.5.1)", "pytest-mock (==3.3.1)", "pytest-runner (==5.2)", "pytest-xdist (==2.1.0)", "pytest (==6.1.1)", "responses (>=0.10.0,<0.11.0)", "snapshottest (==0.6.0)", "tox (==3.14.2)", "tox-pip-version (==0.0.7)", "tqdm (==4.48.0)", "yamllint"]
+test = ["astroid (>=2.3.3,<2.5)", "black (==20.8b1)", "coverage (==5.3)", "docker", "flake8 (>=3.7.8)", "freezegun (>=0.3.15)", "grpcio-tools (==1.32.0)", "isort (>=4.3.21,<5)", "mock (==3.0.5)", "protobuf (==3.13.0)", "pylint (==2.6.0)", "pytest-cov (==2.10.1)", "pytest-dependency (==0.5.1)", "pytest-mock (==3.3.1)", "pytest-rerunfailures (==10.0)", "pytest-runner (==5.2)", "pytest-xdist (==2.1.0)", "pytest (==6.1.1)", "responses (>=0.10.0,<0.11.0)", "snapshottest (==0.6.0)", "tox (==3.14.2)", "tox-pip-version (==0.0.7)", "tqdm (==4.48.0)", "yamllint"]
 
 [[package]]
 name = "dagster-gcp"
-version = "0.11.14"
+version = "0.12.3"
 description = "Package for GCP-specific Dagster framework solid and resource components."
 category = "main"
 optional = false
 python-versions = "*"
 
 [package.dependencies]
-dagster = "*"
-dagster-pandas = "*"
+dagster = "0.12.3"
+dagster-pandas = "0.12.3"
 google-api-python-client = "<2.0.0"
 google-cloud-bigquery = ">=1.19"
 google-cloud-storage = "*"
@@ -317,13 +317,14 @@ pyarrow = ["pyarrow"]
 
 [[package]]
 name = "dagster-graphql"
-version = "0.11.14"
+version = "0.12.3"
 description = "The GraphQL frontend to python dagster."
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 
 [package.dependencies]
+dagster = "0.12.3"
 gevent = "*"
 gevent-websocket = ">=0.10.1"
 gql = "<3"
@@ -333,44 +334,43 @@ requests = "*"
 
 [[package]]
 name = "dagster-k8s"
-version = "0.11.14"
+version = "0.12.3"
 description = "A Dagster integration for k8s"
 category = "main"
 optional = false
 python-versions = "*"
 
 [package.dependencies]
-dagster = "*"
-dagster-graphql = "*"
+dagster = "0.12.3"
 kubernetes = "*"
 
 [[package]]
 name = "dagster-pandas"
-version = "0.11.14"
+version = "0.12.3"
 description = "Utilities and examples for working with pandas and dagster, an opinionated framework for expressing data pipelines"
 category = "main"
 optional = false
 python-versions = "*"
 
 [package.dependencies]
-dagster = "*"
+dagster = "0.12.3"
 pandas = "*"
 
 [[package]]
 name = "dagster-postgres"
-version = "0.11.14"
+version = "0.12.3"
 description = "A Dagster integration for postgres"
 category = "main"
 optional = false
 python-versions = "*"
 
 [package.dependencies]
-dagster = "*"
+dagster = "0.12.3"
 psycopg2-binary = "<2.9"
 
 [[package]]
 name = "dagster-slack"
-version = "0.11.14"
+version = "0.12.3"
 description = "A Slack client resource for posting to Slack"
 category = "main"
 optional = false
@@ -378,7 +378,7 @@ python-versions = "*"
 
 [package.dependencies]
 chardet = "<4.0"
-dagster = "*"
+dagster = "0.12.3"
 slackclient = ">=2,<3"
 
 [[package]]
@@ -413,11 +413,11 @@ python-versions = "*"
 
 [[package]]
 name = "docstring-parser"
-version = "0.7.1"
-description = ""
+version = "0.10"
+description = "\"Parse Python docstrings in reST, Google and Numpydoc format\""
 category = "main"
 optional = false
-python-versions = "~=3.6"
+python-versions = ">=3.5"
 
 [[package]]
 name = "entrypoints"
@@ -529,7 +529,7 @@ python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 name = "gevent"
 version = "21.1.2"
 description = "Coroutine-based network library"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*"
 
@@ -550,7 +550,7 @@ test = ["dnspython (>=1.16.0,<2.0)", "idna", "requests", "objgraph", "cffi (>=1.
 name = "gevent-websocket"
 version = "0.10.1"
 description = "Websocket handler for the gevent pywsgi server, a Python network library"
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 
@@ -732,7 +732,7 @@ grpc = ["grpcio (>=1.0.0)"]
 name = "gql"
 version = "2.0.0"
 description = "GraphQL client for Python"
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 
@@ -750,7 +750,7 @@ test = ["pytest (==5.4.2)", "pytest-asyncio (==0.11.0)", "pytest-cov (==2.8.1)",
 name = "graphene"
 version = "2.1.9"
 description = "GraphQL Framework for Python"
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 
@@ -769,7 +769,7 @@ test = ["pytest", "pytest-benchmark", "pytest-cov", "pytest-mock", "fastdiff (==
 name = "graphql-core"
 version = "2.3.2"
 description = "GraphQL implementation for Python"
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 
@@ -786,7 +786,7 @@ test = ["six (==1.14.0)", "pyannotate (==1.2.0)", "pytest (==4.6.10)", "pytest-d
 name = "graphql-relay"
 version = "2.0.1"
 description = "Relay implementation for Python"
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 
@@ -1272,7 +1272,7 @@ virtualenv = ">=20.0.8"
 name = "promise"
 version = "2.3"
 description = "Promises/A+ implementation for Python"
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 
@@ -1812,7 +1812,7 @@ multidict = ">=4.0"
 name = "zope.event"
 version = "4.5.0"
 description = "Very basic event publishing system"
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 
@@ -1824,7 +1824,7 @@ test = ["zope.testrunner"]
 name = "zope.interface"
 version = "5.4.0"
 description = "Interfaces for Python"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
@@ -1836,7 +1836,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.9"
-content-hash = "0b27623fa587b47acfb059b865267e695804e591e2d862fa21d4588472ef55e2"
+content-hash = "0d2ba03a0b6a66bda2ce7a81fefab8cf0f09a95ec7aa6d4f4d109635e5b2f28b"
 
 [metadata.files]
 aiohttp = [
@@ -1915,8 +1915,8 @@ bleach = [
     {file = "bleach-3.3.1.tar.gz", hash = "sha256:306483a5a9795474160ad57fce3ddd1b50551e981eed8e15a582d34cef28aafa"},
 ]
 broad-dagster-utils = [
-    {file = "broad_dagster_utils-0.5.3-py3-none-any.whl", hash = "sha256:27a5c52015d9123cc287ebef5a5d1bd5cf782401aa0c81f420a0c393d0b2cdd1"},
-    {file = "broad_dagster_utils-0.5.3.tar.gz", hash = "sha256:058fd4eff18b3a3bfa017f5475cd89292b8acf1268f065b82b1a965ce3143873"},
+    {file = "broad_dagster_utils-0.6.0-py3-none-any.whl", hash = "sha256:bb5f9164b8e40e2c98a4072bf3638ff14789b3eb02ffa506b998d8707cc11f38"},
+    {file = "broad_dagster_utils-0.6.0.tar.gz", hash = "sha256:0df0d3cd3ac84dd83f0dd763f0ec2dd837e6036c2d79eb2033fd90a1f091746d"},
 ]
 cached-property = [
     {file = "cached-property-1.5.2.tar.gz", hash = "sha256:9fa5755838eecbb2d234c3aa390bd80fbd3ac6b6869109bfc1b499f7bd89a130"},
@@ -2001,36 +2001,36 @@ croniter = [
     {file = "croniter-1.0.15.tar.gz", hash = "sha256:a70dfc9d52de9fc1a886128b9148c89dd9e76b67d55f46516ca94d2d73d58219"},
 ]
 dagit = [
-    {file = "dagit-0.11.14-py3-none-any.whl", hash = "sha256:67456ea753d367fbf82a3b8c6bf5093612e5ac14665daf12319ded6cd925b7ea"},
-    {file = "dagit-0.11.14.tar.gz", hash = "sha256:e3a034c6ed80467bc68790c4e2c350f6980600c3f654d96f7a4ac0519e3b6a76"},
+    {file = "dagit-0.12.3-py3-none-any.whl", hash = "sha256:a8728f1b1aa408a97690c74cf52300358ec0cd60a4f82b5a31c38e6826ad13cd"},
+    {file = "dagit-0.12.3.tar.gz", hash = "sha256:56b33fb02cfe0401715db44b0b172477c00430097b71052bb32cb34cde51df64"},
 ]
 dagster = [
-    {file = "dagster-0.11.14-py3-none-any.whl", hash = "sha256:b1e8ebe3058c881de68116191c3308a66e50cdd6424a5a64537b3a6ea264cc83"},
-    {file = "dagster-0.11.14.tar.gz", hash = "sha256:a8eb5a266859ff71b1b3ea80858a7cf5838702210c7df5f1c783411456e4b8a1"},
+    {file = "dagster-0.12.3-py3-none-any.whl", hash = "sha256:cc3bdac75e57e6847a6ebd9090c6d415911fead2b22fd38585b045e757dfb8d6"},
+    {file = "dagster-0.12.3.tar.gz", hash = "sha256:34cdb3840d4fb8af7976cba8c0be488ac2edd32b3bf590e3b6cadfcbf64ca539"},
 ]
 dagster-gcp = [
-    {file = "dagster-gcp-0.11.14.tar.gz", hash = "sha256:2ceb6b446bf26411c62718c9d52ef041e055a702d5893091db51f3d9ba7859e1"},
-    {file = "dagster_gcp-0.11.14-py3-none-any.whl", hash = "sha256:68e30a3fe8acf559f2e223320f700e5d7b05003d64e191ac8dea0e17b10d0719"},
+    {file = "dagster-gcp-0.12.3.tar.gz", hash = "sha256:15d55da7d2ab18227ef008759bc0a4aec76cd9ae1259592b50881106a576968d"},
+    {file = "dagster_gcp-0.12.3-py3-none-any.whl", hash = "sha256:3c1a15012dff95dc3fe565e0eb1286a0340f7969c2766436acd2b5b72d6c9693"},
 ]
 dagster-graphql = [
-    {file = "dagster-graphql-0.11.14.tar.gz", hash = "sha256:855ffc2512c3d226839f136255ad16adb5522cad96043c030a61670eb587482d"},
-    {file = "dagster_graphql-0.11.14-py3-none-any.whl", hash = "sha256:1f3d1f0b501e014e6e1f778b2c3bf8fa209d9059442fdaafe1131cedb03463a1"},
+    {file = "dagster-graphql-0.12.3.tar.gz", hash = "sha256:dc16464d773600839ceff2b8f4b45cdec38a8b6c844a83e89f4864c78b2979bf"},
+    {file = "dagster_graphql-0.12.3-py3-none-any.whl", hash = "sha256:905030e9eb5a7821fbf42322d1f8c79b1611870fdb15aa5ef95e618505d809e7"},
 ]
 dagster-k8s = [
-    {file = "dagster-k8s-0.11.14.tar.gz", hash = "sha256:91702939d2af8fab986c691f2dc6dde2a228dd0936ec327606b446c951518632"},
-    {file = "dagster_k8s-0.11.14-py3-none-any.whl", hash = "sha256:9d27a55ae0818ade990d15c7802fd24b7db70613fef9bf442e8c44862bce71cc"},
+    {file = "dagster-k8s-0.12.3.tar.gz", hash = "sha256:8edc70c7eb9925cf39f94a726d7325da20b9bcd1867a6c965b81579a75ab07ee"},
+    {file = "dagster_k8s-0.12.3-py3-none-any.whl", hash = "sha256:d96ce5a89230845344de6d5707433d4ac73f133734c7b76ca9e58f2f8a3361cb"},
 ]
 dagster-pandas = [
-    {file = "dagster-pandas-0.11.14.tar.gz", hash = "sha256:f7f84a5336ea7a600844350a53c3936cb8edcd258f2b01eb50baec718e423282"},
-    {file = "dagster_pandas-0.11.14-py3-none-any.whl", hash = "sha256:7d8eb6e9da45c196b48be93e4e15df74e8b11db962d7916213fc4dbc95b4ba74"},
+    {file = "dagster-pandas-0.12.3.tar.gz", hash = "sha256:51a68d111f0565b0a775e4f2775c8f24102b8dc6e86e9fc26dc6b543a22a3801"},
+    {file = "dagster_pandas-0.12.3-py3-none-any.whl", hash = "sha256:14c3a9aeefa35b05e1901f9140b0fd6a30d33b7380ca9c588f1d4b83261f064d"},
 ]
 dagster-postgres = [
-    {file = "dagster-postgres-0.11.14.tar.gz", hash = "sha256:5c2e8714c7795bbfc3cdb11efe2efe4108221153d8bff32a8d683b5dba5622ee"},
-    {file = "dagster_postgres-0.11.14-py3-none-any.whl", hash = "sha256:f2e74b3f2af4a8316b9dba5d343d06bb746452889c118d4a0481151b02f1711c"},
+    {file = "dagster-postgres-0.12.3.tar.gz", hash = "sha256:4304d4268bef20f889b295b82b174f982e7eb20c7d625d91c1274f99fc34bf23"},
+    {file = "dagster_postgres-0.12.3-py3-none-any.whl", hash = "sha256:a001d447888ea0536519a5020984a4e6e86e040153ea2e52030a59ae647e5bda"},
 ]
 dagster-slack = [
-    {file = "dagster-slack-0.11.14.tar.gz", hash = "sha256:67cded474a7b9919be3784d3ca847ab327c6a4b1c0eb2c169c3c5f9faf20bf92"},
-    {file = "dagster_slack-0.11.14-py3-none-any.whl", hash = "sha256:a948d31c2436cd38af338b2f322bbba2323c99f0d958f46bcc4a59af79d056fb"},
+    {file = "dagster-slack-0.12.3.tar.gz", hash = "sha256:72b1bff935ba2e8a9bb808dcbc048b03dc5f994676aa83f7bab4d95c1973bf0e"},
+    {file = "dagster_slack-0.12.3-py3-none-any.whl", hash = "sha256:87577cfe0621d608cc9124fc9feed3c08819e36c97bb0cf5bd9d12a44a7b0144"},
 ]
 data-repo-client = [
     {file = "data-repo-client-1.134.0.tar.gz", hash = "sha256:9a2799ba8b719e89995be633478a3aa090aeae19a59d66aee844fb2946d62487"},
@@ -2045,7 +2045,7 @@ distlib = [
     {file = "distlib-0.3.2.zip", hash = "sha256:106fef6dc37dd8c0e2c0a60d3fca3e77460a48907f335fa28420463a6f799736"},
 ]
 docstring-parser = [
-    {file = "docstring_parser-0.7.1.tar.gz", hash = "sha256:7f91d48ea2e4ad04a101f3aa24767f8475545acc93af1b3b14c617733d40c086"},
+    {file = "docstring_parser-0.10.tar.gz", hash = "sha256:d75c81533f70e3902c54d0cfe5f896b65905772004c1eb9ee38a2526b077940d"},
 ]
 entrypoints = [
     {file = "entrypoints-0.3-py2.py3-none-any.whl", hash = "sha256:589f874b313739ad35be6e0cd7efde2a4e9b6fea91edcc34e58ecbb8dbe56d19"},

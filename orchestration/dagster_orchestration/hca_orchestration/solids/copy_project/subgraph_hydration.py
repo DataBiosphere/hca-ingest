@@ -33,7 +33,7 @@ class MetadataEntity:
     required_resource_keys={
         "snapshot_config",
         "bigquery_service",
-        "hca_project_config",
+        "hca_project_copying_config",
         "scratch_config"
     },
     input_defs=[InputDefinition("start", Nothing)]
@@ -44,7 +44,7 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataEntit
     # 3. find all other entities assoc. with the links
     snapshot_config: SnapshotConfig = context.resources.snapshot_config
     bigquery_service: BigQueryService = context.resources.bigquery_service
-    hca_project_config = context.resources.hca_project_config
+    hca_project_config = context.resources.hca_project_copying_config
     project_id = hca_project_config.project_id
     scratch_config: ScratchConfig = context.resources.scratch_config
 
@@ -55,7 +55,7 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataEntit
         FROM {snapshot_config.bigquery_project_id}.{snapshot_config.snapshot_name}.links
         WHERE project_id = "{project_id}"
     """
-    query_job = bigquery_service.build_query_job_returning_data(query, snapshot_config.bigquery_project_id)
+    query_job = bigquery_service.build_query_job(query, snapshot_config.bigquery_project_id)
     nodes = defaultdict(list)
     subgraphs = []
     for row in query_job.result():
@@ -191,7 +191,7 @@ def _extract_entities_to_path(
             ArrayQueryParameter("entity_ids", "STRING", entity_ids)
         ]
         print(f"**** Saved tabular data ingest to gs://{destination_path}/{entity_type}/*")
-        query_job = bigquery_service.build_query_job_returning_data(
+        query_job = bigquery_service.build_query_job(
             fetch_entities_query, bigquery_project_id, query_params, location='US')
         query_job.result()
 
@@ -212,8 +212,8 @@ def fetch_entities(
         query_params = [
             ArrayQueryParameter("entity_ids", "STRING", entity_ids)
         ]
-        result[entity_type] = [row for row in bigquery_service.build_query_job_returning_data(fetch_entities_query,
-                                                                                              bigquery_project_id,
-                                                                                              query_params)]
+        result[entity_type] = [row for row in bigquery_service.build_query_job(fetch_entities_query,
+                                                                               bigquery_project_id,
+                                                                               query_params)]
 
     return result

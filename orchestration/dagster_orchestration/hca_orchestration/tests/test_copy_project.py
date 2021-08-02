@@ -32,7 +32,7 @@ def test_copy_project() -> None:
                         "bigquery_project_id": "fake_bq_project_id"
                     }
                 },
-                "hca_project_config": {
+                "hca_project_copying_config": {
                     "config": {
                         "project_id": "fake_project_id"
                     }

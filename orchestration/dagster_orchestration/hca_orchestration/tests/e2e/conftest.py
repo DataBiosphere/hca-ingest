@@ -1,5 +1,6 @@
 import logging
 import uuid
+from dataclasses import dataclass
 from typing import Iterable
 
 import pytest
@@ -9,6 +10,12 @@ from hca_manage.common import data_repo_host, get_api_client, data_repo_profile_
 from hca_manage.dataset import DatasetManager
 
 MONSTER_TEST_DATASET_SENTINEL = "MONSTER_TEST_DELETEME"
+
+
+@dataclass
+class DatasetInfo:
+    dataset_id: str
+    dataset_data_project_id: str
 
 
 @pytest.fixture
@@ -32,7 +39,7 @@ def dataset_name() -> str:
 
 
 @pytest.fixture
-def dataset_id(dataset_name, delete_dataset_on_exit, existing_dataset_id) -> Iterable[str]:
+def dataset_info(dataset_name, delete_dataset_on_exit, existing_dataset_id) -> Iterable[DatasetInfo]:
     data_repo_client = get_api_client(data_repo_host["dev"])
     dataset_manager = DatasetManager("dev", data_repo_client)
 
@@ -53,7 +60,8 @@ def dataset_id(dataset_name, delete_dataset_on_exit, existing_dataset_id) -> Ite
             MONSTER_TEST_DATASET_SENTINEL
         )
 
-    yield dataset_id
+    info = dataset_manager.retrieve_dataset(dataset_id)
+    yield DatasetInfo(dataset_id, info.data_project)
 
     # clean up
     if delete_dataset_on_exit:
@@ -67,7 +75,7 @@ def dataset_id(dataset_name, delete_dataset_on_exit, existing_dataset_id) -> Ite
 
 
 @pytest.fixture
-def load_hca_run_config(dataset_name, dataset_id):
+def load_hca_run_config(dataset_name: str, dataset_info: DatasetInfo):
     return {
         "loggers": {
             "console": {
@@ -79,7 +87,7 @@ def load_hca_run_config(dataset_name, dataset_id):
         "resources": {
             "beam_runner": {
                 "config": {
-                    "working_dir": "../..",
+                    "working_dir": "../../"
                 }
             },
             "load_tag": {
@@ -100,8 +108,8 @@ def load_hca_run_config(dataset_name, dataset_id):
             "target_hca_dataset": {
                 "config": {
                     "dataset_name": dataset_name,
-                    "dataset_id": dataset_id,
-                    "project_id": "broad-jade-dev-data",
+                    "dataset_id": dataset_info.dataset_id,
+                    "project_id": dataset_info.dataset_data_project_id,
                     "billing_profile_id": data_repo_profile_ids["dev"],
                 }
             }
