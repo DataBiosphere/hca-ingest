@@ -34,7 +34,7 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
       - name: Install dependencies
-        run: poetry install --no-dev
+        run: poetry install
         working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
       - uses: olafurpg/setup-scala@v10
         with:
