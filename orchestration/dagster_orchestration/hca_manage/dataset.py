@@ -254,7 +254,7 @@ class DatasetManager:
         else:
             # can't have both/neither provided
             raise ValueError("You must provide either dataset_name or dataset_id, and cannot provide neither/both.")
-        delete_response_id: JobId = self.data_repo_client.delete_dataset(dataset_id).id
+        delete_response_id: JobId = self.data_repo_client.delete_dataset(dataset_id, _request_timeout=30).id
         logging.info(f"Dataset deletion job id: {delete_response_id}")
         return delete_response_id
 
