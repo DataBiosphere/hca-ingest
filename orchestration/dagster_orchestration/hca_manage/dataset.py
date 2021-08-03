@@ -254,6 +254,10 @@ class DatasetManager:
         else:
             # can't have both/neither provided
             raise ValueError("You must provide either dataset_name or dataset_id, and cannot provide neither/both.")
+
+        # set a request timeout (read + connect) of 30 seconds; for unknown reasons, this call can hang for
+        # minutes in our CI environment. Setting a timeout here forces a quick failure + an immediate
+        # (hoppefully successful) retry
         delete_response_id: JobId = self.data_repo_client.delete_dataset(dataset_id, _request_timeout=30).id
         logging.info(f"Dataset deletion job id: {delete_response_id}")
         return delete_response_id
