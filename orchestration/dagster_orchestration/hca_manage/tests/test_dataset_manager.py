@@ -22,12 +22,12 @@ class DatasetManagerTestCase(unittest.TestCase):
 
         self.manager.delete_dataset(dataset_name='steve')
 
-        self.manager.data_repo_client.delete_dataset.assert_called_once_with('abc')
+        self.manager.data_repo_client.delete_dataset.assert_called_once_with('abc', _request_timeout=30)
 
     def test_delete_dataset_uses_id_if_provided(self):
         self.manager.delete_dataset(dataset_id='steve')
 
-        self.manager.data_repo_client.delete_dataset.assert_called_once_with('steve')
+        self.manager.data_repo_client.delete_dataset.assert_called_once_with('steve', _request_timeout=30)
 
     def test_delete_dataset_blows_up_if_both_or_neither_id_and_name(self):
         with self.assertRaises(ValueError):

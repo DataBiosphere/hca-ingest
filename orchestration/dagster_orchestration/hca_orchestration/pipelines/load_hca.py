@@ -59,7 +59,7 @@ dev_mode = ModeDefinition(
 local_mode = ModeDefinition(
     name="local",
     resource_defs={
-        "beam_runner": preconfigure_resource_for_mode(dataflow_beam_runner, "local"),
+        "beam_runner": local_beam_runner,
         "bigquery_client": bigquery_client,
         "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
         "gcs": google_storage_client,

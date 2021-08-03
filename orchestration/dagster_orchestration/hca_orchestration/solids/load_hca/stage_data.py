@@ -3,6 +3,7 @@ import re
 from dagster import solid, InputDefinition, Nothing, String
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from google.cloud.bigquery import Dataset
+from google.cloud.storage.client import Client
 
 from dagster_utils.resources.beam.beam_runner import BeamRunner
 from hca_orchestration.support.typing import HcaScratchDatasetName
@@ -16,16 +17,21 @@ def clear_scratch_dir(context: AbstractComputeExecutionContext) -> int:
     Given a staging bucket + prefix, deletes all blobs present at that path
     :return: Number of deletions
     """
-
     scratch_bucket_name = context.resources.scratch_config.scratch_bucket_name
     scratch_prefix_name = context.resources.scratch_config.scratch_prefix_name
 
-    blobs = context.resources.gcs.list_blobs(scratch_bucket_name, prefix=f"{scratch_prefix_name}/")
+    context.log.info(f"Clearing scratch dir at {scratch_prefix_name}")
+    deletions_count = clear_dir(scratch_bucket_name, scratch_prefix_name, context.resources.gcs)
+    context.log.info(f"Deleted {deletions_count} blobs under {scratch_prefix_name}")
+    return deletions_count
+
+
+def clear_dir(bucket: str, prefix: str, gcs: Client) -> int:
+    blobs = gcs.list_blobs(bucket, prefix=f"{prefix}/")
     deletions_count = 0
     for blob in blobs:
         blob.delete()
         deletions_count += 1
-    context.log.debug(f"--clear_scratch_dir deleted {deletions_count} blobs under {scratch_prefix_name}")
     return deletions_count
 
 

@@ -2,14 +2,14 @@ from typing import Optional
 
 from dataclasses import dataclass
 from google.cloud import bigquery
-from google.cloud.bigquery import ExternalConfig, WriteDisposition, QueryJob
+from google.cloud.bigquery import ExternalConfig, WriteDisposition, QueryJob, ArrayQueryParameter, QueryJobConfig
 
 
 @dataclass
 class BigQueryService:
     bigquery_client: bigquery.client.Client
 
-    def build_query_job(
+    def build_query_job_with_destination(
             self,
             query: str,
             destination_table: str,
@@ -31,6 +31,28 @@ class BigQueryService:
             project=bigquery_project
         )
 
+        return query_job
+
+    def build_query_job(
+            self,
+            query: str,
+            bigquery_project: str,
+            query_params: list[ArrayQueryParameter] = [],
+            location: str = 'US'
+    ) -> QueryJob:
+        """
+        Performs a bigquery query, with no external destination (table or otherwise)
+        """
+        job_config = QueryJobConfig()
+        if query_params:
+            job_config.query_parameters = query_params
+
+        query_job = self.bigquery_client.query(
+            query,
+            job_config=job_config,
+            location=location,
+            project=bigquery_project
+        )
         return query_job
 
     def build_query_job_using_external_schema(
