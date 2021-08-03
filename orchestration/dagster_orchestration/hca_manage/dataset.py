@@ -37,8 +37,8 @@ def run(arguments: Optional[list[str]] = None) -> None:
     dataset_create.add_argument("-n", "--dataset_name", help="Name of dataset to create.", required=True)
     dataset_create.add_argument("-b", "--billing_profile_id", help="Billing profile ID", required=True)
     dataset_create.add_argument(
-        "-p", "--policy-members", default='monster@firecloud.org',
-        help="CSV list of emails to grant steward access to this dataset (default: monster@firecloud.org)"
+        "-p", "--policy-members",
+        help="CSV list of emails to grant steward access to this dataset"
     )
     dataset_create.add_argument("-s", "--schema_path", help="Path to JSON schema", required=False)
     dataset_create.add_argument("-r", "--region", help="GCP region for the dataset", required=True)
@@ -100,7 +100,7 @@ def _create_dataset(args: argparse.Namespace) -> None:
     else:
         schema = hca.generate_schema()
 
-    hca.create_dataset_with_policy_members(
+    dataset_model = hca.create_dataset_with_policy_members(
         args.dataset_name,
         args.billing_profile_id,
         policy_members,
@@ -109,6 +109,13 @@ def _create_dataset(args: argparse.Namespace) -> None:
         args.env,
         None
     )
+
+    logging.info({
+        'id': dataset_model.id,
+        'default_profile_id': dataset_model.default_profile_id,
+        'data_project': dataset_model.data_project,
+        'name': dataset_model.name
+    })
 
 
 @tdr_operation
@@ -124,7 +131,7 @@ def _retrieve_dataset(args: argparse.Namespace) -> None:
     host = data_repo_host[args.env]
 
     hca = DatasetManager(environment=args.env, data_repo_client=get_api_client(host=host))
-    logging.info(hca.retrieve_dataset(uuid=args.id))
+    logging.info(hca.retrieve_dataset(dataset_id=args.id))
 
 
 @dataclass
@@ -135,7 +142,7 @@ class DatasetManager:
 
     def __post_init__(self) -> None:
         self.stewards = {
-            "dev": {"monster@firecloud.org"},
+            "dev": {"monster-dev@dev.test.firecloud.org"},
             "prod": {"monster@firecloud.org"}
         }[self.environment]
 
@@ -162,7 +169,7 @@ class DatasetManager:
             region: str,
             env: str,
             description: Optional[str]
-    ) -> str:
+    ) -> DatasetModel:
         job_id = self.create_dataset(
             dataset_name=dataset_name,
             billing_profile_id=billing_profile_id,
@@ -189,13 +196,13 @@ class DatasetManager:
         dataset_id: str = job_result["id"]
         logging.info(f"Dataset created, id = {dataset_id}")
 
-        # if policy-members are provided in the CLI args, add the monster team email (default without provided arg)
+        logging.info(f"Adding default policy_members {self.stewards}")
+        self.add_policy_members(dataset_id, self.stewards, "steward")
         if policy_members:
             logging.info(f"Adding policy_members {policy_members}")
-            self.add_policy_members(dataset_id, self.stewards, "steward")
             self.add_policy_members(dataset_id, policy_members, "steward")
 
-        return dataset_id
+        return self.retrieve_dataset(dataset_id)
 
     def create_dataset(
             self,
@@ -268,8 +275,8 @@ class DatasetManager:
         """
         return self.data_repo_client.enumerate_datasets(filter=dataset_name, limit=1000)
 
-    def retrieve_dataset(self, uuid: int) -> DatasetModel:
-        return self.data_repo_client.retrieve_dataset(uuid)
+    def retrieve_dataset(self, dataset_id: str) -> DatasetModel:
+        return self.data_repo_client.retrieve_dataset(dataset_id)
 
     def add_policy_members(
             self,

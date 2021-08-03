@@ -5,7 +5,7 @@ from dagster_utils.resources.google_storage import google_storage_client
 
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.resources import bigquery_service, load_tag
-from hca_orchestration.resources.config.hca_dataset import target_hca_dataset
+from hca_orchestration.resources.config.target_hca_dataset import target_hca_dataset
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.hca_project_config import hca_project_copying_config
 from hca_orchestration.solids.copy_project.data_file_ingestion import ingest_data_files

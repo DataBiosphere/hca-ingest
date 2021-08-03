@@ -1,14 +1,13 @@
 from collections import defaultdict
 
-from dagster import solid, ResourceDefinition, Nothing, InputDefinition
+from dagster import solid, Nothing, InputDefinition
 from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
-from data_repo_client import RepositoryApi
+from hca_orchestration.models.hca_dataset import HcaDataset
 
 from hca_orchestration.contrib.bigquery import BigQueryService
-from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
-from hca_orchestration.resources.config.scratch import ScratchConfig
+from hca_orchestration.models.scratch import ScratchConfig
 from hca_orchestration.solids.copy_project.tabular_data_ingestion import ingest_tabular_data_to_tdr
 
 
@@ -19,7 +18,7 @@ from hca_orchestration.solids.copy_project.tabular_data_ingestion import ingest_
 def inject_file_ids(context: AbstractComputeExecutionContext, entity_types: set[str]) -> set[str]:
     data_repo_client = context.resources.data_repo_client
     scratch_config: ScratchConfig = context.resources.scratch_config
-    target_hca_dataset: TargetHcaDataset = context.resources.target_hca_dataset
+    target_hca_dataset: HcaDataset = context.resources.target_hca_dataset
     bigquery_service: BigQueryService = context.resources.bigquery_service
 
     ingest_paths = defaultdict(str)

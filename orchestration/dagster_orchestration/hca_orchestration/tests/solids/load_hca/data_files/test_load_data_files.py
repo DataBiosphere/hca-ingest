@@ -6,7 +6,7 @@ from dagster_utils.resources.bigquery import noop_bigquery_client
 from dagster_utils.resources.google_storage import mock_storage_client
 from data_repo_client.api import RepositoryApi
 from data_repo_client.models import JobModel
-from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
+from hca_orchestration.models.hca_dataset import HcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
 from hca_orchestration.solids.load_hca.data_files.load_data_files import diff_file_loads, run_bulk_file_ingest
 from hca_orchestration.support.typing import HcaScratchDatasetName
@@ -19,7 +19,7 @@ load_datafiles_test_mode: ModeDefinition = ModeDefinition(
         "bigquery_client": noop_bigquery_client,
         "bigquery_service": ResourceDefinition.mock_resource(),
         "target_hca_dataset": ResourceDefinition.hardcoded_resource(
-            TargetHcaDataset(
+            HcaDataset(
                 "fake_dataset_name",
                 "1234abc",
                 "fake_hca_project_id",

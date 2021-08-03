@@ -1,6 +1,5 @@
 import json
 from collections import defaultdict
-from dataclasses import dataclass
 from urllib.parse import urlparse
 
 import requests
@@ -15,22 +14,10 @@ from google.oauth2.credentials import Credentials
 from requests.structures import CaseInsensitiveDict
 
 from hca_orchestration.contrib.bigquery import BigQueryService
-from hca_orchestration.resources.config.scratch import ScratchConfig
+from hca_orchestration.models.scratch import ScratchConfig
 from hca_orchestration.resources.hca_project_config import HcaProjectCopyingConfig
-
-
-@dataclass(eq=True, frozen=True)
-class DataFileEntity:
-    """Represents an HCA data file"""
-    path: str
-    hca_file_id: str
-
-
-@dataclass
-class MetadataEntity:
-    """Represents an HCA metadata entity"""
-    entity_type: str
-    entity_id: str
+from hca_orchestration.models.entities import DataFileEntity, MetadataEntity
+from hca_orchestration.support.typing import MetadataType
 
 
 @solid(
@@ -54,7 +41,7 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
 
     query = f"""
       SELECT *
-        FROM {hca_project_config.source_bigquery_project_id}.{hca_project_config.source_snapshot_name}.links
+        FROM `{hca_project_config.source_bigquery_project_id}.{hca_project_config.source_snapshot_name}.links`
         WHERE project_id = "{project_id}"
     """
     query_job = bigquery_service.build_query_job(query, hca_project_config.source_bigquery_project_id)
@@ -62,7 +49,7 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
     subgraphs = []
     for row in query_job.result():
         subgraphs.append(json.loads(row["content"])["links"])
-        nodes["links"].append(MetadataEntity("link", row["links_id"]))
+        nodes["links"].append(MetadataEntity(MetadataType("link"), row["links_id"]))
 
     context.log.info("Hydrating subgraphs...")
     for subgraph in subgraphs:
@@ -179,7 +166,7 @@ def _extract_entities_to_path(
                   overwrite=true
                 ) AS
                 SELECT * EXCEPT (datarepo_row_id, file_id)
-                FROM {bigquery_project_id}.{snapshot_name}.{entity_type} WHERE {entity_type}_id IN
+                FROM `{bigquery_project_id}.{snapshot_name}.{entity_type}` WHERE {entity_type}_id IN
                 UNNEST(@entity_ids)
             """
         else:
@@ -190,7 +177,7 @@ def _extract_entities_to_path(
                   overwrite=true
                 ) AS
                 SELECT * EXCEPT (datarepo_row_id)
-                FROM {bigquery_project_id}.{snapshot_name}.{entity_type} WHERE {entity_type}_id IN
+                FROM `{bigquery_project_id}.{snapshot_name}.{entity_type}` WHERE {entity_type}_id IN
                 UNNEST(@entity_ids)
                 """
         entity_ids = [entity.entity_id for entity in entities]
@@ -213,13 +200,13 @@ def fetch_entities(
         if not entity_type.endswith("_file"):
             fetch_entities_query = f"""
             SELECT * EXCEPT (datarepo_row_id)
-            FROM {bigquery_project_id}.{snapshot_name}.{entity_type} WHERE {entity_type}_id IN
+            FROM `{bigquery_project_id}.{snapshot_name}.{entity_type}` WHERE {entity_type}_id IN
             UNNEST(@entity_ids)
             """
         else:
             fetch_entities_query = f"""
             SELECT '/' || JSON_EXTRACT_SCALAR(descriptor, '$.file_id') || '/' || JSON_EXTRACT_SCALAR(descriptor, '$.file_name') as target_path, * EXCEPT (datarepo_row_id)
-            FROM {bigquery_project_id}.{snapshot_name}.{entity_type} WHERE {entity_type}_id IN
+            FROM `{bigquery_project_id}.{snapshot_name}.{entity_type}` WHERE {entity_type}_id IN
             UNNEST(@entity_ids)
             """
         entity_ids = [entity.entity_id for entity in entities]

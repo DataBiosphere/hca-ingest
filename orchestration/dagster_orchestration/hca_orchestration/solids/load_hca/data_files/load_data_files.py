@@ -1,20 +1,19 @@
 from typing import Iterator
 
-from dagster import composite_solid, solid, Nothing
+from dagster import composite_solid, solid
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from dagster.experimental import DynamicOutput, DynamicOutputDefinition
+from data_repo_client import JobModel
 from google.cloud import bigquery
 from google.cloud.bigquery.client import RowIterator
 
 from hca_manage.common import JobId
 from hca_orchestration.contrib.bigquery import BigQueryService
-from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
-from hca_orchestration.resources.config.scratch import ScratchConfig
+from hca_orchestration.models.hca_dataset import HcaDataset
+from hca_orchestration.models.scratch import ScratchConfig
 from hca_orchestration.solids.data_repo import wait_for_job_completion
 from hca_orchestration.solids.load_hca.poll_ingest_job import check_data_ingest_job_result
 from hca_orchestration.support.typing import HcaScratchDatasetName
-from data_repo_client import JobModel
-
 
 FILE_LOAD_TABLE_BQ_SCHEMA = [
     {
@@ -76,7 +75,7 @@ def diff_file_loads(context: AbstractComputeExecutionContext,
 
 def _determine_files_to_load(
         bigquery_service: BigQueryService,
-        target_hca_dataset: TargetHcaDataset,
+        target_hca_dataset: HcaDataset,
         staging_dataset: HcaScratchDatasetName,
         file_load_table_name: str,
         scratch_config: ScratchConfig,
