@@ -68,7 +68,7 @@ def _query_rows_to_append(
     """
 
     target_table = f"{scratch_dataset_name}.{metadata_type}_values"
-    return bigquery_service.build_query_job(
+    return bigquery_service.build_query_job_with_destination(
         query,
         target_table,
         scratch_config.scratch_bq_project
@@ -246,7 +246,7 @@ def _get_outdated_ids(
     WHERE J.version < L.latest_version
     """
 
-    bigquery_service.build_query_job(
+    bigquery_service.build_query_job_with_destination(
         query,
         destination,
         scratch_config.scratch_bq_project
