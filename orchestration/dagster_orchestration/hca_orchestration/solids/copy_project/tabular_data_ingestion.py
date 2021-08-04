@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import DefaultDict
 
 from dagster import solid, InputDefinition, Nothing
 from dagster.core.execution.context.compute import (
@@ -38,16 +39,16 @@ def ingest_tabular_data(context: AbstractComputeExecutionContext) -> set[str]:
 def ingest_tabular_data_to_tdr(context: AbstractComputeExecutionContext, data_repo_client: RepositoryApi,
                                entity_types: dict[str, GsBucketWithPrefix], target_hca_dataset: HcaDataset) -> None:
     for entity_type, path in entity_types.items():
-        path = f"{path.to_gs_path()}/*"
+        ingest_path = f"{path.to_gs_path()}/*"
         payload = {
             "format": "json",
             "ignore_unknown_values": "false",
             "max_bad_records": 0,
-            "path": path,
+            "path": ingest_path,
             "table": entity_type
         }
 
-        context.log.info(f"Submitting request to TDR to ingest data at path = {path}")
+        context.log.info(f"Submitting tabular data ingests for {entity_type}...")
         job_response: JobModel = data_repo_client.ingest_dataset(
             id=target_hca_dataset.dataset_id,
             ingest=payload
@@ -64,7 +65,7 @@ def _find_entities_for_ingestion(gcs: Client,
         bucket_or_name=scratch_config.scratch_bucket_name,
         prefix=scratch_config.scratch_prefix_name + "/tabular_data_for_ingest/"
     )
-    entity_types = defaultdict(GsBucketWithPrefix)
+    entity_types = {}
 
     for blob in result:
         entity_type = blob.name.split('/')[-2]

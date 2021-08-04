@@ -23,7 +23,7 @@ def inject_file_ids(context: AbstractComputeExecutionContext, entity_types: set[
     target_hca_dataset: HcaDataset = context.resources.target_hca_dataset
     bigquery_service: BigQueryService = context.resources.bigquery_service
 
-    ingest_paths = defaultdict(GsBucketWithPrefix)
+    ingest_paths = {}
     for entity_type in entity_types:
         if not entity_type.endswith("_file"):
             continue
