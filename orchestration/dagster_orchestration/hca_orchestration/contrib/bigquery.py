@@ -153,7 +153,8 @@ class BigQueryService:
             self,
             destination_gcs_path: GsBucketWithPrefix,
             table_name: str,
-            target_hca_dataset: HcaDataset
+            target_hca_dataset: HcaDataset,
+            location: str
     ) -> bigquery.QueryJob:
         """
         Returns any duplicate rows from the given table, deduping on version.
@@ -178,7 +179,7 @@ class BigQueryService:
         else:
             query = f"""
                 EXPORT DATA OPTIONS(
-                    uri='{destination_gcs_path.to_gs_path()}/*',
+                    uri='{destination_gcs_path.to_wildcarded_gs_path()}/*',
                     format='CSV',
                     overwrite=true
                 ) AS
@@ -193,4 +194,26 @@ class BigQueryService:
             """
 
         return self.build_query_job(
-            query, target_hca_dataset.project_id, location='us-central1')
+            query, target_hca_dataset.project_id, location=location)
+
+    def build_extract_file_ids_job(self,
+                                   destination_gcs_path: GsBucketWithPrefix,
+                                   table_name: str,
+                                   target_hca_dataset: HcaDataset,
+                                   location: str
+                                   ) -> bigquery.QueryJob:
+        query = f"""
+        EXPORT DATA OPTIONS(
+            uri='{destination_gcs_path.to_wildcarded_gs_path()}',
+            format='JSON',
+            overwrite=true
+        ) AS
+        SELECT sf.{table_name}_id, sf.version, dlh.file_id, sf.content, sf.descriptor FROM `{target_hca_dataset.project_id}.datarepo_{target_hca_dataset.dataset_name}.{table_name}` sf
+        LEFT JOIN  `{target_hca_dataset.project_id}.datarepo_{target_hca_dataset.dataset_name}.datarepo_load_history` dlh
+            ON dlh.state = 'succeeded' AND JSON_EXTRACT_SCALAR(sf.descriptor, '$.crc32c') = dlh.checksum_crc32c
+            AND '/' || JSON_EXTRACT_SCALAR(sf.descriptor, '$.file_id') || '/' || JSON_EXTRACT_SCALAR(sf.descriptor, '$.file_name') = dlh.target_path
+        """
+
+        return self.build_query_job(
+            query, target_hca_dataset.project_id, location=location
+        )

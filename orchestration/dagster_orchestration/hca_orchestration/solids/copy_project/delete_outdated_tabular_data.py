@@ -27,7 +27,8 @@ def delete_outdated_tabular_data(context: AbstractComputeExecutionContext, entit
     base_path = f"{scratch_config.scratch_bucket_name}/{scratch_config.scratch_prefix_name}"
     for entity_type in entity_types:
         destination_path = parse_gs_path(f"gs://{base_path}/outdated_row_ids/{entity_type}")
-        query_job = bigquery_service.build_extract_duplicates_job(destination_path, entity_type, target_hca_dataset)
+        query_job = bigquery_service.build_extract_duplicates_job(
+            destination_path, entity_type, target_hca_dataset, 'us-central1')
         query_job.result()
 
         # todo clean up
