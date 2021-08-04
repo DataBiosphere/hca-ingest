@@ -23,7 +23,7 @@ def inject_file_ids(context: AbstractComputeExecutionContext, entity_types: set[
     target_hca_dataset: HcaDataset = context.resources.target_hca_dataset
     bigquery_service: BigQueryService = context.resources.bigquery_service
 
-    ingest_paths = defaultdict(str)
+    ingest_paths = defaultdict(GsBucketWithPrefix)
     for entity_type in entity_types:
         if not entity_type.endswith("_file"):
             continue
@@ -35,7 +35,7 @@ def inject_file_ids(context: AbstractComputeExecutionContext, entity_types: set[
             entity_type, target_hca_dataset, "us-central1"
         )
         query_job.result()
-        ingest_paths[entity_type] = destination_path.to_gs_path()
+        ingest_paths[entity_type] = destination_path
 
     ingest_tabular_data_to_tdr(context, data_repo_client, ingest_paths, target_hca_dataset)
     return entity_types

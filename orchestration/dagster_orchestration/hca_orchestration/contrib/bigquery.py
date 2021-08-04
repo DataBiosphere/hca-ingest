@@ -160,10 +160,11 @@ class BigQueryService:
         Returns any duplicate rows from the given table, deduping on version.
         """
         # todo much copy + paste here, refactor
+        extraction_path = destination_gcs_path.to_wildcarded_gs_path()
         if not table_name.endswith("_file"):
             query = f"""
                 EXPORT DATA OPTIONS(
-                    uri='{destination_gcs_path.to_wildcarded_gs_path()}',
+                    uri='{extraction_path}',
                     format='CSV',
                     overwrite=true
                 ) AS
@@ -179,7 +180,7 @@ class BigQueryService:
         else:
             query = f"""
                 EXPORT DATA OPTIONS(
-                    uri='{destination_gcs_path.to_wildcarded_gs_path()}/*',
+                    uri='{extraction_path}',
                     format='CSV',
                     overwrite=true
                 ) AS
