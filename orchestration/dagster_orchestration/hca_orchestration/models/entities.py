@@ -7,7 +7,7 @@ from hca_orchestration.support.typing import MetadataType
 class DataFileEntity:
     """Represents an HCA data file"""
     path: str
-    hca_file_id: str
+    hca_file_path: str
 
 
 @dataclass
