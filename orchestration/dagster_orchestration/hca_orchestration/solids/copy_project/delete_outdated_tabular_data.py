@@ -43,7 +43,7 @@ def delete_outdated_tabular_data(context: AbstractComputeExecutionContext, entit
                 {
                     "gcsFileSpec": {
                         "fileType": "csv",
-                        "path": f"{destination_path.to_wildcarded_gs_path()}"
+                        "path": f"{destination_path.to_gs_path()}/*"
                     },
                     "tableName": entity_type
                 }

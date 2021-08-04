@@ -160,7 +160,7 @@ class BigQueryService:
         Returns any duplicate rows from the given table, deduping on version.
         """
         # todo much copy + paste here, refactor
-        extraction_path = destination_gcs_path.to_wildcarded_gs_path()
+        extraction_path = f"{destination_gcs_path.to_gs_path()}/*"
         if not table_name.endswith("_file"):
             query = f"""
                 EXPORT DATA OPTIONS(
@@ -203,9 +203,10 @@ class BigQueryService:
                                    target_hca_dataset: HcaDataset,
                                    location: str
                                    ) -> bigquery.QueryJob:
+
         query = f"""
         EXPORT DATA OPTIONS(
-            uri='{destination_gcs_path.to_wildcarded_gs_path()}',
+            uri='{destination_gcs_path}/*',
             format='JSON',
             overwrite=true
         ) AS

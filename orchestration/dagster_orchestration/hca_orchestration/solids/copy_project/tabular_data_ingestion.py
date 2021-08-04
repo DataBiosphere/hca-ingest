@@ -38,15 +38,16 @@ def ingest_tabular_data(context: AbstractComputeExecutionContext) -> set[str]:
 def ingest_tabular_data_to_tdr(context: AbstractComputeExecutionContext, data_repo_client: RepositoryApi,
                                entity_types: dict[str, GsBucketWithPrefix], target_hca_dataset: HcaDataset) -> None:
     for entity_type, path in entity_types.items():
+        path = f"{path.to_gs_path()}/*"
         payload = {
             "format": "json",
             "ignore_unknown_values": "false",
             "max_bad_records": 0,
-            "path": path.to_wildcarded_gs_path(),
+            "path": path,
             "table": entity_type
         }
 
-        context.log.info(f"Submitting request to TDR to ingest data at path = {path.to_wildcarded_gs_path()}")
+        context.log.info(f"Submitting request to TDR to ingest data at path = {path}")
         job_response: JobModel = data_repo_client.ingest_dataset(
             id=target_hca_dataset.dataset_id,
             ingest=payload
