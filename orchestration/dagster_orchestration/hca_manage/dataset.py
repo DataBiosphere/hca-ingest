@@ -13,10 +13,11 @@ from dagster_utils.contrib.data_repo.typing import JobId
 from data_repo_client import RepositoryApi, EnumerateDatasetModel, DatasetModel
 
 from hca_manage import __version__ as hca_manage_version
-from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client, query_yes_no, tdr_operation, setup_cli_logging_format
+from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client, query_yes_no, tdr_operation, \
+    setup_cli_logging_format
 
-MAX_DATASET_CREATE_POLL_SECONDS = 120
-DATASET_CREATE_POLL_INTERVAL_SECONDS = 2
+MAX_DATASET_OP_POLL_SECONDS = 120
+DATASET_OP_POLL_INTERVAL_SECONDS = 2
 DATASET_NAME_REGEX = "^hca_(dev|prod|staging)_(\\d{4})(\\d{2})(\\d{2})(_[a-zA-Z][a-zA-Z0-9]{0,13})?$"
 
 
@@ -66,11 +67,17 @@ def run(arguments: Optional[list[str]] = None) -> None:
 
 @tdr_operation
 def _remove_dataset(args: argparse.Namespace) -> None:
-    if not query_yes_no("Are you sure?"):
+    if args.dataset_id:
+        prompt = f"This will remove dataset id = {args.dataset_id} in env = {args.env}. Are you sure?"
+    else:
+        prompt = f"This will remove dataset name = {args.dataset_name} in env = {args.env}. Are you sure?"
+
+    if not query_yes_no(prompt):
         return
 
     host = data_repo_host[args.env]
     hca = DatasetManager(environment=args.env, data_repo_client=get_api_client(host=host))
+
     hca.delete_dataset(dataset_name=args.dataset_name, dataset_id=args.dataset_id)
 
 
@@ -83,7 +90,7 @@ def _validate_dataset_name(dataset_name: str) -> None:
 @tdr_operation
 def _create_dataset(args: argparse.Namespace) -> None:
     _validate_dataset_name(args.dataset_name)
-    if not query_yes_no("Are you sure?"):
+    if not query_yes_no(f"This will create dataset name = {args.dataset_name} in env = {args.env}. Are you sure?"):
         return
 
     host = data_repo_host[args.env]
@@ -135,7 +142,7 @@ class DatasetManager:
 
     def __post_init__(self) -> None:
         self.stewards = {
-            "dev": {"monster@firecloud.org"},
+            "dev": {"monster-dev@dev.test.firecloud.org"},
             "prod": {"monster@firecloud.org"}
         }[self.environment]
 
@@ -172,18 +179,7 @@ class DatasetManager:
             env=env
         )
 
-        try:
-            poll_job(
-                job_id,
-                MAX_DATASET_CREATE_POLL_SECONDS,
-                DATASET_CREATE_POLL_INTERVAL_SECONDS,
-                self.data_repo_client
-            )
-        except JobPollException:
-            job_result = self.data_repo_client.retrieve_job_result(job_id)
-            logging.error("Create job failed, results =")
-            logging.error(job_result)
-            sys.exit(1)
+        self._poll_job(job_id)
 
         job_result = self.data_repo_client.retrieve_job_result(job_id)
         dataset_id: str = job_result["id"]
@@ -260,7 +256,23 @@ class DatasetManager:
         # (hoppefully successful) retry
         delete_response_id: JobId = self.data_repo_client.delete_dataset(dataset_id, _request_timeout=30).id
         logging.info(f"Dataset deletion job id: {delete_response_id}")
+
+        self._poll_job(delete_response_id)
         return delete_response_id
+
+    def _poll_job(self, job_id: JobId):
+        try:
+            poll_job(
+                job_id,
+                MAX_DATASET_OP_POLL_SECONDS,
+                DATASET_OP_POLL_INTERVAL_SECONDS,
+                self.data_repo_client
+            )
+        except JobPollException:
+            job_result = self.data_repo_client.retrieve_job_result(job_id)
+            logging.error("Dataset job failed, results =")
+            logging.error(job_result)
+            sys.exit(1)
 
     def enumerate_dataset(self, dataset_name: str) -> EnumerateDatasetModel:
         """

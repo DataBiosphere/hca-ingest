@@ -52,7 +52,8 @@ class DatasetManagerTestCase(unittest.TestCase):
 
         self.manager.data_repo_client.create_dataset.assert_called_once()
         calls = [
-            call('fake_dataset_id', policy_name='steward', policy_member={'email': 'monster@firecloud.org'}),
+            call('fake_dataset_id', policy_name='steward', policy_member={
+                 'email': 'monster-dev@dev.test.firecloud.org'}),
             call('fake_dataset_id', policy_name='steward', policy_member={'email': 'abc@example.com'}),
             call('fake_dataset_id', policy_name='steward', policy_member={'email': 'def@example.com'}),
         ]
