@@ -1,8 +1,13 @@
 from typing import Optional
 
 from dataclasses import dataclass
+
+from dagster_utils.contrib.google import GsBucketWithPrefix
 from google.cloud import bigquery
 from google.cloud.bigquery import ExternalConfig, WriteDisposition, QueryJob, ArrayQueryParameter, QueryJobConfig
+
+from hca_orchestration.models.hca_dataset import HcaDataset
+from hca_orchestration.models.entities import MetadataEntity
 
 
 @dataclass
@@ -143,3 +148,74 @@ class BigQueryService:
         for row in result:
             cnt = row[0]
         return cnt
+
+    def build_extract_duplicates_job(
+            self,
+            destination_gcs_path: GsBucketWithPrefix,
+            table_name: str,
+            target_hca_dataset: HcaDataset,
+            location: str
+    ) -> bigquery.QueryJob:
+        """
+        Returns any duplicate rows from the given table, deduping on version.
+        """
+        # todo much copy + paste here, refactor
+        extraction_path = f"{destination_gcs_path.to_gs_path()}/*"
+        if not table_name.endswith("_file"):
+            query = f"""
+                EXPORT DATA OPTIONS(
+                    uri='{extraction_path}',
+                    format='CSV',
+                    overwrite=true
+                ) AS
+                WITH rows_ordered_by_version AS (
+                    SELECT datarepo_row_id, {table_name}_id, version, rank() OVER (
+                        PARTITION BY {table_name}_id ORDER BY version ASC, datarepo_row_id ASC
+                    ) AS rank
+                    FROM `{target_hca_dataset.project_id}.datarepo_{target_hca_dataset.dataset_name}.{table_name}`
+                              ORDER BY {table_name}_id
+                )
+                SELECT datarepo_row_id FROM rows_ordered_by_version WHERE rank > 1;
+            """
+        else:
+            query = f"""
+                EXPORT DATA OPTIONS(
+                    uri='{extraction_path}',
+                    format='CSV',
+                    overwrite=true
+                ) AS
+                WITH rows_ordered_by_version AS (
+                    SELECT datarepo_row_id, {table_name}_id, version, ROW_NUMBER() OVER (
+                        PARTITION BY {table_name}_id ORDER BY version DESC, file_id NULLS LAST
+                    ) AS rank
+                    FROM `{target_hca_dataset.project_id}.datarepo_{target_hca_dataset.dataset_name}.{table_name}`
+                              ORDER BY {table_name}_id
+                )
+                SELECT datarepo_row_id FROM rows_ordered_by_version WHERE rank > 1;
+            """
+
+        return self.build_query_job(
+            query, target_hca_dataset.project_id, location=location)
+
+    def build_extract_file_ids_job(self,
+                                   destination_gcs_path: GsBucketWithPrefix,
+                                   table_name: str,
+                                   target_hca_dataset: HcaDataset,
+                                   location: str
+                                   ) -> bigquery.QueryJob:
+
+        query = f"""
+        EXPORT DATA OPTIONS(
+            uri='{destination_gcs_path}/*',
+            format='JSON',
+            overwrite=true
+        ) AS
+        SELECT sf.{table_name}_id, sf.version, dlh.file_id, sf.content, sf.descriptor FROM `{target_hca_dataset.project_id}.datarepo_{target_hca_dataset.dataset_name}.{table_name}` sf
+        LEFT JOIN  `{target_hca_dataset.project_id}.datarepo_{target_hca_dataset.dataset_name}.datarepo_load_history` dlh
+            ON dlh.state = 'succeeded' AND JSON_EXTRACT_SCALAR(sf.descriptor, '$.crc32c') = dlh.checksum_crc32c
+            AND '/' || JSON_EXTRACT_SCALAR(sf.descriptor, '$.file_id') || '/' || JSON_EXTRACT_SCALAR(sf.descriptor, '$.file_name') = dlh.target_path
+        """
+
+        return self.build_query_job(
+            query, target_hca_dataset.project_id, location=location
+        )

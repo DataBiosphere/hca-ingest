@@ -40,13 +40,7 @@ def run(arguments: Optional[list[str]] = None) -> None:
 
 
 def check_data(args: argparse.Namespace, host: str, parser: argparse.ArgumentParser, remove: bool = False) -> None:
-    if args.env == "dev":
-        if args.project:
-            parser.error("Do not specify a project when the environment is dev, there is only one project.")
-        project = "broad-jade-dev-data"
-    else:
-        project = args.project
-
+    project = args.project
     hca = CheckManager(environment=args.env,
                        project=project,
                        dataset=args.dataset,

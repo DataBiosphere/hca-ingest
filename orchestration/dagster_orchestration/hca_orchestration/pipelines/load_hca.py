@@ -1,17 +1,16 @@
 from dagster import ModeDefinition, pipeline
 from dagster_gcp.gcs import gcs_pickle_io_manager
-from dagster_utils.resources.beam.noop_beam_runner import noop_beam_runner
 from dagster_utils.resources.beam.k8s_beam_runner import k8s_dataflow_beam_runner
 from dagster_utils.resources.beam.local_beam_runner import local_beam_runner
-from dagster_utils.resources.beam.dataflow_beam_runner import dataflow_beam_runner
+from dagster_utils.resources.beam.noop_beam_runner import noop_beam_runner
 from dagster_utils.resources.bigquery import bigquery_client, noop_bigquery_client
-from dagster_utils.resources.google_storage import google_storage_client, mock_storage_client
 from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client, noop_data_repo_client
+from dagster_utils.resources.google_storage import google_storage_client, mock_storage_client
 
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.resources import load_tag, bigquery_service, mock_bigquery_service
-from hca_orchestration.resources.config.hca_dataset import target_hca_dataset
 from hca_orchestration.resources.config.scratch import scratch_config
+from hca_orchestration.resources.config.target_hca_dataset import target_hca_dataset
 from hca_orchestration.solids.load_hca.data_files.load_data_files import import_data_files
 from hca_orchestration.solids.load_hca.data_files.load_data_metadata_files import file_metadata_fanout
 from hca_orchestration.solids.load_hca.non_file_metadata.load_non_file_metadata import non_file_metadata_fanout

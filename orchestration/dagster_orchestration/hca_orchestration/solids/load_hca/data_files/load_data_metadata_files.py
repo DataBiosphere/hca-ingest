@@ -5,7 +5,7 @@ from dagster.core.execution.context.compute import AbstractComputeExecutionConte
 from google.cloud.bigquery.client import RowIterator
 
 from hca_orchestration.contrib.bigquery import BigQueryService
-from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
+from hca_orchestration.models.hca_dataset import HcaDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
 from hca_orchestration.solids.load_hca.ingest_metadata_type import ingest_metadata_type
 from hca_orchestration.solids.load_hca.load_table import load_table, export_data
@@ -29,7 +29,7 @@ ingest_file_metadata_type = configured(ingest_metadata_type, name="ingest_file_m
 
 
 def _inject_file_ids(
-        target_hca_dataset: TargetHcaDataset,
+        target_hca_dataset: HcaDataset,
         scratch_config: ScratchConfig,
         file_metadata_type: str,
         scratch_dataset_name: HcaScratchDatasetName,
