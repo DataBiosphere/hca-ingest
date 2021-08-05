@@ -260,7 +260,7 @@ class DatasetManager:
         self._poll_job(delete_response_id)
         return delete_response_id
 
-    def _poll_job(self, job_id: JobId):
+    def _poll_job(self, job_id: JobId) -> None:
         try:
             poll_job(
                 job_id,
