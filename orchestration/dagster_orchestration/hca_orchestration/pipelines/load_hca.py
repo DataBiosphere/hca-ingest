@@ -12,6 +12,7 @@ from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_clie
 from dagster_utils.resources.slack import console_slack_client, live_slack_client
 
 from hca_orchestration.config import preconfigure_resource_for_mode
+from hca_orchestration.contrib.slack import base_slack_blocks
 from hca_orchestration.resources import load_tag, bigquery_service, mock_bigquery_service
 from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.hca_dataset import target_hca_dataset
@@ -90,34 +91,6 @@ test_mode = ModeDefinition(
 )
 
 
-def _base_slack_blocks(title: str, key_values: dict[str, str]) -> list[dict[str, object]]:
-    return [
-        {
-            "type": "section",
-            "text": {
-                'type': 'mrkdwn',
-                'text': f'*{title}*',
-            }
-        },
-        {
-            'type': 'divider'
-        },
-        {
-            'type': 'section',
-            'fields': [
-                {
-                    'type': 'mrkdwn',
-                    'text': '\n'.join(map(lambda keys: f'*{keys}*', key_values.keys())),
-                },
-                {
-                    'type': 'mrkdwn',
-                    'text': '\n'.join(key_values.values())
-                }
-            ]
-        }
-    ]
-
-
 @success_hook(
     required_resource_keys={'slack', 'target_hca_dataset', 'dagit_config'}
 )
@@ -132,7 +105,7 @@ def import_start_notification(context: HookContext) -> None:
         "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
     }
 
-    context.resources.slack.send_message(blocks=_base_slack_blocks("HCA Starting Import", key_values=kvs))
+    context.resources.slack.send_message(blocks=base_slack_blocks("HCA Starting Import", key_values=kvs))
 
 
 @failure_hook(
@@ -152,14 +125,14 @@ def import_failed_notification(context: HookContext) -> None:
         "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
     }
 
-    context.resources.slack.send_message(blocks=_base_slack_blocks("HCA Import Failed", key_values=kvs))
+    context.resources.slack.send_message(blocks=base_slack_blocks("HCA Import Failed", key_values=kvs))
 
 
 @success_hook(
     required_resource_keys={'slack', 'target_hca_dataset', 'dagit_config'}
 )
 def message_for_import_done(context: HookContext) -> None:
-    context.resources.slack.send_message(blocks=_base_slack_blocks("HCA Import Complete", {
+    context.resources.slack.send_message(blocks=base_slack_blocks("HCA Import Complete", {
         "Staging Area": context.solids.pre_process_metadata.input_prefix,
         "Target Dataset": context.resources.target_hca_dataset.dataset_name,
         "Jade Project": context.resources.target_hca_dataset.project_id,
@@ -171,8 +144,14 @@ def message_for_import_done(context: HookContext) -> None:
     mode_defs=[prod_mode, dev_mode, local_mode, test_mode]
 )
 def load_hca() -> None:
-    hooked_staging_dataset = create_scratch_dataset(pre_process_metadata(clear_scratch_dir())).with_hooks({import_start_notification})
-    hooked_result = import_data_files(hooked_staging_dataset).collect().with_hooks({import_failed_notification})
+    hooked_create_scratch_dataset = create_scratch_dataset.with_hooks({import_start_notification})
+    staging_dataset = hooked_create_scratch_dataset(pre_process_metadata(clear_scratch_dir()))
 
-    file_metadata_fanout(result, staging_dataset).with_hooks({import_failed_notification})
-    non_file_metadata_fanout(result, staging_dataset).with_hooks({import_failed_notification}).with_hooks({message_for_import_done})
+    hooked_import_data_files = import_data_files.with_hooks({import_failed_notification})
+    result = hooked_import_data_files(staging_dataset).collect()
+
+    hooked_file_metadata_fanout = file_metadata_fanout.with_hooks({message_for_import_done})
+    hooked_file_metadata_fanout(result, staging_dataset)
+
+    hooked_non_file_metadata_fanout = non_file_metadata_fanout.with_hooks({message_for_import_done})
+    hooked_non_file_metadata_fanout(result, staging_dataset)
