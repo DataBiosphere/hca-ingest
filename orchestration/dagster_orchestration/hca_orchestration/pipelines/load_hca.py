@@ -96,12 +96,10 @@ test_mode = ModeDefinition(
 )
 def import_start_notification(context: HookContext) -> None:
     context.log.info(f"Solid output = {context.solid_output_values}")
-    job_id = context.solid_output_values["result"]
     kvs = {
         "Staging Area": context.solids.pre_process_metadata.input_prefix,
         "Target Dataset": context.resources.target_hca_dataset.dataset_name,
         "Jade Project": context.resources.target_hca_dataset.project_id,
-        "TDR Job ID": job_id,
         "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
     }
 
@@ -112,16 +110,10 @@ def import_start_notification(context: HookContext) -> None:
     required_resource_keys={'slack', 'target_hca_dataset', 'dagit_config'}
 )
 def import_failed_notification(context: HookContext) -> None:
-    if "result" in context.solid_output_values:
-        job_id = context.solid_output_values["result"]
-    else:
-        job_id = "N/A"
-
     kvs = {
         "Staging Area": context.solids.pre_process_metadata.input_prefix,
         "Target Dataset": context.resources.target_hca_dataset.dataset_name,
         "Jade Project": context.resources.target_hca_dataset.project_id,
-        "TDR Job ID": job_id,
         "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
     }
 
