@@ -58,7 +58,7 @@ def dataset_info(dataset_name, delete_dataset_on_exit, existing_dataset_id) -> I
             "US",
             "dev",
             MONSTER_TEST_DATASET_SENTINEL
-        )
+        ).id
 
     info = dataset_manager.retrieve_dataset(dataset_id)
     yield DatasetInfo(dataset_id, info.data_project)
