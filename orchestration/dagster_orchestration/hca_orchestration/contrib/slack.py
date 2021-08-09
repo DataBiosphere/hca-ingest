@@ -1,6 +1,10 @@
 
 
-def base_slack_blocks(title: str, key_values: dict[str, str]) -> list[dict[str, object]]:
+def key_value_slack_blocks(title: str, key_values: dict[str, str]) -> list[dict[str, object]]:
+    """
+    Creates a slack [blocks](https://api.slack.com/block-kit/building) structure that captures
+    the supplied key-value information.
+    """
     return [
         {
             "type": "section",

@@ -11,7 +11,7 @@ from dagster_utils.resources.google_storage import google_storage_client, mock_s
 from dagster_utils.resources.slack import live_slack_client, console_slack_client
 
 from hca_orchestration.config import preconfigure_resource_for_mode
-from hca_orchestration.contrib.slack import base_slack_blocks
+from hca_orchestration.contrib.slack import key_value_slack_blocks
 from hca_orchestration.resources import load_tag, bigquery_service, mock_bigquery_service
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.config.target_hca_dataset import target_hca_dataset
@@ -101,7 +101,7 @@ def import_start_notification(context: HookContext) -> None:
         "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
     }
 
-    context.resources.slack.send_message(blocks=base_slack_blocks("HCA Starting Import", key_values=kvs))
+    context.resources.slack.send_message(blocks=key_value_slack_blocks("HCA Starting Import", key_values=kvs))
 
 
 @failure_hook(
@@ -115,14 +115,14 @@ def import_failed_notification(context: HookContext) -> None:
         "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
     }
 
-    context.resources.slack.send_message(blocks=base_slack_blocks("HCA Import Failed", key_values=kvs))
+    context.resources.slack.send_message(blocks=key_value_slack_blocks("HCA Import Failed", key_values=kvs))
 
 
 @success_hook(
     required_resource_keys={'slack', 'target_hca_dataset', 'dagit_config'}
 )
 def message_for_import_done(context: HookContext) -> None:
-    context.resources.slack.send_message(blocks=base_slack_blocks("HCA Import Complete", {
+    context.resources.slack.send_message(blocks=key_value_slack_blocks("HCA Import Complete", {
         "Staging Area": context.solids.pre_process_metadata.input_prefix,
         "Target Dataset": context.resources.target_hca_dataset.dataset_name,
         "Jade Project": context.resources.target_hca_dataset.project_id,

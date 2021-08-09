@@ -9,7 +9,7 @@ from dagster_utils.resources.sam import sam_client, noop_sam_client
 from dagster_utils.resources.slack import console_slack_client, live_slack_client
 
 from hca_orchestration.config import preconfigure_resource_for_mode
-from hca_orchestration.contrib.slack import base_slack_blocks
+from hca_orchestration.contrib.slack import key_value_slack_blocks
 from hca_orchestration.solids.create_snapshot import get_completed_snapshot_info, make_snapshot_public, \
     submit_snapshot_job
 from hca_orchestration.solids.data_repo import wait_for_job_completion
@@ -102,7 +102,7 @@ def snapshot_start_notification(context: HookContext) -> None:
 
     }
 
-    context.resources.slack.send_message(blocks=base_slack_blocks("HCA Starting Snapshot", key_values=kvs))
+    context.resources.slack.send_message(blocks=key_value_slack_blocks("HCA Starting Snapshot", key_values=kvs))
 
 
 @failure_hook(
@@ -121,14 +121,14 @@ def snapshot_job_failed_notification(context: HookContext) -> None:
         "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
     }
 
-    context.resources.slack.send_message(blocks=base_slack_blocks("HCA Snapshot Failed", key_values=kvs))
+    context.resources.slack.send_message(blocks=key_value_slack_blocks("HCA Snapshot Failed", key_values=kvs))
 
 
 @success_hook(
     required_resource_keys={'slack', 'snapshot_config', 'dagit_config'}
 )
 def message_for_snapshot_done(context: HookContext) -> None:
-    context.resources.slack.send_message(blocks=base_slack_blocks("HCA Snapshot Complete", {
+    context.resources.slack.send_message(blocks=key_value_slack_blocks("HCA Snapshot Complete", {
         "Snapshot name": context.resources.snapshot_config.snapshot_name,
         "Dataset": context.resources.snapshot_config.dataset_name,
         "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
