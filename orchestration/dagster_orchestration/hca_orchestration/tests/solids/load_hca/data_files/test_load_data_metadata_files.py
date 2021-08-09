@@ -1,12 +1,10 @@
-from dagster import ModeDefinition, ResourceDefinition, SolidExecutionResult, execute_solid
+from dagster import SolidExecutionResult, execute_solid
 from dagster_utils.contrib.data_repo.typing import JobId
-
 
 from hca_orchestration.pipelines.load_hca import test_mode
 from hca_orchestration.solids.load_hca.data_files.load_data_metadata_files import ingest_metadata_for_file_type, \
-    ingest_metadata, file_metadata_fanout
+    file_metadata_fanout
 from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType, MetadataTypeFanoutResult
-
 
 run_config = {
     "resources": {
@@ -48,19 +46,19 @@ def test_ingest_metadata_for_file_type():
     )
 
     assert result.success
-
-
-def test_ingest_metadata():
-    result: SolidExecutionResult = execute_solid(
-        ingest_metadata,
-        mode_def=test_mode,
-        input_values={
-            "file_metadata_fanout_result": metadata_fanout_result
-        },
-        run_config=run_config
-    )
-
-    assert result.success
+#
+#
+# def test_ingest_metadata():
+#     result: SolidExecutionResult = execute_solid(
+#         ingest_metadata,
+#         mode_def=test_mode,
+#         input_values={
+#             "file_metadata_fanout_result": metadata_fanout_result
+#         },
+#         run_config=run_config
+#     )
+#
+#     assert result.success
 
 
 def test_file_metadata_fanout():

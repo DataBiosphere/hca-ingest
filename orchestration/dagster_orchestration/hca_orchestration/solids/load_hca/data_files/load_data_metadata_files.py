@@ -1,6 +1,8 @@
 from enum import Enum
+from typing import Optional, Iterable, Any
 
-from dagster import solid, composite_solid, configured, Nothing
+import dagster
+from dagster import solid, composite_solid, configured, Nothing, DynamicOutputDefinition, Noneable, String
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from google.cloud.bigquery.client import RowIterator
 
@@ -117,11 +119,15 @@ def ingest_metadata_for_file_type(
     return file_metadata_fanout_result
 
 
-@composite_solid
-def ingest_metadata(file_metadata_fanout_result: MetadataTypeFanoutResult) -> Nothing:
-    return load_table(ingest_metadata_for_file_type(file_metadata_fanout_result))
+# @composite_solid
+# def ingest_metadata(file_metadata_fanout_result: MetadataTypeFanoutResult) -> Optional[JobId]:
+#     return load_table(ingest_metadata_for_file_type(file_metadata_fanout_result))
 
 
-@composite_solid
-def file_metadata_fanout(result: list[JobId], scratch_dataset_name: HcaScratchDatasetName) -> Nothing:
-    ingest_file_metadata_type(result, scratch_dataset_name).map(ingest_metadata)
+@composite_solid(
+    output_defs=[DynamicOutputDefinition(dagster_type=Optional[JobId])]
+)
+def file_metadata_fanout(result: list[JobId], scratch_dataset_name: HcaScratchDatasetName) -> Optional[JobId]:
+    results = ingest_file_metadata_type(result, scratch_dataset_name).map(ingest_metadata_for_file_type)
+    results2 = results.map(load_table)
+    return results2
