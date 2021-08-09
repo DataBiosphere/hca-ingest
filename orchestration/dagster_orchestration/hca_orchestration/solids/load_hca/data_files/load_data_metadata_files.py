@@ -124,4 +124,4 @@ def ingest_metadata(file_metadata_fanout_result: MetadataTypeFanoutResult) -> No
 
 @composite_solid
 def file_metadata_fanout(result: list[JobId], scratch_dataset_name: HcaScratchDatasetName) -> Nothing:
-    ingest_file_metadata_type(result, scratch_dataset_name).map(ingest_metadata)
+    return ingest_file_metadata_type(result, scratch_dataset_name).map(ingest_metadata)
