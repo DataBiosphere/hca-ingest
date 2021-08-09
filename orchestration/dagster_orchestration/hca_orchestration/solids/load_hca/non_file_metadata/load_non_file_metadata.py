@@ -42,4 +42,4 @@ ingest_non_file_metadata_type = configured(ingest_metadata_type, name="ingest_no
 
 @composite_solid
 def non_file_metadata_fanout(result: list[JobId], scratch_dataset_name: HcaScratchDatasetName) -> Nothing:
-    ingest_non_file_metadata_type(result, scratch_dataset_name).map(load_table)
+    return ingest_non_file_metadata_type(result, scratch_dataset_name).map(load_table)

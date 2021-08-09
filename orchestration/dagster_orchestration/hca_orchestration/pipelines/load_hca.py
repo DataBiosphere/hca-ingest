@@ -1,6 +1,5 @@
-from dagster import ModeDefinition, pipeline, success_hook, failure_hook
 from dagster import HookContext
-
+from dagster import ModeDefinition, pipeline, success_hook
 from dagster_gcp.gcs import gcs_pickle_io_manager
 from dagster_utils.resources.beam.k8s_beam_runner import k8s_dataflow_beam_runner
 from dagster_utils.resources.beam.local_beam_runner import local_beam_runner
@@ -13,13 +12,13 @@ from dagster_utils.resources.slack import live_slack_client, console_slack_clien
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.contrib.slack import key_value_slack_blocks
 from hca_orchestration.resources import load_tag, bigquery_service, mock_bigquery_service
+from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.config.target_hca_dataset import target_hca_dataset
 from hca_orchestration.solids.load_hca.data_files.load_data_files import import_data_files
 from hca_orchestration.solids.load_hca.data_files.load_data_metadata_files import file_metadata_fanout
 from hca_orchestration.solids.load_hca.non_file_metadata.load_non_file_metadata import non_file_metadata_fanout
 from hca_orchestration.solids.load_hca.stage_data import clear_scratch_dir, pre_process_metadata, create_scratch_dataset
-from hca_orchestration.resources.config.dagit import dagit_config
 
 prod_mode = ModeDefinition(
     name="prod",
@@ -95,7 +94,7 @@ test_mode = ModeDefinition(
 def import_start_notification(context: HookContext) -> None:
     context.log.info(f"Solid output = {context.solid_output_values}")
     kvs = {
-        "Staging Area": context.solids.pre_process_metadata.input_prefix,
+        "Staging area": context.solid_config["input_prefix"],
         "Target Dataset": context.resources.target_hca_dataset.dataset_name,
         "Jade Project": context.resources.target_hca_dataset.project_id,
         "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
@@ -104,44 +103,15 @@ def import_start_notification(context: HookContext) -> None:
     context.resources.slack.send_message(blocks=key_value_slack_blocks("HCA Starting Import", key_values=kvs))
 
 
-@failure_hook(
-    required_resource_keys={'slack', 'target_hca_dataset', 'dagit_config'}
-)
-def import_failed_notification(context: HookContext) -> None:
-    kvs = {
-        "Staging Area": context.solids.pre_process_metadata.input_prefix,
-        "Target Dataset": context.resources.target_hca_dataset.dataset_name,
-        "Jade Project": context.resources.target_hca_dataset.project_id,
-        "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
-    }
-
-    context.resources.slack.send_message(blocks=key_value_slack_blocks("HCA Import Failed", key_values=kvs))
-
-
-@success_hook(
-    required_resource_keys={'slack', 'target_hca_dataset', 'dagit_config'}
-)
-def message_for_import_done(context: HookContext) -> None:
-    context.resources.slack.send_message(blocks=key_value_slack_blocks("HCA Import Complete", {
-        "Staging Area": context.solids.pre_process_metadata.input_prefix,
-        "Target Dataset": context.resources.target_hca_dataset.dataset_name,
-        "Jade Project": context.resources.target_hca_dataset.project_id,
-        "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
-    }))
-
-
 @pipeline(
     mode_defs=[prod_mode, dev_mode, local_mode, test_mode]
 )
 def load_hca() -> None:
-    hooked_create_scratch_dataset = create_scratch_dataset.with_hooks({import_start_notification})
-    staging_dataset = hooked_create_scratch_dataset(pre_process_metadata(clear_scratch_dir()))
+    hooked_pre_process_metadata = pre_process_metadata.with_hooks({import_start_notification})
+    staging_dataset = create_scratch_dataset(hooked_pre_process_metadata(clear_scratch_dir()))
 
-    hooked_import_data_files = import_data_files.with_hooks({import_failed_notification})
-    result = hooked_import_data_files(staging_dataset).collect()
+    result = import_data_files(staging_dataset).collect()
 
-    hooked_file_metadata_fanout = file_metadata_fanout.with_hooks({message_for_import_done})
-    hooked_file_metadata_fanout(result, staging_dataset)
-
-    hooked_non_file_metadata_fanout = non_file_metadata_fanout.with_hooks({message_for_import_done})
-    hooked_non_file_metadata_fanout(result, staging_dataset)
+    # todo restructure these branches to allow a fan-in notification solid
+    file_metadata_fanout(result, staging_dataset)
+    non_file_metadata_fanout(result, staging_dataset)
