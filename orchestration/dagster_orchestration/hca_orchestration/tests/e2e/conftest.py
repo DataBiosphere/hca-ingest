@@ -25,17 +25,18 @@ def tdr_bigquery_client():
 
 @pytest.fixture
 def delete_dataset_on_exit():
-    return True
+    return False
 
 
 @pytest.fixture
 def existing_dataset_id():
-    return None
+    return "90dfc52a-8185-472c-b4af-321be3941dec"
 
 
 @pytest.fixture
 def dataset_name() -> str:
-    return f"monster_hca_test_{str(uuid.uuid4()).replace('-', '_')}"
+    # f"monster_hca_test_{str(uuid.uuid4()).replace('-', '_')}"
+    return "monster_hca_test_7ab3a177_c647_496d_96c3_3a9af038ce13"
 
 
 @pytest.fixture

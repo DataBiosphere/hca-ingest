@@ -3,7 +3,9 @@ from typing import Iterable
 
 from dagster import composite_solid, solid, Nothing, OutputDefinition, Output
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
+from dagster_utils.contrib.data_repo.jobs import poll_job
 from dagster_utils.contrib.data_repo.typing import JobId
+from dagster_utils.contrib.google import parse_gs_path
 from data_repo_client import RepositoryApi, JobModel
 from google.cloud.bigquery import DestinationFormat
 from google.cloud.bigquery.client import RowIterator
@@ -29,13 +31,13 @@ def _diff_hca_table(
         bigquery_service: BigQueryService
 
 ) -> None:
-    datarepo_key = f"{primary_key} as datarepo_{primary_key}"
+    datarepo_key = f"{primary_key} as datarepo_{primary_key}, version as datarepo_version"
     fq_dataset_id = target_hca_dataset.fully_qualified_jade_dataset_name()
 
     query = f"""
-    SELECT J.datarepo_row_id, S.*, {datarepo_key}
-    FROM {metadata_type} S FULL JOIN `{target_hca_dataset.project_id}.{fq_dataset_id}.{metadata_type}` J
-    USING ({primary_key})
+    SELECT existing.datarepo_row_id, staged.*, {datarepo_key}
+    FROM {metadata_type} staged FULL JOIN `{target_hca_dataset.project_id}.{fq_dataset_id}.{metadata_type}` existing
+    USING ({primary_key}, version)
     """
     destination = f"{scratch_dataset_name}.{joined_table_name}"
 
@@ -62,9 +64,9 @@ def _query_rows_to_append(
         bigquery_service: BigQueryService
 ) -> RowIterator:
     query = f"""
-    SELECT * EXCEPT (datarepo_{primary_key}, datarepo_row_id)
+    SELECT * EXCEPT (datarepo_{primary_key}, datarepo_row_id, datarepo_version)
     FROM {scratch_dataset_name}.{joined_table_name}
-    WHERE datarepo_row_id IS NULL AND {primary_key} IS NOT NULL
+    WHERE datarepo_row_id IS NULL AND {primary_key} IS NOT NULL AND version IS NOT NULL
     """
 
     target_table = f"{scratch_dataset_name}.{metadata_type}_values"
@@ -238,10 +240,10 @@ def _get_outdated_ids(
     query = f"""
     WITH latest_versions AS (
         SELECT {table_name}_id, MAX(version) AS latest_version
-        FROM {jade_table} GROUP BY {table_name}_id
+        FROM `{jade_table}` GROUP BY {table_name}_id
     )
     SELECT J.datarepo_row_id FROM
-        {jade_table} J JOIN latest_versions L
+        `{jade_table}` J JOIN latest_versions L
         ON J.{table_name}_id = L.{table_name}_id
     WHERE J.version < L.latest_version
     """
@@ -259,52 +261,25 @@ def _export_outdated(
         scratch_dataset_name: HcaScratchDatasetName,
         scratch_config: ScratchConfig,
         bigquery_service: BigQueryService
-) -> None:
-    out_path = f"{scratch_config.scratch_area()}/outdated-ids/{metadata_type}/*"
+) -> str:
+    out_path = f"{scratch_config.scratch_area()}/outdated-ids/{metadata_type}"
     bigquery_service.build_extract_job(
         source_table=outdated_ids_table_name,
-        out_path=out_path,
+        out_path=out_path + "/*",
         bigquery_dataset=scratch_dataset_name,
         bigquery_project=scratch_config.scratch_bq_project,
         output_format=DestinationFormat.CSV
     ).result()
+    return out_path
 
 
 @solid(
-    required_resource_keys={"bigquery_service", "target_hca_dataset", "scratch_config", "data_repo_client", "gcs"},
-    output_defs=[
-        OutputDefinition(name="no_outdated", is_required=False),
-        OutputDefinition(name="has_outdated", is_required=False),
-    ]
-)
-def check_has_outdated(
-        context: AbstractComputeExecutionContext,
-        parent_load_job_id: JobId,
-        metadata_fanout_result: MetadataTypeFanoutResult
-) -> Iterable[Output]:
-    assert parent_load_job_id, "Should not attempt to check for outdated rows if no parent job loaded data"
-
-    scratch_config = context.resources.scratch_config
-    metadata_type = metadata_fanout_result.metadata_type
-    source_path = f"{scratch_config.scratch_prefix_name}/outdated-ids/{metadata_type}/"
-
-    if path_has_any_data(scratch_config.scratch_bucket_name, source_path, context.resources.gcs):
-        yield Output(True, "has_outdated")
-    else:
-        yield Output(False, "no_outdated")
-    return False
-
-
-@solid(
-    required_resource_keys={"bigquery_service", "target_hca_dataset", "scratch_config", "data_repo_client"}
+    required_resource_keys={"gcs", "bigquery_service", "target_hca_dataset", "scratch_config", "data_repo_client"}
 )
 def clear_outdated(
         context: AbstractComputeExecutionContext,
-        has_outdated: bool,
         metadata_fanout_result: MetadataTypeFanoutResult
-) -> JobId:
-    assert has_outdated, "Should not attempt to clear outdated rows if none are present"
-
+) -> None:
     metadata_type = metadata_fanout_result.metadata_type
     bigquery_service = context.resources.bigquery_service
     target_hca_dataset = context.resources.target_hca_dataset
@@ -319,20 +294,26 @@ def clear_outdated(
         outdated_ids_table_name=outdated_ids_table_name,
         bigquery_service=bigquery_service
     )
-    _export_outdated(
+    out_path = _export_outdated(
         metadata_type=metadata_type,
         outdated_ids_table_name=outdated_ids_table_name,
         scratch_dataset_name=metadata_fanout_result.scratch_dataset_name,
         scratch_config=scratch_config,
         bigquery_service=bigquery_service
     )
-    job_id: JobId = _soft_delete_outdated(
-        data_repo_api_client=context.resources.data_repo_client,
-        target_dataset=target_hca_dataset,
-        table_name=metadata_type,
-        scratch_config=scratch_config
-    )
-    return job_id
+    gs_path = parse_gs_path(out_path)
+    if path_has_any_data(gs_path.bucket, gs_path.prefix, context.resources.gcs):
+        context.log.info(f"Submitting soft deletes for path = {out_path}")
+        job_id: JobId = _soft_delete_outdated(
+            data_repo_api_client=context.resources.data_repo_client,
+            target_dataset=target_hca_dataset,
+            table_name=metadata_type,
+            scratch_config=scratch_config
+        )
+        context.log.info(f"Polling on job_id = {job_id}")
+        poll_job(job_id, 300, 2, context.resources.data_repo_client)
+    else:
+        context.log.info(f"No soft deletes needed for {metadata_type}")
 
 
 def _soft_delete_outdated(
@@ -377,12 +358,8 @@ def load_table(metadata_fanout_result: MetadataTypeFanoutResult) -> Nothing:
 
     # skip checking for outdated if a "load job id" was never returned (i.e., we loaded
     # no data, so there is no possibility of outdated rows)
-    no_outdated, has_outdated = check_has_outdated(
-        check_table_ingest_job_result(wait_for_job_completion(job_id)),
-        metadata_fanout_result
-    )
-    check_data_ingest_job_result(
-        wait_for_job_completion(
-            clear_outdated(has_outdated, metadata_fanout_result)
-        )
-    )
+    # no_outdated, has_outdated = check_has_outdated(
+    #     check_table_ingest_job_result(wait_for_job_completion(job_id)),
+    #     metadata_fanout_result
+    # )
+    clear_outdated(metadata_fanout_result)
