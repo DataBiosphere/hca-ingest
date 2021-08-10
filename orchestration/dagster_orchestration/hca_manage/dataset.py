@@ -13,10 +13,11 @@ from dagster_utils.contrib.data_repo.typing import JobId
 from data_repo_client import RepositoryApi, EnumerateDatasetModel, DatasetModel
 
 from hca_manage import __version__ as hca_manage_version
-from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client, query_yes_no, tdr_operation, setup_cli_logging_format
+from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client, query_yes_no, tdr_operation, \
+    setup_cli_logging_format
 
-MAX_DATASET_CREATE_POLL_SECONDS = 120
-DATASET_CREATE_POLL_INTERVAL_SECONDS = 2
+MAX_DATASET_OP_POLL_SECONDS = 120
+DATASET_OP_POLL_INTERVAL_SECONDS = 2
 DATASET_NAME_REGEX = "^hca_(dev|prod|staging)_(\\d{4})(\\d{2})(\\d{2})(_[a-zA-Z][a-zA-Z0-9]{0,13})?$"
 
 
@@ -37,8 +38,8 @@ def run(arguments: Optional[list[str]] = None) -> None:
     dataset_create.add_argument("-n", "--dataset_name", help="Name of dataset to create.", required=True)
     dataset_create.add_argument("-b", "--billing_profile_id", help="Billing profile ID", required=True)
     dataset_create.add_argument(
-        "-p", "--policy-members", default='monster@firecloud.org',
-        help="CSV list of emails to grant steward access to this dataset (default: monster@firecloud.org)"
+        "-p", "--policy-members",
+        help="CSV list of emails to grant steward access to this dataset"
     )
     dataset_create.add_argument("-s", "--schema_path", help="Path to JSON schema", required=False)
     dataset_create.add_argument("-r", "--region", help="GCP region for the dataset", required=True)
@@ -66,11 +67,17 @@ def run(arguments: Optional[list[str]] = None) -> None:
 
 @tdr_operation
 def _remove_dataset(args: argparse.Namespace) -> None:
-    if not query_yes_no("Are you sure?"):
+    if args.dataset_id:
+        prompt = f"This will remove dataset id = {args.dataset_id} in env = {args.env}. Are you sure?"
+    else:
+        prompt = f"This will remove dataset name = {args.dataset_name} in env = {args.env}. Are you sure?"
+
+    if not query_yes_no(prompt):
         return
 
     host = data_repo_host[args.env]
     hca = DatasetManager(environment=args.env, data_repo_client=get_api_client(host=host))
+
     hca.delete_dataset(dataset_name=args.dataset_name, dataset_id=args.dataset_id)
 
 
@@ -83,7 +90,7 @@ def _validate_dataset_name(dataset_name: str) -> None:
 @tdr_operation
 def _create_dataset(args: argparse.Namespace) -> None:
     _validate_dataset_name(args.dataset_name)
-    if not query_yes_no("Are you sure?"):
+    if not query_yes_no(f"This will create dataset name = {args.dataset_name} in env = {args.env}. Are you sure?"):
         return
 
     host = data_repo_host[args.env]
@@ -100,7 +107,7 @@ def _create_dataset(args: argparse.Namespace) -> None:
     else:
         schema = hca.generate_schema()
 
-    hca.create_dataset_with_policy_members(
+    dataset_model = hca.create_dataset_with_policy_members(
         args.dataset_name,
         args.billing_profile_id,
         policy_members,
@@ -109,6 +116,13 @@ def _create_dataset(args: argparse.Namespace) -> None:
         args.env,
         None
     )
+
+    logging.info({
+        'id': dataset_model.id,
+        'default_profile_id': dataset_model.default_profile_id,
+        'data_project': dataset_model.data_project,
+        'name': dataset_model.name
+    })
 
 
 @tdr_operation
@@ -124,7 +138,7 @@ def _retrieve_dataset(args: argparse.Namespace) -> None:
     host = data_repo_host[args.env]
 
     hca = DatasetManager(environment=args.env, data_repo_client=get_api_client(host=host))
-    logging.info(hca.retrieve_dataset(uuid=args.id))
+    logging.info(hca.retrieve_dataset(dataset_id=args.id))
 
 
 @dataclass
@@ -135,7 +149,7 @@ class DatasetManager:
 
     def __post_init__(self) -> None:
         self.stewards = {
-            "dev": {"monster@firecloud.org"},
+            "dev": {"monster-dev@dev.test.firecloud.org"},
             "prod": {"monster@firecloud.org"}
         }[self.environment]
 
@@ -162,7 +176,7 @@ class DatasetManager:
             region: str,
             env: str,
             description: Optional[str]
-    ) -> str:
+    ) -> DatasetModel:
         job_id = self.create_dataset(
             dataset_name=dataset_name,
             billing_profile_id=billing_profile_id,
@@ -172,30 +186,19 @@ class DatasetManager:
             env=env
         )
 
-        try:
-            poll_job(
-                job_id,
-                MAX_DATASET_CREATE_POLL_SECONDS,
-                DATASET_CREATE_POLL_INTERVAL_SECONDS,
-                self.data_repo_client
-            )
-        except JobPollException:
-            job_result = self.data_repo_client.retrieve_job_result(job_id)
-            logging.error("Create job failed, results =")
-            logging.error(job_result)
-            sys.exit(1)
+        self._poll_job(job_id)
 
         job_result = self.data_repo_client.retrieve_job_result(job_id)
         dataset_id: str = job_result["id"]
         logging.info(f"Dataset created, id = {dataset_id}")
 
-        # if policy-members are provided in the CLI args, add the monster team email (default without provided arg)
+        logging.info(f"Adding default policy_members {self.stewards}")
+        self.add_policy_members(dataset_id, self.stewards, "steward")
         if policy_members:
             logging.info(f"Adding policy_members {policy_members}")
-            self.add_policy_members(dataset_id, self.stewards, "steward")
             self.add_policy_members(dataset_id, policy_members, "steward")
 
-        return dataset_id
+        return self.retrieve_dataset(dataset_id)
 
     def create_dataset(
             self,
@@ -260,7 +263,23 @@ class DatasetManager:
         # (hoppefully successful) retry
         delete_response_id: JobId = self.data_repo_client.delete_dataset(dataset_id, _request_timeout=30).id
         logging.info(f"Dataset deletion job id: {delete_response_id}")
+
+        self._poll_job(delete_response_id)
         return delete_response_id
+
+    def _poll_job(self, job_id: JobId) -> None:
+        try:
+            poll_job(
+                job_id,
+                MAX_DATASET_OP_POLL_SECONDS,
+                DATASET_OP_POLL_INTERVAL_SECONDS,
+                self.data_repo_client
+            )
+        except JobPollException:
+            job_result = self.data_repo_client.retrieve_job_result(job_id)
+            logging.error("Dataset job failed, results =")
+            logging.error(job_result)
+            sys.exit(1)
 
     def enumerate_dataset(self, dataset_name: str) -> EnumerateDatasetModel:
         """
@@ -268,8 +287,8 @@ class DatasetManager:
         """
         return self.data_repo_client.enumerate_datasets(filter=dataset_name, limit=1000)
 
-    def retrieve_dataset(self, uuid: int) -> DatasetModel:
-        return self.data_repo_client.retrieve_dataset(uuid)
+    def retrieve_dataset(self, dataset_id: str) -> DatasetModel:
+        return self.data_repo_client.retrieve_dataset(dataset_id)
 
     def add_policy_members(
             self,

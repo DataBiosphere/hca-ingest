@@ -1,7 +1,7 @@
 import logging
-from typing import Iterable, Optional
+from typing import Optional
 
-from dagster import composite_solid, solid, Nothing, OutputDefinition, Output
+from dagster import solid
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from dagster_utils.contrib.data_repo.jobs import poll_job
 from dagster_utils.contrib.data_repo.typing import JobId
@@ -13,11 +13,8 @@ from google.cloud.storage import Client
 
 from hca_orchestration.contrib.bigquery import BigQueryService
 from hca_orchestration.contrib.gcs import path_has_any_data
-from hca_orchestration.resources.config.hca_dataset import TargetHcaDataset
-from hca_orchestration.resources.config.scratch import ScratchConfig
-from hca_orchestration.solids.data_repo import wait_for_job_completion
-from hca_orchestration.solids.load_hca.poll_ingest_job import check_data_ingest_job_result, \
-    check_table_ingest_job_result
+from hca_orchestration.models.hca_dataset import HcaDataset
+from hca_orchestration.models.scratch import ScratchConfig
 from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType, MetadataTypeFanoutResult
 
 
@@ -27,7 +24,7 @@ def _diff_hca_table(
         primary_key: str,
         joined_table_name: str,
         scratch_config: ScratchConfig,
-        target_hca_dataset: TargetHcaDataset,
+        target_hca_dataset: HcaDataset,
         scratch_dataset_name: HcaScratchDatasetName,
         bigquery_service: BigQueryService
 
@@ -111,7 +108,7 @@ def export_data(
 
 def _ingest_table(
         data_repo_api_client: RepositoryApi,
-        target_dataset: TargetHcaDataset,
+        target_dataset: HcaDataset,
         table_name: str,
         scratch_config: ScratchConfig
 ) -> JobId:
@@ -158,7 +155,7 @@ def check_has_data(
 def start_load(
         scratch_config: ScratchConfig,
         scratch_dataset_name: HcaScratchDatasetName,
-        target_hca_dataset: TargetHcaDataset,
+        target_hca_dataset: HcaDataset,
         metadata_type: MetadataType,
         metadata_path: str,
         data_repo_client: RepositoryApi,
@@ -216,7 +213,7 @@ def start_load(
 
 def _get_outdated_ids(
         table_name: str,
-        target_hca_dataset: TargetHcaDataset,
+        target_hca_dataset: HcaDataset,
         scratch_config: ScratchConfig,
         scratch_dataset_name: HcaScratchDatasetName,
         outdated_ids_table_name: str,
@@ -270,7 +267,7 @@ def clear_outdated(
         # metadata_fanout_result: MetadataTypeFanoutResult
         scratch_config: ScratchConfig,
         scratch_dataset_name: HcaScratchDatasetName,
-        target_hca_dataset: TargetHcaDataset,
+        target_hca_dataset: HcaDataset,
         metadata_type: MetadataType,
         bigquery_service: BigQueryService,
         data_repo_client: RepositoryApi,
@@ -313,7 +310,7 @@ def clear_outdated(
 
 def _soft_delete_outdated(
         data_repo_api_client: RepositoryApi,
-        target_dataset: TargetHcaDataset,
+        target_dataset: HcaDataset,
         table_name: str,
         scratch_config: ScratchConfig
 ) -> JobId:

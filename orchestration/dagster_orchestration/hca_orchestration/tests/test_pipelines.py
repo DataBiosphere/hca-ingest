@@ -41,7 +41,7 @@ class PipelinesTestCase(unittest.TestCase):
             mode=pipeline_mode
         )
 
-    def test_load_data_noop_resources(self):
+    def test_load_hca_noop_resources(self):
         result = self.run_pipeline(load_hca, config_name="test_load_hca_noop_resources.yaml")
 
         self.assertTrue(result.success)

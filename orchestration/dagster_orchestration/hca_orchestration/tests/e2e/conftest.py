@@ -50,7 +50,7 @@ def dataset_info(dataset_name, delete_dataset_on_exit, existing_dataset_id) -> I
         dataset_id = existing_dataset_id
     else:
         logging.info("No existing dataset ID passed, creating new dataset")
-        dataset_id = dataset_manager.create_dataset_with_policy_members(
+        info = dataset_manager.create_dataset_with_policy_members(
             dataset_name,
             data_repo_profile_ids["dev"],
             None,
@@ -59,6 +59,7 @@ def dataset_info(dataset_name, delete_dataset_on_exit, existing_dataset_id) -> I
             "dev",
             MONSTER_TEST_DATASET_SENTINEL
         )
+        dataset_id = info.id
 
     info = dataset_manager.retrieve_dataset(dataset_id)
     yield DatasetInfo(dataset_id, info.data_project)
