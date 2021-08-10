@@ -13,13 +13,16 @@ def test_load_updated_staging_area(
         tdr_bigquery_client,
         dataset_info
 ):
+    base_area_config = load_hca_run_config.copy()
+    base_area_config["solids"]["pre_process_metadata"]["config"][
+        "input_prefix"] = "gs://broad-dsp-monster-hca-dev-test-storage/integration/ebi_micro/test_data"
     execute_pipeline(
         load_hca,
         mode="local",
         run_config=load_hca_run_config
     )
     assert_correct_version(
-        "75e7414b-3333-4dd7-8ec5-d25748b35487'",
+        "75e7414b-3333-4dd7-8ec5-d25748b35487",
         "2020-06-16T14:35:06.273000+00:00",
         dataset_name,
         dataset_info.dataset_data_project_id,
@@ -35,8 +38,8 @@ def test_load_updated_staging_area(
     )
 
     assert_correct_version(
-        "75e7414b-3333-4dd7-8ec5-d25748b35487'",
-        "2021-07-30T09:19:00.273000+00:00",
+        "75e7414b-3333-4dd7-8ec5-d25748b35487",
+        "2021-08-06T14:35:06.273000+00:00",
         dataset_name,
         dataset_info.dataset_data_project_id,
         tdr_bigquery_client)
