@@ -54,9 +54,9 @@ def assert_correct_version(sequence_file_id: str, expected_version: str, dataset
 
     rows = _exec_query(query, tdr_bigquery_client, bq_project)
 
-    expected_version = datetime.fromisoformat(expected_version)
+    expected_dt = datetime.fromisoformat(expected_version)
     assert len(rows) == 1
-    assert rows[0]["version"] == expected_version, f"Row version should be {expected_version}"
+    assert rows[0]["version"] == expected_dt, f"Row version should be {expected_version}"
 
 
 def _exec_query(query, client, bq_project):

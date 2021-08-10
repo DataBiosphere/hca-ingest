@@ -6,7 +6,7 @@ from dagster_utils.contrib.data_repo.jobs import poll_job
 from dagster_utils.contrib.data_repo.typing import JobId
 from data_repo_client import JobModel, RepositoryApi
 from google.cloud.storage import Client
-from hca_orchestration.models.hca_dataset import HcaDataset
+from hca_orchestration.models.hca_dataset import TdrDataset
 
 from hca_orchestration.contrib.gcs import parse_gs_path
 from hca_orchestration.models.scratch import ScratchConfig
@@ -32,7 +32,7 @@ def ingest_data_files(context: AbstractComputeExecutionContext, data_entities: s
     storage_client = context.resources.gcs
     data_repo_client = context.resources.data_repo_client
     scratch_config: ScratchConfig = context.resources.scratch_config
-    target_hca_dataset: HcaDataset = context.resources.target_hca_dataset
+    target_hca_dataset: TdrDataset = context.resources.target_hca_dataset
     load_tag = context.resources.load_tag
 
     control_file_path = _generate_control_file(context, data_entities, scratch_config, storage_client)
@@ -49,7 +49,7 @@ def _bulk_ingest_to_tdr(context: AbstractComputeExecutionContext,
                         control_file_path: str,
                         data_repo_client: RepositoryApi,
                         scratch_config: ScratchConfig,
-                        target_hca_dataset: HcaDataset,
+                        target_hca_dataset: TdrDataset,
                         load_tag: str) -> None:
     payload = {
         "profileId": target_hca_dataset.billing_profile_id,

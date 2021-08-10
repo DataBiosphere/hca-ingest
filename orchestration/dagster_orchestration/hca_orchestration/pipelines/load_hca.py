@@ -67,7 +67,7 @@ local_mode = ModeDefinition(
         "scratch_config": scratch_config,
         "target_hca_dataset": target_hca_dataset,
         "bigquery_service": bigquery_service,
-        "slack": preconfigure_resource_for_mode(live_slack_client, "local"),
+        "slack": console_slack_client,
         "dagit_config": preconfigure_resource_for_mode(dagit_config, "local")
     }
 )
@@ -105,7 +105,7 @@ def import_start_notification(context: HookContext) -> None:
 
 
 @solid
-def terminal_solid(results1: list[Optional[JobId]], results2: list[Optional[JobId]]):
+def terminal_solid(results1: list[Optional[JobId]], results2: list[Optional[JobId]]) -> None:
     pass
 
 

@@ -1,11 +1,7 @@
-from unittest.mock import Mock
+from dagster import ModeDefinition, ResourceDefinition, SolidExecutionResult, execute_solid
 
-from dagster import ModeDefinition, ResourceDefinition, SolidExecutionResult, execute_solid, resource
-
-from hca_orchestration.contrib.bigquery import BigQueryService
 from hca_orchestration.pipelines.load_hca import test_mode
-from hca_orchestration.solids.load_hca.load_table import check_has_data, clear_outdated, \
-    load_table, start_load
+from hca_orchestration.solids.load_hca.load_table import load_table_solid
 from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType, MetadataTypeFanoutResult
 from hca_orchestration.tests.support.gcs import FakeGCSClient, FakeGoogleBucket, HexBlobInfo
 
@@ -55,7 +51,7 @@ metadata_fanout_result = MetadataTypeFanoutResult(
 
 def test_load_table():
     result: SolidExecutionResult = execute_solid(
-        load_table,
+        load_table_solid,
         mode_def=load_table_test_mode,
         input_values={
             "metadata_fanout_result": metadata_fanout_result

@@ -13,7 +13,7 @@ from google.cloud.storage import Client
 
 from hca_orchestration.contrib.bigquery import BigQueryService
 from hca_orchestration.contrib.gcs import path_has_any_data
-from hca_orchestration.models.hca_dataset import HcaDataset
+from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.models.scratch import ScratchConfig
 from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType, MetadataTypeFanoutResult
 
@@ -24,7 +24,7 @@ def _diff_hca_table(
         primary_key: str,
         joined_table_name: str,
         scratch_config: ScratchConfig,
-        target_hca_dataset: HcaDataset,
+        target_hca_dataset: TdrDataset,
         scratch_dataset_name: HcaScratchDatasetName,
         bigquery_service: BigQueryService
 
@@ -43,14 +43,14 @@ def _diff_hca_table(
         f"{scratch_config.scratch_area()}/{metadata_path}/{metadata_type}/*"
     ]
 
-    bigquery_service.build_query_job_using_external_schema(
+    bigquery_service.run_query_using_external_schema(
         query,
         schema=None,
         source_paths=source_paths,
         table_name=metadata_type,
         destination=destination,
         bigquery_project=scratch_config.scratch_bq_project
-    ).result()
+    )
 
 
 def _query_rows_to_append(
@@ -68,11 +68,11 @@ def _query_rows_to_append(
     """
 
     target_table = f"{scratch_dataset_name}.{metadata_type}_values"
-    return bigquery_service.build_query_job_with_destination(
+    return bigquery_service.run_query_with_destination(
         query,
         target_table,
         scratch_config.scratch_bq_project
-    ).result()
+    )
 
 
 def export_data(
@@ -101,14 +101,14 @@ def export_data(
         out_path=out_path,
         bigquery_dataset=scratch_dataset_name,
         bigquery_project=scratch_config.scratch_bq_project,
-    ).result()
+    )
 
     return num_rows
 
 
 def _ingest_table(
         data_repo_api_client: RepositoryApi,
-        target_dataset: HcaDataset,
+        target_dataset: TdrDataset,
         table_name: str,
         scratch_config: ScratchConfig
 ) -> JobId:
@@ -130,45 +130,15 @@ def _ingest_table(
     return JobId(job_response.id)
 
 
-# @solid(
-#     required_resource_keys={"bigquery_service", "target_hca_dataset", "scratch_config", "data_repo_client", "gcs"},
-#     output_defs=[
-#         OutputDefinition(name="no_data", is_required=False),
-#         OutputDefinition(name="has_data", is_required=False),
-#     ]
-# )
-def check_has_data(
-    scratch_config: ScratchConfig,
-    metadata_type: MetadataType,
-    metadata_path: str,
-    gcs_client: Client
-) -> bool:
-    # scratch_config = context.resources.scratch_config
-    # metadata_type = metadata_fanout_result.metadata_type
-    # metadata_path = metadata_fanout_result.path
-
-    source_path = f"{scratch_config.scratch_prefix_name}/{metadata_path}/{metadata_type}/"
-    #context.log.info(f"Checking for data to load at path {source_path}")
-    return path_has_any_data(scratch_config.scratch_bucket_name, source_path, gcs_client)
-
-
 def start_load(
         scratch_config: ScratchConfig,
         scratch_dataset_name: HcaScratchDatasetName,
-        target_hca_dataset: HcaDataset,
+        target_hca_dataset: TdrDataset,
         metadata_type: MetadataType,
         metadata_path: str,
         data_repo_client: RepositoryApi,
         bigquery_service: BigQueryService
 ) -> Optional[JobId]:
-    # bigquery_service = context.resources.bigquery_service
-    # target_hca_dataset = context.resources.target_hca_dataset
-    # scratch_config = context.resources.scratch_config
-    # metadata_type = metadata_fanout_result.metadata_type
-    # metadata_path = metadata_fanout_result.path
-    # scratch_dataset_name = metadata_fanout_result.scratch_dataset_name
-    # data_repo_client = context.resources.data_repo_client
-
     pk = f"{metadata_type}_id"
     joined_table_name = f"{metadata_type}_joined"
     _diff_hca_table(
@@ -213,17 +183,20 @@ def start_load(
 
 def _get_outdated_ids(
         table_name: str,
-        target_hca_dataset: HcaDataset,
+        target_hca_dataset: TdrDataset,
         scratch_config: ScratchConfig,
-        scratch_dataset_name: HcaScratchDatasetName,
-        outdated_ids_table_name: str,
         bigquery_service: BigQueryService
-) -> None:
+) -> str:
     fq_dataset_id = target_hca_dataset.fully_qualified_jade_dataset_name()
     jade_table = f"{target_hca_dataset.project_id}.{fq_dataset_id}.{table_name}"
-    destination = f"{scratch_dataset_name}.{outdated_ids_table_name}"
+    out_path = f"{scratch_config.scratch_area()}/outdated-ids/{table_name}"
 
     query = f"""
+    EXPORT DATA OPTIONS(
+        uri='{out_path}/*',
+        format='CSV',
+        overwrite=true
+    ) AS
     WITH latest_versions AS (
         SELECT {table_name}_id, MAX(version) AS latest_version
         FROM `{jade_table}` GROUP BY {table_name}_id
@@ -234,75 +207,46 @@ def _get_outdated_ids(
     WHERE J.version < L.latest_version
     """
 
-    bigquery_service.build_query_job_with_destination(
+    bigquery_service.run_query(
         query,
-        destination,
-        scratch_config.scratch_bq_project
-    ).result()
+        bigquery_project=scratch_config.scratch_bq_project
+    )
 
-
-def _export_outdated(
-        metadata_type: MetadataType,
-        outdated_ids_table_name: str,
-        scratch_dataset_name: HcaScratchDatasetName,
-        scratch_config: ScratchConfig,
-        bigquery_service: BigQueryService
-) -> str:
-    out_path = f"{scratch_config.scratch_area()}/outdated-ids/{metadata_type}"
-    bigquery_service.build_extract_job(
-        source_table=outdated_ids_table_name,
-        out_path=out_path + "/*",
-        bigquery_dataset=scratch_dataset_name,
-        bigquery_project=scratch_config.scratch_bq_project,
-        output_format=DestinationFormat.CSV
-    ).result()
     return out_path
 
 
-# @solid(
-#     required_resource_keys={"gcs", "bigquery_service", "target_hca_dataset", "scratch_config", "data_repo_client"}
-# )
 def clear_outdated(
-        # context: AbstractComputeExecutionContext,
-        # metadata_fanout_result: MetadataTypeFanoutResult
         scratch_config: ScratchConfig,
-        scratch_dataset_name: HcaScratchDatasetName,
-        target_hca_dataset: HcaDataset,
+        target_hca_dataset: TdrDataset,
         metadata_type: MetadataType,
         bigquery_service: BigQueryService,
         data_repo_client: RepositoryApi,
         gcs_client: Client
 ) -> Optional[JobId]:
-    # metadata_type = metadata_fanout_result.metadata_type
-    # bigquery_service = context.resources.bigquery_service
-    # target_hca_dataset = context.resources.target_hca_dataset
-    # scratch_config = context.resources.scratch_config
-    outdated_ids_table_name = f"{metadata_type}_outdated_ids"
-    _get_outdated_ids(
+    """
+    Looks for any outdated IDs and submits a soft delete job to remove them from the target dataset
+
+    :return: The JobID if any rows were found for deletion, or None if none were found
+    """
+    out_path = _get_outdated_ids(
         table_name=metadata_type,
         target_hca_dataset=target_hca_dataset,
         scratch_config=scratch_config,
-        scratch_dataset_name=scratch_dataset_name,
-        outdated_ids_table_name=outdated_ids_table_name,
         bigquery_service=bigquery_service
     )
-    out_path = _export_outdated(
-        metadata_type=metadata_type,
-        outdated_ids_table_name=outdated_ids_table_name,
-        scratch_dataset_name=scratch_dataset_name,
-        scratch_config=scratch_config,
-        bigquery_service=bigquery_service
-    )
+
     gs_path = parse_gs_path(out_path)
     if path_has_any_data(gs_path.bucket, gs_path.prefix, gcs_client):
-        #context.log.info(f"Submitting soft deletes for path = {out_path}")
+        logging.info(f"Submitting soft deletes for path = {out_path}")
+        outdated_ids_path = f"{scratch_config.scratch_area()}/outdated-ids/{metadata_type}/*"
+
         job_id: JobId = _soft_delete_outdated(
             data_repo_api_client=data_repo_client,
             target_dataset=target_hca_dataset,
             table_name=metadata_type,
-            scratch_config=scratch_config
+            outdated_ids_path=outdated_ids_path
         )
-        #context.log.info(f"Polling on job_id = {job_id}")
+        logging.info(f"Polling on job_id = {job_id}")
         return poll_job(job_id, 300, 2, data_repo_client)
 
     return None
@@ -310,11 +254,10 @@ def clear_outdated(
 
 def _soft_delete_outdated(
         data_repo_api_client: RepositoryApi,
-        target_dataset: HcaDataset,
+        target_dataset: TdrDataset,
         table_name: str,
-        scratch_config: ScratchConfig
+        outdated_ids_path: str
 ) -> JobId:
-    outdated_ids_path = f"{scratch_config.scratch_area()}/outdated-ids/{table_name}/*"
     payload = {
         "deleteType": "soft",
         "specType": "gcsFile",
@@ -339,47 +282,51 @@ def _soft_delete_outdated(
 @solid(
     required_resource_keys={"bigquery_service", "target_hca_dataset", "scratch_config", "data_repo_client", "gcs"},
 )
-def load_table(context: AbstractComputeExecutionContext,
-               metadata_fanout_result: MetadataTypeFanoutResult) -> Optional[JobId]:
-    """
-    Composite solid that knows how to load a metadata table
-    """
-    scratch_config = context.resources.scratch_config
-    metadata_type = metadata_fanout_result.metadata_type
-    metadata_path = metadata_fanout_result.path
-    target_hca_dataset = context.resources.target_hca_dataset
-    # these jobs return two values, to reflect whether data was loaded in each step
-    # dagster will not dispatch downstream solids if the needed "data was loaded"
-    # output is never returned, hence we have conditional brOlt)
-    # no_job, job_id = start_load(has_data, metadata_fanout_result)
-    if not check_has_data(scratch_config, metadata_fanout_result.metadata_type, metadata_path, context.resources.gcs):
-        return None
-
-    maybe_job_id: Optional[JobId] = start_load(
-        scratch_config,
+def load_table_solid(context: AbstractComputeExecutionContext,
+                     metadata_fanout_result: MetadataTypeFanoutResult) -> Optional[JobId]:
+    return load_table(
+        context.resources.scratch_config,
         metadata_fanout_result.scratch_dataset_name,
-        target_hca_dataset,
-        metadata_type,
-        metadata_path,
+        metadata_fanout_result.metadata_type,
+        metadata_fanout_result.path,
+        context.resources.target_hca_dataset,
+        context.resources.gcs,
         context.resources.data_repo_client,
         context.resources.bigquery_service
     )
 
-    maybe_outdated_job_id: Optional[JobId] = clear_outdated(
+
+def load_table(
+        scratch_config: ScratchConfig,
+        scratch_dataset_name: HcaScratchDatasetName,
+        metadata_type: MetadataType,
+        metadata_path: str,
+        target_hca_dataset: TdrDataset,
+        gcs_client: Client,
+        data_repo_client: RepositoryApi,
+        bigquery_service: BigQueryService
+) -> Optional[JobId]:
+    source_path = f"{scratch_config.scratch_prefix_name}/{metadata_path}/{metadata_type}/"
+    if not path_has_any_data(scratch_config.scratch_bucket_name, source_path, gcs_client):
+        logging.info(f"No data for metadata type {metadata_type}")
+        return None
+
+    start_load(
         scratch_config,
-        metadata_fanout_result.scratch_dataset_name,
+        scratch_dataset_name,
         target_hca_dataset,
         metadata_type,
-        context.resources.bigquery_service,
-        context.resources.data_repo_client,
-        context.resources.gcs
+        metadata_path,
+        data_repo_client,
+        bigquery_service
+    )
+
+    maybe_outdated_job_id: Optional[JobId] = clear_outdated(
+        scratch_config,
+        target_hca_dataset,
+        metadata_type,
+        bigquery_service,
+        data_repo_client,
+        gcs_client
     )
     return maybe_outdated_job_id
-
-    # skip checking for outdated if a "load job id" was never returned (i.e., we loaded
-    # no data, so there is no possibility of outdated rows)
-    # no_outdated, has_outdated = check_has_outdated(
-    #     check_table_ingest_job_result(wait_for_job_completion(job_id)),
-    #     metadata_fanout_result
-    # )
-    # clear_outdated(metadata_fanout_result)
