@@ -46,19 +46,6 @@ def test_ingest_metadata_for_file_type():
     )
 
     assert result.success
-#
-#
-# def test_ingest_metadata():
-#     result: SolidExecutionResult = execute_solid(
-#         ingest_metadata,
-#         mode_def=test_mode,
-#         input_values={
-#             "file_metadata_fanout_result": metadata_fanout_result
-#         },
-#         run_config=run_config
-#     )
-#
-#     assert result.success
 
 
 def test_file_metadata_fanout():

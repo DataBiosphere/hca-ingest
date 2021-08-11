@@ -1,9 +1,18 @@
+from unittest.mock import MagicMock, Mock
+
 from dagster import ModeDefinition, ResourceDefinition, SolidExecutionResult, execute_solid
+from dagster_utils.contrib.data_repo.typing import JobId
+
+from hca_orchestration.contrib.bigquery import BigQueryService
+from data_repo_client import RepositoryApi, JobModel
+from google.cloud.storage import Client, Blob
 
 from hca_orchestration.pipelines.load_hca import test_mode
-from hca_orchestration.solids.load_hca.load_table import load_table_solid
+from hca_orchestration.solids.load_hca.load_table import load_table_solid, clear_outdated
 from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType, MetadataTypeFanoutResult
 from hca_orchestration.tests.support.gcs import FakeGCSClient, FakeGoogleBucket, HexBlobInfo
+from hca_orchestration.models.hca_dataset import TdrDataset
+from hca_orchestration.models.scratch import ScratchConfig
 
 test_bucket = FakeGoogleBucket(
     {"gs://my-fake-bucket/fake-prefix": HexBlobInfo(hex_md5="b2d6ec45472467c836f253bd170182c7", content="test content")}
@@ -61,20 +70,42 @@ def test_load_table():
 
     assert result.success
 
-#
-# def test_clear_outdated():
-#     result: SolidExecutionResult = execute_solid(
-#         clear_outdated,
-#         mode_def=load_table_test_mode,
-#         input_values={
-#             "has_outdated": True,
-#             "metadata_fanout_result": metadata_fanout_result
-#         },
-#         run_config=run_config
-#     )
-#
-#     assert result.success
-#     assert result.output_value() == "abcdef"
+
+def test_clear_outdated():
+    scratch_config = ScratchConfig(
+        "fake_scratch_bucket",
+        "fake_scratch_prefix",
+        "fake_bq_project",
+        "fake_scratch_dataset_prefix",
+        0
+    )
+    target_hca_dataset = TdrDataset(
+        "fake_target_dataset_name",
+        "1234abc",
+        "fake_target_bq_project_id",
+        "fake_billing_profile_id"
+    )
+
+    gcs = Mock(spec=Client)
+    blob = Mock(spec=Blob)
+    blob.size = 1
+    gcs.list_blobs = Mock(return_value=[blob])
+    data_repo_client = Mock(spec=RepositoryApi),
+    data_repo_client.apply_dataset_data_deletion = Mock(return_value=JobModel(id="abc123abc123abc123"))
+    result = clear_outdated(
+        scratch_config,
+        target_hca_dataset,
+        "sequence_file",
+        Mock(spec=BigQueryService),
+        data_repo_client,
+        gcs
+    )
+    import pdb
+    pdb.set_trace()
+    pass
+    #
+    # assert result.success
+    # assert result.output_value() == "abcdef"
 #
 #
 # def test_check_has_data_false():
