@@ -1,9 +1,13 @@
+"""
+Abstraction over the raw bigquery client. All operations automatically return the materialized results of a query.
+"""
+
 from dataclasses import dataclass
-from typing import Optional, Iterator
+from typing import Optional
 
 from dagster_utils.contrib.google import GsBucketWithPrefix
 from google.cloud import bigquery
-from google.cloud.bigquery import ExternalConfig, WriteDisposition, ArrayQueryParameter, QueryJobConfig, Row
+from google.cloud.bigquery import ExternalConfig, WriteDisposition, ArrayQueryParameter, QueryJobConfig
 from google.cloud.bigquery.table import RowIterator
 
 from hca_orchestration.models.hca_dataset import TdrDataset

@@ -1,5 +1,11 @@
+"""
+Abstraction over the raw TDR data repo client. All async job operations automatically poll on the returned job
+to completion.
+"""
+import logging
 from dataclasses import dataclass
 
+from dagster_utils.contrib.data_repo.jobs import poll_job
 from dagster_utils.contrib.data_repo.typing import JobId
 from data_repo_client import RepositoryApi, JobModel
 
@@ -27,7 +33,11 @@ class DataRepoService:
             id=dataset_id,
             data_deletion_request=payload
         )
-        return JobId(job_response.id)
+
+        job_id = JobId(job_response.id)
+        logging.info(f"Polling on job_id = {job_id}")
+        poll_job(job_id, 600, 2, self.data_repo_client)
+        return job_id
 
     def ingest_data(self, dataset_id: str, control_file_path: str, table_name: str) -> JobId:
         payload = {
@@ -42,4 +52,7 @@ class DataRepoService:
             ingest=payload
         )
 
-        return JobId(job_response.id)
+        job_id = JobId(job_response.id)
+        logging.info(f"Polling on job_id = {job_id}")
+        poll_job(job_id, 600, 2, self.data_repo_client)
+        return job_id

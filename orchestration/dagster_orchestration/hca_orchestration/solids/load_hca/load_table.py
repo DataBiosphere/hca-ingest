@@ -3,15 +3,13 @@ from typing import Optional
 
 from dagster import solid
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
-from dagster_utils.contrib.data_repo.jobs import poll_job
 from dagster_utils.contrib.data_repo.typing import JobId
 from dagster_utils.contrib.google import parse_gs_path
-from data_repo_client import RepositoryApi, JobModel
 from google.cloud.bigquery.client import RowIterator
 from google.cloud.storage import Client
 
-from hca_orchestration.contrib.data_repo import DataRepoService
 from hca_orchestration.contrib.bigquery import BigQueryService
+from hca_orchestration.contrib.data_repo import DataRepoService
 from hca_orchestration.contrib.gcs import path_has_any_data
 from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.models.scratch import ScratchConfig
@@ -60,7 +58,7 @@ def load_table(
         logging.info(f"No data for metadata type {metadata_type}")
         return None
 
-    start_load(
+    num_new_rows = start_load(
         scratch_config,
         scratch_dataset_name,
         target_hca_dataset,
@@ -70,6 +68,11 @@ def load_table(
         bigquery_service
     )
 
+    if num_new_rows == 0:
+        logging.info(f"No new rows for metadata type {metadata_type}")
+        return None
+
+    logging.info(f"New rows for metadata type {metadata_type}, soft deleting outdated versions...")
     maybe_outdated_job_id: Optional[JobId] = clear_outdated(
         scratch_config,
         target_hca_dataset,
@@ -191,7 +194,7 @@ def start_load(
         metadata_path: str,
         data_repo_service: DataRepoService,
         bigquery_service: BigQueryService
-) -> Optional[JobId]:
+) -> int:
     pk = f"{metadata_type}_id"
     joined_table_name = f"{metadata_type}_joined"
     _diff_hca_table(
@@ -224,17 +227,14 @@ def start_load(
     )
 
     if num_new_rows > 0:
-        job_id = _ingest_table(
+        _ingest_table(
             data_repo_service,
             target_hca_dataset,
             metadata_type,
             scratch_config
         )
 
-        # todo change poll_job to consume a data repo service to keep the
-        # abstraction consistent
-        return poll_job(job_id, 600, 2, data_repo_service.data_repo_client)
-    return None
+    return num_new_rows
 
 
 def _get_outdated_ids(
@@ -301,8 +301,6 @@ def clear_outdated(
             outdated_ids_path,
             metadata_type
         )
-
-        logging.info(f"Polling on job_id = {job_id}")
-        return poll_job(job_id, 300, 2, data_repo_service.data_repo_client)
+        return job_id
 
     return None

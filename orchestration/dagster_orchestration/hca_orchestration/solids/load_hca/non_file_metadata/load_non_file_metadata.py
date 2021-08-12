@@ -1,7 +1,6 @@
 from enum import Enum
-from typing import Optional
 
-from dagster import composite_solid, configured, DynamicOutputDefinition
+from dagster import composite_solid, configured, DynamicOutputDefinition, Optional
 
 from hca_manage.common import JobId
 from hca_orchestration.solids.load_hca.ingest_metadata_type import ingest_metadata_type
