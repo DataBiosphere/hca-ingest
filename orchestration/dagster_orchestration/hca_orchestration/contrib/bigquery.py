@@ -211,7 +211,7 @@ class BigQueryService:
 
         query = f"""
         EXPORT DATA OPTIONS(
-            uri='{destination_gcs_path}/*',
+            uri='{destination_gcs_path.to_gs_path()}/*',
             format='JSON',
             overwrite=true
         ) AS
