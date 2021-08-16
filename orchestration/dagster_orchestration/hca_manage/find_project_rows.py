@@ -47,7 +47,8 @@ def _query_for_project(args: argparse.Namespace) -> None:
 
     logging.info("Project row IDs = ")
     project_row_ids = bq_service.build_query_job(query, bq_project_id).result()
-    [logging.info(row["datarepo_row_id"]) for row in project_row_ids]
+    for row in project_row_ids:
+        logging.info(row["datarepo_row_id"])
 
     query = f"""
     SELECT * FROM `datarepo_{dataset_name}.links`
@@ -56,7 +57,8 @@ def _query_for_project(args: argparse.Namespace) -> None:
     links_rows = bq_service.build_query_job(query, bq_project_id).result()
     logging.info("")
     logging.info("Links row IDs = ")
-    [logging.info(row["datarepo_row_id"]) for row in links_rows]
+    for row in links_rows:
+        logging.info(row["datarepo_row_id"])
 
 
 if __name__ == '__main__':
