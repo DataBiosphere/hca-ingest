@@ -118,3 +118,7 @@ class SoftDeleteManager:
         )
 
         return JobId(response.id)  # type: ignore # data repo client has no type hints, since it's auto-generated
+
+
+if __name__ == '__main__':
+    run()
