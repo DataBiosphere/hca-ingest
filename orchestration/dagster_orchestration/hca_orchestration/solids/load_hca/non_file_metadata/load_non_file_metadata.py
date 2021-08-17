@@ -1,11 +1,11 @@
 from enum import Enum
 
-from dagster import composite_solid, configured, Nothing
+from dagster import composite_solid, configured, DynamicOutputDefinition, Optional
 
-from hca_orchestration.solids.load_hca.load_table import load_table
-from hca_orchestration.solids.load_hca.ingest_metadata_type import ingest_metadata_type
-from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType
 from hca_manage.common import JobId
+from hca_orchestration.solids.load_hca.ingest_metadata_type import ingest_metadata_type
+from hca_orchestration.solids.load_hca.load_table import load_table_solid
+from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType
 
 
 class NonFileMetadataTypes(Enum):
@@ -40,6 +40,9 @@ ingest_non_file_metadata_type = configured(ingest_metadata_type, name="ingest_no
     {"metadata_types": NonFileMetadataTypes, "prefix": "metadata"})
 
 
-@composite_solid
-def non_file_metadata_fanout(result: list[JobId], scratch_dataset_name: HcaScratchDatasetName) -> Nothing:
-    return ingest_non_file_metadata_type(result, scratch_dataset_name).map(load_table)
+@composite_solid(
+    output_defs=[DynamicOutputDefinition(dagster_type=Optional[JobId])]
+)
+def non_file_metadata_fanout(result: list[JobId], scratch_dataset_name: HcaScratchDatasetName) -> Optional[JobId]:
+    results = ingest_non_file_metadata_type(result, scratch_dataset_name)
+    return results.map(load_table_solid)

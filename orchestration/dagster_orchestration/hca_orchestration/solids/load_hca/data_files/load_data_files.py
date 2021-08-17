@@ -9,7 +9,7 @@ from google.cloud.bigquery.client import RowIterator
 
 from hca_manage.common import JobId
 from hca_orchestration.contrib.bigquery import BigQueryService
-from hca_orchestration.models.hca_dataset import HcaDataset
+from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.models.scratch import ScratchConfig
 from hca_orchestration.solids.data_repo import wait_for_job_completion
 from hca_orchestration.solids.load_hca.poll_ingest_job import check_data_ingest_job_result
@@ -75,7 +75,7 @@ def diff_file_loads(context: AbstractComputeExecutionContext,
 
 def _determine_files_to_load(
         bigquery_service: BigQueryService,
-        target_hca_dataset: HcaDataset,
+        target_hca_dataset: TdrDataset,
         staging_dataset: HcaScratchDatasetName,
         file_load_table_name: str,
         scratch_config: ScratchConfig,
@@ -98,7 +98,7 @@ def _determine_files_to_load(
         f"{scratch_config.scratch_area()}/data-transfer-requests/*"
     ]
 
-    query_job = bigquery_service.build_query_job_using_external_schema(
+    rows = bigquery_service.run_query_using_external_schema(
         query,
         source_paths,
         FILE_LOAD_TABLE_BQ_SCHEMA,
@@ -106,7 +106,7 @@ def _determine_files_to_load(
         f"{staging_dataset}.{file_load_table_name}",
         scratch_config.scratch_bq_project
     )
-    return query_job.result()
+    return rows
 
 
 def _extract_files_to_load_to_control_files(
@@ -125,7 +125,7 @@ def _extract_files_to_load_to_control_files(
         scratch_dataset_name,
         scratch_config.scratch_bq_project,
     )
-    return extract_job.result()
+    return extract_job
 
 
 @solid(

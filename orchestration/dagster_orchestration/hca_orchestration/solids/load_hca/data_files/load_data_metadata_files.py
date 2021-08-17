@@ -1,16 +1,16 @@
 from enum import Enum
 
-from dagster import solid, composite_solid, configured, Nothing
+from dagster import solid, composite_solid, configured, DynamicOutputDefinition, Optional
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from google.cloud.bigquery.client import RowIterator
 
+from hca_manage.common import JobId
 from hca_orchestration.contrib.bigquery import BigQueryService
-from hca_orchestration.models.hca_dataset import HcaDataset
+from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
 from hca_orchestration.solids.load_hca.ingest_metadata_type import ingest_metadata_type
-from hca_orchestration.solids.load_hca.load_table import load_table, export_data
+from hca_orchestration.solids.load_hca.load_table import load_table_solid, export_data
 from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType, MetadataTypeFanoutResult
-from hca_manage.common import JobId
 
 
 class FileMetadataTypes(Enum):
@@ -29,7 +29,7 @@ ingest_file_metadata_type = configured(ingest_metadata_type, name="ingest_file_m
 
 
 def _inject_file_ids(
-        target_hca_dataset: HcaDataset,
+        target_hca_dataset: TdrDataset,
         scratch_config: ScratchConfig,
         file_metadata_type: str,
         scratch_dataset_name: HcaScratchDatasetName,
@@ -47,7 +47,7 @@ def _inject_file_ids(
 
     destination_table_name = f"{file_metadata_type}_with_ids"
     source_path = f"{scratch_config.scratch_area()}/metadata/{file_metadata_type}/*"
-    query_job = bigquery_service.build_query_job_using_external_schema(
+    rows = bigquery_service.run_query_using_external_schema(
         query,
         source_paths=[source_path],
         schema=[
@@ -80,15 +80,15 @@ def _inject_file_ids(
         table_name=file_metadata_type,
         destination=f"{scratch_dataset_name}.{destination_table_name}",
         bigquery_project=scratch_config.scratch_bq_project
-    ).result()
+    )
 
-    return query_job
+    return rows
 
 
 @solid(
     required_resource_keys={"bigquery_service", "target_hca_dataset", "scratch_config", "data_repo_client"}
 )
-def ingest_metadata_for_file_type(
+def inject_file_ids_solid(
         context: AbstractComputeExecutionContext,
         file_metadata_fanout_result: MetadataTypeFanoutResult
 ) -> MetadataTypeFanoutResult:
@@ -117,11 +117,9 @@ def ingest_metadata_for_file_type(
     return file_metadata_fanout_result
 
 
-@composite_solid
-def ingest_metadata(file_metadata_fanout_result: MetadataTypeFanoutResult) -> Nothing:
-    return load_table(ingest_metadata_for_file_type(file_metadata_fanout_result))
-
-
-@composite_solid
-def file_metadata_fanout(result: list[JobId], scratch_dataset_name: HcaScratchDatasetName) -> Nothing:
-    return ingest_file_metadata_type(result, scratch_dataset_name).map(ingest_metadata)
+@composite_solid(
+    output_defs=[DynamicOutputDefinition(dagster_type=Optional[JobId])]
+)
+def file_metadata_fanout(result: list[JobId], scratch_dataset_name: HcaScratchDatasetName) -> Optional[JobId]:
+    results = ingest_file_metadata_type(result, scratch_dataset_name).map(inject_file_ids_solid)
+    return results.map(load_table_solid)
