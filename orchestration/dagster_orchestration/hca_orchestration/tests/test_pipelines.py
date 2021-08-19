@@ -74,7 +74,7 @@ class PipelinesTestCase(unittest.TestCase):
         result = self.run_pipeline(cut_snapshot, config_name="test_create_snapshot.yaml")
 
         self.assertTrue(result.success)
-        # todo: a test case for invalid snapshot name assertRaises(InvalidSnapshotNameException)?
+
 
 if __name__ == '__main__':
     unittest.main()
