@@ -8,7 +8,7 @@ from dagster_utils.contrib.google import path_has_any_data, parse_gs_path
 from data_repo_client import JobModel
 
 from hca_orchestration.contrib.bigquery import BigQueryService
-from hca_orchestration.models.hca_dataset import HcaDataset
+from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.models.scratch import ScratchConfig
 
 
@@ -19,7 +19,7 @@ from hca_orchestration.models.scratch import ScratchConfig
 def delete_outdated_tabular_data(context: AbstractComputeExecutionContext, entity_types: set[str]) -> None:
     """Soft-deletes outdated and duplicate data in each entity type table"""
 
-    target_hca_dataset: HcaDataset = context.resources.target_hca_dataset
+    target_hca_dataset: TdrDataset = context.resources.target_hca_dataset
     bigquery_service: BigQueryService = context.resources.bigquery_service
     scratch_config: ScratchConfig = context.resources.scratch_config
     data_repo_client = context.resources.data_repo_client
@@ -27,9 +27,8 @@ def delete_outdated_tabular_data(context: AbstractComputeExecutionContext, entit
     base_path = f"{scratch_config.scratch_bucket_name}/{scratch_config.scratch_prefix_name}"
     for entity_type in entity_types:
         destination_path = parse_gs_path(f"gs://{base_path}/outdated_row_ids/{entity_type}")
-        query_job = bigquery_service.build_extract_duplicates_job(
+        bigquery_service.build_extract_duplicates_job(
             destination_path, entity_type, target_hca_dataset, 'us-central1')
-        query_job.result()
 
         # todo clean up
         if not path_has_any_data(destination_path.bucket, destination_path.prefix, context.resources.gcs):

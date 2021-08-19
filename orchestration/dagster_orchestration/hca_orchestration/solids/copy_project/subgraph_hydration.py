@@ -44,10 +44,10 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
         FROM `{hca_project_config.source_bigquery_project_id}.{hca_project_config.source_snapshot_name}.links`
         WHERE project_id = "{project_id}"
     """
-    query_job = bigquery_service.build_query_job(query, hca_project_config.source_bigquery_project_id)
+    rows = bigquery_service.run_query(query, hca_project_config.source_bigquery_project_id)
     nodes = defaultdict(list)
     subgraphs = []
-    for row in query_job.result():
+    for row in rows:
         subgraphs.append(json.loads(row["content"])["links"])
         nodes["links"].append(MetadataEntity(MetadataType("link"), row["links_id"]))
 
@@ -185,9 +185,8 @@ def _extract_entities_to_path(
             ArrayQueryParameter("entity_ids", "STRING", entity_ids)
         ]
         print(f"**** Saved tabular data ingest to gs://{destination_path}/{entity_type}/*")
-        query_job = bigquery_service.build_query_job(
+        bigquery_service.run_query(
             fetch_entities_query, bigquery_project_id, query_params, location='US')
-        query_job.result()
 
 
 def fetch_entities(
@@ -213,8 +212,8 @@ def fetch_entities(
         query_params = [
             ArrayQueryParameter("entity_ids", "STRING", entity_ids)
         ]
-        result[entity_type] = [row for row in bigquery_service.build_query_job(fetch_entities_query,
-                                                                               bigquery_project_id,
-                                                                               query_params)]
+        result[entity_type] = [row for row in bigquery_service.run_query(fetch_entities_query,
+                                                                         bigquery_project_id,
+                                                                         query_params)]
 
     return result

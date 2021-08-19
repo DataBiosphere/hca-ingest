@@ -11,7 +11,7 @@ from dagster_utils.contrib.google import GsBucketWithPrefix
 from data_repo_client import JobModel, RepositoryApi
 from google.cloud.storage.client import Client
 
-from hca_orchestration.models.hca_dataset import HcaDataset
+from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.models.scratch import ScratchConfig
 
 
@@ -28,7 +28,7 @@ def ingest_tabular_data(context: AbstractComputeExecutionContext) -> set[str]:
     gcs = context.resources.gcs
     scratch_config: ScratchConfig = context.resources.scratch_config
     data_repo_client = context.resources.data_repo_client
-    target_hca_dataset: HcaDataset = context.resources.target_hca_dataset
+    target_hca_dataset: TdrDataset = context.resources.target_hca_dataset
 
     entity_types = _find_entities_for_ingestion(gcs, scratch_config)
     ingest_tabular_data_to_tdr(context, data_repo_client, entity_types, target_hca_dataset)
@@ -37,7 +37,7 @@ def ingest_tabular_data(context: AbstractComputeExecutionContext) -> set[str]:
 
 
 def ingest_tabular_data_to_tdr(context: AbstractComputeExecutionContext, data_repo_client: RepositoryApi,
-                               entity_types: dict[str, GsBucketWithPrefix], target_hca_dataset: HcaDataset) -> None:
+                               entity_types: dict[str, GsBucketWithPrefix], target_hca_dataset: TdrDataset) -> None:
     for entity_type, path in entity_types.items():
         ingest_path = f"{path.to_gs_path()}/*"
         payload = {

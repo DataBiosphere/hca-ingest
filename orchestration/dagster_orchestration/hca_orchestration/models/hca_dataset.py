@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class HcaDataset:
+class TdrDataset:
     """
     Represents the target HCA dataset in Jade that will receive data
     during a pipeline run

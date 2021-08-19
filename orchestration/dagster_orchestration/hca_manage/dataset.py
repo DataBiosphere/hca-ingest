@@ -150,7 +150,8 @@ class DatasetManager:
     def __post_init__(self) -> None:
         self.stewards = {
             "dev": {"monster-dev@dev.test.firecloud.org"},
-            "prod": {"monster@firecloud.org"}
+            "prod": {"monster@firecloud.org"},
+            "real_prod": {"monster@firecloud.org"},
         }[self.environment]
 
     def generate_schema(self) -> dict[str, object]:

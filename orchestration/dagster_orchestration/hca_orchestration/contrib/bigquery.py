@@ -1,25 +1,28 @@
-from typing import Optional
+"""
+Abstraction over the raw bigquery client. All operations automatically return the materialized results of a query.
+"""
 
 from dataclasses import dataclass
+from typing import Optional
 
 from dagster_utils.contrib.google import GsBucketWithPrefix
 from google.cloud import bigquery
-from google.cloud.bigquery import ExternalConfig, WriteDisposition, QueryJob, ArrayQueryParameter, QueryJobConfig
+from google.cloud.bigquery import ExternalConfig, WriteDisposition, ArrayQueryParameter, QueryJobConfig
+from google.cloud.bigquery.table import RowIterator
 
-from hca_orchestration.models.hca_dataset import HcaDataset
-from hca_orchestration.models.entities import MetadataEntity
+from hca_orchestration.models.hca_dataset import TdrDataset
 
 
 @dataclass
 class BigQueryService:
     bigquery_client: bigquery.client.Client
 
-    def build_query_job_with_destination(
+    def run_query_with_destination(
             self,
             query: str,
             destination_table: str,
             bigquery_project: str
-    ) -> QueryJob:
+    ) -> RowIterator:
         """
         Performs a bigquery query, with no external table definitions.
         Results are deposited in the destination table provided.
@@ -36,15 +39,15 @@ class BigQueryService:
             project=bigquery_project
         )
 
-        return query_job
+        return query_job.result()
 
-    def build_query_job(
+    def run_query(
             self,
             query: str,
             bigquery_project: str,
             query_params: list[ArrayQueryParameter] = [],
             location: str = 'US'
-    ) -> QueryJob:
+    ) -> RowIterator:
         """
         Performs a bigquery query, with no external destination (table or otherwise)
         """
@@ -58,9 +61,9 @@ class BigQueryService:
             location=location,
             project=bigquery_project
         )
-        return query_job
+        return query_job.result()
 
-    def build_query_job_using_external_schema(
+    def run_query_using_external_schema(
             self,
             query: str,
             source_paths: list[str],
@@ -68,7 +71,7 @@ class BigQueryService:
             table_name: str,
             destination: str,
             bigquery_project: str
-    ) -> bigquery.QueryJob:
+    ) -> RowIterator:
         """
         Performs a bigquery query using an external table definition, using the supplied
         schema and source paths. Results are deposited at the supplied GCS destination
@@ -104,7 +107,7 @@ class BigQueryService:
             project=bigquery_project
         )
 
-        return query_job
+        return query_job.result()
 
     def build_extract_job(
             self,
@@ -129,7 +132,7 @@ class BigQueryService:
             project=bigquery_project
         )
 
-        return extract_job
+        return extract_job.result()
 
     def get_num_rows_in_table(
             self,
@@ -153,9 +156,9 @@ class BigQueryService:
             self,
             destination_gcs_path: GsBucketWithPrefix,
             table_name: str,
-            target_hca_dataset: HcaDataset,
+            target_hca_dataset: TdrDataset,
             location: str
-    ) -> bigquery.QueryJob:
+    ) -> RowIterator:
         """
         Returns any duplicate rows from the given table, deduping on version.
         """
@@ -194,19 +197,21 @@ class BigQueryService:
                 SELECT datarepo_row_id FROM rows_ordered_by_version WHERE rank > 1;
             """
 
-        return self.build_query_job(
-            query, target_hca_dataset.project_id, location=location)
+        return self.run_query(
+            query,
+            target_hca_dataset.project_id,
+            location=location)
 
-    def build_extract_file_ids_job(self,
-                                   destination_gcs_path: GsBucketWithPrefix,
-                                   table_name: str,
-                                   target_hca_dataset: HcaDataset,
-                                   location: str
-                                   ) -> bigquery.QueryJob:
+    def run_extract_file_ids_job(self,
+                                 destination_gcs_path: GsBucketWithPrefix,
+                                 table_name: str,
+                                 target_hca_dataset: TdrDataset,
+                                 location: str
+                                 ) -> RowIterator:
 
         query = f"""
         EXPORT DATA OPTIONS(
-            uri='{destination_gcs_path}/*',
+            uri='{destination_gcs_path.to_gs_path()}/*',
             format='JSON',
             overwrite=true
         ) AS
@@ -216,6 +221,8 @@ class BigQueryService:
             AND '/' || JSON_EXTRACT_SCALAR(sf.descriptor, '$.file_id') || '/' || JSON_EXTRACT_SCALAR(sf.descriptor, '$.file_name') = dlh.target_path
         """
 
-        return self.build_query_job(
-            query, target_hca_dataset.project_id, location=location
+        return self.run_query(
+            query,
+            target_hca_dataset.project_id,
+            location=location
         )
