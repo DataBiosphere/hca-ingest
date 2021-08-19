@@ -7,7 +7,8 @@ from dagster import execute_pipeline, file_relative_path, PipelineDefinition, Pi
 from dagster.utils import load_yaml_from_globs
 from dagster.utils.merger import deep_merge_dicts
 
-from hca_orchestration.pipelines import load_hca, validate_egress
+from hca_orchestration.pipelines import cut_snapshot, load_hca, validate_egress
+from hca_manage.snapshot import InvalidSnapshotNameException
 
 
 def config_path(relative_path: str) -> str:
@@ -66,6 +67,14 @@ class PipelinesTestCase(unittest.TestCase):
 
         self.assertTrue(result.success)
 
+    def test_cut_snapshot(self):
+        """
+        This test is checking to see if cut_snapshot spins up
+        """
+        result = self.run_pipeline(cut_snapshot, config_name="test_create_snapshot.yaml")
+
+        self.assertTrue(result.success)
+        # todo: a test case for invalid snapshot name assertRaises(InvalidSnapshotNameException)?
 
 if __name__ == '__main__':
     unittest.main()
