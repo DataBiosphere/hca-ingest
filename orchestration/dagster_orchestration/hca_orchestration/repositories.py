@@ -1,3 +1,4 @@
+import os
 from typing import Union
 
 from dagster import PipelineDefinition, repository, SensorDefinition
@@ -12,6 +13,8 @@ from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.config.target_hca_dataset import target_hca_dataset, build_new_target_hca_dataset
 from hca_orchestration.resources.hca_project_config import hca_project_copying_config
 from hca_orchestration.resources.data_repo_service import data_repo_service
+from hca_orchestration.pipelines import cut_snapshot, load_hca, validate_egress
+from hca_orchestration.sensors import build_post_import_sensor
 
 
 def copy_project_job():
@@ -44,5 +47,13 @@ def copy_project_to_new_dataset_job():
 
 
 @repository
-def dev_repo() -> list[Union[PipelineDefinition, SensorDefinition]]:
-    return [copy_project_job(), copy_project_to_new_dataset_job()]
+def all_jobs() -> list[Union[PipelineDefinition, SensorDefinition]]:
+    defs = [
+        cut_snapshot,
+        load_hca,
+        validate_egress,
+        build_post_import_sensor(os.environ.get("ENV", "test")),
+        copy_project_job(),
+        copy_project_to_new_dataset_job()
+    ]
+    return defs
