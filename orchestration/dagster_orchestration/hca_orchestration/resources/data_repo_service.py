@@ -1,6 +1,6 @@
 from dagster import resource, InitResourceContext
 
-from hca_orchestration.contrib.data_repo import DataRepoService
+from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
 
 
 @resource(

@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, Mock
 from dagster_utils.testing.matchers import StringMatchingRegex, ObjectWithAttributes
 from data_repo_client import RepositoryApi, SnapshotRequestModel
 
-from hca_manage.snapshot import SnapshotManager, InvalidSnapshotNameException
+from hca_orchestration.contrib.data_repo.snapshot import SnapshotManager, InvalidSnapshotNameException
 
 
 class SnapshotManagerTestCase(unittest.TestCase):

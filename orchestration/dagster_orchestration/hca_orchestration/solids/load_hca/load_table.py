@@ -9,7 +9,7 @@ from google.cloud.bigquery.client import RowIterator
 from google.cloud.storage import Client
 
 from hca_orchestration.contrib.bigquery import BigQueryService
-from hca_orchestration.contrib.data_repo import DataRepoService
+from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
 from hca_orchestration.contrib.gcs import path_has_any_data
 from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.models.scratch import ScratchConfig

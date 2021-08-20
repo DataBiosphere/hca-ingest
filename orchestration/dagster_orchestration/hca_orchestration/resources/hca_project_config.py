@@ -18,5 +18,5 @@ def hca_project_copying_config(context: InitResourceContext) -> HcaProjectCopyin
     return HcaProjectCopyingConfig(
         source_hca_project_id=context.resource_config["source_hca_project_id"],
         source_snapshot_name=context.resource_config["source_snapshot_name"],
-        source_bigquery_project_id=context.resource_config["source_bigquery_project_id"]
+        source_bigquery_project_id=context.resource_config["source_bigquery_project_id"],
     )
