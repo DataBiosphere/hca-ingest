@@ -3,7 +3,7 @@ from collections import defaultdict
 from urllib.parse import urlparse
 
 import requests
-from dagster import solid, InputDefinition, Nothing
+from dagster import InputDefinition, Nothing, op
 from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
@@ -14,13 +14,13 @@ from google.oauth2.credentials import Credentials
 from requests.structures import CaseInsensitiveDict
 
 from hca_orchestration.contrib.bigquery import BigQueryService
+from hca_orchestration.models.entities import DataFileEntity, MetadataEntity
 from hca_orchestration.models.scratch import ScratchConfig
 from hca_orchestration.resources.hca_project_config import HcaProjectCopyingConfig
-from hca_orchestration.models.entities import DataFileEntity, MetadataEntity
 from hca_orchestration.support.typing import MetadataType
 
 
-@solid(
+@op(
     required_resource_keys={
         "bigquery_service",
         "hca_project_copying_config",

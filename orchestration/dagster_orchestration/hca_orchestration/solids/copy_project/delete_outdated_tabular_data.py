@@ -1,4 +1,4 @@
-from dagster import solid, InputDefinition
+from dagster import InputDefinition, op
 from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
@@ -12,7 +12,7 @@ from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.models.scratch import ScratchConfig
 
 
-@solid(
+@op(
     required_resource_keys={"bigquery_service", "target_hca_dataset", "scratch_config", "data_repo_client", "gcs"},
     input_defs=[InputDefinition("entity_types", set[str])]
 )

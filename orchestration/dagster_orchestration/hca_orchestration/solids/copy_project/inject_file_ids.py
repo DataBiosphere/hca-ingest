@@ -1,19 +1,16 @@
-from collections import defaultdict
-
-from dagster import solid, Nothing, InputDefinition
+from dagster import Nothing, InputDefinition, op
 from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
 from dagster_utils.contrib.google import GsBucketWithPrefix
 
-from hca_orchestration.models.hca_dataset import TdrDataset
-
 from hca_orchestration.contrib.bigquery import BigQueryService
+from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.models.scratch import ScratchConfig
 from hca_orchestration.solids.copy_project.tabular_data_ingestion import ingest_tabular_data_to_tdr
 
 
-@solid(
+@op(
     required_resource_keys={"data_repo_client", "bigquery_service", "scratch_config", "target_hca_dataset"},
     input_defs=[InputDefinition("start", Nothing)]
 )

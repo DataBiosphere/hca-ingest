@@ -1,7 +1,4 @@
-from collections import defaultdict
-from typing import DefaultDict
-
-from dagster import solid, InputDefinition, Nothing
+from dagster import InputDefinition, Nothing, op
 from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
@@ -15,7 +12,7 @@ from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.models.scratch import ScratchConfig
 
 
-@solid(
+@op(
     required_resource_keys={
         "gcs",
         "scratch_config",

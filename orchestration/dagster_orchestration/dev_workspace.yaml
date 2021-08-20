@@ -1,4 +1,6 @@
 # Defines where to find our code for tooling like Dagit
 # https://docs.dagster.io/overview/repositories-workspaces/workspaces
 load_from:
-  - python_file: hca_orchestration/repositories.py
+  - python_package:
+      package_name: hca_orchestration.repositories.dev
+      attribute: dev_repo
