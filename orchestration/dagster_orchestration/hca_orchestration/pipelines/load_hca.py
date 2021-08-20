@@ -108,11 +108,26 @@ def import_start_notification(context: HookContext) -> None:
 
     context.resources.slack.send_message(blocks=key_value_slack_blocks("HCA Starting Import", key_values=kvs))
 
+@success_hook(
+    required_resource_keys={'slack', 'target_hca_dataset', 'dagit_config'}
+)
+def import_complete_notification(context: HookContext) -> None:
+    context.log.info(f"Solid output = {context.solid_output_values}")
+    kvs = {
+        # todo: how do I pull staging area out here (that is from the preprocess_metadata solid config)
+        # "Staging area": context.solid_config["input_prefix"],
+        "Target Dataset": context.resources.target_hca_dataset.dataset_name,
+        "Jade Project": context.resources.target_hca_dataset.project_id,
+        "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
+    }
+
+    context.resources.slack.send_message(blocks=key_value_slack_blocks("HCA Completed Import", key_values=kvs))
 
 @solid
 def terminal_solid(results1: list[Optional[JobId]], results2: list[Optional[JobId]]) -> None:
+    # todo: should there be a check for whether we get valid results?
+    # if (results1 is not None and results2 is not None):
     pass
-
 
 @pipeline(
     mode_defs=[prod_mode, dev_mode, local_mode, test_mode]
@@ -125,4 +140,6 @@ def load_hca() -> None:
 
     file_metadata_results = file_metadata_fanout(result, staging_dataset).collect()
     non_file_metadata_results = non_file_metadata_fanout(result, staging_dataset).collect()
-    terminal_solid(file_metadata_results, non_file_metadata_results)
+
+    hooked_terminal_solid = terminal_solid.with_hooks({import_complete_notification})
+    hooked_terminal_solid(file_metadata_results, non_file_metadata_results)
