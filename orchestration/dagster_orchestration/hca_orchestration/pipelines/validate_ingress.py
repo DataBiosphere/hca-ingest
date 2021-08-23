@@ -4,9 +4,9 @@ from dagster_utils.resources.google_storage import google_storage_client, mock_s
 from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client, noop_data_repo_client
 from dagster_utils.resources.slack import console_slack_client, live_slack_client
 
-from hca_manage.validation import run
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.contrib.slack import key_value_slack_blocks
+from hca_orchestration.solids.validate_ingress import pre_flight_validate, notify_slack_of_ingress_validation_results
 
 prod_mode = ModeDefinition(
     name="prod",
@@ -59,4 +59,4 @@ def validation_failed_notification(context: HookContext) -> None:
     mode_defs=[prod_mode, local_mode, test_mode, dev_mode]
 )
 def validate_ingress() -> None:
-    run()
+    notify_slack_of_ingress_validation_results(pre_flight_validate())

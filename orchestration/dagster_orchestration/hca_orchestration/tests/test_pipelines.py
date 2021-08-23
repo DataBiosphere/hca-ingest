@@ -7,7 +7,7 @@ from dagster import execute_pipeline, file_relative_path, PipelineDefinition, Pi
 from dagster.utils import load_yaml_from_globs
 from dagster.utils.merger import deep_merge_dicts
 
-from hca_orchestration.pipelines import load_hca, validate_egress
+from hca_orchestration.pipelines import load_hca, validate_egress, validate_ingress
 
 
 def config_path(relative_path: str) -> str:
@@ -63,6 +63,16 @@ class PipelinesTestCase(unittest.TestCase):
         it runs at all
         """
         result = self.run_pipeline(validate_egress, config_name="test_validate_egress.yaml")
+
+        self.assertTrue(result.success)
+
+    def test_validate_ingress(self, *mocks):
+        """
+        currently validate_ingress is just a thin wrapper around
+        the pre flight validation code, so this just spins it up and sees if
+        it runs at all
+        """
+        result = self.run_pipeline(validate_ingress, config_name="test_validate_ingress.yaml")
 
         self.assertTrue(result.success)
 
