@@ -2,6 +2,6 @@ resources:
   snapshot_config:
     config:
       dataset_name: 'hca_prod_20201120_dcp2'
-      snapshot_name: 'hca_prod_20201120_dcp2___20210812_dcp8'
+      snapshot_name: 'hca_prod_20201120_dcp2___20210812_fake'
       managed_access: False
 
