@@ -6,6 +6,7 @@ import os
 
 from dagster import file_relative_path, Partition, PartitionSetDefinition
 from dagster.utils import load_yaml_from_path
+from dagster_utils.typing import DagsterObjectConfigSchema
 
 
 def get_dev_refresh_partitions() -> list[Partition]:
@@ -20,11 +21,11 @@ def get_dev_refresh_partitions() -> list[Partition]:
     return project_ids
 
 
-def run_config_for_dev_refresh_partition(partition: Partition):
+def run_config_for_dev_refresh_partition(partition: Partition) -> DagsterObjectConfigSchema:
     path = file_relative_path(
         __file__, os.path.join("./run_config", "run_config.yaml")
     )
-    run_config = load_yaml_from_path(path)
+    run_config: DagsterObjectConfigSchema = load_yaml_from_path(path)
     run_config["resources"]["hca_project_copying_config"]["config"]["source_hca_project_id"] = partition.value
     run_config["resources"]["load_tag"]["config"]["load_tag_prefix"] = f"dev_refresh_project_{partition.value}"
     run_config["resources"]["scratch_config"]["config"]["scratch_prefix_name"] = f"project_copy_{partition.value}"
