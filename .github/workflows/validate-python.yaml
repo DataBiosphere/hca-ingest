@@ -55,3 +55,12 @@ jobs:
       run: poetry run pytest -v
       working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
       if: always() && steps.dependencies.outcome == 'success' # run all three checks, even if a prior check fails
+    - name: Get artifact slug
+      id: get-artifact-slug
+      run: 'echo ::set-output name=slug::$(git rev-parse --short "$GITHUB_SHA")'
+    - name: Push Dagster User Code Docker image
+      uses: docker/build-push-action@v2
+      with:
+        context: ./orchestration/dagster_orchestration
+        push: true
+        tags: us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:${{steps.get-artifact-slug.outputs.slug}}
