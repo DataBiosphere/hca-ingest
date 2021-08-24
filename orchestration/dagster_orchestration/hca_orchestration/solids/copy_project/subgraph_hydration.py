@@ -3,7 +3,7 @@ from collections import defaultdict
 from urllib.parse import urlparse
 
 import requests
-from dagster import InputDefinition, Nothing, op
+from dagster import InputDefinition, Nothing, op, In
 from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
@@ -26,7 +26,7 @@ from hca_orchestration.support.typing import MetadataType
         "hca_project_copying_config",
         "scratch_config"
     },
-    input_defs=[InputDefinition("start", Nothing)]
+    ins={"start": In(Nothing)}
 )
 def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileEntity]:
     # 1. given a project ID, query the links table for all rows associated with the project

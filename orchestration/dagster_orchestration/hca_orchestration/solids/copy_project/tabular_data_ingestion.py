@@ -1,4 +1,4 @@
-from dagster import InputDefinition, Nothing, op
+from dagster import InputDefinition, Nothing, op, In
 from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
@@ -19,7 +19,7 @@ from hca_orchestration.models.scratch import ScratchConfig
         "data_repo_client",
         "target_hca_dataset"
     },
-    input_defs=[InputDefinition("start", Nothing)]
+    ins={"start": In(Nothing)}
 )
 def ingest_tabular_data(context: AbstractComputeExecutionContext) -> set[str]:
     gcs = context.resources.gcs

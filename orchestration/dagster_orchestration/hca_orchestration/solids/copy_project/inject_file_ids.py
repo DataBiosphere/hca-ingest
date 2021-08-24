@@ -1,4 +1,4 @@
-from dagster import Nothing, InputDefinition, op
+from dagster import Nothing, InputDefinition, op, In
 from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
@@ -12,7 +12,7 @@ from hca_orchestration.solids.copy_project.tabular_data_ingestion import ingest_
 
 @op(
     required_resource_keys={"data_repo_client", "bigquery_service", "scratch_config", "target_hca_dataset"},
-    input_defs=[InputDefinition("start", Nothing)]
+    ins={"start": In(Nothing)}
 )
 def inject_file_ids(context: AbstractComputeExecutionContext, entity_types: set[str]) -> set[str]:
     data_repo_client = context.resources.data_repo_client
