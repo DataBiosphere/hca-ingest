@@ -3,6 +3,7 @@ Defines partitioning logic for the Q3 2021 dev refresh
 """
 
 import os
+from datetime import datetime
 
 from dagster import file_relative_path, Partition, PartitionSetDefinition
 from dagster.utils import load_yaml_from_path
@@ -40,7 +41,8 @@ def run_config_for_per_project_dataset_partition(partition: Partition) -> Dagste
     run_config: DagsterObjectConfigSchema = load_yaml_from_path(path)
     run_config["resources"]["hca_project_copying_config"]["config"]["source_hca_project_id"] = partition.value
     run_config["resources"]["load_tag"]["config"]["load_tag_prefix"] = f"dev_refresh_project_{partition.value}"
-    run_config["resources"]["scratch_config"]["config"]["scratch_prefix_name"] = f"project_copy_{partition.value}"
+    run_config["resources"]["scratch_config"]["config"][
+        "scratch_prefix_name"] = f"project_copy_{partition.value}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
     return run_config
 

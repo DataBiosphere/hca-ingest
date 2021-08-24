@@ -110,14 +110,17 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
             entity_file_ids[drs_object] = row[f"target_path"]
 
     # get the actual GS path for the DRS object
-    context.log.info("Resolving DRS object GCS paths...")
+    context.log.info(f"Resolving DRS object GCS paths ({len(drs_objects)} objects)...")
+
     data_entities = set()
     with requests.Session() as s:
         creds = _get_credentials()
         s.headers = CaseInsensitiveDict[str]()
         s.headers["Authorization"] = f"Bearer {creds.token}"
 
-        for drs_object, drs_host in drs_objects.items():
+        for cnt, (drs_object, drs_host) in enumerate(drs_objects.items()):
+            if cnt % 100 == 0:
+                context.log.info(f"Resolved {cnt} paths...")
             data_entities.add(
                 DataFileEntity(
                     _fetch_drs_access_info(

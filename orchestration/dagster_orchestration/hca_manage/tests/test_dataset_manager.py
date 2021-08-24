@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, Mock, call
 
 from data_repo_client import RepositoryApi
 
-from hca_orchestration.contrib.data_repo.dataset import DatasetManager, _validate_dataset_name, InvalidDatasetNameException
+from hca_manage.dataset import DatasetManager, _validate_dataset_name, InvalidDatasetNameException
 
 
 class DatasetManagerTestCase(unittest.TestCase):

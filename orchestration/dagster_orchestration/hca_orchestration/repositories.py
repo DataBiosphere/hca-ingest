@@ -18,7 +18,7 @@ from hca_orchestration.pipelines import cut_snapshot, load_hca, validate_egress
 from hca_orchestration.sensors import build_post_import_sensor
 
 
-def copy_project_job():
+def copy_project_job() -> PipelineDefinition:
     return copy_project.to_job(resource_defs={
         "bigquery_client": bigquery_client,
         "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
@@ -31,7 +31,7 @@ def copy_project_job():
     })
 
 
-def copy_project_to_new_dataset_job():
+def copy_project_to_new_dataset_job() -> PipelineDefinition:
     return copy_project.to_job(
         name="copy_project_to_new_dataset",
         resource_defs={

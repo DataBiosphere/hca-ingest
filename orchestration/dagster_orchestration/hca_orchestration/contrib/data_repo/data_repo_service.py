@@ -10,7 +10,7 @@ from dagster_utils.contrib.data_repo.jobs import poll_job
 from dagster_utils.contrib.data_repo.typing import JobId
 from data_repo_client import RepositoryApi, JobModel, EnumerateDatasetModel, DatasetSummaryModel, DatasetModel
 
-from hca_orchestration.contrib.data_repo.dataset import DatasetManager
+from hca_manage.dataset import DatasetManager
 from hca_orchestration.models.hca_dataset import TdrDataset
 
 
@@ -81,7 +81,7 @@ class DataRepoService:
             billing_profile_id: str,
             policy_members: set[str],
             region: str,
-            description: str):
+            description: str) -> TdrDataset:
         dataset_manager = DatasetManager(tdr_env, self.data_repo_client)
         dataset_info = dataset_manager.create_dataset_with_policy_members(
             dataset_name,

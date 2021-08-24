@@ -4,7 +4,7 @@ from dagster import AssetMaterialization, EventMetadataEntry, Output, OutputDefi
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
 from hca_manage.common import JobId, data_repo_profile_ids
-from hca_orchestration.contrib.data_repo.snapshot import SnapshotManager
+from hca_manage.snapshot import SnapshotManager
 
 
 @solid(
