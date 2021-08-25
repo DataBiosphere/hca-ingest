@@ -1,5 +1,6 @@
 from dagster import HookContext, solid, Optional, ResourceDefinition
 from dagster import ModeDefinition, pipeline, success_hook
+from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from dagster_gcp.gcs import gcs_pickle_io_manager
 from dagster_utils.contrib.data_repo.typing import JobId
 from dagster_utils.resources.beam.k8s_beam_runner import k8s_dataflow_beam_runner
@@ -112,12 +113,10 @@ def import_start_notification(context: HookContext) -> None:
 @solid(
     required_resource_keys={'slack', 'target_hca_dataset', 'dagit_config'}
 )
-def terminal_solid(context: HookContext, results1: list[Optional[JobId]], results2: list[Optional[JobId]]) -> None:
-    # todo: do I need to log the solid output here?
-    # context.log.info(f"Solid output = {context.solid_output_values}")
+def terminal_solid(context: AbstractComputeExecutionContext,
+                   results1: list[Optional[JobId]], results2: list[Optional[JobId]]) -> None:
     kvs = {
-        # todo: how do I pull staging area out here (that is from the preprocess_metadata solid config)
-        # "Staging area": context.solid_config["input_prefix"],
+        "Staging area": context.run_config["solids"]["pre_process_metadata"]["config"]["input_prefix"],
         "Target Dataset": context.resources.target_hca_dataset.dataset_name,
         "Jade Project": context.resources.target_hca_dataset.project_id,
         "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
