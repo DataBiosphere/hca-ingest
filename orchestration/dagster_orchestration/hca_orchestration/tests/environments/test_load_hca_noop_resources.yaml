@@ -1,12 +1,11 @@
 resources:
   load_tag:
     config:
-      load_tag_prefix: fake_load_tag
+      load_tag_prefix: dcpfake
       append_timestamp: true
   scratch_config:
     config:
       scratch_bucket_name: example_staging_bucket_name
-      scratch_prefix_name: example_staging_prefix_name
       scratch_bq_project: fake_bq_project
       scratch_dataset_prefix: testing_dataset_prefix
       scratch_table_expiration_ms: 1

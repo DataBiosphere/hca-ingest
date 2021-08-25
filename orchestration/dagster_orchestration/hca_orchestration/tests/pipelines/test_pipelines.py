@@ -48,7 +48,7 @@ class PipelinesTestCase(unittest.TestCase):
         self.assertTrue(result.success)
         scratch_dataset_name = result.result_for_solid("create_scratch_dataset").output_value("result")
         self.assertTrue(
-            scratch_dataset_name.startswith("fake_bq_project.testing_dataset_prefix_fake_load_tag"),
+            scratch_dataset_name.startswith("fake_bq_project.testing_dataset_prefix_dcpfake"),
             "staging dataset should start with load tag prefix"
         )
 
