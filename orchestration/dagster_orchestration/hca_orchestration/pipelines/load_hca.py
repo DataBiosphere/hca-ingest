@@ -1,5 +1,6 @@
 from dagster import HookContext, solid, Optional, ResourceDefinition
 from dagster import ModeDefinition, pipeline, success_hook
+from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from dagster_gcp.gcs import gcs_pickle_io_manager
 from dagster_utils.contrib.data_repo.typing import JobId
 from dagster_utils.resources.beam.k8s_beam_runner import k8s_dataflow_beam_runner
@@ -109,9 +110,21 @@ def import_start_notification(context: HookContext) -> None:
     context.resources.slack.send_message(blocks=key_value_slack_blocks("HCA Starting Import", key_values=kvs))
 
 
-@solid
-def terminal_solid(results1: list[Optional[JobId]], results2: list[Optional[JobId]]) -> None:
-    pass
+@solid(
+    required_resource_keys={'slack', 'target_hca_dataset', 'dagit_config'}
+)
+def terminal_solid(
+        context: AbstractComputeExecutionContext,
+        results1: list[Optional[JobId]],
+        results2: list[Optional[JobId]]
+) -> None:
+    kvs = {
+        "Staging area": context.run_config["solids"]["pre_process_metadata"]["config"]["input_prefix"],
+        "Target Dataset": context.resources.target_hca_dataset.dataset_name,
+        "Jade Project": context.resources.target_hca_dataset.project_id,
+        "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
+    }
+    context.resources.slack.send_message(blocks=key_value_slack_blocks("HCA Completed Import", key_values=kvs))
 
 
 @pipeline(
@@ -125,4 +138,5 @@ def load_hca() -> None:
 
     file_metadata_results = file_metadata_fanout(result, staging_dataset).collect()
     non_file_metadata_results = non_file_metadata_fanout(result, staging_dataset).collect()
+
     terminal_solid(file_metadata_results, non_file_metadata_results)
