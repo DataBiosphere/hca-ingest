@@ -624,7 +624,7 @@ six = "*"
 
 [[package]]
 name = "google-cloud-bigquery"
-version = "2.24.1"
+version = "2.25.0"
 description = "Google BigQuery API client library"
 category = "main"
 optional = false
@@ -641,9 +641,10 @@ protobuf = ">=3.12.0"
 requests = ">=2.18.0,<3.0.0dev"
 
 [package.extras]
-all = ["google-cloud-bigquery-storage (>=2.0.0,<3.0.0dev)", "grpcio (>=1.38.1,<2.0dev)", "pyarrow (>=3.0.0,<6.0dev)", "pandas (>=0.23.0)", "tqdm (>=4.7.4,<5.0.0dev)", "opentelemetry-api (>=0.11b0)", "opentelemetry-sdk (>=0.11b0)", "opentelemetry-instrumentation (>=0.11b0)"]
+all = ["google-cloud-bigquery-storage (>=2.0.0,<3.0.0dev)", "grpcio (>=1.38.1,<2.0dev)", "pyarrow (>=3.0.0,<6.0dev)", "geopandas (>=0.9.0,<1.0dev)", "Shapely (>=1.6.0,<2.0dev)", "pandas (>=0.23.0)", "tqdm (>=4.7.4,<5.0.0dev)", "opentelemetry-api (>=0.11b0)", "opentelemetry-sdk (>=0.11b0)", "opentelemetry-instrumentation (>=0.11b0)"]
 bignumeric_type = ["pyarrow (>=3.0.0,<6.0dev)"]
 bqstorage = ["google-cloud-bigquery-storage (>=2.0.0,<3.0.0dev)", "grpcio (>=1.38.1,<2.0dev)", "pyarrow (>=3.0.0,<6.0dev)"]
+geopandas = ["geopandas (>=0.9.0,<1.0dev)", "Shapely (>=1.6.0,<2.0dev)"]
 opentelemetry = ["opentelemetry-api (>=0.11b0)", "opentelemetry-sdk (>=0.11b0)", "opentelemetry-instrumentation (>=0.11b0)"]
 pandas = ["pandas (>=0.23.0)", "pyarrow (>=3.0.0,<6.0dev)"]
 tqdm = ["tqdm (>=4.7.4,<5.0.0dev)"]
@@ -762,7 +763,7 @@ test = ["pytest", "pytest-benchmark", "pytest-cov", "pytest-mock", "fastdiff (==
 name = "graphql-core"
 version = "2.3.2"
 description = "GraphQL implementation for Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -805,19 +806,14 @@ test = ["pytest (==4.6.9)", "pytest-cov (==2.8.1)"]
 
 [[package]]
 name = "graphql-ws"
-version = "0.4.4"
-description = "Websocket backend for GraphQL subscriptions"
-category = "dev"
+version = "0.3.1"
+description = "Websocket server for GraphQL subscriptions"
+category = "main"
 optional = false
 python-versions = "*"
 
 [package.dependencies]
-graphql-core = ">=2.0.0,<3.0.0"
-
-[package.extras]
-dev = ["flake8 (>=3.7,<4)", "black", "tox (>=3,<4)", "Sphinx (>=1.8,<2)"]
-maintainer = ["bumpversion (>=0.5.3)", "wheel (>=0.33.6)", "PyYAML (>=5.3,<6)"]
-test = ["pytest-cov", "graphene (>=2.0,<3)", "gevent", "graphene-django", "pytest (>=4,<5)", "mock", "django (>=1.11.0,<1.12.0)", "channels (>=1.0.0,<2.0.0)", "pytest (>5)", "django (>=3.0.0,<4.0.0)", "channels (>=3.0.0,<4.0.0)", "pytest-asyncio", "aiohttp"]
+graphql-core = ">=2.0,<3"
 
 [[package]]
 name = "greenlet"
@@ -1270,7 +1266,7 @@ virtualenv = ">=20.0.8"
 name = "promise"
 version = "2.3"
 description = "Promises/A+ implementation for Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -1838,7 +1834,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.9"
-content-hash = "2a59aa1a751ad01e0eec4f8dceda26ab23650cb76a6fe52fd051036b10f62f65"
+content-hash = "5230e8d216cc0d3f5151e72ec30abf47dad4f52700a7c9f6868914572190105b"
 
 [metadata.files]
 aiohttp = [
@@ -2129,8 +2125,8 @@ google-auth-httplib2 = [
     {file = "google_auth_httplib2-0.1.0-py2.py3-none-any.whl", hash = "sha256:31e49c36c6b5643b57e82617cb3e021e3e1d2df9da63af67252c02fa9c1f4a10"},
 ]
 google-cloud-bigquery = [
-    {file = "google-cloud-bigquery-2.24.1.tar.gz", hash = "sha256:8111d23e2af87a96c0646a82a83f62d694b6c8829e7881eb4e437b754471649f"},
-    {file = "google_cloud_bigquery-2.24.1-py2.py3-none-any.whl", hash = "sha256:f9d118a0e408d213f00eb3b5bfb07027a79a6604b078dae86276f6c4938a9c9a"},
+    {file = "google-cloud-bigquery-2.25.0.tar.gz", hash = "sha256:ea6ff7ede03f3a36f809d800aa5b3d0f733f3cdfe34493deef9f3f7da9aeedbd"},
+    {file = "google_cloud_bigquery-2.25.0-py2.py3-none-any.whl", hash = "sha256:2128c4ee294876be9960466dfb8daab9c36185c5bd2ce7b0d342f10cc4fe3769"},
 ]
 google-cloud-core = [
     {file = "google-cloud-core-2.0.0.tar.gz", hash = "sha256:90ee99648ccf9e11a16781a7fc58d13e58f662b439c737d48c24ef18662c2702"},
@@ -2199,8 +2195,8 @@ graphql-server-core = [
     {file = "graphql-server-core-1.2.0.tar.gz", hash = "sha256:04ee90da0322949f7b49ff6905688e3a21a9efbd5a7d7835997e431a0afdbd11"},
 ]
 graphql-ws = [
-    {file = "graphql-ws-0.4.4.tar.gz", hash = "sha256:2ad38db70f37964f54d7eb3e2ede86dbe3f2a1ed7ea0a9f9a3b8b17162a22852"},
-    {file = "graphql_ws-0.4.4-py2.py3-none-any.whl", hash = "sha256:b6f4c9f6968feba80762354068a2a36538a48ac72e4253971be43e0cba020506"},
+    {file = "graphql-ws-0.3.1.tar.gz", hash = "sha256:ad711b974511b229cbc0aabff6ed6dda0706a91df8892cc9e2fce21a827e69f0"},
+    {file = "graphql_ws-0.3.1-py2.py3-none-any.whl", hash = "sha256:2ce29b2dad178f288a469bc6e06b74b4a02edccfcc968c4b5cfaa820e6136b95"},
 ]
 greenlet = [
     {file = "greenlet-1.1.1-cp27-cp27m-macosx_10_14_x86_64.whl", hash = "sha256:476ba9435afaead4382fbab8f1882f75e3fb2285c35c9285abb3dd30237f9142"},

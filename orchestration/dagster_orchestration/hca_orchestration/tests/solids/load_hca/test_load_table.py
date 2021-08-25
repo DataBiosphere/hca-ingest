@@ -6,7 +6,7 @@ from dagster_utils.contrib.data_repo.typing import JobId
 from google.cloud.storage import Client, Blob
 
 from hca_orchestration.contrib.bigquery import BigQueryService
-from hca_orchestration.contrib.data_repo import DataRepoService
+from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
 from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.models.scratch import ScratchConfig
 from hca_orchestration.pipelines.load_hca import test_mode

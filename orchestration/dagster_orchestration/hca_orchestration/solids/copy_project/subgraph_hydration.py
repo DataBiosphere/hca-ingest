@@ -1,9 +1,10 @@
 import json
+import logging
 from collections import defaultdict
 from urllib.parse import urlparse
 
 import requests
-from dagster import solid, InputDefinition, Nothing
+from dagster import Nothing, op, In
 from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
@@ -14,19 +15,19 @@ from google.oauth2.credentials import Credentials
 from requests.structures import CaseInsensitiveDict
 
 from hca_orchestration.contrib.bigquery import BigQueryService
+from hca_orchestration.models.entities import DataFileEntity, MetadataEntity
 from hca_orchestration.models.scratch import ScratchConfig
 from hca_orchestration.resources.hca_project_config import HcaProjectCopyingConfig
-from hca_orchestration.models.entities import DataFileEntity, MetadataEntity
 from hca_orchestration.support.typing import MetadataType
 
 
-@solid(
+@op(
     required_resource_keys={
         "bigquery_service",
         "hca_project_copying_config",
         "scratch_config"
     },
-    input_defs=[InputDefinition("start", Nothing)]
+    ins={"start": In(Nothing)}
 )
 def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileEntity]:
     # 1. given a project ID, query the links table for all rows associated with the project
@@ -110,14 +111,17 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
             entity_file_ids[drs_object] = row[f"target_path"]
 
     # get the actual GS path for the DRS object
-    context.log.info("Resolving DRS object GCS paths...")
+    context.log.info(f"Resolving DRS object GCS paths ({len(drs_objects)} objects)...")
+
     data_entities = set()
     with requests.Session() as s:
         creds = _get_credentials()
         s.headers = CaseInsensitiveDict[str]()
         s.headers["Authorization"] = f"Bearer {creds.token}"
 
-        for drs_object, drs_host in drs_objects.items():
+        for cnt, (drs_object, drs_host) in enumerate(drs_objects.items(), start=1):
+            if cnt % 100 == 0:
+                context.log.info(f"Resolved {cnt} paths...")
             data_entities.add(
                 DataFileEntity(
                     _fetch_drs_access_info(
@@ -125,6 +129,7 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
                         drs_object,
                         s),
                     entity_file_ids[drs_object]))
+        context.log.info(f"Resolved {len(data_entities)} total paths")
 
     return data_entities
 
@@ -184,7 +189,7 @@ def _extract_entities_to_path(
         query_params = [
             ArrayQueryParameter("entity_ids", "STRING", entity_ids)
         ]
-        print(f"**** Saved tabular data ingest to gs://{destination_path}/{entity_type}/*")
+        logging.info(f"Saved tabular data for ingest to gs://{destination_path}/{entity_type}/*")
         bigquery_service.run_query(
             fetch_entities_query, bigquery_project_id, query_params, location='US')
 

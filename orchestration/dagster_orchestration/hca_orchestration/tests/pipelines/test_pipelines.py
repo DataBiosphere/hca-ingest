@@ -13,7 +13,7 @@ from hca_manage.snapshot import InvalidSnapshotNameException
 
 def config_path(relative_path: str) -> str:
     path: str = file_relative_path(
-        __file__, os.path.join("./environments/", relative_path)
+        __file__, os.path.join("../environments/", relative_path)
     )
     return path
 

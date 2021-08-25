@@ -1,7 +1,4 @@
-from collections import defaultdict
-from typing import DefaultDict
-
-from dagster import solid, InputDefinition, Nothing
+from dagster import Nothing, op, In
 from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
@@ -15,14 +12,14 @@ from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.models.scratch import ScratchConfig
 
 
-@solid(
+@op(
     required_resource_keys={
         "gcs",
         "scratch_config",
         "data_repo_client",
         "target_hca_dataset"
     },
-    input_defs=[InputDefinition("start", Nothing)]
+    ins={"start": In(Nothing)}
 )
 def ingest_tabular_data(context: AbstractComputeExecutionContext) -> set[str]:
     gcs = context.resources.gcs
@@ -68,6 +65,11 @@ def _find_entities_for_ingestion(gcs: Client,
     entity_types = {}
 
     for blob in result:
+        blob.reload()
+        if blob.size == 0:
+            print(f"Found 0 byte blob at {blob.name}, removing...")
+            blob.delete()
+
         entity_type = blob.name.split('/')[-2]
         last_idx = blob.name.rfind("/")
         entity_types[entity_type] = GsBucketWithPrefix(scratch_config.scratch_bucket_name, blob.name[0:last_idx])

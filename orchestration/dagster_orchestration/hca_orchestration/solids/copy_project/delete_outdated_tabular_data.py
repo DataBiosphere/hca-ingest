@@ -1,4 +1,4 @@
-from dagster import solid, InputDefinition
+from dagster import InputDefinition, op, In
 from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
@@ -12,9 +12,9 @@ from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.models.scratch import ScratchConfig
 
 
-@solid(
+@op(
     required_resource_keys={"bigquery_service", "target_hca_dataset", "scratch_config", "data_repo_client", "gcs"},
-    input_defs=[InputDefinition("entity_types", set[str])]
+    ins={"entity_types": In(set[str])}
 )
 def delete_outdated_tabular_data(context: AbstractComputeExecutionContext, entity_types: set[str]) -> None:
     """Soft-deletes outdated and duplicate data in each entity type table"""

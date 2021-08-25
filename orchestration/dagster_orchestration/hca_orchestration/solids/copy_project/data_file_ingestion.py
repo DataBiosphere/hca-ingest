@@ -1,4 +1,4 @@
-from dagster import solid
+from dagster import solid, op
 from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
@@ -13,7 +13,7 @@ from hca_orchestration.models.scratch import ScratchConfig
 from hca_orchestration.solids.copy_project.subgraph_hydration import DataFileEntity
 
 
-@solid(
+@op(
     required_resource_keys={
         "gcs",
         "data_repo_client",
