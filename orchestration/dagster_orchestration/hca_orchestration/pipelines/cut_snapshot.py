@@ -89,13 +89,14 @@ test_mode = ModeDefinition(
 
 
 @success_hook(
-    required_resource_keys={'slack', 'snapshot_config', 'dagit_config'}
+    required_resource_keys={'slack', 'snapshot_config', 'dagit_config', 'hca_manage_config'}
 )
 def snapshot_start_notification(context: HookContext) -> None:
     context.log.info(f"Solid output = {context.solid_output_values}")
     job_id = context.solid_output_values["result"]
     kvs = {
         "Snapshot name": context.resources.snapshot_config.snapshot_name,
+        "Google Project ID": context.resources.hca_manage_config.google_project_name,
         "Dataset": context.resources.snapshot_config.dataset_name,
         "TDR Job ID": job_id,
         "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
@@ -106,7 +107,7 @@ def snapshot_start_notification(context: HookContext) -> None:
 
 
 @failure_hook(
-    required_resource_keys={'slack', 'snapshot_config', 'dagit_config'}
+    required_resource_keys={'slack', 'snapshot_config', 'dagit_config', 'hca_manage_config'}
 )
 def snapshot_job_failed_notification(context: HookContext) -> None:
     if "result" in context.solid_output_values:
@@ -116,6 +117,7 @@ def snapshot_job_failed_notification(context: HookContext) -> None:
 
     kvs = {
         "Snapshot name": context.resources.snapshot_config.snapshot_name,
+        "Google Project ID": context.resources.hca_manage_config.google_project_name,
         "Dataset": context.resources.snapshot_config.dataset_name,
         "TDR Job ID": job_id,
         "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
@@ -125,11 +127,12 @@ def snapshot_job_failed_notification(context: HookContext) -> None:
 
 
 @success_hook(
-    required_resource_keys={'slack', 'snapshot_config', 'dagit_config'}
+    required_resource_keys={'slack', 'snapshot_config', 'dagit_config', 'hca_manage_config'}
 )
 def message_for_snapshot_done(context: HookContext) -> None:
     context.resources.slack.send_message(blocks=key_value_slack_blocks("HCA Snapshot Complete", {
         "Snapshot name": context.resources.snapshot_config.snapshot_name,
+        "Google Project ID": context.resources.hca_manage_config.google_project_name,
         "Dataset": context.resources.snapshot_config.dataset_name,
         "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
     }))
