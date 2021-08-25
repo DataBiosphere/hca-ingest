@@ -61,7 +61,7 @@ class DatasetManagerTestCase(unittest.TestCase):
 
     def test_valid_dataset_name(self):
         _validate_dataset_name(
-            "hca_dev_20200812_dssAllNoData"
+            "hca_dev_6da7595859864507839b6d75875925fb__20200812"
         )
 
     def test_invalid_dataset_name(self):

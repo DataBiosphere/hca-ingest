@@ -129,7 +129,7 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
                         drs_object,
                         s),
                     entity_file_ids[drs_object]))
-        context.log.info(f"Resolved {cnt} total paths")
+        context.log.info(f"Resolved {len(data_entities)} total paths")
 
     return data_entities
 
