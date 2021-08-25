@@ -1,9 +1,10 @@
 import json
+import logging
 from collections import defaultdict
 from urllib.parse import urlparse
 
 import requests
-from dagster import InputDefinition, Nothing, op, In
+from dagster import Nothing, op, In
 from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
@@ -118,7 +119,7 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
         s.headers = CaseInsensitiveDict[str]()
         s.headers["Authorization"] = f"Bearer {creds.token}"
 
-        for cnt, (drs_object, drs_host) in enumerate(drs_objects.items()):
+        for cnt, (drs_object, drs_host) in enumerate(drs_objects.items(), start=1):
             if cnt % 100 == 0:
                 context.log.info(f"Resolved {cnt} paths...")
             data_entities.add(
@@ -128,6 +129,7 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
                         drs_object,
                         s),
                     entity_file_ids[drs_object]))
+        context.log.info(f"Resolved {cnt} total paths")
 
     return data_entities
 
@@ -187,7 +189,7 @@ def _extract_entities_to_path(
         query_params = [
             ArrayQueryParameter("entity_ids", "STRING", entity_ids)
         ]
-        print(f"**** Saved tabular data ingest to gs://{destination_path}/{entity_type}/*")
+        logging.info(f"Saved tabular data for ingest to gs://{destination_path}/{entity_type}/*")
         bigquery_service.run_query(
             fetch_entities_query, bigquery_project_id, query_params, location='US')
 

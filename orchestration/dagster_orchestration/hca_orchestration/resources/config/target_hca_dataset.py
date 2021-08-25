@@ -32,7 +32,7 @@ def build_new_target_hca_dataset(init_context: InitResourceContext) -> Optional[
 
     creation_date = datetime.now().strftime("%Y%m%d")
     env = init_context.resource_config['env']
-    target_hca_dataset_name = f"hca_{env}_{creation_date}_{hca_project_id.hex.replace('-', '')}"
+    target_hca_dataset_name = f"hca_{env}_{hca_project_id.hex.replace('-', '')}__{creation_date}"
 
     init_context.log.info(f"Checking for existing dataset named = {target_hca_dataset_name}")
     data_repo_service: DataRepoService = init_context.resources.data_repo_service

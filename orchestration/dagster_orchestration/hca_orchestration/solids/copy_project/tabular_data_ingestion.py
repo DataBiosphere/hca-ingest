@@ -1,4 +1,6 @@
-from dagster import InputDefinition, Nothing, op, In
+import logging
+
+from dagster import Nothing, op, In
 from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
@@ -65,6 +67,11 @@ def _find_entities_for_ingestion(gcs: Client,
     entity_types = {}
 
     for blob in result:
+        blob.reload()
+        if blob.size == 0:
+            logging.info(f"Found 0 byte blob at {blob.name}, removing...")
+            blob.delete()
+
         entity_type = blob.name.split('/')[-2]
         last_idx = blob.name.rfind("/")
         entity_types[entity_type] = GsBucketWithPrefix(scratch_config.scratch_bucket_name, blob.name[0:last_idx])

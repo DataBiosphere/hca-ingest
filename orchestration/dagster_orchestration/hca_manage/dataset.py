@@ -18,7 +18,7 @@ from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client,
 
 MAX_DATASET_OP_POLL_SECONDS = 120
 DATASET_OP_POLL_INTERVAL_SECONDS = 2
-DATASET_NAME_REGEX = "^hca_(dev|prod|staging)_(\\d{4})(\\d{2})(\\d{2})(_[a-zA-Z][a-zA-Z0-9]{0,13})?$"
+DATASET_NAME_REGEX = r"^hca_(dev|prod|staging)_([0-9a-f]{32})?__(\d{4})(\d{2})(\d{2})(?:_([a-zA-Z][a-zA-Z0-9]{0,15}))?$"
 
 
 class InvalidDatasetNameException(ValueError):
