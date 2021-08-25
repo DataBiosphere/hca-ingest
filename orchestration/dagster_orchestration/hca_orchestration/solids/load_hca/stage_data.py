@@ -11,6 +11,7 @@ from hca_orchestration.support.typing import HcaScratchDatasetName
 
 @solid(
     required_resource_keys={"gcs", "scratch_config"},
+    input_defs=[InputDefinition("ignore", Nothing)]
 )
 def clear_scratch_dir(context: AbstractComputeExecutionContext) -> int:
     """

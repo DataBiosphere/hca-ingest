@@ -1,8 +1,6 @@
-from dagster import HookContext, solid, Optional, ResourceDefinition
-from dagster import ModeDefinition, pipeline, success_hook
-from dagster.core.execution.context.compute import AbstractComputeExecutionContext
+from dagster import ModeDefinition, pipeline
+from dagster import ResourceDefinition
 from dagster_gcp.gcs import gcs_pickle_io_manager
-from dagster_utils.contrib.data_repo.typing import JobId
 from dagster_utils.resources.beam.k8s_beam_runner import k8s_dataflow_beam_runner
 from dagster_utils.resources.beam.local_beam_runner import local_beam_runner
 from dagster_utils.resources.beam.noop_beam_runner import noop_beam_runner
@@ -12,16 +10,16 @@ from dagster_utils.resources.google_storage import google_storage_client, mock_s
 from dagster_utils.resources.slack import live_slack_client, console_slack_client
 
 from hca_orchestration.config import preconfigure_resource_for_mode
-from hca_orchestration.contrib.slack import key_value_slack_blocks
 from hca_orchestration.resources import load_tag, bigquery_service, mock_bigquery_service
 from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.config.target_hca_dataset import target_hca_dataset
+from hca_orchestration.resources.data_repo_service import data_repo_service
 from hca_orchestration.solids.load_hca.data_files.load_data_files import import_data_files
 from hca_orchestration.solids.load_hca.data_files.load_data_metadata_files import file_metadata_fanout
 from hca_orchestration.solids.load_hca.non_file_metadata.load_non_file_metadata import non_file_metadata_fanout
 from hca_orchestration.solids.load_hca.stage_data import clear_scratch_dir, pre_process_metadata, create_scratch_dataset
-from hca_orchestration.resources.data_repo_service import data_repo_service
+from hca_orchestration.solids.load_hca.utilities import initial_solid, terminal_solid
 
 prod_mode = ModeDefinition(
     name="prod",
@@ -95,44 +93,15 @@ test_mode = ModeDefinition(
 )
 
 
-@success_hook(
-    required_resource_keys={'slack', 'target_hca_dataset', 'dagit_config'}
-)
-def import_start_notification(context: HookContext) -> None:
-    context.log.info(f"Solid output = {context.solid_output_values}")
-    kvs = {
-        "Staging area": context.solid_config["input_prefix"],
-        "Target Dataset": context.resources.target_hca_dataset.dataset_name,
-        "Jade Project": context.resources.target_hca_dataset.project_id,
-        "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
-    }
-
-    context.resources.slack.send_message(blocks=key_value_slack_blocks("HCA Starting Import", key_values=kvs))
-
-
-@solid(
-    required_resource_keys={'slack', 'target_hca_dataset', 'dagit_config'}
-)
-def terminal_solid(
-        context: AbstractComputeExecutionContext,
-        results1: list[Optional[JobId]],
-        results2: list[Optional[JobId]]
-) -> None:
-    kvs = {
-        "Staging area": context.run_config["solids"]["pre_process_metadata"]["config"]["input_prefix"],
-        "Target Dataset": context.resources.target_hca_dataset.dataset_name,
-        "Jade Project": context.resources.target_hca_dataset.project_id,
-        "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
-    }
-    context.resources.slack.send_message(blocks=key_value_slack_blocks("HCA Completed Import", key_values=kvs))
-
-
 @pipeline(
     mode_defs=[prod_mode, dev_mode, local_mode, test_mode]
 )
 def load_hca() -> None:
-    hooked_pre_process_metadata = pre_process_metadata.with_hooks({import_start_notification})
-    staging_dataset = create_scratch_dataset(hooked_pre_process_metadata(clear_scratch_dir()))
+    staging_dataset = create_scratch_dataset(
+        pre_process_metadata(
+            clear_scratch_dir(
+                initial_solid()
+            )))
 
     result = import_data_files(staging_dataset).collect()
 
