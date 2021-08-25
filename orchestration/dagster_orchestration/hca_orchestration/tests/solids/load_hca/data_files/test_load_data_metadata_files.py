@@ -8,10 +8,15 @@ from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType
 
 run_config = {
     "resources": {
+        "load_tag": {
+            "config": {
+                "append_timestamp": False,
+                "load_tag_prefix": "load_tag_prefix"
+            }
+        },
         "scratch_config": {
             "config": {
                 "scratch_bucket_name": "bucket_name",
-                "scratch_prefix_name": "prefix_name",
                 "scratch_bq_project": "bq_project",
                 "scratch_dataset_prefix": "dataset_prefix",
                 "scratch_table_expiration_ms": 86400000
