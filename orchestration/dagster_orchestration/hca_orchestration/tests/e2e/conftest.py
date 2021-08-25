@@ -93,14 +93,13 @@ def load_hca_run_config(dataset_name: str, dataset_info: DatasetInfo):
             },
             "load_tag": {
                 "config": {
-                    "load_tag_prefix": "monster_test",
+                    "load_tag_prefix": "hcatest",
                     "append_timestamp": True
                 }
             },
             "scratch_config": {
                 "config": {
                     "scratch_bucket_name": "broad-dsp-monster-hca-dev-temp-storage",
-                    "scratch_prefix_name": f"e2e/{dataset_name}",
                     "scratch_bq_project": "broad-dsp-monster-hca-dev",
                     "scratch_dataset_prefix": f"e2e_test_{dataset_name}",
                     "scratch_table_expiration_ms": 86400000

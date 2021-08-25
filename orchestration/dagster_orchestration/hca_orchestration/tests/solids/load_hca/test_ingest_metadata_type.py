@@ -27,6 +27,14 @@ class IngestMetadataTypeSolidTestCase(unittest.TestCase):
                 "scratch_dataset_name": FakeDatasetName
             },
             run_config={
+                "resources": {
+                    "load_tag": {
+                        "config": {
+                            "append_timestamp": False,
+                            "load_tag_prefix": "load_tag_prefix"
+                        }
+                    },
+                },
                 "solids": {
                     "ingest_metadata_type": {
                         "config": {

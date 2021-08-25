@@ -34,7 +34,6 @@ stage_data_test_mode.resource_defs["bigquery_client"] = ResourceDefinition.hardc
 scratch_config = {
     "config": {
         "scratch_bucket_name": "my-fake-bucket",
-        "scratch_prefix_name": "prefix_name",
         "scratch_bq_project": "bq_project",
         "scratch_dataset_prefix": "dataset_prefix",
         "scratch_table_expiration_ms": 86400000
@@ -48,6 +47,12 @@ def test_clear_scratch_dir():
         mode_def=stage_data_test_mode,
         run_config={
             "resources": {
+                "load_tag": {
+                    "config": {
+                        "append_timestamp": False,
+                        "load_tag_prefix": "fake"
+                    }
+                },
                 "scratch_config": scratch_config
             }
         }
@@ -70,7 +75,13 @@ def test_pre_process_metadata():
                 }
             },
             "resources": {
-                "scratch_config": scratch_config
+                "scratch_config": scratch_config,
+                "load_tag": {
+                    "config": {
+                        "append_timestamp": False,
+                        "load_tag_prefix": "fake"
+                    }
+                },
             }
         }
     )
@@ -88,7 +99,7 @@ def test_create_scratch_dataset():
                 "scratch_config": scratch_config,
                 "load_tag": {
                     "config": {
-                        "append_timestamp": True,
+                        "append_timestamp": False,
                         "load_tag_prefix": "load_tag_prefix"
                     }
                 }
