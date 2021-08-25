@@ -113,8 +113,11 @@ def import_start_notification(context: HookContext) -> None:
 @solid(
     required_resource_keys={'slack', 'target_hca_dataset', 'dagit_config'}
 )
-def terminal_solid(context: AbstractComputeExecutionContext,
-                   results1: list[Optional[JobId]], results2: list[Optional[JobId]]) -> None:
+def terminal_solid(
+        context: AbstractComputeExecutionContext,
+        results1: list[Optional[JobId]],
+        results2: list[Optional[JobId]]
+) -> None:
     kvs = {
         "Staging area": context.run_config["solids"]["pre_process_metadata"]["config"]["input_prefix"],
         "Target Dataset": context.resources.target_hca_dataset.dataset_name,
