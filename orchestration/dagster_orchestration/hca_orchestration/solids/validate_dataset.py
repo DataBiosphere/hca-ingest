@@ -18,5 +18,5 @@ def validate_copied_dataset(context: AbstractComputeExecutionContext) -> None:
         data_repo_client=context.resources.data_repo_client
     ).check_for_all()
 
-    if not result:
+    if result.has_problems():
         raise Failure(f"Dataset {target_hca_dataset.dataset_name} failed validation")
