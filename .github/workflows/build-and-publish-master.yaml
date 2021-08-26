@@ -41,10 +41,10 @@ jobs:
           java-version: graalvm@20.0.0
       - name: Check Scala formatting
         run: sbt scalafmtCheckAll
-      - name: Scala Compile
-        run: sbt Compile/compile Test/compile IntegrationTest/compile
-      - name: Scala Test
-        run: sbt "set ThisBuild/coverageEnabled := true" test IntegrationTest/test coverageAggregate
+#      - name: Scala Compile
+#        run: sbt Compile/compile Test/compile IntegrationTest/compile
+#      - name: Scala Test
+#        run: sbt "set ThisBuild/coverageEnabled := true" test IntegrationTest/test coverageAggregate
       - name: Run E2E test suite
         run: poetry run pytest -v -m e2e
         working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
