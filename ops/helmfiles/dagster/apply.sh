@@ -52,5 +52,14 @@ function fire_slack_deployment_notification () {
     }"
 }
 
+
+echo "Deploying to ${ENV}"
+
+if [ "$ENV" == "prod" ]; then
+	gcloud container clusters get-credentials hca-cluster --project mystical-slate-284720 --region us-central1-c
+else
+	gcloud container clusters get-credentials hca-cluster --project broad-dsp-monster-hca-dev --region us-central1-c
+fi
+
 helmfile $COMMAND
 fire_slack_deployment_notification ${ENV} ${GIT_SHORTHASH}
