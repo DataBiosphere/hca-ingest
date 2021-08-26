@@ -155,8 +155,8 @@ class DatasetManager:
         }[self.environment]
 
     def generate_schema(self) -> dict[str, object]:
-        cwd = os.path.join(os.path.dirname(__file__), "../../../")
-        schema_path = f"{cwd}/schema/target/schema.json"
+        cwd = os.path.join(os.path.dirname(__file__), "../")
+        schema_path = f"{cwd}/schema.json"
         if not os.path.exists(schema_path):
             subprocess.run(
                 ["sbt", f'generateJadeSchema'],

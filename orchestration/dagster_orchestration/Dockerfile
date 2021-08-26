@@ -29,4 +29,3 @@ RUN  rm -rf /var \
 
 # ==> Add user code layer
 COPY ./ /
-COPY ../schema/target/schema.json /schema/target/schema.json
