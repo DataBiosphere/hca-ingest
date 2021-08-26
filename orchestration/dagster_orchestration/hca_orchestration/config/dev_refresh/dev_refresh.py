@@ -28,8 +28,7 @@ def run_config_for_dev_refresh_partition(partition: Partition) -> DagsterObjectC
     )
     run_config: DagsterObjectConfigSchema = load_yaml_from_path(path)
     run_config["resources"]["hca_project_copying_config"]["config"]["source_hca_project_id"] = partition.value
-    run_config["resources"]["load_tag"]["config"]["load_tag_prefix"] = f"dev_refresh_project_{partition.value}"
-    run_config["resources"]["scratch_config"]["config"]["scratch_prefix_name"] = f"project_copy_{partition.value}"
+    run_config["resources"]["load_tag"]["config"]["load_tag_prefix"] = f"dr"
 
     return run_config
 
@@ -40,9 +39,7 @@ def run_config_for_per_project_dataset_partition(partition: Partition) -> Dagste
     )
     run_config: DagsterObjectConfigSchema = load_yaml_from_path(path)
     run_config["resources"]["hca_project_copying_config"]["config"]["source_hca_project_id"] = partition.value
-    run_config["resources"]["load_tag"]["config"]["load_tag_prefix"] = f"dev_refresh_project_{partition.value}"
-    run_config["resources"]["scratch_config"]["config"][
-        "scratch_prefix_name"] = f"project_copy_{partition.value}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    run_config["resources"]["load_tag"]["config"]["load_tag_prefix"] = f"dr"
 
     return run_config
 
