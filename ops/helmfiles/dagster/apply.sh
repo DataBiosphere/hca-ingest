@@ -61,5 +61,5 @@ else
 	gcloud container clusters get-credentials hca-cluster --project broad-dsp-monster-hca-dev --region us-central1-c
 fi
 
-helmfile $COMMAND
+helmfile --interactive $COMMAND
 fire_slack_deployment_notification ${ENV} ${GIT_SHORTHASH}
