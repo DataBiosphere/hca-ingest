@@ -20,7 +20,7 @@ def load_tag(init_context: InitResourceContext) -> str:
 
     NOTE: We can only use pipeline-level, static items when generating the load tag
     (i.e., run_id) as this will be regenerated every time we cross
-    prcoess boundaries (i.e., when running via the multiprocess executor)
+    process boundaries (i.e., when running via the multiprocess executor)
 
     Hence, we cannot use a timestamp or other such dynamically generated data
     :return: The generated load tag
