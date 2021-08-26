@@ -5,7 +5,7 @@ resources:
       source_snapshot_name: hca_prod_20201120_dcp2___20210812_dcp8
   load_tag:
     config:
-      append_timestamp: true
+      append_run_id: true
       load_tag_prefix: project_copy
   scratch_config:
     config:

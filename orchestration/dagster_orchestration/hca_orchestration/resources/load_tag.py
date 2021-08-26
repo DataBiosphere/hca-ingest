@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 
 from dagster import resource, Field, InitResourceContext, Bool, String, Failure
@@ -10,7 +11,7 @@ MAX_LOAD_TAG_LEN = 26
 
 @resource({
     "load_tag_prefix": Field(String),
-    "append_timestamp": Field(Bool),
+    "append_run_id": Field(Bool),
 })
 def load_tag(init_context: InitResourceContext) -> str:
     """
@@ -19,8 +20,13 @@ def load_tag(init_context: InitResourceContext) -> str:
     :return: The generated load tag
     """
     tag = f"{init_context.resource_config['load_tag_prefix']}"
-    if init_context.resource_config['append_timestamp']:
-        tag = f"{tag}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    if init_context.resource_config['append_run_id']:
+        run_id = init_context.run_id
+        if not run_id:
+            # no run id in test scenarios, generate one here
+            run_id = uuid.uuid4().hex
+
+        tag = f"{tag}_{run_id[0:8]}"
 
     if len(tag) > MAX_LOAD_TAG_LEN:
         raise Failure(f"Load tag must be less than {MAX_LOAD_TAG_LEN} chars")

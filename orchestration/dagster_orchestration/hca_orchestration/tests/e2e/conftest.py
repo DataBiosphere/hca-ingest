@@ -94,7 +94,7 @@ def load_hca_run_config(dataset_name: str, dataset_info: DatasetInfo):
             "load_tag": {
                 "config": {
                     "load_tag_prefix": "hcatest",
-                    "append_timestamp": True
+                    "append_run_id": True
                 }
             },
             "scratch_config": {

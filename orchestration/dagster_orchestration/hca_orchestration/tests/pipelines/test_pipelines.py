@@ -8,7 +8,6 @@ from dagster.utils import load_yaml_from_globs
 from dagster.utils.merger import deep_merge_dicts
 
 from hca_orchestration.pipelines import cut_snapshot, load_hca, validate_egress
-from hca_manage.snapshot import InvalidSnapshotNameException
 
 
 def config_path(relative_path: str) -> str:
@@ -48,7 +47,7 @@ class PipelinesTestCase(unittest.TestCase):
         self.assertTrue(result.success)
         scratch_dataset_name = result.result_for_solid("create_scratch_dataset").output_value("result")
         self.assertTrue(
-            scratch_dataset_name.startswith("fake_bq_project.testing_dataset_prefix_dcpfake"),
+            scratch_dataset_name.startswith("fake_bq_project.testing_dataset_prefix_fake"),
             "staging dataset should start with load tag prefix"
         )
 

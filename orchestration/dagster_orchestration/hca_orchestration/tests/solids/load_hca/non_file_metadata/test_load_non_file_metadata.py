@@ -9,7 +9,7 @@ run_config = {
     "resources": {
         "load_tag": {
             "config": {
-                "append_timestamp": False,
+                "append_run_id": False,
                 "load_tag_prefix": "load_tag_prefix"
             }
         },
