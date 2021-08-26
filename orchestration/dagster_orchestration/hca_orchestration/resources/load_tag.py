@@ -16,7 +16,13 @@ MAX_LOAD_TAG_LEN = 26
 def load_tag(init_context: InitResourceContext) -> str:
     """
     Generates a load tag for the pipeline, optionally suffixing
-    with a timestamp.
+    with a run ID.
+
+    NOTE: We can only use pipeline-level, static items when generating the load tag
+    (i.e., run_id) as this will be regenerated every time we cross
+    prcoess boundaries (i.e., when running via the multiprocess executor)
+
+    Hence, we cannot use a timestamp or other such dynamically generated data
     :return: The generated load tag
     """
     tag = f"{init_context.resource_config['load_tag_prefix']}"
