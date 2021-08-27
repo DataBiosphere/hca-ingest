@@ -84,6 +84,11 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
                 raise Exception(f"Unknown link type {link_type} encountered")
 
     context.log.info("Saving entities to extract scratch path...")
+    if 'project' not in nodes:
+        # some subgraphs don't explicitly include the parent project
+        nodes['project'].append(
+            MetadataEntity(MetadataType('project'), hca_project_config.source_hca_project_id)
+        )
     _extract_entities_to_path(
         nodes,
         f"{scratch_bucket_name}/tabular_data_for_ingest",
@@ -93,6 +98,7 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
     )
 
     context.log.info("Determining files to load...")
+
     entity_rows: dict[str, list[Row]] = fetch_entities(nodes,
                                                        hca_project_config.source_bigquery_project_id,
                                                        hca_project_config.source_snapshot_name,
