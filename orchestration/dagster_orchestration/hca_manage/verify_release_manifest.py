@@ -8,6 +8,9 @@ areas descriptors. It's possible that an expected file was loaded by another sta
 contain the same file). While this is discouraged, it's technically possible and we need to accommodate that.
 So, we check if the target path was loaded, disregarding the source staging dir.
 
+Additonally, this will check that metadata was loaded properly (including links) by pull the entity_id, version and
+content from the files in GS and checking that the expected row is present in the given dataset.
+
 Example invocation:
 python verify_release_manifest.py -f testing.csv -g fake-gs-project -b fake-bq-project -d fake-dataset
 """
@@ -20,13 +23,14 @@ from collections import defaultdict
 from functools import partial
 from multiprocessing import Pool
 from urllib.parse import urlparse
+import dateutil
 
 from google.cloud import bigquery, storage
 from google.cloud.storage.client import Client
 from dagster_utils.contrib.google import get_credentials
 
-
 from hca_orchestration.solids.load_hca.data_files.load_data_metadata_files import FileMetadataTypes
+from hca_orchestration.solids.load_hca.non_file_metadata.load_non_file_metadata import NonFileMetadataTypes
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 
@@ -109,12 +113,80 @@ def process_staging_area(area: str, gs_project: str, bq_project: str, dataset: s
 
         if diff:
             logging.warning(
-                f"❌ area = {area} Mismatched loaded paths; expected to find {staged}, found {loaded}"
+                f"❌ area = {area} - (data files) Mismatched loaded paths; expected files loaded = {staged}, actual loaded = {loaded}"
             )
             logging.warning(diff)
         else:
             logging.info(
-                f"✅  area = {area}, expected = {staged}, found {loaded}")
+                f"✅ area = {area} - (data files) expected files loaded = {staged}, actual loaded = {loaded}")
+
+        verify_metadata(area, bq_project, dataset)
+
+
+def inspect_entities_at_path(storage_client, bq_client, bq_project, bq_dataset, staging_area, prefix, entity_type):
+    metadata_entities = {}
+
+    url = urlparse(staging_area)
+    if prefix:
+        prefix = f"{url.path.lstrip('/')}/{prefix}/{entity_type}"
+    else:
+        prefix = f"{url.path.lstrip('/')}/{entity_type}"
+
+    blobs = list(storage_client.list_blobs(url.netloc, prefix=prefix))
+
+    for blob in blobs:
+        content = blob.download_as_text()
+        file_name = blob.name.split('/')[-1]
+        entity_id = file_name.split('_')[0]
+        version = file_name.split('_')[1].replace('.json', '')
+        metadata_entities[entity_id] = (version, content)
+
+    if len(metadata_entities) == 0:
+        if entity_type == 'links':
+            raise Exception(f"❌ area = {staging_area} no links data found")
+
+        logging.debug(f"❌ area = {staging_area} No metadata for {entity_type} expected, skipping")
+        return
+
+    logging.debug(f"querying for metadata entities of type {entity_type}")
+    entity_ids = metadata_entities.keys()
+    query = f"""
+    SELECT {entity_type}_id, content, version FROM `{bq_project}.datarepo_{bq_dataset}.{entity_type}`
+    WHERE {entity_type}_id IN UNNEST(@entity_ids)
+    """
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ArrayQueryParameter("entity_ids", "STRING", entity_ids),
+        ]
+    )
+    query_job = bq_client.query(query, job_config=job_config)
+    rows = {row[f'{entity_type}_id']: (row['version'], row['content']) for row in query_job.result()}
+
+    for key, (version, content) in metadata_entities.items():
+        assert key in rows.keys(), f"{entity_type} ID {key} not in table"
+        row = rows[key]
+        assert dateutil.parser.parse(version) == row[0], f"{entity_type} ID {key} version is incorrect"
+        assert json.loads(content) == json.loads(row[1]), f"{entity_type} ID {key} content is incorrect"
+
+    logging.info(
+        f"✅ area = {staging_area} - (metadata) all {entity_type} entities found ({len(metadata_entities.keys())} entities)")
+
+
+def verify_metadata(staging_area, bq_project, bq_dataset):
+    creds = get_credentials()
+    storage_client = storage.Client(project="broad-dsp-monster-hca-prod", credentials=creds)
+
+    client = bigquery.Client(project=bq_project)
+    inspect_entities_at_path(storage_client, client, bq_project, bq_dataset, staging_area, "", "links")
+    for file_type in NonFileMetadataTypes:
+        if file_type.value == 'links':
+            continue
+        inspect_entities_at_path(storage_client, client, bq_project, bq_dataset, staging_area, "metadata",
+                                 file_type.value)
+
+    for file_type in FileMetadataTypes:
+        inspect_entities_at_path(storage_client, client, bq_project, bq_dataset, staging_area, "metadata",
+                                 file_type.value)
 
 
 def verify(manifest_file: str, gs_project: str, bq_project: str, dataset: str, pool_size: int) -> bool:
