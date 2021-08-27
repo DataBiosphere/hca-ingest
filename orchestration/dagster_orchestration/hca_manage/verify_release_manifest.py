@@ -23,7 +23,7 @@ from collections import defaultdict
 from functools import partial
 from multiprocessing import Pool
 from urllib.parse import urlparse
-import dateutil
+from dateutil import parser
 
 from google.cloud import bigquery, storage
 from google.cloud.storage.client import Client
@@ -123,7 +123,8 @@ def process_staging_area(area: str, gs_project: str, bq_project: str, dataset: s
         verify_metadata(area, bq_project, dataset)
 
 
-def inspect_entities_at_path(storage_client, bq_client, bq_project, bq_dataset, staging_area, prefix, entity_type):
+def inspect_entities_at_path(storage_client: Client, bq_client: bigquery.Client, bq_project: str,
+                             bq_dataset: str, staging_area: str, prefix: str, entity_type: str) -> None:
     metadata_entities = {}
 
     url = urlparse(staging_area)
@@ -165,28 +166,28 @@ def inspect_entities_at_path(storage_client, bq_client, bq_project, bq_dataset, 
     for key, (version, content) in metadata_entities.items():
         assert key in rows.keys(), f"{entity_type} ID {key} not in table"
         row = rows[key]
-        assert dateutil.parser.parse(version) == row[0], f"{entity_type} ID {key} version is incorrect"
+        assert parser.parse(version) == row[0], f"{entity_type} ID {key} version is incorrect"
         assert json.loads(content) == json.loads(row[1]), f"{entity_type} ID {key} content is incorrect"
 
     logging.info(
         f"✅ area = {staging_area} - (metadata) all {entity_type} entities found ({len(metadata_entities.keys())} entities)")
 
 
-def verify_metadata(staging_area, bq_project, bq_dataset):
+def verify_metadata(staging_area: str, bq_project: str, bq_dataset: str) -> None:
     creds = get_credentials()
     storage_client = storage.Client(project="broad-dsp-monster-hca-prod", credentials=creds)
 
     client = bigquery.Client(project=bq_project)
     inspect_entities_at_path(storage_client, client, bq_project, bq_dataset, staging_area, "", "links")
-    for file_type in NonFileMetadataTypes:
-        if file_type.value == 'links':
+    for non_file_metadata_type in NonFileMetadataTypes:
+        if non_file_metadata_type.value == 'links':
             continue
         inspect_entities_at_path(storage_client, client, bq_project, bq_dataset, staging_area, "metadata",
-                                 file_type.value)
+                                 non_file_metadata_type.value)
 
-    for file_type in FileMetadataTypes:
+    for file_metadata_type in FileMetadataTypes:
         inspect_entities_at_path(storage_client, client, bq_project, bq_dataset, staging_area, "metadata",
-                                 file_type.value)
+                                 file_metadata_type.value)
 
 
 def verify(manifest_file: str, gs_project: str, bq_project: str, dataset: str, pool_size: int) -> bool:
@@ -208,13 +209,13 @@ def verify(manifest_file: str, gs_project: str, bq_project: str, dataset: str, p
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-f", "--manifest-file", required=True)
-    parser.add_argument("-g", "--gs-project", required=True)
-    parser.add_argument("-b", "--bq-project", required=True)
-    parser.add_argument("-d", "--dataset", required=True)
-    parser.add_argument("-p", "--pool-size", type=int, default=4)
-    args = parser.parse_args()
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument("-f", "--manifest-file", required=True)
+    argparser.add_argument("-g", "--gs-project", required=True)
+    argparser.add_argument("-b", "--bq-project", required=True)
+    argparser.add_argument("-d", "--dataset", required=True)
+    argparser.add_argument("-p", "--pool-size", type=int, default=4)
+    args = argparser.parse_args()
 
     result = verify(args.manifest_file, args.gs_project, args.bq_project, args.dataset, args.pool_size)
     if not result:
