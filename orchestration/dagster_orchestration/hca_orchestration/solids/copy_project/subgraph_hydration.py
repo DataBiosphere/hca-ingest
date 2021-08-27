@@ -93,6 +93,12 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
     )
 
     context.log.info("Determining files to load...")
+    if 'project' not in nodes:
+        # some subgraphs don't explicitly include the parent project
+        nodes['project'].append(
+            MetadataEntity(MetadataType('project'), hca_project_config.source_hca_project_id)
+        )
+
     entity_rows: dict[str, list[Row]] = fetch_entities(nodes,
                                                        hca_project_config.source_bigquery_project_id,
                                                        hca_project_config.source_snapshot_name,
