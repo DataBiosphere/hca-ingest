@@ -1,7 +1,8 @@
+from typing import Iterator
+
 from dagster import op, Failure, In, Nothing, AssetMaterialization, AssetKey, Out, Output
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
-from hca_manage.common import ProblemCount
 from hca_manage.check import CheckManager
 from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.resources.hca_project_config import HcaProjectCopyingConfig
@@ -15,7 +16,7 @@ from hca_orchestration.resources.hca_project_config import HcaProjectCopyingConf
     },
     ins={"start": In(Nothing)}
 )
-def validate_copied_dataset(context: AbstractComputeExecutionContext) -> ProblemCount:
+def validate_copied_dataset(context: AbstractComputeExecutionContext) -> Iterator[Output]:
     target_hca_dataset: TdrDataset = context.resources.target_hca_dataset
     hca_project_config: HcaProjectCopyingConfig = context.resources.hca_project_copying_config
 
