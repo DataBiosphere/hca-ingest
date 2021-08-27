@@ -1,8 +1,8 @@
 resources:
   load_tag:
     config:
-      load_tag_prefix: dcpfake
-      append_timestamp: true
+      load_tag_prefix: fake
+      append_run_id: true
   scratch_config:
     config:
       scratch_bucket_name: example_staging_bucket_name

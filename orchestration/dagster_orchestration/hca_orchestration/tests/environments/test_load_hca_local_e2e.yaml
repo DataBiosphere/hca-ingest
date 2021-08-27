@@ -4,7 +4,7 @@ resources:
       target_class: hca-transformation-pipeline
   load_tag:
     config:
-      append_timestamp: true
+      append_run_id: true
       load_tag_prefix: test_load_hca_local_e2e
   scratch_config:
     config:

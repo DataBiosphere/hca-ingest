@@ -49,7 +49,7 @@ def test_clear_scratch_dir():
             "resources": {
                 "load_tag": {
                     "config": {
-                        "append_timestamp": False,
+                        "append_run_id": False,
                         "load_tag_prefix": "fake"
                     }
                 },
@@ -78,7 +78,7 @@ def test_pre_process_metadata():
                 "scratch_config": scratch_config,
                 "load_tag": {
                     "config": {
-                        "append_timestamp": False,
+                        "append_run_id": False,
                         "load_tag_prefix": "fake"
                     }
                 },
@@ -99,7 +99,7 @@ def test_create_scratch_dataset():
                 "scratch_config": scratch_config,
                 "load_tag": {
                     "config": {
-                        "append_timestamp": False,
+                        "append_run_id": False,
                         "load_tag_prefix": "load_tag_prefix"
                     }
                 }

@@ -27,7 +27,7 @@ def run_config(test_bucket_name):
             "load_tag": {
                 "config": {
                     "load_tag_prefix": "fake",
-                    "append_timestamp": False
+                    "append_run_id": False
                 }
             },
             "scratch_config": {
