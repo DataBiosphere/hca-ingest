@@ -3,7 +3,7 @@ Python CLI tools to help work with TDR and HCA.
 
 ## How to run
 - Install [Poetry](https://python-poetry.org/) (make sure you're using python 3)
-- Run `poetry install` from the dagster_orchestration directory to install dependencies
+- Run `poetry install` from the orchestration directory to install dependencies
 - Test it with `poetry run check -V` to get the version
 
 Before running it, you need to make sure your google application default credentials are all lined up.

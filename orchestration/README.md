@@ -6,7 +6,7 @@ todos and anything else we bump into as we test out this technology.
 
 ## Setting up your dev environment
 * Make sure you have [Poetry](https://python-poetry.org/docs/#installation) installed.
-* From the `dagster_orchestration` dir, run `poetry install` to install all dependencies.
+* From the `orchestration` dir, run `poetry install` to install all dependencies.
 * Run `poetry run pre-commit install` to install a hook that will automatically lint your code whenever you create a commit.
 	* If the hook blocks you from creating a commit, you can just run `git commit` again, unless it reports any linting errors it wasn't able to fix.
 

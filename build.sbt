@@ -25,11 +25,3 @@ lazy val `hca-transformation-pipeline` = project
     )
   )
   .dependsOn(`hca-schema`)
-
-lazy val `hca-orchestration-workflow` = project
-  .in(file("orchestration"))
-  .enablePlugins(MonsterHelmPlugin)
-  .settings(
-    helmChartOrganization := "DataBiosphere",
-    helmChartRepository := "hca-ingest"
-  )
