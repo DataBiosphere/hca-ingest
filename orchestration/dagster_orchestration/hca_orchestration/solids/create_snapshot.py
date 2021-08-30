@@ -55,5 +55,6 @@ def get_completed_snapshot_info(context: AbstractComputeExecutionContext, job_id
 @solid(
     required_resource_keys={'sam_client'},
 )
-def make_snapshot_public(context: AbstractComputeExecutionContext, snapshot_id: str) -> None:
+def make_snapshot_public(context: AbstractComputeExecutionContext, snapshot_id: str) -> str:
     context.resources.sam_client.make_snapshot_public(snapshot_id)
+    return snapshot_id

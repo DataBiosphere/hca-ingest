@@ -7,6 +7,7 @@ from dagster_utils.resources.google_storage import google_storage_client
 from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client, noop_data_repo_client
 from dagster_utils.resources.sam import sam_client, noop_sam_client
 from dagster_utils.resources.slack import console_slack_client, live_slack_client
+from data_repo_client import SnapshotRequestAccessIncludeModel
 
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.contrib.slack import key_value_slack_blocks
@@ -15,7 +16,6 @@ from hca_orchestration.solids.create_snapshot import get_completed_snapshot_info
 from hca_orchestration.solids.data_repo import wait_for_job_completion
 from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.data_repo import hca_manage_config, snapshot_creation_config
-
 
 real_prod_mode = ModeDefinition(
     name="real_prod",
@@ -30,7 +30,6 @@ real_prod_mode = ModeDefinition(
         "dagit_config": preconfigure_resource_for_mode(dagit_config, "prod"),
     }
 )
-
 
 prod_mode = ModeDefinition(
     name="prod",
@@ -117,8 +116,8 @@ def snapshot_job_failed_notification(context: HookContext) -> None:
 
     kvs = {
         "Snapshot name": context.resources.snapshot_config.snapshot_name,
-        "Google Project ID": context.resources.hca_manage_config.google_project_name,
-        "Dataset": context.resources.snapshot_config.dataset_name,
+        "Dataset jGoogle Project ID": context.resources.hca_manage_config.google_project_name,
+        "Source Dataset": context.resources.snapshot_config.dataset_name,
         "TDR Job ID": job_id,
         "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
     }
@@ -127,13 +126,21 @@ def snapshot_job_failed_notification(context: HookContext) -> None:
 
 
 @success_hook(
-    required_resource_keys={'slack', 'snapshot_config', 'dagit_config', 'hca_manage_config'}
+    required_resource_keys={'slack', 'snapshot_config', 'dagit_config', 'hca_manage_config', 'data_repo_client'}
 )
 def message_for_snapshot_done(context: HookContext) -> None:
+    snapshot_id = context.solid_output_values["result"]
+    snapshot_details: SnapshotRequestAccessIncludeModel = context.resources.data_repo_client.retrieve_snapshot(
+        id=snapshot_id,
+        include=["DATA_PROJECT"]
+    )
+    data_repo_project = snapshot_details.data_project
+
     context.resources.slack.send_message(blocks=key_value_slack_blocks("HCA Snapshot Complete", {
         "Snapshot name": context.resources.snapshot_config.snapshot_name,
-        "Google Project ID": context.resources.hca_manage_config.google_project_name,
-        "Dataset": context.resources.snapshot_config.dataset_name,
+        "Dataset Google Project ID": context.resources.hca_manage_config.google_project_name,
+        "Source Dataset": context.resources.snapshot_config.dataset_name,
+        "Snapshot Google Data Project ID": data_repo_project,
         "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
     }))
 
