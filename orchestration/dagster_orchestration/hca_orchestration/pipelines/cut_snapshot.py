@@ -116,7 +116,7 @@ def snapshot_job_failed_notification(context: HookContext) -> None:
 
     kvs = {
         "Snapshot name": context.resources.snapshot_config.snapshot_name,
-        "Dataset jGoogle Project ID": context.resources.hca_manage_config.google_project_name,
+        "Dataset Google Project ID": context.resources.hca_manage_config.google_project_name,
         "Source Dataset": context.resources.snapshot_config.dataset_name,
         "TDR Job ID": job_id,
         "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
