@@ -17,7 +17,8 @@ from hca_manage.common import data_repo_host, data_repo_profile_ids, DefaultHelp
 
 MAX_SNAPSHOT_DELETE_POLL_SECONDS = 120
 SNAPSHOT_DELETE_POLL_INTERVAL_SECONDS = 2
-SNAPSHOT_NAME_REGEX = r"^hca_(dev|prod|staging)_(\d{4})(\d{2})(\d{2})(_[a-zA-Z][a-zA-Z0-9]{0,13})?_([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})?__(\d{4})(\d{2})(\d{2})(?:_([a-zA-Z][a-zA-Z0-9]{0,13}))?$"
+LEGACY_SNAPSHOT_NAME_REGEX = r"^hca_(dev|prod|staging)_(\d{4})(\d{2})(\d{2})(_[a-zA-Z][a-zA-Z0-9]{0,13})?_([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})?__(\d{4})(\d{2})(\d{2})(?:_([a-zA-Z][a-zA-Z0-9]{0,13}))?$"
+UPDATED_SNAPSHOT_NAME_REGEX = r"^hca_(dev|prod|staging)_([0-9a-f]{32})?__(\d{4})(\d{2})(\d{2})(?:_([a-zA-Z][a-zA-Z0-9]{0,15}))?_(\d{4})(\d{2})(\d{2})(?:_([a-zA-Z][a-zA-Z0-9]{0,15}))?$"
 
 
 class InvalidSnapshotNameException(ValueError):
@@ -192,7 +193,8 @@ class SnapshotManager:
         :param managed_access: Determine which set of readers to grant access to this snapshot (default = False)
         :return: Job ID of the snapshot creation job
         """
-        if not search(SNAPSHOT_NAME_REGEX, snapshot_name):
+        if not search(LEGACY_SNAPSHOT_NAME_REGEX, snapshot_name) \
+                and not search(UPDATED_SNAPSHOT_NAME_REGEX, snapshot_name):
             raise InvalidSnapshotNameException(f"Snapshot name {snapshot_name} is invalid")
 
         reader_list = self.managed_access_reader_list if managed_access else self.publc_access_reader_list

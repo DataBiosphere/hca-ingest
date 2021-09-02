@@ -72,7 +72,8 @@ class DataRepoService:
         dataset_summary: DatasetSummaryModel = result.items[0]
         dataset_manager = DatasetManager(env, self.data_repo_client)
         dataset_model = dataset_manager.retrieve_dataset(dataset_summary.id)
-        return TdrDataset(dataset_name, dataset_model.id, dataset_model.data_project, dataset_model.default_profile_id)
+        return TdrDataset(dataset_model.name, dataset_model.id,
+                          dataset_model.data_project, dataset_model.default_profile_id)
 
     def create_dataset(
             self,

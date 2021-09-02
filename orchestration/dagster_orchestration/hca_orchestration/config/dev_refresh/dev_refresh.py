@@ -44,6 +44,30 @@ def run_config_for_per_project_dataset_partition(partition: Partition) -> Dagste
     return run_config
 
 
+def run_config_for_cut_snapshot_partition(partition: Partition) -> DagsterObjectConfigSchema:
+    run_config = {
+        "resources": {
+            "snapshot_config": {
+                "config": {
+                    "source_hca_project_id": partition.value,
+                    "managed_access": "false",
+                }
+            }
+        }
+    }
+
+    return run_config
+
+
+def dev_refresh_cut_snapshot_partition_set() -> PartitionSetDefinition:
+    return PartitionSetDefinition(
+        name="dev_refresh_cut_snapshot_partition_set",
+        pipeline_name="cut_snapshot",
+        partition_fn=get_dev_refresh_partitions,
+        run_config_fn_for_partition=run_config_for_cut_snapshot_partition
+    )
+
+
 def dev_refresh_partition_set() -> PartitionSetDefinition:
     return PartitionSetDefinition(
         name="dev_refresh_partition_set",
@@ -58,5 +82,6 @@ def dev_refresh_per_project_dataset_partition_set() -> PartitionSetDefinition:
         name="per_project_dataset_dev_refresh_partition_set",
         pipeline_name="copy_project_to_new_dataset",
         partition_fn=get_dev_refresh_partitions,
-        run_config_fn_for_partition=run_config_for_per_project_dataset_partition
+        run_config_fn_for_partition=run_config_for_per_project_dataset_partition,
+        mode="dev_refresh"
     )
