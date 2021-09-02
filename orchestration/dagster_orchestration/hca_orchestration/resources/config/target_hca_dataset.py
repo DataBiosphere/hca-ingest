@@ -32,19 +32,20 @@ def build_new_target_hca_dataset(init_context: InitResourceContext) -> Optional[
 
     creation_date = datetime.now().strftime("%Y%m%d")
     env = init_context.resource_config['env']
-    target_hca_dataset_name = f"hca_{env}_{hca_project_id.hex.replace('-', '')}__{creation_date}"
+    target_hca_dataset_prefix = f"hca_{env}_{hca_project_id.hex.replace('-', '')}"
+    target_hca_dataset_name = f"{target_hca_dataset_prefix}__{creation_date}"
 
-    init_context.log.info(f"Checking for existing dataset named = {target_hca_dataset_name}")
+    init_context.log.info(f"Checking for existing dataset with prefix = {target_hca_dataset_prefix}")
     data_repo_service: DataRepoService = init_context.resources.data_repo_service
-    result = data_repo_service.find_dataset(target_hca_dataset_name, env)
+    result = data_repo_service.find_dataset(target_hca_dataset_prefix, env)
 
     if not result:
-        init_context.log.info(f"Target dataset {target_hca_dataset_name} not found, creating")
+        init_context.log.info(f"Target dataset with prefix {target_hca_dataset_prefix} not found, creating")
         return data_repo_service.create_dataset(
             target_hca_dataset_name,
             env,
             data_repo_profile_ids[env],
-            {"aherbst@broadinstitute.org"},
+            {"monster-dev@dev.test.firecloud.org"},
             "us-central1",
             f"Dataset for HCA project {hca_project_id}"
         )
