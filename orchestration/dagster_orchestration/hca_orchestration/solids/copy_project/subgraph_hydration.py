@@ -126,8 +126,14 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
         s.headers["Authorization"] = f"Bearer {creds.token}"
 
         for cnt, (drs_object, drs_host) in enumerate(drs_objects.items(), start=1):
+            if creds.expired:
+                context.log.info("Refreshing expired credentials")
+                creds = _get_credentials()
+                s.headers["Authorization"] = f"Bearer {creds.token}"
+
             if cnt % 100 == 0:
                 context.log.info(f"Resolved {cnt} paths...")
+
             data_entities.add(
                 DataFileEntity(
                     _fetch_drs_access_info(
