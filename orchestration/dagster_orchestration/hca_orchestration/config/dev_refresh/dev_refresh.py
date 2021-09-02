@@ -64,7 +64,8 @@ def dev_refresh_cut_snapshot_partition_set() -> PartitionSetDefinition:
         name="dev_refresh_cut_snapshot_partition_set",
         pipeline_name="cut_snapshot",
         partition_fn=get_dev_refresh_partitions,
-        run_config_fn_for_partition=run_config_for_cut_snapshot_partition
+        run_config_fn_for_partition=run_config_for_cut_snapshot_partition,
+        mode="dev_refresh"
     )
 
 
