@@ -50,7 +50,7 @@ def run_config_for_cut_snapshot_partition(partition: Partition) -> DagsterObject
             "snapshot_config": {
                 "config": {
                     "source_hca_project_id": partition.value,
-                    "managed_access": false,
+                    "managed_access": False,
                 }
             }
         }
