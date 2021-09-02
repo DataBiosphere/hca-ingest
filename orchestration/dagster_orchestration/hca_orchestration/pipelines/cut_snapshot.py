@@ -11,11 +11,13 @@ from data_repo_client import SnapshotRequestAccessIncludeModel
 
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.contrib.slack import key_value_slack_blocks
+from hca_orchestration.resources.data_repo_service import data_repo_service
 from hca_orchestration.solids.create_snapshot import get_completed_snapshot_info, make_snapshot_public, \
     submit_snapshot_job
 from hca_orchestration.solids.data_repo import wait_for_job_completion
 from hca_orchestration.resources.config.dagit import dagit_config
-from hca_orchestration.resources.config.data_repo import hca_manage_config, snapshot_creation_config
+from hca_orchestration.resources.config.data_repo import hca_manage_config, snapshot_creation_config, \
+    dev_refresh_snapshot_creation_config
 
 real_prod_mode = ModeDefinition(
     name="real_prod",
@@ -58,6 +60,23 @@ dev_mode = ModeDefinition(
         "slack": preconfigure_resource_for_mode(live_slack_client, "dev"),
         "snapshot_config": snapshot_creation_config,
         "dagit_config": preconfigure_resource_for_mode(dagit_config, "dev"),
+    }
+)
+
+dev_refresh_mode = ModeDefinition(
+    name="dev_refresh",
+    resource_defs={
+        "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
+        "gcs": google_storage_client,
+        "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, "dev"),
+        "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "dev"),
+        # we don't want to actually hit sam and make a snapshot public
+        # unless we're running in prod
+        "sam_client": noop_sam_client,
+        "slack": preconfigure_resource_for_mode(live_slack_client, "dev"),
+        "snapshot_config": dev_refresh_snapshot_creation_config,
+        "dagit_config": preconfigure_resource_for_mode(dagit_config, "dev"),
+        "data_repo_service": data_repo_service
     }
 )
 
@@ -146,7 +165,7 @@ def message_for_snapshot_done(context: HookContext) -> None:
 
 
 @pipeline(
-    mode_defs=[prod_mode, dev_mode, local_mode, test_mode]
+    mode_defs=[prod_mode, dev_mode, local_mode, test_mode, dev_refresh_mode]
 )
 def cut_snapshot() -> None:
     hooked_submit_snapshot_job = submit_snapshot_job.with_hooks({snapshot_start_notification})
