@@ -34,7 +34,7 @@ jobs:
         cache-name: cache-poetry
       with:
         path: ~/.cache/pypoetry
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./orchestration/dagster_orchestration/pyproject.toml') }}
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./orchestration/pyproject.toml') }}
         restore-keys: |
           ${{ runner.os }}-build-${{ env.cache-name }}-
           ${{ runner.os }}-build-
@@ -42,16 +42,16 @@ jobs:
     - name: Install dependencies
       id: dependencies
       run: poetry install
-      working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
+      working-directory: ${{ github.workspace }}/orchestration
     - name: Enforce coding style guide
       run: poetry run autopep8 --recursive --diff --exit-code .
-      working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
+      working-directory: ${{ github.workspace }}/orchestration
       if: always() && steps.dependencies.outcome == 'success' # run all three checks, even if a prior check fails
     - name: Check static types
       run: poetry run mypy
-      working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
+      working-directory: ${{ github.workspace }}/orchestration
       if: always() && steps.dependencies.outcome == 'success' # run all three checks, even if a prior check fails
     - name: Run test suite
       run: poetry run pytest -v
-      working-directory: ${{ github.workspace }}/orchestration/dagster_orchestration
+      working-directory: ${{ github.workspace }}/orchestration
       if: always() && steps.dependencies.outcome == 'success' # run all three checks, even if a prior check fails
