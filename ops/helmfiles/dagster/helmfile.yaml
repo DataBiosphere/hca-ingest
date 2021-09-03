@@ -73,5 +73,14 @@ releases:
               envSecrets:
                 - name: monster-dagster-secrets
       - dagsterDaemon:
+#          runCoordinator:
+#            enabled: true
+#            type: QueuedRunCoordinator
+#            config:
+#              queuedRunCoordinator:
+#                maxConcurrentRuns: 10
+#                tagConcurrencyLimits:
+#                  - key: dev_refresh_snapshot_backfill
+#                    limit: 1
           envSecrets:
             - name: monster-dagster-secrets
