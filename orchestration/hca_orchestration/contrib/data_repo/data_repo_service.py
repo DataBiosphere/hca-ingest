@@ -63,6 +63,7 @@ class DataRepoService:
 
     def find_dataset(self, dataset_name: str, env: str) -> Optional[TdrDataset]:
         result: EnumerateDatasetModel = self.data_repo_client.enumerate_datasets(filter=dataset_name)
+
         if result.filtered_total > 1:
             raise Exception(f"More than one match for dataset name {dataset_name}")
 
