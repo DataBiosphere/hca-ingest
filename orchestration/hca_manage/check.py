@@ -84,12 +84,14 @@ class CheckManager:
                                       project=self.project,
                                       soft_delete_manager=self.soft_delete_manager)
 
+    @property
     def links_count_manager(self) -> CountsManager:
         return CountsManager(dataset=self.dataset,
                              project=self.project,
                              soft_delete_manager=self.soft_delete_manager,
                              entity_type="links")
 
+    @property
     def projects_count_manager(self) -> CountsManager:
         return CountsManager(dataset=self.dataset,
                              project=self.project,
@@ -103,8 +105,8 @@ class CheckManager:
         """
         logging.info("Processing...")
 
-        empty_links_count = self.links_count_manager().check_or_delete_rows()
-        empty_projects_count = self.projects_count_manager().check_or_delete_rows()
+        empty_links_count = self.links_count_manager.check_or_delete_rows()
+        empty_projects_count = self.projects_count_manager.check_or_delete_rows()
         duplicate_count = self.duplicate_manager.check_or_delete_rows()
         null_file_ref_count = self.null_file_ref_manager.check_or_delete_rows()
         dangling_proj_refs_count = self.dangling_file_ref_manager.check_or_delete_rows()
@@ -124,6 +126,9 @@ class CheckManager:
         :return: A named tuple with the counts of rows to soft delete
         """
         logging.info("Processing, deleting as we find anything...")
+
+        empty_links_count = self.links_count_manager.check_or_delete_rows()
+        empty_projects_count = self.projects_count_manager.check_or_delete_rows()
         duplicate_count = self.duplicate_manager.check_or_delete_rows(soft_delete=True)
         null_file_ref_count = self.null_file_ref_manager.check_or_delete_rows(soft_delete=True)
         logging.info("Skipping any rows with dangling project refs, manual intervention required")
@@ -131,7 +136,9 @@ class CheckManager:
         return ProblemCount(
             duplicates=duplicate_count,
             null_file_refs=null_file_ref_count,
-            dangling_project_refs=0
+            dangling_project_refs=0,
+            empty_links_count=empty_links_count,
+            empty_projects_count=empty_projects_count
         )
 
 

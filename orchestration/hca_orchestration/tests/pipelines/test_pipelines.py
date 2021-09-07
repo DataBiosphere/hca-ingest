@@ -56,6 +56,7 @@ class PipelinesTestCase(unittest.TestCase):
     @patch("hca_manage.bq_managers.DuplicatesManager.get_rows")
     @patch("hca_manage.bq_managers.DuplicatesManager.get_all_table_names")
     @patch("hca_manage.bq_managers.DanglingFileRefManager.get_rows")
+    @patch("hca_manage.bq_managers.CountsManager.get_rows")
     def test_validate_egress(self, *mocks):
         """
         currently validate_egress is just a thin wrapper around
