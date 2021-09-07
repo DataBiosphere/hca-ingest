@@ -77,6 +77,31 @@ class BQRowManager(_BQRowDataclass, ABC):
         return problem_count
 
 
+@dataclass
+class CountsManager(BQRowManager):
+    entity_type: str
+
+    def get_rows(self, target_table: str) -> set[str]:
+        query = f"""
+        SELECT COUNT(*) FROM `{self.project}.datarepo_{self.dataset}.{self.entity_type}`
+        """
+        cnt = int(self._hit_bigquery(query).pop())
+        if not cnt:
+            return {"no rows"}
+
+        return set()
+
+    def check_or_delete_rows(self, soft_delete: bool = False) -> int:
+        if soft_delete:
+            raise NotImplementedError("Soft deleting rows in this context is unsupported")
+
+        def tables() -> set[str]:
+            return {self.entity_type}
+
+        return self._check_or_delete_rows(tables, self.get_rows, soft_delete=False,
+                                          issue=f"Found empty {self.entity_type} table")
+
+
 class DanglingFileRefManager(BQRowManager):
     def get_rows(self, target_table: str) -> set[str]:
         query = f"""

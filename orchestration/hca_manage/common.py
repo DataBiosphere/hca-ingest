@@ -32,9 +32,15 @@ class ProblemCount:
     duplicates: int
     null_file_refs: int
     dangling_project_refs: int
+    empty_links_count: int
+    empty_projects_count: int
 
     def has_problems(self) -> bool:
-        return self.duplicates > 0 or self.null_file_refs > 0 or self.dangling_project_refs > 0
+        return self.duplicates > 0 or \
+            self.null_file_refs > 0 or \
+            self.dangling_project_refs > 0 or \
+            self.empty_links_count > 0 or \
+            self.empty_projects_count > 0
 
 
 def setup_cli_logging_format() -> None:
