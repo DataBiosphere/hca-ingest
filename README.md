@@ -1,10 +1,6 @@
 # HCA Ingest
 Batch ETL workflow for ingesting HCA data into the Terra Data Repository (TDR).
 
-## Status: MVP
-There's a good chance that this entire repository will need to be rewritten / thrown
-away after the MVP of DCP 2.0.
-
 ## Schema Design
 The MVP schema for HCA is purposefully minimal. Instead of fully replicating the
 existing [metadata schemas](https://github.com/humancellatlas/metadata-schema), we've
@@ -25,8 +21,8 @@ table to the `project` table. All other references can be found in the `content`
 in the `links` table.
 
 ## Pipeline Architecture
-HCA Ingest doesn't run on a schedule / automatically. Instead, an Argo workflow template
-must be manually launched through the CLI or UI. Once kicked off, the workflow orchestrates
+HCA Ingest doesn't run on a schedule / automatically. Instead, a Dagster pipeline
+must be manually launched through the CLI or UI. Once kicked off, the pipeline orchestrates
 Dataflow, BigQuery, and TDR data-processing jobs to push data into the repository. The high
 level flow looks like:
 ![Architecture diagram](./importer-flow.png)
@@ -80,7 +76,7 @@ To push metadata into the TDR, we follow a common pattern per-table:
 2. Export rows-to-append and ids-to-delete from the diff outputs
 3. Run a TDR soft-delete job, followed by a TDR ingest job, using the exported data
 
-The templates used to run these steps are generic, and abstracted across ingest projects.
+The pipeline steps used to run these steps are generic, and abstracted across ingest projects.
 We had to make two additions to these templates to support the HCA use-case:
 1. To support importing from multiple transient staging areas, none of which contain the entirety
    of HCA metadata, we added the ability to compute an "upsert" diff instead of a full diff, only
