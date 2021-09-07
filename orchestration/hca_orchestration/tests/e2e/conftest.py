@@ -88,7 +88,7 @@ def load_hca_run_config(dataset_name: str, dataset_info: DatasetInfo):
         "resources": {
             "beam_runner": {
                 "config": {
-                    "working_dir": "../../"
+                    "working_dir": "../"
                 }
             },
             "load_tag": {
