@@ -17,7 +17,8 @@ class PostImportValidateTestCase(unittest.TestCase):
     @patch("hca_manage.bq_managers.NullFileRefManager.get_file_table_names", return_value=set())
     @patch("hca_manage.bq_managers.DuplicatesManager.get_rows", return_value=set())
     @patch("hca_manage.bq_managers.DuplicatesManager.get_all_table_names", return_value=set())
-    def test_post_import_validate(self, mock_all_table_names: Mock, mock_duplicates: Mock, mock_file_table_names: Mock,
+    @patch("hca_manage.bq_managers.CountsManager.get_rows", return_value=set())
+    def test_post_import_validate(self, mock_counts: Mock, mock_all_table_names: Mock, mock_duplicates: Mock, mock_file_table_names: Mock,
                                   mock_null_filerefs: Mock, mock_dangling_proj_refs: Mock):
         """
         Mock bigQuery interactions and make sure the post_import_validate solid works as desired.
@@ -51,6 +52,7 @@ class PostImportValidateTestCase(unittest.TestCase):
         expected_duplicate_issues = len(fake_table_names) * len(fake_duplicate_ids)
         expected_file_ref_issues = len(fake_file_table_names) * len(fake_null_fileref_ids)
         expected_dangling_proj_refs = len(fake_table_names) * len(fake_dangling_proj_refs)
+
         self.assertEqual(expected_duplicate_issues, result.output_value().duplicates)
         self.assertEqual(expected_file_ref_issues, result.output_value().null_file_refs)
         self.assertEqual(expected_dangling_proj_refs, result.output_value().dangling_project_refs)
@@ -83,7 +85,7 @@ class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
                 mode_def=test_mode,
                 input_values={
                     "validation_results": ProblemCount(
-                        duplicates=3, null_file_refs=2, dangling_project_refs=3
+                        duplicates=3, null_file_refs=2, dangling_project_refs=3, empty_projects_count=0, empty_links_count=0
                     )
                 }
             )
@@ -110,7 +112,7 @@ class NotifySlackOfEgressValidationResultsTestCase(unittest.TestCase):
                 mode_def=test_mode,
                 input_values={
                     "validation_results": ProblemCount(
-                        duplicates=0, null_file_refs=0, dangling_project_refs=0
+                        duplicates=0, null_file_refs=0, dangling_project_refs=0, empty_projects_count=0, empty_links_count=0
                     )
                 }
             )

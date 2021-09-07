@@ -40,7 +40,9 @@ def notify_slack_of_egress_validation_results(
             f"Triggering Argo workflow ID: {argo_workflow_id}",
             "Duplicate lines found: " + str(validation_results.duplicates),
             "Null file references found: " + str(validation_results.null_file_refs),
-            "Dangling project references found: " + str(validation_results.dangling_project_refs)
+            "Dangling project references found: " + str(validation_results.dangling_project_refs),
+            "Empty links table: " + str(validation_results.empty_links_count),
+            "Empty projects table: " + str(validation_results.empty_projects_count)
         ]
     else:
         message_lines = [

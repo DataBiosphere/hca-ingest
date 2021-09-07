@@ -6,7 +6,7 @@ from typing import Optional
 from data_repo_client import RepositoryApi
 
 from hca_manage import __version__ as hca_manage_version
-from hca_manage.bq_managers import DanglingFileRefManager, DuplicatesManager, NullFileRefManager
+from hca_manage.bq_managers import DanglingFileRefManager, DuplicatesManager, NullFileRefManager, CountsManager
 from hca_manage.common import DefaultHelpParser, ProblemCount, data_repo_host, get_api_client, query_yes_no, \
     setup_cli_logging_format
 from hca_manage.soft_delete import SoftDeleteManager
@@ -84,12 +84,29 @@ class CheckManager:
                                       project=self.project,
                                       soft_delete_manager=self.soft_delete_manager)
 
+    @property
+    def links_count_manager(self) -> CountsManager:
+        return CountsManager(dataset=self.dataset,
+                             project=self.project,
+                             soft_delete_manager=self.soft_delete_manager,
+                             entity_type="links")
+
+    @property
+    def projects_count_manager(self) -> CountsManager:
+        return CountsManager(dataset=self.dataset,
+                             project=self.project,
+                             soft_delete_manager=self.soft_delete_manager,
+                             entity_type="project")
+
     def check_for_all(self) -> ProblemCount:
         """
         Check and print the number of duplicates and null file references in all tables in the dataset.
         :return: A named tuple with the counts of rows to soft delete
         """
         logging.info("Processing...")
+
+        empty_links_count = self.links_count_manager.check_or_delete_rows()
+        empty_projects_count = self.projects_count_manager.check_or_delete_rows()
         duplicate_count = self.duplicate_manager.check_or_delete_rows()
         null_file_ref_count = self.null_file_ref_manager.check_or_delete_rows()
         dangling_proj_refs_count = self.dangling_file_ref_manager.check_or_delete_rows()
@@ -97,7 +114,9 @@ class CheckManager:
         return ProblemCount(
             duplicates=duplicate_count,
             null_file_refs=null_file_ref_count,
-            dangling_project_refs=dangling_proj_refs_count
+            dangling_project_refs=dangling_proj_refs_count,
+            empty_links_count=empty_links_count,
+            empty_projects_count=empty_projects_count
         )
 
     def remove_all(self) -> ProblemCount:
@@ -107,6 +126,9 @@ class CheckManager:
         :return: A named tuple with the counts of rows to soft delete
         """
         logging.info("Processing, deleting as we find anything...")
+
+        empty_links_count = self.links_count_manager.check_or_delete_rows()
+        empty_projects_count = self.projects_count_manager.check_or_delete_rows()
         duplicate_count = self.duplicate_manager.check_or_delete_rows(soft_delete=True)
         null_file_ref_count = self.null_file_ref_manager.check_or_delete_rows(soft_delete=True)
         logging.info("Skipping any rows with dangling project refs, manual intervention required")
@@ -114,7 +136,9 @@ class CheckManager:
         return ProblemCount(
             duplicates=duplicate_count,
             null_file_refs=null_file_ref_count,
-            dangling_project_refs=0
+            dangling_project_refs=0,
+            empty_links_count=empty_links_count,
+            empty_projects_count=empty_projects_count
         )
 
 

@@ -10,8 +10,8 @@ from hca_orchestration.resources.hca_project_config import HcaProjectCopyingConf
 @patch("hca_manage.bq_managers.NullFileRefManager.get_file_table_names", return_value=set())
 @patch("hca_manage.bq_managers.DuplicatesManager.get_rows", return_value=set())
 @patch("hca_manage.bq_managers.DuplicatesManager.get_all_table_names", return_value=set())
-def test_copy_project(mock_all_table_names: Mock, mock_duplicates: Mock, mock_file_table_names: Mock,
-                      mock_null_filerefs: Mock, mock_dangling_proj_refs: Mock) -> None:
+@patch("hca_manage.bq_managers.CountsManager.get_rows", return_value=set())
+def test_copy_project(*mocks) -> None:
     result = copy_project.execute_in_process(
         resources={
             "bigquery_client": MagicMock(),
