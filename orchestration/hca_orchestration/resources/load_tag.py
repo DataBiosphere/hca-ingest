@@ -1,8 +1,6 @@
 import uuid
-from datetime import datetime
 
 from dagster import resource, Field, InitResourceContext, Bool, String, Failure
-
 
 # constrain load tag size to avoid K8S naming errors with downstream
 # dataflow jobs
@@ -33,8 +31,5 @@ def load_tag(init_context: InitResourceContext) -> str:
             run_id = uuid.uuid4().hex
 
         tag = f"{tag}_{run_id[0:8]}"
-
-    if len(tag) > MAX_LOAD_TAG_LEN:
-        raise Failure(f"Load tag must be less than {MAX_LOAD_TAG_LEN} chars")
 
     return tag

@@ -53,8 +53,6 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
     bucket_name = context.resources.scratch_config.scratch_bucket_name
     prefix_name = f"{context.resources.scratch_config.scratch_prefix_name}"
 
-    kebabified_output_prefix = re.sub(r"[^A-Za-z0-9]", "-", prefix_name)
-
     beam_runner: BeamRunner = context.resources.beam_runner
     args_dict = {
         "inputPrefix": context.solid_config["input_prefix"],
@@ -62,7 +60,7 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
     }
     beam_runner.run(
         run_arg_dict=args_dict,
-        job_name=f"hca-{kebabified_output_prefix}",
+        job_name=f"hca-{context.run_id}",
         target_class="org.broadinstitute.monster.hca.HcaPipeline",
         scala_project="hca-transformation-pipeline",
     )
