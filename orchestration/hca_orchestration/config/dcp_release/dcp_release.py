@@ -7,7 +7,7 @@ from dagster.utils import load_yaml_from_path
 from dagster_utils.typing import DagsterObjectConfigSchema
 
 
-def load_dcp_release_manifests():
+def load_dcp_release_manifests() -> list[PartitionSetDefinition]:
     release_manifest_path = os.environ.get("DCP_RELEASE_MANIFEST_PATH", "")
     if not release_manifest_path:
         return []
