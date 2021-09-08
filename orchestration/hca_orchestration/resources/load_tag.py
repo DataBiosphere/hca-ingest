@@ -2,10 +2,6 @@ import uuid
 
 from dagster import resource, Field, InitResourceContext, Bool, String, Failure
 
-# constrain load tag size to avoid K8S naming errors with downstream
-# dataflow jobs
-MAX_LOAD_TAG_LEN = 26
-
 
 @resource({
     "load_tag_prefix": Field(String),
