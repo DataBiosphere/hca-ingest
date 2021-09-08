@@ -1,3 +1,4 @@
+import uuid
 from dagster import solid, InputDefinition, Nothing, String
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from dagster_utils.resources.beam.beam_runner import BeamRunner
@@ -56,9 +57,14 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
         "inputPrefix": context.solid_config["input_prefix"],
         "outputPrefix": f'gs://{bucket_name}/{prefix_name}',
     }
+    run_id = context.run_id
+    if not run_id:
+        run_id = uuid.uuid4().hex
+    tag = f"{run_id[0:8]}"
+
     beam_runner.run(
         run_arg_dict=args_dict,
-        job_name=f"hca-{context.run_id}",
+        job_name=f"hca-{tag}",
         target_class="org.broadinstitute.monster.hca.HcaPipeline",
         scala_project="hca-transformation-pipeline",
     )
