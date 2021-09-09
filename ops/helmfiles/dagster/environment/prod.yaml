@@ -2,6 +2,7 @@ env: &envConfig
   # all of these key-value pairs get injected as environment variables into the containers running dagster,
   # including the dagit ui server and any pipeline executors
   HCA_ARGO_URL: https://hca-argo.monster-prod.broadinstitute.org/
+  DCP_RELEASE_MANIFEST_PATH: gs://broad-dsp-monster-hca-prod-dcp-releases/manifests
 
   # this is needed for setting a mode for automatically triggered pipelines (i.e., via sensors)
   ENV: prod
