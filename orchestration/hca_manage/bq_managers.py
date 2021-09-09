@@ -83,7 +83,7 @@ class CountsManager(BQRowManager):
 
     def get_rows(self, target_table: str) -> set[str]:
         query = f"""
-        SELECT COUNT(*) FROM `{self.project}.datarepo_{self.dataset}.{self.entity_type}`
+        SELECT COUNT(*) FROM `{self.project}.{self.dataset}.{self.entity_type}`
         """
         cnt = int(self._hit_bigquery(query).pop())
         if not cnt:
@@ -106,9 +106,9 @@ class DanglingFileRefManager(BQRowManager):
     def get_rows(self, target_table: str) -> set[str]:
         query = f"""
         SELECT links.links_id
-        FROM `{self.project}.datarepo_{self.dataset}.{target_table}` links
+        FROM `{self.project}.{self.dataset}.{target_table}` links
                  LEFT JOIN
-             `{self.project}.datarepo_{self.dataset}.project` projects
+             `{self.project}.{self.dataset}.project` projects
              ON
                  {target_table}.project_id = projects.project_id
         WHERE projects.project_id IS NULL;
@@ -139,7 +139,7 @@ class DuplicatesManager(BQRowManager):
         :param target_table: The particular table to operate on.
         :return: A set of row ids to soft delete.
         """
-        sql_table = f"`{self.project}.datarepo_{self.dataset}.{target_table}`"
+        sql_table = f"`{self.project}.{self.dataset}.{target_table}`"
 
         # rid -> row_id, fid -> file_id, v -> version
 
@@ -202,7 +202,7 @@ class DuplicatesManager(BQRowManager):
         """
         query = f"""
         SELECT table_name
-        FROM `{self.project}.datarepo_{self.dataset}.INFORMATION_SCHEMA.TABLES` WHERE table_type = "VIEW"
+        FROM `{self.project}.{self.dataset}.INFORMATION_SCHEMA.TABLES` WHERE table_type = "VIEW"
         """
 
         return self._hit_bigquery(query)
@@ -217,7 +217,7 @@ class NullFileRefManager(BQRowManager):
         """
         query = f"""
         SELECT datarepo_row_id
-        FROM `{self.project}.datarepo_{self.dataset}.{target_table}` WHERE file_id IS NULL
+        FROM `{self.project}.{self.dataset}.{target_table}` WHERE file_id IS NULL
         """
 
         return self._hit_bigquery(query)
@@ -239,10 +239,10 @@ class NullFileRefManager(BQRowManager):
         query = f"""
         WITH fileRefTables AS (
             SELECT *
-            FROM `{self.project}.datarepo_{self.dataset}.INFORMATION_SCHEMA.COLUMNS`
+            FROM `{self.project}.{self.dataset}.INFORMATION_SCHEMA.COLUMNS`
             WHERE column_name = "file_id"),
         desiredViews AS (
-            SELECT * FROM `{self.project}.datarepo_{self.dataset}.INFORMATION_SCHEMA.TABLES`
+            SELECT * FROM `{self.project}.{self.dataset}.INFORMATION_SCHEMA.TABLES`
             WHERE table_type = "VIEW")
         SELECT desiredViews.table_name
         FROM fileRefTables

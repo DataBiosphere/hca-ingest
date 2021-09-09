@@ -26,6 +26,7 @@ def run(arguments: Optional[list[str]] = None) -> None:
                         help="Remove problematic rows. If flag not set, "
                              "will only check for presence of problematic rows",
                         action="store_true")
+    parser.add_argument("-s", "--snapshot", help="Target dataset is a snapshot", action="store_true")
 
     args = parser.parse_args(arguments)
     host = data_repo_host[args.env]
@@ -41,9 +42,14 @@ def run(arguments: Optional[list[str]] = None) -> None:
 
 def check_data(args: argparse.Namespace, host: str, parser: argparse.ArgumentParser, remove: bool = False) -> None:
     project = args.project
+
+    dataset = args.dataset
+    if not args.snapshot:
+        dataset = f"datarepo_{dataset}"
+
     hca = CheckManager(environment=args.env,
                        project=project,
-                       dataset=args.dataset,
+                       dataset=dataset,
                        data_repo_client=get_api_client(host))
 
     if remove:
@@ -103,14 +109,14 @@ class CheckManager:
         Check and print the number of duplicates and null file references in all tables in the dataset.
         :return: A named tuple with the counts of rows to soft delete
         """
-        logging.info("Processing...")
+        logging.info(f"Processing dataset {self.dataset}...")
 
         empty_links_count = self.links_count_manager.check_or_delete_rows()
         empty_projects_count = self.projects_count_manager.check_or_delete_rows()
         duplicate_count = self.duplicate_manager.check_or_delete_rows()
         null_file_ref_count = self.null_file_ref_manager.check_or_delete_rows()
         dangling_proj_refs_count = self.dangling_file_ref_manager.check_or_delete_rows()
-        logging.info("Finished.")
+        logging.info(f"Finished processing dataset {self.dataset}.")
         return ProblemCount(
             duplicates=duplicate_count,
             null_file_refs=null_file_ref_count,
