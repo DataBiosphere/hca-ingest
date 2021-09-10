@@ -6,7 +6,7 @@ from hca_manage.check import CheckManager
 
 
 @solid(
-    required_resource_keys={'data_repo_client', 'hca_dataset_operation_config'}
+    required_resource_keys={'data_repo_client', 'hca_dataset_operation_config', 'hca_manage_config'}
 )
 def post_import_validate(context: AbstractComputeExecutionContext) -> ProblemCount:
     """
