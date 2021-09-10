@@ -5,6 +5,7 @@ from typing import BinaryIO, Optional
 import uuid
 
 from dagster_utils.contrib import google as hca_google
+from dagster_utils.contrib.data_repo.jobs import poll_job
 from data_repo_client import RepositoryApi, DataDeletionRequest
 import google.auth.credentials
 from google.cloud import storage
@@ -68,6 +69,7 @@ class SoftDeleteManager:
             remote_file_path = self.put_soft_delete_csv_in_bucket(local_file=rf, target_table=target_table)
             job_id = self._submit_soft_delete(target_table=target_table, target_path=remote_file_path)
             logging.info(f"Soft delete job for table {target_table} running, job id of: {job_id}")
+            poll_job(job_id, 600, 2, self.data_repo_client)
             return job_id
 
     def put_soft_delete_csv_in_bucket(self, local_file: BinaryIO, target_table: str) -> str:
