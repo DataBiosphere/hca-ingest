@@ -23,6 +23,10 @@ def run(arguments: Optional[list[str]] = None) -> None:
     billing_profile_query = subparsers.add_parser("enumerate")
     billing_profile_query.set_defaults(func=_enumerate_billing_profiles)
 
+    billing_profile_retrieve = subparsers.add_parser("retrieve")
+    billing_profile_retrieve.add_argument("-i", "--billing_profile_id", required=True)
+    billing_profile_retrieve.set_defaults(func=_retrieve_billing_profile)
+
     args = parser.parse_args(arguments)
     args.func(args)
 
@@ -52,6 +56,15 @@ def _enumerate_billing_profiles(args: argparse.Namespace) -> None:
     resources_api_client = get_resources_api_client(host)
 
     response = resources_api_client.enumerate_profiles()
+
+    logging.info(response)
+
+
+def _retrieve_billing_profile(args: argparse.Namespace) -> None:
+    host = data_repo_host[args.env]
+    resources_api_client = get_resources_api_client(host)
+
+    response = resources_api_client.retrieve_profile(id=args.billing_profile_id)
 
     logging.info(response)
 

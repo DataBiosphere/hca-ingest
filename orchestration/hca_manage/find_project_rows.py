@@ -41,20 +41,20 @@ def _query_for_project(args: argparse.Namespace) -> None:
 
     bq_service = BigQueryService(Client())
     query = f"""
-    SELECT * FROM `datarepo_{dataset_name}.project`
+    SELECT * FROM `{dataset_name}.project`
     WHERE project_id = '{hca_project_id}'
     """
 
     logging.info("Project row IDs = ")
-    project_row_ids = bq_service.run_query(query, bq_project_id).result()
+    project_row_ids = bq_service.run_query(query, bq_project_id)
     for row in project_row_ids:
         logging.info(row["datarepo_row_id"])
 
     query = f"""
-    SELECT * FROM `datarepo_{dataset_name}.links`
+    SELECT * FROM `{dataset_name}.links`
     WHERE project_id = '{hca_project_id}'
     """
-    links_rows = bq_service.run_query(query, bq_project_id).result()
+    links_rows = bq_service.run_query(query, bq_project_id)
     logging.info("")
     logging.info("Links row IDs = ")
     for row in links_rows:
