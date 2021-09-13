@@ -6,6 +6,7 @@ from re import search
 import sys
 from typing import Optional
 
+from dagster_utils.resources.sam import Sam
 from data_repo_client import RepositoryApi, SnapshotRequestModel, SnapshotRequestContentsModel, \
     EnumerateSnapshotModel, PolicyMemberRequest, PolicyResponse, SnapshotModel
 from dagster_utils.contrib.data_repo.jobs import poll_job, JobPollException
@@ -13,7 +14,7 @@ from dagster_utils.contrib.data_repo.typing import JobId
 
 from hca_manage import __version__ as hca_manage_version
 from hca_manage.common import data_repo_host, data_repo_profile_ids, DefaultHelpParser, get_api_client, \
-    query_yes_no, tdr_operation, setup_cli_logging_format
+    query_yes_no, tdr_operation, setup_cli_logging_format, sam_host
 
 MAX_SNAPSHOT_DELETE_POLL_SECONDS = 120
 SNAPSHOT_DELETE_POLL_INTERVAL_SECONDS = 2
@@ -77,8 +78,42 @@ def run(arguments: Optional[list[str]] = None) -> None:
     snapshot_retrieve.add_argument("-i", "--snapshot_id", help="Id of snapshot", required=True)
     snapshot_retrieve.set_defaults(func=_retrieve_snapshot)
 
+    # set public
+    snapshot_public = subparsers.add_parser("mark_public")
+    snapshot_public.add_argument("-i", "--snapshot_id", help="Id of snapshot", required=True)
+    snapshot_public.set_defaults(func=_mark_snapshot_public)
+
+    # set private
+    snapshot_public = subparsers.add_parser("mark_private")
+    snapshot_public.add_argument("-i", "--snapshot_id", help="Id of snapshot", required=True)
+    snapshot_public.set_defaults(func=_mark_snapshot_private)
+
     args = parser.parse_args(arguments)
     args.func(args)
+
+
+@tdr_operation
+def _mark_snapshot_public(args: argparse.Namespace) -> None:
+    snapshot_id = args.snapshot_id
+
+    sam_client = Sam(base_url=sam_host[args.env])
+
+    if not query_yes_no(f"This will set snapshot id {snapshot_id} to public, are you sure?"):
+        return
+
+    sam_client.set_public_flag(snapshot_id, True)
+
+
+@tdr_operation
+def _mark_snapshot_private(args: argparse.Namespace) -> None:
+    snapshot_id = args.snapshot_id
+
+    sam_client = Sam(base_url=sam_host[args.env])
+
+    if not query_yes_no(f"This will set snapshot id {snapshot_id} to private, are you sure?"):
+        return
+
+    sam_client.set_public_flag(snapshot_id, False)
 
 
 @tdr_operation
@@ -168,7 +203,7 @@ class SnapshotManager:
             ],
             "prod": ["hca-snapshot-readers@firecloud.org", "monster@firecloud.org"]
         }[self.environment]
-        self.publc_access_reader_list = {
+        self.public_access_reader_list = {
             "dev": [
                 "hca-snapshot-readers@dev.test.firecloud.org",
                 "monster-dev@dev.test.firecloud.org",
@@ -197,7 +232,7 @@ class SnapshotManager:
                 and not search(UPDATED_SNAPSHOT_NAME_REGEX, snapshot_name):
             raise InvalidSnapshotNameException(f"Snapshot name {snapshot_name} is invalid")
 
-        reader_list = self.managed_access_reader_list if managed_access else self.publc_access_reader_list
+        reader_list = self.managed_access_reader_list if managed_access else self.public_access_reader_list
         snapshot_request = SnapshotRequestModel(
             name=snapshot_name,
             profile_id=self.data_repo_profile_id,
