@@ -120,21 +120,16 @@ version = "0.6.3"
 description = "Common utilities and objects for building Dagster pipelines"
 category = "main"
 optional = false
-python-versions = "~3.9"
-develop = true
+python-versions = ">=3.9,<3.10"
 
 [package.dependencies]
-argo-workflows = "^5.0.0"
-dagster = "^0.12.3"
-data-repo-client = "^1.134.0"
-google-cloud-bigquery = "^2.15.0"
-google-cloud-storage = "^1.38.0"
-PyYAML = "^5.4.1"
-slackclient = "^2.9.3"
-
-[package.source]
-type = "directory"
-url = "../../dagster-utils"
+argo-workflows = ">=5.0.0,<6.0.0"
+dagster = ">=0.12.3,<0.13.0"
+data-repo-client = ">=1.134.0,<2.0.0"
+google-cloud-bigquery = ">=2.15.0,<3.0.0"
+google-cloud-storage = ">=1.38.0,<2.0.0"
+PyYAML = ">=5.4.1,<6.0.0"
+slackclient = ">=2.9.3,<3.0.0"
 
 [[package]]
 name = "cached-property"
@@ -1848,7 +1843,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.9"
-content-hash = "fbf349efea566098ea68e8da3fd6820da8071a50475f54b06c4d4ff8bfd6fd08"
+content-hash = "2424ebb06b503bc1cf4d81f670947f61cfe0123c32a10da9b35e2f6b1cfb474e"
 
 [metadata.files]
 aiohttp = [
@@ -1926,7 +1921,10 @@ bleach = [
     {file = "bleach-4.1.0-py2.py3-none-any.whl", hash = "sha256:4d2651ab93271d1129ac9cbc679f524565cc8a1b791909c4a51eac4446a15994"},
     {file = "bleach-4.1.0.tar.gz", hash = "sha256:0900d8b37eba61a802ee40ac0061f8c2b5dee29c1927dd1d233e075ebf5a71da"},
 ]
-broad-dagster-utils = []
+broad-dagster-utils = [
+    {file = "broad_dagster_utils-0.6.3-py3-none-any.whl", hash = "sha256:b9f02ceea4024f2f87743611cd4561569e602e49ef183ffaa4b7a6271d034d92"},
+    {file = "broad_dagster_utils-0.6.3.tar.gz", hash = "sha256:09e291f9923d24eaaae30caeb67b1c46e7b7705b929db0e4700c342b771d805a"},
+]
 cached-property = [
     {file = "cached-property-1.5.2.tar.gz", hash = "sha256:9fa5755838eecbb2d234c3aa390bd80fbd3ac6b6869109bfc1b499f7bd89a130"},
     {file = "cached_property-1.5.2-py2.py3-none-any.whl", hash = "sha256:df4f613cf7ad9a588cc381aaf4a512d26265ecebd5eb9e1ba12f1319eb85a6a0"},
