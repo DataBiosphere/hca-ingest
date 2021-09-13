@@ -7,3 +7,4 @@ worker_machine_type: n1-standard-4
 starting_workers: 4
 max_workers: 16
 namespace: dagster
+load_incluster_config: true
