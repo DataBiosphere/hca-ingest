@@ -17,6 +17,7 @@ class CheckManagerTestCase(unittest.TestCase):
             data_repo_client=MagicMock(spec=RepositoryApi),
             project='project-id',
             dataset='datasetname',
+            snapshot=False
         )
 
     def test__hit_bigquery_gets_first_column_from_results(self):
