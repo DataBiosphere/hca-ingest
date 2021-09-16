@@ -24,7 +24,8 @@ def validate_copied_dataset(context: AbstractComputeExecutionContext) -> Iterato
         environment="dev",
         project=target_hca_dataset.project_id,
         dataset=target_hca_dataset.dataset_name,
-        data_repo_client=context.resources.data_repo_client
+        data_repo_client=context.resources.data_repo_client,
+        snapshot=False
     ).check_for_all()
 
     if result.has_problems():
