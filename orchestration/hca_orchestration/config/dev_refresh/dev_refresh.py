@@ -84,5 +84,4 @@ def dev_refresh_per_project_dataset_partition_set() -> PartitionSetDefinition:
         pipeline_name="copy_project_to_new_dataset",
         partition_fn=get_dev_refresh_partitions,
         run_config_fn_for_partition=run_config_for_per_project_dataset_partition,
-        # mode="dev_refresh"
     )
