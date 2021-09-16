@@ -65,7 +65,7 @@ class CheckManager:
     data_repo_client: RepositoryApi
     snapshot: bool
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.snapshot:
             self.dataset = f"datarepo_{self.dataset}"
 
