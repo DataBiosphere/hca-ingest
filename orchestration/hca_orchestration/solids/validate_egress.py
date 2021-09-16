@@ -16,7 +16,8 @@ def post_import_validate(context: AbstractComputeExecutionContext) -> ProblemCou
         environment=context.resources.hca_manage_config.gcp_env,
         project=context.resources.hca_manage_config.google_project_name,
         dataset=context.resources.hca_dataset_operation_config.dataset_name,
-        data_repo_client=context.resources.data_repo_client
+        data_repo_client=context.resources.data_repo_client,
+        snapshot=False
     ).check_for_all()
 
 

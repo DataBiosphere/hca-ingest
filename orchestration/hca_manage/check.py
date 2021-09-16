@@ -44,13 +44,12 @@ def check_data(args: argparse.Namespace, host: str, parser: argparse.ArgumentPar
     project = args.project
 
     dataset = args.dataset
-    if not args.snapshot:
-        dataset = f"datarepo_{dataset}"
 
     hca = CheckManager(environment=args.env,
                        project=project,
                        dataset=dataset,
-                       data_repo_client=get_api_client(host))
+                       data_repo_client=get_api_client(host),
+                       snapshot=args.snapshot)
 
     if remove:
         hca.remove_all()
@@ -64,6 +63,11 @@ class CheckManager:
     project: str
     dataset: str
     data_repo_client: RepositoryApi
+    snapshot: bool
+
+    def __post_init__(self):
+        if not self.snapshot:
+            self.dataset = f"datarepo_{self.dataset}"
 
     @property
     def soft_delete_manager(self) -> SoftDeleteManager:
