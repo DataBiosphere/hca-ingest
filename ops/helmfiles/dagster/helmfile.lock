@@ -5,7 +5,7 @@ dependencies:
   version: 0.0.6
 - name: dagster
   repository: https://dagster-io.github.io/helm
-  version: 0.12.3
+  version: 0.12.10
 - name: serviceaccount-psp
   repository: https://broadinstitute.github.io/datarepo-helm
   version: 0.0.3

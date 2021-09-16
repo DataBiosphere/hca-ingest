@@ -2,7 +2,7 @@ import _root_.io.circe.Json
 
 lazy val `hca-ingest` = project
   .in(file("."))
-  .aggregate(`hca-schema`, `hca-transformation-pipeline`, `hca-orchestration-workflow`)
+  .aggregate(`hca-schema`, `hca-transformation-pipeline`)
   .settings(publish / skip := true)
 
 lazy val `hca-schema` = project
@@ -25,11 +25,3 @@ lazy val `hca-transformation-pipeline` = project
     )
   )
   .dependsOn(`hca-schema`)
-
-lazy val `hca-orchestration-workflow` = project
-  .in(file("orchestration"))
-  .enablePlugins(MonsterHelmPlugin)
-  .settings(
-    helmChartOrganization := "DataBiosphere",
-    helmChartRepository := "hca-ingest"
-  )
