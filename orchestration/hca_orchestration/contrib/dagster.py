@@ -40,6 +40,7 @@ def gs_csv_partition_reader(gs_partitions_bucket_name: str, pipeline_name: str, 
             ]
             partition_set_id = f"{pipeline_name}_{blob.name.split('/')[-1].split('.csv')[0]}"
 
+            logging.info(f"Partition set {partition_set_id} loaded")
             # We need to bind the staging_paths to a lambda-local var ("paths") so we return
             # the proper state.
             #
