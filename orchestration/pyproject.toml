@@ -6,7 +6,7 @@ authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
 # until https://bugs.python.org/issue45081 is pushed in an upcoming python version we can't upgrade past 3.9.6
-python = "<3.9.7"
+python = "3.9.6"
 argo-workflows = "^5.0.0"
 cached-property = "^1.5.2"
 dagster = "0.12.10"
