@@ -30,7 +30,7 @@ def gs_csv_partition_reader(gs_partitions_bucket_name: str, pipeline_name: str, 
 
     for blob in blobs:
         if not blob.name.endswith(".csv"):
-            logging.warning(f"Invalid partition file found at path {blob.name}, ignoring.")
+            logging.info(f"Blob at {blob.name} is not a CSV, ignoring.")
             continue
 
         with blob.open("r") as parition_file_handle:
