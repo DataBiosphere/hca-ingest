@@ -53,7 +53,7 @@ def run_config_for_cut_snapshot_partition(partition: Partition) -> DagsterObject
 def dev_refresh_cut_snapshot_partition_set() -> list[PartitionSetDefinition]:
     dev_refresh_partitions_path = os.environ.get("PARTITIONS_BUCKET", "")
     if not dev_refresh_partitions_path:
-        logging.info("DEV_REFRESH_PARTITIONS_PATH not set, skipping dev refresh partitioning.")
+        logging.info("PARTITIONS_BUCKET not set, skipping dev refresh partitioning.")
         return []
 
     return gs_csv_partition_reader(dev_refresh_partitions_path, "cut_snapshot", Client(),
@@ -63,7 +63,7 @@ def dev_refresh_cut_snapshot_partition_set() -> list[PartitionSetDefinition]:
 def copy_project_to_new_dataset_partitions() -> list[PartitionSetDefinition]:
     dev_refresh_partitions_path = os.environ.get("PARTITIONS_BUCKET", "")
     if not dev_refresh_partitions_path:
-        logging.info("DEV_REFRESH_PARTITIONS_PATH not set, skipping dev refresh partitioning.")
+        logging.info("PARTITIONS_BUCKET not set, skipping dev refresh partitioning.")
         return []
 
     return gs_csv_partition_reader(dev_refresh_partitions_path, "copy_project_to_new_dataset",
