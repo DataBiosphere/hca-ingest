@@ -7,7 +7,7 @@ from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_clie
 from dagster_utils.resources.google_storage import google_storage_client
 
 from hca_orchestration.config import preconfigure_resource_for_mode
-from hca_orchestration.config.dev_refresh.dev_refresh import dev_refresh_per_project_dataset_partition_set, \
+from hca_orchestration.config.dev_refresh.dev_refresh import copy_project_to_new_dataset_partitions, \
     dev_refresh_cut_snapshot_partition_set
 from hca_orchestration.config.dcp_release.dcp_release import load_dcp_release_manifests
 from hca_orchestration.pipelines import copy_project
@@ -43,7 +43,7 @@ def base_jobs() -> list[Union[PipelineDefinition, SensorDefinition]]:
         validate_egress,
         build_post_import_sensor(os.environ.get("ENV", "test")),
         copy_project_to_new_dataset_job(),
-        dev_refresh_per_project_dataset_partition_set(),
+        copy_project_to_new_dataset_partitions(),
         dev_refresh_cut_snapshot_partition_set(),
     ]
     return defs + load_dcp_release_manifests()
