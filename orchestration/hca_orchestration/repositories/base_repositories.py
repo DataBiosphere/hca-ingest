@@ -43,7 +43,7 @@ def base_jobs() -> list[Union[PipelineDefinition, SensorDefinition]]:
         validate_egress,
         build_post_import_sensor(os.environ.get("ENV", "test")),
         copy_project_to_new_dataset_job(),
-        copy_project_to_new_dataset_partitions(),
-        dev_refresh_cut_snapshot_partition_set(),
     ]
-    return defs + load_dcp_release_manifests()
+
+    return defs + load_dcp_release_manifests() + copy_project_to_new_dataset_partitions() + \
+        dev_refresh_cut_snapshot_partition_set()
