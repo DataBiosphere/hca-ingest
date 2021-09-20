@@ -1,7 +1,7 @@
 env: &envConfig
   # all of these key-value pairs get injected as environment variables into the containers running dagster,
   # including the dagit ui server and any pipeline executors
-  HCA_ARGO_URL: https://hca-argo.monster-dev.broadinstitute.org/
+  PARTITIONS_BUCKET: broad-dsp-monster-hca-dev-etl-partitions
 
   # this is needed for setting a mode for automatically triggered pipelines (i.e., via sensors)
   ENV: dev
