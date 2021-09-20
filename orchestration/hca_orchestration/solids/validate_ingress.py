@@ -1,3 +1,5 @@
+from typing import Any
+
 from dagster import solid, String, Failure
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
@@ -8,7 +10,7 @@ from dagster.core.execution.context.compute import AbstractComputeExecutionConte
         "staging_area": String
     }
 )
-def pre_flight_validate(context: AbstractComputeExecutionContext) -> str:
+def pre_flight_validate(context: AbstractComputeExecutionContext) -> Any:
     """
     Runs the external validation code on the provided staging area.
     """

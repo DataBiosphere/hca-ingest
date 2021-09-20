@@ -1,12 +1,12 @@
 import logging
-from typing import Optional
+from typing import Any, Optional
 
 from hca_manage.common import DefaultHelpParser
 from hca.staging_area_validator import StagingAreaValidator
 
 
 class HcaValidator:
-    def validate_staging_area(self, path: str, ignore_inputs: bool) -> int:
+    def validate_staging_area(self, path: str, ignore_inputs: bool) -> Any:
         """
         Run the validation pre-checks on the staging area
         :param path: Google Cloud Storage path for staging area
@@ -25,7 +25,7 @@ class HcaValidator:
         return exit_code
 
 
-## CLI
+# CLI
 def run(arguments: Optional[list[str]] = None) -> None:
     parser = DefaultHelpParser(description="CLI to manage validate GS path and json files.")
     parser.add_argument("-p", "--path", help="GS path to validate", required=True)

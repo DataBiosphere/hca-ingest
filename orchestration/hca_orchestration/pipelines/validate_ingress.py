@@ -57,7 +57,6 @@ def staging_area_validator(init_context: InitResourceContext) -> HcaValidator:
     return HcaValidator()
 
 
-
 @failure_hook(
     required_resource_keys={'slack', 'dagit_config'}
 )
@@ -66,6 +65,7 @@ def validation_failed_notification(context: HookContext) -> None:
         "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
     }
     context.resources.slack.send_message(blocks=key_value_slack_blocks("Validation Ingress Failed", key_values=kvs))
+
 
 @graph
 def validate_ingress_graph() -> None:
