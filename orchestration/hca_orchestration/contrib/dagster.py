@@ -8,7 +8,7 @@ T = TypeVar("T")
 
 
 def gs_csv_partition_reader(gs_partitions_bucket_name: str, pipeline_name: str, gs_client: Client,
-                            run_config_fn_for_partition: Callable[[Partition[T]], Any]):
+                            run_config_fn_for_partition: Callable[[Partition[T]], Any]) -> list[PartitionSetDefinition]:
     """
     Parses any csv files at the given GS path, interpreting each line as a separate
     partition.
