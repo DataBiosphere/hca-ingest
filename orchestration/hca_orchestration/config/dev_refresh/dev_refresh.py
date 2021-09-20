@@ -3,23 +3,14 @@ Defines partitioning logic for the Q3 2021 dev refresh
 """
 
 import os
-from datetime import datetime
+import logging
 
 from dagster import file_relative_path, Partition, PartitionSetDefinition
 from dagster.utils import load_yaml_from_path
 from dagster_utils.typing import DagsterObjectConfigSchema
+from google.cloud.storage import Client
 
-
-def get_dev_refresh_partitions() -> list[Partition]:
-    path = file_relative_path(
-        __file__, os.path.join("./partitions/", "hca_project_ids.csv")
-    )
-
-    with open(path) as project_ids_file:
-        lines = project_ids_file.readlines()
-        project_ids = [Partition(project_id.strip()) for project_id in lines]
-
-    return project_ids
+from hca_orchestration.contrib.dagster import gs_csv_partition_reader
 
 
 def run_config_for_dev_refresh_partition(partition: Partition) -> DagsterObjectConfigSchema:
@@ -59,29 +50,21 @@ def run_config_for_cut_snapshot_partition(partition: Partition) -> DagsterObject
     return run_config
 
 
-def dev_refresh_cut_snapshot_partition_set() -> PartitionSetDefinition:
-    return PartitionSetDefinition(
-        name="dev_refresh_cut_snapshot_partition_set",
-        pipeline_name="cut_snapshot",
-        partition_fn=get_dev_refresh_partitions,
-        run_config_fn_for_partition=run_config_for_cut_snapshot_partition,
-        mode="dev_refresh"
-    )
+def dev_refresh_cut_snapshot_partition_set() -> list[PartitionSetDefinition]:
+    dev_refresh_partitions_path = os.environ.get("PARTITIONS_BUCKET", "")
+    if not dev_refresh_partitions_path:
+        logging.info("PARTITIONS_BUCKET not set, skipping dev refresh partitioning.")
+        return []
+
+    return gs_csv_partition_reader(dev_refresh_partitions_path, "cut_snapshot", Client(),
+                                   run_config_for_cut_snapshot_partition)
 
 
-def dev_refresh_partition_set() -> PartitionSetDefinition:
-    return PartitionSetDefinition(
-        name="dev_refresh_partition_set",
-        pipeline_name="copy_project",
-        partition_fn=get_dev_refresh_partitions,
-        run_config_fn_for_partition=run_config_for_dev_refresh_partition
-    )
+def copy_project_to_new_dataset_partitions() -> list[PartitionSetDefinition]:
+    dev_refresh_partitions_path = os.environ.get("PARTITIONS_BUCKET", "")
+    if not dev_refresh_partitions_path:
+        logging.info("PARTITIONS_BUCKET not set, skipping dev refresh partitioning.")
+        return []
 
-
-def dev_refresh_per_project_dataset_partition_set() -> PartitionSetDefinition:
-    return PartitionSetDefinition(
-        name="per_project_dataset_dev_refresh_partition_set",
-        pipeline_name="copy_project_to_new_dataset",
-        partition_fn=get_dev_refresh_partitions,
-        run_config_fn_for_partition=run_config_for_per_project_dataset_partition,
-    )
+    return gs_csv_partition_reader(dev_refresh_partitions_path, "copy_project_to_new_dataset",
+                                   Client(), run_config_for_per_project_dataset_partition)
