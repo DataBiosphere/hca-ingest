@@ -18,4 +18,7 @@ def validate_ingress_job() -> PipelineDefinition:
 
 @repository
 def all_jobs() -> list[PipelineDefinition]:
-    return base_jobs() + [validate_ingress_job()]
+    jobs = base_jobs()
+
+    jobs.append(validate_ingress_job())
+    return jobs
