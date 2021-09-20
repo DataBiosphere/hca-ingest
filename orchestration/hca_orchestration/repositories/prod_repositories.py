@@ -2,9 +2,7 @@ from dagster import PipelineDefinition, repository
 from dagster_utils.resources.slack import live_slack_client
 
 from hca_orchestration.config import preconfigure_resource_for_mode
-
 from hca_orchestration.pipelines.validate_ingress import validate_ingress_graph, staging_area_validator
-
 from hca_orchestration.repositories.base_repositories import base_jobs
 
 
