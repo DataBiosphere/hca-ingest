@@ -1,13 +1,15 @@
 import os
 import unittest
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
-from dagster import execute_pipeline, file_relative_path, PipelineDefinition, PipelineExecutionResult
+from dagster import execute_pipeline, file_relative_path, PipelineDefinition, PipelineExecutionResult, \
+    ResourceDefinition, Failure
 from dagster.utils import load_yaml_from_globs
 from dagster.utils.merger import deep_merge_dicts
+from dagster_utils.resources.slack import console_slack_client
 
-from hca_orchestration.pipelines import cut_snapshot, load_hca, validate_egress
+from hca_orchestration.pipelines import cut_snapshot, load_hca, validate_egress, validate_ingress_graph
 
 
 def config_path(relative_path: str) -> str:
@@ -67,10 +69,45 @@ class PipelinesTestCase(unittest.TestCase):
 
         self.assertTrue(result.success)
 
+    def test_validate_ingress_success(self):
+        validate_ingress_graph.to_job(resource_defs={
+            "slack": console_slack_client,
+            "staging_area_validator": ResourceDefinition.mock_resource()
+        })
+
+        mock_validator = MagicMock()
+        mock_validator.validate_staging_area = MagicMock(return_value=0)
+        result = validate_ingress_graph.execute_in_process(
+            config=load_yaml_from_globs(
+                config_path("test_validate_ingress.yaml")
+            ),
+            resources={
+                'slack': MagicMock(),
+                "staging_area_validator": mock_validator
+            })
+
+        self.assertTrue(result.success)
+
+    def test_validate_ingress_failure(self):
+        validate_ingress_graph.to_job(resource_defs={
+            "slack": console_slack_client,
+            "staging_area_validator": ResourceDefinition.mock_resource()
+        })
+
+        mock_validator = MagicMock()
+        mock_validator.validate_staging_area = MagicMock(return_value=1)
+
+        with self.assertRaises(Failure):
+            validate_ingress_graph.execute_in_process(
+                config=load_yaml_from_globs(
+                    config_path("test_validate_ingress.yaml")
+                ),
+                resources={
+                    'slack': MagicMock(),
+                    "staging_area_validator": mock_validator
+                })
+
     def test_cut_snapshot(self):
-        """
-        This test is checking to see if cut_snapshot spins up
-        """
         result = self.run_pipeline(cut_snapshot, config_name="test_create_snapshot.yaml")
 
         self.assertTrue(result.success)
