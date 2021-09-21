@@ -1,4 +1,4 @@
-from dagster import ModeDefinition, pipeline, success_hook, failure_hook, ResourceDefinition
+from dagster import ModeDefinition, pipeline, success_hook, failure_hook, ResourceDefinition, PresetDefinition
 from dagster import HookContext
 
 from dagster_gcp.gcs import gcs_pickle_io_manager
@@ -165,7 +165,27 @@ def message_for_snapshot_done(context: HookContext) -> None:
 
 
 @pipeline(
-    mode_defs=[prod_mode, dev_mode, local_mode, test_mode, dev_refresh_mode]
+    mode_defs=[prod_mode, dev_mode, local_mode, test_mode, dev_refresh_mode],
+    preset_defs=[
+        PresetDefinition("dev_preset", mode="dev", run_config={
+            "solids": {
+                "add_steward": {
+                    "config": {
+                        "snapshot_steward": "monster-dev@dev.test.firecloud.org"
+                    }
+                }
+            }
+        }),
+        PresetDefinition("prod_preset", mode="prod", run_config={
+            "solids": {
+                "add_steward": {
+                    "config": {
+                        "snapshot_steward": "monster@firecloud.org"
+                    }
+                }
+            }
+        })
+    ]
 )
 def cut_snapshot() -> None:
     hooked_submit_snapshot_job = submit_snapshot_job.with_hooks({snapshot_start_notification})
