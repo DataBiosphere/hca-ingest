@@ -4,4 +4,7 @@ resources:
       dataset_name: 'hca_prod_20201120_dcp2'
       snapshot_name: 'hca_prod_20201120_dcp2___20210812_fake'
       managed_access: False
-
+solids:
+  add_steward:
+    config:
+      snapshot_steward: foo@example.com
