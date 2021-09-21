@@ -1,4 +1,4 @@
-from dagster import ModeDefinition, pipeline, success_hook, failure_hook
+from dagster import ModeDefinition, pipeline, success_hook, failure_hook, ResourceDefinition
 from dagster import HookContext
 
 from dagster_gcp.gcs import gcs_pickle_io_manager
@@ -13,7 +13,7 @@ from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.contrib.slack import key_value_slack_blocks
 from hca_orchestration.resources.data_repo_service import data_repo_service
 from hca_orchestration.solids.create_snapshot import get_completed_snapshot_info, make_snapshot_public, \
-    submit_snapshot_job
+    submit_snapshot_job, add_steward
 from hca_orchestration.solids.data_repo import wait_for_job_completion
 from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.data_repo import hca_manage_config, snapshot_creation_config, \
@@ -173,6 +173,8 @@ def cut_snapshot() -> None:
     hooked_make_snapshot_public = make_snapshot_public.with_hooks({message_for_snapshot_done})
 
     hooked_make_snapshot_public(
-        get_completed_snapshot_info(
-            hooked_wait_for_job_completion(
-                hooked_submit_snapshot_job())))
+        add_steward(
+            get_completed_snapshot_info(
+                hooked_wait_for_job_completion(
+                    hooked_submit_snapshot_job())))
+    )

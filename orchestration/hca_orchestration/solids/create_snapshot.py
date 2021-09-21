@@ -1,6 +1,7 @@
+from data_repo_client import RepositoryApi, PolicyMemberRequest, PolicyResponse
 from typing import Iterator
 
-from dagster import AssetMaterialization, EventMetadataEntry, Output, OutputDefinition, solid
+from dagster import AssetMaterialization, EventMetadataEntry, Output, OutputDefinition, solid, Failure
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
 from hca_manage.common import JobId, data_repo_profile_ids
@@ -57,4 +58,27 @@ def get_completed_snapshot_info(context: AbstractComputeExecutionContext, job_id
 )
 def make_snapshot_public(context: AbstractComputeExecutionContext, snapshot_id: str) -> str:
     context.resources.sam_client.make_snapshot_public(snapshot_id)
+    return snapshot_id
+
+
+@solid(
+    config_schema={"snapshot_steward": str},
+    required_resource_keys={'data_repo_client'}
+)
+def add_steward(context: AbstractComputeExecutionContext, snapshot_id: str) -> str:
+    data_repo_client: RepositoryApi = context.resources.data_repo_client
+    policy_member = context.solid_config["snapshot_steward"]
+
+    result: PolicyResponse = data_repo_client.add_snapshot_policy_member(
+        id=snapshot_id, policy_name="steward", policy_member=PolicyMemberRequest(email=policy_member))
+    for policy in result.policies:
+        if policy.name == 'steward':
+            found_member = False
+            for member in policy.members:
+                if policy_member == member.email:
+                    found_member = True
+
+            if not found_member:
+                raise Failure(f"Policy member {policy_member} not added to stewards for snapshot id {snapshot_id}")
+
     return snapshot_id
