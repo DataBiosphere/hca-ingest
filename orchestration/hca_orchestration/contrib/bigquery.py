@@ -35,7 +35,7 @@ class BigQueryService:
         query_job = self.bigquery_client.query(
             query,
             job_config,
-            location='US',
+            location='us-central1',
             project=bigquery_project
         )
 
@@ -46,7 +46,7 @@ class BigQueryService:
             query: str,
             bigquery_project: str,
             query_params: list[ArrayQueryParameter] = [],
-            location: str = 'US'
+            location: str = 'us-central1'
     ) -> RowIterator:
         """
         Performs a bigquery query, with no external destination (table or otherwise)
@@ -103,7 +103,7 @@ class BigQueryService:
         query_job = self.bigquery_client.query(
             query,
             job_config,
-            location='US',
+            location='us-central1',
             project=bigquery_project
         )
 

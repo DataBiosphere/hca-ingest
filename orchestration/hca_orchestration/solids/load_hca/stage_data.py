@@ -87,6 +87,7 @@ def create_scratch_dataset(context: AbstractComputeExecutionContext) -> HcaScrat
     dataset_name = f"{scratch_bq_project}.{scratch_dataset_prefix}_{load_tag}"
 
     dataset = Dataset(dataset_name)
+    dataset.location = 'us-central1'
     dataset.default_table_expiration_ms = context.resources.scratch_config.scratch_table_expiration_ms
 
     bq_client = context.resources.bigquery_client

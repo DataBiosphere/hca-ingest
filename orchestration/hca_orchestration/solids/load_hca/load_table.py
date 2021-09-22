@@ -10,7 +10,7 @@ from google.cloud.storage import Client
 
 from hca_orchestration.contrib.bigquery import BigQueryService
 from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
-from hca_orchestration.contrib.gcs import path_has_any_data
+from hca_orchestration.contrib.gcs import path_has_any_data, remove_empty_blobs
 from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.models.scratch import ScratchConfig
 from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType, MetadataTypeFanoutResult
@@ -57,6 +57,8 @@ def load_table(
     if not path_has_any_data(scratch_config.scratch_bucket_name, source_path, gcs_client):
         logging.info(f"No data for metadata type {metadata_type}")
         return None
+
+    remove_empty_blobs(scratch_config.scratch_bucket_name, source_path, gcs_client)
 
     num_new_rows = start_load(
         scratch_config,
