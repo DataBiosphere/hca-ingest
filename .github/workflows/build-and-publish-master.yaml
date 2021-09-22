@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: 3.9.6
       - name: Install Poetry
-        uses: snok/install-poetry@v1.1.8
+        uses: snok/install-poetry@v1.1.9
       - name: Restore cache dependencies
         uses: actions/cache@v2
         env:
