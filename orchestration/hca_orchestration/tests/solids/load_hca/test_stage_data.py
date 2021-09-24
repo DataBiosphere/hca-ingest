@@ -102,6 +102,11 @@ def test_create_scratch_dataset():
                         "append_run_id": False,
                         "load_tag_prefix": "load_tag_prefix"
                     }
+                },
+                "target_hca_dataset": {
+                    "config": {
+                        "dataset_id": "123abc"
+                    }
                 }
             }
         }

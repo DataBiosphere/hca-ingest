@@ -117,7 +117,8 @@ def _diff_hca_table(
         source_paths=source_paths,
         table_name=metadata_type,
         destination=destination,
-        bigquery_project=scratch_config.scratch_bq_project
+        bigquery_project=scratch_config.scratch_bq_project,
+        location=target_hca_dataset.bq_location
     )
 
 
@@ -127,6 +128,7 @@ def _query_rows_to_append(
         scratch_config: ScratchConfig,
         scratch_dataset_name: HcaScratchDatasetName,
         joined_table_name: str,
+        target_hca_dataset: TdrDataset,
         bigquery_service: BigQueryService
 ) -> RowIterator:
     query = f"""
@@ -139,7 +141,8 @@ def _query_rows_to_append(
     return bigquery_service.run_query_with_destination(
         query,
         target_table,
-        scratch_config.scratch_bq_project
+        scratch_config.scratch_bq_project,
+        location=target_hca_dataset.bq_location
     )
 
 
@@ -216,6 +219,7 @@ def start_load(
         scratch_config=scratch_config,
         scratch_dataset_name=scratch_dataset_name,
         joined_table_name=joined_table_name,
+        target_hca_dataset=target_hca_dataset,
         bigquery_service=bigquery_service
     )
 
@@ -267,7 +271,8 @@ def _get_outdated_ids(
 
     bigquery_service.run_query(
         query,
-        bigquery_project=scratch_config.scratch_bq_project
+        bigquery_project=scratch_config.scratch_bq_project,
+        location=target_hca_dataset.bq_location
     )
 
     return out_path

@@ -40,10 +40,7 @@ def run_config(test_bucket_name):
             },
             "target_hca_dataset": {
                 "config": {
-                    "dataset_name": "dataset_name",
-                    "dataset_id": "dataset_id",
-                    "project_id": "project_id",
-                    "billing_profile_id": "billing_profile_id"
+                    "dataset_id": "dataset_id"
                 }
             }
         }
@@ -122,7 +119,8 @@ def test_clear_outdated(data_repo_service):
         "fake_target_dataset_name",
         "1234abc",
         "fake_target_bq_project_id",
-        "fake_billing_profile_id"
+        "fake_billing_profile_id",
+        "fake_location"
     )
 
     gcs = Mock(spec=Client)

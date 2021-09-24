@@ -11,6 +11,7 @@ class TdrDataset:
     dataset_id: str
     project_id: str
     billing_profile_id: str
+    bq_location: str
 
     def fully_qualified_jade_dataset_name(self) -> str:
         return f"datarepo_{self.dataset_name}"

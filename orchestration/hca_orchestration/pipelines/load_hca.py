@@ -1,5 +1,4 @@
 from dagster import ModeDefinition, pipeline
-from dagster import ResourceDefinition
 from dagster_gcp.gcs import gcs_pickle_io_manager
 from dagster_utils.resources.beam.k8s_beam_runner import k8s_dataflow_beam_runner
 from dagster_utils.resources.beam.local_beam_runner import local_beam_runner
@@ -14,7 +13,7 @@ from hca_orchestration.resources import load_tag, bigquery_service, mock_bigquer
 from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.config.target_hca_dataset import target_hca_dataset
-from hca_orchestration.resources.data_repo_service import data_repo_service
+from hca_orchestration.resources.data_repo_service import data_repo_service, mock_data_repo_service
 from hca_orchestration.solids.load_hca.data_files.load_data_files import import_data_files
 from hca_orchestration.solids.load_hca.data_files.load_data_metadata_files import file_metadata_fanout
 from hca_orchestration.solids.load_hca.non_file_metadata.load_non_file_metadata import non_file_metadata_fanout
@@ -86,7 +85,7 @@ test_mode = ModeDefinition(
         "scratch_config": scratch_config,
         "target_hca_dataset": target_hca_dataset,
         "bigquery_service": mock_bigquery_service,
-        "data_repo_service": ResourceDefinition.mock_resource(),
+        "data_repo_service": mock_data_repo_service,
         "slack": console_slack_client,
         "dagit_config": preconfigure_resource_for_mode(dagit_config, "test")
     }

@@ -79,7 +79,8 @@ def _inject_file_ids(
         ],
         table_name=file_metadata_type,
         destination=f"{scratch_dataset_name}.{destination_table_name}",
-        bigquery_project=scratch_config.scratch_bq_project
+        bigquery_project=scratch_config.scratch_bq_project,
+        location=target_hca_dataset.bq_location
     )
 
     return rows
