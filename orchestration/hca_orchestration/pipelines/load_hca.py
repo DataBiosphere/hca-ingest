@@ -51,7 +51,7 @@ dev_mode = ModeDefinition(
         "target_hca_dataset": target_hca_dataset,
         "bigquery_service": bigquery_service,
         "data_repo_service": data_repo_service,
-        "slack": console_slack_client,  # (live_slack_client, "dev"),
+        "slack": preconfigure_resource_for_mode(live_slack_client, "dev"),
         "dagit_config": preconfigure_resource_for_mode(dagit_config, "dev")
     }
 )
