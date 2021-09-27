@@ -43,7 +43,13 @@ class PipelinesTestCase(unittest.TestCase):
             mode=pipeline_mode
         )
 
-    def test_load_hca_noop_resources(self):
+    @patch("hca_manage.bq_managers.NullFileRefManager.get_rows")
+    @patch("hca_manage.bq_managers.NullFileRefManager.get_file_table_names")
+    @patch("hca_manage.bq_managers.DuplicatesManager.get_rows")
+    @patch("hca_manage.bq_managers.DuplicatesManager.get_all_table_names")
+    @patch("hca_manage.bq_managers.DanglingFileRefManager.get_rows")
+    @patch("hca_manage.bq_managers.CountsManager.get_rows")
+    def test_load_hca_noop_resources(self, *mocks):
         result = self.run_pipeline(load_hca, config_name="test_load_hca_noop_resources.yaml")
 
         self.assertTrue(result.success)
