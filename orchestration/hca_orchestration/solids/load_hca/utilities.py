@@ -12,7 +12,7 @@ from hca_orchestration.models.hca_dataset import TdrDataset
 @solid(
     required_resource_keys={'slack', 'target_hca_dataset', 'dagit_config', 'data_repo_client'}
 )
-def terminal_solid(
+def validate_and_notify(
         context: AbstractComputeExecutionContext,
         results1: list[Optional[JobId]],
         results2: list[Optional[JobId]]
