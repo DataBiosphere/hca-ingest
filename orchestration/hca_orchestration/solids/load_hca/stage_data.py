@@ -6,6 +6,7 @@ from google.cloud.bigquery import Dataset
 from google.cloud.storage.client import Client
 
 from hca_orchestration.support.typing import HcaScratchDatasetName
+from hca_orchestration.models.hca_dataset import TdrDataset
 
 
 @solid(
@@ -71,7 +72,7 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
 
 
 @solid(
-    required_resource_keys={"bigquery_client", "load_tag", "scratch_config"},
+    required_resource_keys={"bigquery_client", "load_tag", "scratch_config", "target_hca_dataset"},
     input_defs=[InputDefinition("start", Nothing)],
 )
 def create_scratch_dataset(context: AbstractComputeExecutionContext) -> HcaScratchDatasetName:
@@ -83,10 +84,15 @@ def create_scratch_dataset(context: AbstractComputeExecutionContext) -> HcaScrat
     scratch_bq_project = context.resources.scratch_config.scratch_bq_project
     scratch_dataset_prefix = context.resources.scratch_config.scratch_dataset_prefix
     load_tag = context.resources.load_tag
+    target_hca_dataset: TdrDataset = context.resources.target_hca_dataset
 
     dataset_name = f"{scratch_bq_project}.{scratch_dataset_prefix}_{load_tag}"
 
     dataset = Dataset(dataset_name)
+
+    # co-locate the staging dataset in the same BQ location as the target TDR dataset
+    # so we can perform joins
+    dataset.location = target_hca_dataset.bq_location
     dataset.default_table_expiration_ms = context.resources.scratch_config.scratch_table_expiration_ms
 
     bq_client = context.resources.bigquery_client

@@ -71,10 +71,24 @@ class DataRepoService:
             return None
 
         dataset_summary: DatasetSummaryModel = result.items[0]
-        dataset_manager = DatasetManager(env, self.data_repo_client)
-        dataset_model = dataset_manager.retrieve_dataset(dataset_summary.id)
-        return TdrDataset(dataset_model.name, dataset_model.id,
-                          dataset_model.data_project, dataset_model.default_profile_id)
+        return self.get_dataset(dataset_summary.id)
+
+    def get_dataset(self, dataset_id: str) -> TdrDataset:
+        dataset_model: DatasetModel = self.data_repo_client.retrieve_dataset(id=dataset_id)
+        bq_location = self._get_dataset_bq_location(dataset_model)
+
+        if not bq_location:
+            raise ValueError(f"No bigquery location found for dataset {dataset_id}")
+
+        return TdrDataset(dataset_model.name, dataset_model.id, dataset_model.data_project,
+                          dataset_model.default_profile_id, bq_location)
+
+    def _get_dataset_bq_location(self, dataset_model: DatasetModel) -> Optional[str]:
+        for storage_info in dataset_model.storage:
+            if storage_info.cloud_resource == 'bigquery':
+                return str(storage_info.region)
+
+        return None
 
     def create_dataset(
             self,
@@ -94,9 +108,14 @@ class DataRepoService:
             tdr_env,
             description
         )
+        bq_location = self._get_dataset_bq_location(dataset_info)
+        if not bq_location:
+            raise ValueError(f"No bigquery location found for dataset {dataset_info.id}")
+
         return TdrDataset(
             dataset_info.name,
             dataset_info.id,
             dataset_info.data_project,
-            dataset_info.default_profile_id
+            dataset_info.default_profile_id,
+            bq_location
         )

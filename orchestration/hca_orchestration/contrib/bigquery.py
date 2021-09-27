@@ -21,7 +21,8 @@ class BigQueryService:
             self,
             query: str,
             destination_table: str,
-            bigquery_project: str
+            bigquery_project: str,
+            location: str
     ) -> RowIterator:
         """
         Performs a bigquery query, with no external table definitions.
@@ -35,7 +36,7 @@ class BigQueryService:
         query_job = self.bigquery_client.query(
             query,
             job_config,
-            location='US',
+            location=location,
             project=bigquery_project
         )
 
@@ -45,8 +46,8 @@ class BigQueryService:
             self,
             query: str,
             bigquery_project: str,
-            query_params: list[ArrayQueryParameter] = [],
-            location: str = 'US'
+            location: str,
+            query_params: list[ArrayQueryParameter] = []
     ) -> RowIterator:
         """
         Performs a bigquery query, with no external destination (table or otherwise)
@@ -70,7 +71,8 @@ class BigQueryService:
             schema: Optional[list[dict[str, str]]],
             table_name: str,
             destination: str,
-            bigquery_project: str
+            bigquery_project: str,
+            location: str
     ) -> RowIterator:
         """
         Performs a bigquery query using an external table definition, using the supplied
@@ -103,7 +105,7 @@ class BigQueryService:
         query_job = self.bigquery_client.query(
             query,
             job_config,
-            location='US',
+            location=location,
             project=bigquery_project
         )
 

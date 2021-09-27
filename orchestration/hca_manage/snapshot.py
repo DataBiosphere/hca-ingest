@@ -201,7 +201,8 @@ class SnapshotManager:
                 "monster-dev@dev.test.firecloud.org",
                 "azul-dev@dev.test.firecloud.org"
             ],
-            "prod": ["hca-snapshot-readers@firecloud.org", "monster@firecloud.org"]
+            "prod": ["hca-snapshot-readers@firecloud.org", "monster@firecloud.org"],
+            "real_prod": []
         }[self.environment]
         self.public_access_reader_list = {
             "dev": [
@@ -210,7 +211,8 @@ class SnapshotManager:
                 "azul-dev@dev.test.firecloud.org",
                 "azul-public-dev@dev.test.firecloud.org"
             ],
-            "prod": ["hca-snapshot-readers@firecloud.org", "monster@firecloud.org"]
+            "prod": ["hca-snapshot-readers@firecloud.org", "monster@firecloud.org"],
+            "real_prod": []
         }[self.environment]
 
     def submit_snapshot_request(

@@ -23,10 +23,7 @@ run_config = {
         },
         "target_hca_dataset": {
             "config": {
-                "dataset_name": "dataset_name",
                 "dataset_id": "dataset_id",
-                "project_id": "project_id",
-                "billing_profile_id": "billing_profile_id"
             }
         }
     }

@@ -10,7 +10,7 @@ from google.cloud.storage import Client
 
 from hca_orchestration.contrib.bigquery import BigQueryService
 from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
-from hca_orchestration.contrib.gcs import path_has_any_data
+from hca_orchestration.contrib.gcs import path_has_any_data, remove_empty_blobs
 from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.models.scratch import ScratchConfig
 from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType, MetadataTypeFanoutResult
@@ -57,6 +57,8 @@ def load_table(
     if not path_has_any_data(scratch_config.scratch_bucket_name, source_path, gcs_client):
         logging.info(f"No data for metadata type {metadata_type}")
         return None
+
+    remove_empty_blobs(scratch_config.scratch_bucket_name, source_path, gcs_client)
 
     num_new_rows = start_load(
         scratch_config,
@@ -115,7 +117,8 @@ def _diff_hca_table(
         source_paths=source_paths,
         table_name=metadata_type,
         destination=destination,
-        bigquery_project=scratch_config.scratch_bq_project
+        bigquery_project=scratch_config.scratch_bq_project,
+        location=target_hca_dataset.bq_location
     )
 
 
@@ -125,6 +128,7 @@ def _query_rows_to_append(
         scratch_config: ScratchConfig,
         scratch_dataset_name: HcaScratchDatasetName,
         joined_table_name: str,
+        target_hca_dataset: TdrDataset,
         bigquery_service: BigQueryService
 ) -> RowIterator:
     query = f"""
@@ -137,7 +141,8 @@ def _query_rows_to_append(
     return bigquery_service.run_query_with_destination(
         query,
         target_table,
-        scratch_config.scratch_bq_project
+        scratch_config.scratch_bq_project,
+        location=target_hca_dataset.bq_location
     )
 
 
@@ -214,6 +219,7 @@ def start_load(
         scratch_config=scratch_config,
         scratch_dataset_name=scratch_dataset_name,
         joined_table_name=joined_table_name,
+        target_hca_dataset=target_hca_dataset,
         bigquery_service=bigquery_service
     )
 
@@ -265,7 +271,8 @@ def _get_outdated_ids(
 
     bigquery_service.run_query(
         query,
-        bigquery_project=scratch_config.scratch_bq_project
+        bigquery_project=scratch_config.scratch_bq_project,
+        location=target_hca_dataset.bq_location
     )
 
     return out_path

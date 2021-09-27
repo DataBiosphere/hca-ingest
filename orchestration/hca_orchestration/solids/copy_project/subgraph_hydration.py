@@ -45,7 +45,11 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
         FROM `{hca_project_config.source_bigquery_project_id}.{hca_project_config.source_snapshot_name}.links`
         WHERE project_id = "{project_id}"
     """
-    rows = bigquery_service.run_query(query, hca_project_config.source_bigquery_project_id)
+    rows = bigquery_service.run_query(
+        query,
+        hca_project_config.source_bigquery_project_id,
+        hca_project_config.source_bigquery_region
+    )
     nodes = defaultdict(list)
     subgraphs = []
     for row in rows:
@@ -94,6 +98,7 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
         f"{scratch_bucket_name}/tabular_data_for_ingest",
         hca_project_config.source_bigquery_project_id,
         hca_project_config.source_snapshot_name,
+        hca_project_config.source_bigquery_region,
         bigquery_service
     )
 
@@ -102,6 +107,7 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
     entity_rows: dict[str, list[Row]] = fetch_entities(nodes,
                                                        hca_project_config.source_bigquery_project_id,
                                                        hca_project_config.source_snapshot_name,
+                                                       hca_project_config.source_bigquery_region,
                                                        bigquery_service)
 
     drs_objects = {}
@@ -168,6 +174,7 @@ def _extract_entities_to_path(
         destination_path: str,
         bigquery_project_id: str,
         snapshot_name: str,
+        bigquery_region: str,
         bigquery_service: BigQueryService
 ) -> None:
     for entity_type, entities in nodes.items():
@@ -203,13 +210,14 @@ def _extract_entities_to_path(
         ]
         logging.info(f"Saved tabular data for ingest to gs://{destination_path}/{entity_type}/*")
         bigquery_service.run_query(
-            fetch_entities_query, bigquery_project_id, query_params, location='US')
+            fetch_entities_query, bigquery_project_id, bigquery_region, query_params)
 
 
 def fetch_entities(
         entities_by_type: dict[str, list[MetadataEntity]],
         bigquery_project_id: str,
         snapshot_name: str,
+        bigquery_region: str,
         bigquery_service: BigQueryService) -> dict[str, list[Row]]:
     result: dict[str, list[Row]] = defaultdict(list[Row])
     for entity_type, entities in entities_by_type.items():
@@ -231,6 +239,7 @@ def fetch_entities(
         ]
         result[entity_type] = [row for row in bigquery_service.run_query(fetch_entities_query,
                                                                          bigquery_project_id,
+                                                                         bigquery_region,
                                                                          query_params)]
 
     return result

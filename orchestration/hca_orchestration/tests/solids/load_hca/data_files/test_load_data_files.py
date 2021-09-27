@@ -23,7 +23,8 @@ load_datafiles_test_mode: ModeDefinition = ModeDefinition(
                 "fake_dataset_name",
                 "1234abc",
                 "fake_hca_project_id",
-                "fake_billing_profile_id"
+                "fake_billing_profile_id",
+                "us-fake-region"
             )),
         "scratch_config": ResourceDefinition.hardcoded_resource(
             ScratchConfig(

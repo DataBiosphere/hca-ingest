@@ -19,8 +19,8 @@ def test_copy_project(*mocks) -> None:
             "gcs": MagicMock(),
             "scratch_config": MagicMock(),
             "bigquery_service": MagicMock(),
-            "hca_project_copying_config": HcaProjectCopyingConfig("fake_source_project_id", "fake_source_snapshot_name", "fake_bq_project_id"),
-            "target_hca_dataset": TdrDataset("fake_name", "fake_id", "fake_gcp_project_id", "fake_billing_profile_id"),
+            "hca_project_copying_config": HcaProjectCopyingConfig("fake_source_project_id", "fake_source_snapshot_name", "fake_bq_project_id", "fake_region"),
+            "target_hca_dataset": TdrDataset("fake_name", "fake_id", "fake_gcp_project_id", "fake_billing_profile_id", "us-fake-region"),
             "load_tag": MagicMock(),
         })
     assert result.success

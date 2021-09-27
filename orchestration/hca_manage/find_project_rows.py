@@ -29,6 +29,7 @@ def run(arguments: Optional[list[str]] = None) -> None:
     parser.add_argument("-p", "--hca_project_id", required=True)
     parser.add_argument("-d", "--dataset_name", required=True)
     parser.add_argument("-b", "--bq_project_id", required=True)
+    parser.add_argument("-b", "--bq_region", required=True)
 
     args = parser.parse_args(arguments)
     _query_for_project(args)
@@ -38,6 +39,7 @@ def _query_for_project(args: argparse.Namespace) -> None:
     dataset_name = args.dataset_name
     hca_project_id = args.hca_project_id
     bq_project_id = args.bq_project_id
+    bq_region = args.bq_region
 
     bq_service = BigQueryService(Client())
     query = f"""
@@ -46,7 +48,7 @@ def _query_for_project(args: argparse.Namespace) -> None:
     """
 
     logging.info("Project row IDs = ")
-    project_row_ids = bq_service.run_query(query, bq_project_id)
+    project_row_ids = bq_service.run_query(query, bq_project_id, bq_region)
     for row in project_row_ids:
         logging.info(row["datarepo_row_id"])
 
@@ -54,7 +56,7 @@ def _query_for_project(args: argparse.Namespace) -> None:
     SELECT * FROM `{dataset_name}.links`
     WHERE project_id = '{hca_project_id}'
     """
-    links_rows = bq_service.run_query(query, bq_project_id)
+    links_rows = bq_service.run_query(query, bq_project_id, bq_region)
     logging.info("")
     logging.info("Links row IDs = ")
     for row in links_rows:

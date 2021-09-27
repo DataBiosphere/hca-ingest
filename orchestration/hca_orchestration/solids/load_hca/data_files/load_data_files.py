@@ -104,7 +104,8 @@ def _determine_files_to_load(
         FILE_LOAD_TABLE_BQ_SCHEMA,
         file_load_table_name,
         f"{staging_dataset}.{file_load_table_name}",
-        scratch_config.scratch_bq_project
+        scratch_config.scratch_bq_project,
+        location=target_hca_dataset.bq_location
     )
     return rows
 
