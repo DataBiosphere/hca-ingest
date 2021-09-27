@@ -54,9 +54,7 @@ dev_mode = ModeDefinition(
         "gcs": google_storage_client,
         "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, "dev"),
         "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "dev"),
-        # we don't want to actually hit sam and make a snapshot public
-        # unless we're running in prod
-        "sam_client": noop_sam_client,
+        "sam_client": preconfigure_resource_for_mode(sam_client, "dev"),
         "slack": preconfigure_resource_for_mode(live_slack_client, "dev"),
         "snapshot_config": snapshot_creation_config,
         "dagit_config": preconfigure_resource_for_mode(dagit_config, "dev"),
@@ -70,9 +68,7 @@ dev_refresh_mode = ModeDefinition(
         "gcs": google_storage_client,
         "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, "dev"),
         "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "dev"),
-        # we don't want to actually hit sam and make a snapshot public
-        # unless we're running in prod
-        "sam_client": noop_sam_client,
+        "sam_client": preconfigure_resource_for_mode(sam_client, "dev"),
         "slack": preconfigure_resource_for_mode(live_slack_client, "dev"),
         "snapshot_config": dev_refresh_snapshot_creation_config,
         "dagit_config": preconfigure_resource_for_mode(dagit_config, "dev"),
@@ -86,7 +82,7 @@ local_mode = ModeDefinition(
         "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
         "gcs": google_storage_client,
         "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, "dev"),
-        "sam_client": noop_sam_client,
+        "sam_client": preconfigure_resource_for_mode(sam_client, "dev"),
         "slack": preconfigure_resource_for_mode(live_slack_client, "local"),
         "snapshot_config": snapshot_creation_config,
         "dagit_config": preconfigure_resource_for_mode(dagit_config, "local"),

@@ -107,10 +107,7 @@ def load_hca_run_config(dataset_name: str, dataset_info: DatasetInfo):
             },
             "target_hca_dataset": {
                 "config": {
-                    "dataset_name": dataset_name,
                     "dataset_id": dataset_info.dataset_id,
-                    "project_id": dataset_info.dataset_data_project_id,
-                    "billing_profile_id": data_repo_profile_ids["dev"],
                 }
             }
         },

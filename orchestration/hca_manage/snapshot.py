@@ -208,8 +208,6 @@ class SnapshotManager:
             "dev": [
                 "hca-snapshot-readers@dev.test.firecloud.org",
                 "monster-dev@dev.test.firecloud.org",
-                "azul-dev@dev.test.firecloud.org",
-                "azul-public-dev@dev.test.firecloud.org"
             ],
             "prod": ["hca-snapshot-readers@firecloud.org", "monster@firecloud.org"],
             "real_prod": []
