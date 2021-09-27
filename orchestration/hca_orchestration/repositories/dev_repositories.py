@@ -1,6 +1,8 @@
 from dagster import PipelineDefinition, repository
 from dagster_utils.resources.slack import live_slack_client
 
+from hca_orchestration.config.dev_refresh.dev_refresh import dev_refresh_cut_snapshot_partition_set, \
+    copy_project_to_new_dataset_partitions
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.pipelines.validate_ingress import validate_ingress_graph, staging_area_validator
 from hca_orchestration.repositories.base_repositories import base_jobs
@@ -18,7 +20,9 @@ def validate_ingress_job() -> PipelineDefinition:
 
 @repository
 def all_jobs() -> list[PipelineDefinition]:
-    jobs = base_jobs()
+    jobs = base_jobs("dev")
 
     jobs.append(validate_ingress_job())
+    jobs += copy_project_to_new_dataset_partitions("dev")
+    jobs += dev_refresh_cut_snapshot_partition_set()
     return jobs

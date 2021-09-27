@@ -36,7 +36,7 @@ def copy_project_to_new_dataset_job() -> PipelineDefinition:
         })
 
 
-def base_jobs() -> list[Union[PipelineDefinition, SensorDefinition]]:
+def base_jobs(mode: str) -> list[Union[PipelineDefinition, SensorDefinition]]:
     defs = [
         cut_snapshot,
         load_hca,
@@ -45,5 +45,4 @@ def base_jobs() -> list[Union[PipelineDefinition, SensorDefinition]]:
         copy_project_to_new_dataset_job(),
     ]
 
-    return defs + load_dcp_release_manifests() + copy_project_to_new_dataset_partitions() + \
-        dev_refresh_cut_snapshot_partition_set()
+    return defs + load_dcp_release_manifests(mode)

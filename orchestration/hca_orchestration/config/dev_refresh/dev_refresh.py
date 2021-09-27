@@ -37,6 +37,13 @@ def run_config_for_per_project_dataset_partition(partition: Partition) -> Dagste
 
 def run_config_for_cut_snapshot_partition(partition: Partition) -> DagsterObjectConfigSchema:
     run_config = {
+        "solids": {
+            "add_steward": {
+                "config": {
+                    "snapshot_steward": "monster-dev@dev.test.firecloud.org"
+                }
+            }
+        },
         "resources": {
             "snapshot_config": {
                 "config": {
@@ -57,18 +64,21 @@ def dev_refresh_cut_snapshot_partition_set() -> list[PartitionSetDefinition]:
         return []
 
     result = gs_csv_partition_reader(dev_refresh_partitions_path, "cut_snapshot", Client(),
+                                     "dev_refresh",
                                      run_config_for_cut_snapshot_partition)
     logging.warning(f"Found partitions for cut_snapshot: {result}")
     return result
 
 
-def copy_project_to_new_dataset_partitions() -> list[PartitionSetDefinition]:
+def copy_project_to_new_dataset_partitions(mode: str) -> list[PartitionSetDefinition]:
     dev_refresh_partitions_path = os.environ.get("PARTITIONS_BUCKET", "")
     if not dev_refresh_partitions_path:
         logging.warning("PARTITIONS_BUCKET not set, skipping dev refresh partitioning.")
         return []
 
     result = gs_csv_partition_reader(dev_refresh_partitions_path, "copy_project_to_new_dataset",
-                                     Client(), run_config_for_per_project_dataset_partition)
+                                     Client(),
+                                     mode,
+                                     run_config_for_per_project_dataset_partition)
     logging.warning(f"Found partitions for copy_project_to_new_dataset: {result}")
     return result

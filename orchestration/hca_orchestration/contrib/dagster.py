@@ -7,7 +7,7 @@ from typing import Callable, Any, TypeVar
 T = TypeVar("T")
 
 
-def gs_csv_partition_reader(gs_partitions_bucket_name: str, pipeline_name: str, gs_client: Client,
+def gs_csv_partition_reader(gs_partitions_bucket_name: str, pipeline_name: str, gs_client: Client, mode: str,
                             run_config_fn_for_partition: Callable[[Partition[T]], Any]) -> list[PartitionSetDefinition]:
     """
     Parses any csv files at the given GS path, interpreting each line as a separate
@@ -52,7 +52,8 @@ def gs_csv_partition_reader(gs_partitions_bucket_name: str, pipeline_name: str, 
                 name=partition_set_id,
                 pipeline_name=pipeline_name,
                 partition_fn=lambda paths=partitions, ignoreme=None: paths,
-                run_config_fn_for_partition=run_config_fn_for_partition
+                run_config_fn_for_partition=run_config_fn_for_partition,
+                mode=mode
             ))
 
     return partition_sets
