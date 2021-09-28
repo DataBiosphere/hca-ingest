@@ -1,4 +1,5 @@
 import os
+from dagster_utils.resources.slack import live_slack_client
 from typing import Union
 
 from dagster import PipelineDefinition, repository, SensorDefinition
@@ -18,6 +19,17 @@ from hca_orchestration.resources.config.target_hca_dataset import build_new_targ
 from hca_orchestration.resources.data_repo_service import data_repo_service
 from hca_orchestration.resources.hca_project_config import hca_project_copying_config
 from hca_orchestration.sensors import build_post_import_sensor
+from hca_orchestration.pipelines.validate_ingress import validate_ingress_graph, staging_area_validator
+
+
+def validate_ingress_job() -> PipelineDefinition:
+    return validate_ingress_graph.to_job(
+        name="validate_ingress",
+        resource_defs={
+            "slack": preconfigure_resource_for_mode(live_slack_client, "prod"),
+            "staging_area_validator": staging_area_validator
+        }
+    )
 
 
 def copy_project_to_new_dataset_job() -> PipelineDefinition:
@@ -40,7 +52,8 @@ def base_jobs(mode: str) -> list[Union[PipelineDefinition, SensorDefinition]]:
     defs = [
         cut_snapshot,
         load_hca,
-        validate_egress
+        validate_egress,
+        validate_ingress
     ]
 
     return defs + load_dcp_release_manifests(mode)
