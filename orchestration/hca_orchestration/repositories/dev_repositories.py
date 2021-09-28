@@ -22,7 +22,6 @@ def validate_ingress_job() -> PipelineDefinition:
 def all_jobs() -> list[PipelineDefinition]:
     jobs = base_jobs("dev")
 
-    jobs.append(validate_ingress_job())
     jobs += copy_project_to_new_dataset_partitions()
     jobs += dev_refresh_cut_snapshot_partition_set()
     jobs += copy_project_to_new_dataset_job(),
