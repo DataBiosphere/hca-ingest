@@ -5,6 +5,7 @@ from dagster_utils.resources.beam.beam_runner import BeamRunner
 from google.cloud.bigquery import Dataset
 from google.cloud.storage.client import Client
 
+from hca_orchestration.contrib.dagster import short_run_id
 from hca_orchestration.support.typing import HcaScratchDatasetName
 from hca_orchestration.models.hca_dataset import TdrDataset
 
@@ -58,11 +59,7 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
         "inputPrefix": context.solid_config["input_prefix"],
         "outputPrefix": f'gs://{bucket_name}/{prefix_name}',
     }
-    run_id = context.run_id
-    if not run_id:
-        run_id = uuid.uuid4().hex
-    tag = f"{run_id[0:8]}"
-
+    tag = short_run_id(context.run_id)
     beam_runner.run(
         run_arg_dict=args_dict,
         job_name=f"hca-{tag}",

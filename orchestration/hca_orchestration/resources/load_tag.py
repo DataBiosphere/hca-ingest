@@ -2,6 +2,8 @@ import uuid
 
 from dagster import resource, Field, InitResourceContext, Bool, String, Failure
 
+from hca_orchestration.contrib.dagster import short_run_id
+
 
 @resource({
     "load_tag_prefix": Field(String),
@@ -21,11 +23,6 @@ def load_tag(init_context: InitResourceContext) -> str:
     """
     tag = f"{init_context.resource_config['load_tag_prefix']}"
     if init_context.resource_config['append_run_id']:
-        run_id = init_context.run_id
-        if not run_id:
-            # no run id in test scenarios, generate one here
-            run_id = uuid.uuid4().hex
-
-        tag = f"{tag}_{run_id[0:8]}"
+        tag = f"{tag}_{short_run_id(init_context.run_id)}"
 
     return tag
