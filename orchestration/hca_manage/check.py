@@ -20,8 +20,7 @@ def run(arguments: Optional[list[str]] = None) -> None:
     parser.add_argument("-e", "--env", help="The Jade environment to target",
                         choices=["dev", "prod", "real_prod"], required=True)
 
-    parser.add_argument("-p", "--project", help="The Jade project to target")
-    parser.add_argument("-d", "--dataset", help="The Jade dataset to target", required=True)
+    parser.add_argument("-i", "--dataset-id", help="The Jade dataset ID to target", required=True)
     parser.add_argument("-r", "--remove",
                         help="Remove problematic rows. If flag not set, "
                              "will only check for presence of problematic rows",
@@ -33,21 +32,23 @@ def run(arguments: Optional[list[str]] = None) -> None:
 
     if args.remove:
         if query_yes_no("Are you sure?"):
-            check_data(args, host, parser, remove=True)
+            check_data(args, host, remove=True)
         else:
             print("No removal attempted.")
     else:
-        check_data(args, host, parser)
+        check_data(args, host)
 
 
-def check_data(args: argparse.Namespace, host: str, parser: argparse.ArgumentParser, remove: bool = False) -> None:
-    project = args.project
-
-    dataset = args.dataset
+def check_data(args: argparse.Namespace, host: str, remove: bool = False) -> None:
+    dataset_id = args.dataset_id
+    client = get_api_client(host)
+    dataset = client.retrieve_dataset(id=dataset_id)
+    print(f"name = {dataset.name}")
+    print(f"data_project = {dataset.data_project}")
 
     hca = CheckManager(environment=args.env,
-                       project=project,
-                       dataset=dataset,
+                       project=dataset.data_project,
+                       dataset=dataset.name,
                        data_repo_client=get_api_client(host),
                        snapshot=args.snapshot)
 

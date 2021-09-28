@@ -1,8 +1,9 @@
 import logging
+import uuid
 from dagster import Partition, PartitionSetDefinition
 
 from google.cloud.storage import Client
-from typing import Callable, Any, TypeVar
+from typing import Callable, Any, TypeVar, Optional
 
 T = TypeVar("T")
 
@@ -57,3 +58,10 @@ def gs_csv_partition_reader(gs_partitions_bucket_name: str, pipeline_name: str, 
             ))
 
     return partition_sets
+
+
+def short_run_id(run_id: Optional[str]) -> str:
+    if not run_id:
+        run_id = uuid.uuid4().hex
+    tag = f"{run_id[0:8]}"
+    return tag
