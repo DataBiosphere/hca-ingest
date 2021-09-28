@@ -113,7 +113,8 @@ class PipelinesTestCase(unittest.TestCase):
                     "staging_area_validator": mock_validator
                 })
 
-    def test_cut_snapshot(self):
+    @patch('dagster_utils.resources.data_repo.jade_data_repo.NoopDataRepoClient.add_snapshot_policy_member')
+    def test_cut_snapshot(self, *mocks):
         result = self.run_pipeline(cut_snapshot, config_name="test_create_snapshot.yaml")
 
         self.assertTrue(result.success)

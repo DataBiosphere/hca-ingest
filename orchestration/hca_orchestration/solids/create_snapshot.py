@@ -57,7 +57,7 @@ def get_completed_snapshot_info(context: AbstractComputeExecutionContext, job_id
     required_resource_keys={'sam_client'},
 )
 def make_snapshot_public(context: AbstractComputeExecutionContext, snapshot_id: str) -> str:
-    context.resources.sam_client.make_snapshot_public(snapshot_id)
+    context.resources.sam_client.set_public_flag(snapshot_id, True)
     return snapshot_id
 
 
@@ -75,7 +75,7 @@ def add_steward(context: AbstractComputeExecutionContext, snapshot_id: str) -> s
         if policy.name == 'steward':
             found_member = False
             for member in policy.members:
-                if policy_member == member.email:
+                if policy_member == member:
                     found_member = True
 
             if not found_member:

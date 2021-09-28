@@ -1,5 +1,6 @@
 from dagster import ModeDefinition, pipeline
 from dagster_gcp.gcs import gcs_pickle_io_manager
+from dagster_utils.resources.beam.dataflow_beam_runner import dataflow_beam_runner
 from dagster_utils.resources.beam.k8s_beam_runner import k8s_dataflow_beam_runner
 from dagster_utils.resources.beam.local_beam_runner import local_beam_runner
 from dagster_utils.resources.beam.noop_beam_runner import noop_beam_runner
