@@ -4,7 +4,7 @@ system design information.
 
 # Getting Started
 
-* Clone out this repository to a local directory
+* Clone this repository to a local directory
 * Build and run the dataflow tests
   * From the repository root: `sbt test`
 * Setup a local python environment
