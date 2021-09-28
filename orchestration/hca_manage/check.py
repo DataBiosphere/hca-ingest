@@ -42,10 +42,9 @@ def run(arguments: Optional[list[str]] = None) -> None:
 def check_data(args: argparse.Namespace, host: str, remove: bool = False) -> None:
     dataset_id = args.dataset_id
     client = get_api_client(host)
-    dataset = client.retrieve_dataset(id=dataset_id)
-    print(f"name = {dataset.name}")
-    print(f"data_project = {dataset.data_project}")
 
+    logging.info("Pulling dataset info from TDR...")
+    dataset = client.retrieve_dataset(id=dataset_id)
     hca = CheckManager(environment=args.env,
                        project=dataset.data_project,
                        dataset=dataset.name,
