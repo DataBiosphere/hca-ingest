@@ -1,6 +1,6 @@
 # Deployment
 
-We are deploying code via helmfile. Code is deployed by applying the desired SHA1 via helmfile (via the `apply.sh`)
+Code is deployed by applying the desired SHA1 via helmfile (via the `apply.sh`)
 script in this directory. 
 
 ## Process
