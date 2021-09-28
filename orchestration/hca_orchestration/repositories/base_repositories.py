@@ -40,9 +40,7 @@ def base_jobs(mode: str) -> list[Union[PipelineDefinition, SensorDefinition]]:
     defs = [
         cut_snapshot,
         load_hca,
-        validate_egress,
-        build_post_import_sensor(os.environ.get("ENV", "test")),
-        copy_project_to_new_dataset_job(),
+        validate_egress
     ]
 
     return defs + load_dcp_release_manifests(mode)

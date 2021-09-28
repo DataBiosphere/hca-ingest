@@ -5,7 +5,7 @@ from hca_orchestration.config.dev_refresh.dev_refresh import dev_refresh_cut_sna
     copy_project_to_new_dataset_partitions
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.pipelines.validate_ingress import validate_ingress_graph, staging_area_validator
-from hca_orchestration.repositories.base_repositories import base_jobs
+from hca_orchestration.repositories.base_repositories import base_jobs, copy_project_to_new_dataset_job
 
 
 def validate_ingress_job() -> PipelineDefinition:
@@ -25,4 +25,5 @@ def all_jobs() -> list[PipelineDefinition]:
     jobs.append(validate_ingress_job())
     jobs += copy_project_to_new_dataset_partitions("dev")
     jobs += dev_refresh_cut_snapshot_partition_set()
+    jobs += copy_project_to_new_dataset_job(),
     return jobs

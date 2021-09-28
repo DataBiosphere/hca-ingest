@@ -69,7 +69,7 @@ dev_refresh_mode = ModeDefinition(
         "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, "dev"),
         "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "dev"),
         "sam_client": preconfigure_resource_for_mode(sam_client, "dev"),
-        "slack": console_slack_client,  # preconfigure_resource_for_mode(live_slack_client, "dev"),
+        "slack": preconfigure_resource_for_mode(live_slack_client, "dev"),
         "snapshot_config": dev_refresh_snapshot_creation_config,
         "dagit_config": preconfigure_resource_for_mode(dagit_config, "dev"),
         "data_repo_service": data_repo_service
