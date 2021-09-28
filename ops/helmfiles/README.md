@@ -8,7 +8,8 @@ script in this directory.
 * Install the helmfile tool via this [repo](https://github.com/roboll/helmfile)
 * Install helmfile diff by running `helm plugin install https://github.com/databus23/helm-diff`
 * Run `apply.sh <env> <SHA1 | ref>`
-* This will deploy a new helm release to the relevant K8S cluster
+* This will deploy a new helm release to the relevant K8S cluster and send a slack notification with relevant
+deployment info.
 
 ## Web UI access
 We are using port forwarding for access to the Dagster web UI for now. To run:
