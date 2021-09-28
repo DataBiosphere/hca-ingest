@@ -1,13 +1,17 @@
-This is a WIP.
+# Deployment
+
+Code is deployed by applying the desired SHA1 via helmfile (via the `apply.sh`)
+script in this directory. 
+
+## Process
 
 * Install the helmfile tool via this [repo](https://github.com/roboll/helmfile)
 * Install helmfile diff by running `helm plugin install https://github.com/databus23/helm-diff`
-* Make sure you're connected to the appropriate GKE cluster
-* Run `helmfile diff` to see what changes would be applied
-* Run `helmfile apply` to deploy your changes.
+* Run `apply.sh <env> <SHA1 | ref>`
+  * For example, to deploy `master`: `apply.sh dev master`
+* This will deploy a new helm release to the relevant K8S cluster and send a slack notification with relevant
+deployment info.
 
-To access the ArgoCD instance, make sure you're connected to
-the HCA cluster for your desired environment and set up port-forwarding:
-`kubectl port-forward svc/hca-{env}-argocd-server -n argocd 8080:443`
-
-Then go to `localhost:8080` to access the UI.
+## Web UI access
+We are using port forwarding for access to the Dagster web UI for now. To run:
+`forward_ports.sh <env>`
