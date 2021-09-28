@@ -1,5 +1,6 @@
 from dagster import ModeDefinition, pipeline
 from dagster_gcp.gcs import gcs_pickle_io_manager
+from dagster_utils.resources.beam.dataflow_beam_runner import dataflow_beam_runner
 from dagster_utils.resources.beam.k8s_beam_runner import k8s_dataflow_beam_runner
 from dagster_utils.resources.beam.local_beam_runner import local_beam_runner
 from dagster_utils.resources.beam.noop_beam_runner import noop_beam_runner
@@ -41,7 +42,7 @@ prod_mode = ModeDefinition(
 dev_mode = ModeDefinition(
     name="dev",
     resource_defs={
-        "beam_runner": preconfigure_resource_for_mode(k8s_dataflow_beam_runner, "dev"),
+        "beam_runner": dataflow_beam_runner,  # preconfigure_resource_for_mode(k8s_dataflow_beam_runner, "dev"),
         "bigquery_client": bigquery_client,
         "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
         "gcs": google_storage_client,
@@ -51,7 +52,7 @@ dev_mode = ModeDefinition(
         "target_hca_dataset": target_hca_dataset,
         "bigquery_service": bigquery_service,
         "data_repo_service": data_repo_service,
-        "slack": preconfigure_resource_for_mode(live_slack_client, "dev"),
+        "slack": console_slack_client,  # preconfigure_resource_for_mode(live_slack_client, "dev"),
         "dagit_config": preconfigure_resource_for_mode(dagit_config, "dev")
     }
 )

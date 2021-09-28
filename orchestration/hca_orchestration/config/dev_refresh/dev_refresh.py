@@ -70,7 +70,7 @@ def dev_refresh_cut_snapshot_partition_set() -> list[PartitionSetDefinition]:
     return result
 
 
-def copy_project_to_new_dataset_partitions(mode: str) -> list[PartitionSetDefinition]:
+def copy_project_to_new_dataset_partitions() -> list[PartitionSetDefinition]:
     dev_refresh_partitions_path = os.environ.get("PARTITIONS_BUCKET", "")
     if not dev_refresh_partitions_path:
         logging.warning("PARTITIONS_BUCKET not set, skipping dev refresh partitioning.")
@@ -78,7 +78,7 @@ def copy_project_to_new_dataset_partitions(mode: str) -> list[PartitionSetDefini
 
     result = gs_csv_partition_reader(dev_refresh_partitions_path, "copy_project_to_new_dataset",
                                      Client(),
-                                     mode,
+                                     "dev",
                                      run_config_for_per_project_dataset_partition)
     logging.warning(f"Found partitions for copy_project_to_new_dataset: {result}")
     return result
