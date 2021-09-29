@@ -4,7 +4,7 @@ resources:
       append_run_id: true
   scratch_config:
     config:
-      scratch_bq_project: broad-dsp-monster-hca-prod
+      scratch_bq_project: mystical-slate-284720
       scratch_bucket_name: broad-dsp-monster-hca-prod-staging-storage
       scratch_table_expiration_ms: 86400000
   target_hca_dataset:
