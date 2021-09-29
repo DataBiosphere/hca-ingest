@@ -37,9 +37,9 @@ def load_dcp_release_manifests(mode: str) -> list[PartitionSetDefinition]:
     return partition_sets
 
 
-def run_config_for_dcp_release_partition(partition: Partition) -> DagsterObjectConfigSchema:
+def run_config_for_dcp_release_partition(partition: Partition, mode: str) -> DagsterObjectConfigSchema:
     path = file_relative_path(
-        __file__, os.path.join("./run_config", "dcp_release.yaml")
+        __file__, os.path.join(f"./run_config/{mode}", "dcp_release.yaml")
     )
 
     run_config: DagsterObjectConfigSchema = load_yaml_from_path(path)
