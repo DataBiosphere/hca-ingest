@@ -7,5 +7,5 @@ from hca_orchestration.repositories.base_repositories import base_jobs
 @repository
 def all_jobs() -> list[PipelineDefinition]:
     jobs = base_jobs()
-    jobs += load_dcp_release_manifests("prod")
+    jobs += load_dcp_release_manifests()
     return jobs

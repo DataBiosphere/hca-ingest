@@ -9,7 +9,7 @@ from google.cloud.storage.client import Client
 from hca_orchestration.contrib.dagster import gs_csv_partition_reader
 
 
-def load_dcp_release_manifests(mode: str) -> list[PartitionSetDefinition]:
+def load_dcp_release_manifests() -> list[PartitionSetDefinition]:
     """
     Returns a list of PartitionSetDefinitions for all DCP release manifests located at DCP_RELEASE_MANIFEST_PATH.
     DCP_RELEASE_MANIFEST_PATH must be a Google Cloud Storage path. Release manifests must named in the following
@@ -31,15 +31,15 @@ def load_dcp_release_manifests(mode: str) -> list[PartitionSetDefinition]:
         release_manifest_path,
         "load_hca",
         client,
-        mode,
+        "prod",
         run_config_for_dcp_release_partition)
 
     return partition_sets
 
 
-def run_config_for_dcp_release_partition(partition: Partition, mode: str) -> DagsterObjectConfigSchema:
+def run_config_for_dcp_release_partition(partition: Partition) -> DagsterObjectConfigSchema:
     path = file_relative_path(
-        __file__, os.path.join(f"./run_config/{mode}", "dcp_release.yaml")
+        __file__, os.path.join(f"./run_config/prod", "dcp_release.yaml")
     )
 
     run_config: DagsterObjectConfigSchema = load_yaml_from_path(path)
