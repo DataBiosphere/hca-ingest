@@ -1,4 +1,4 @@
-from dagster import solid
+from dagster import solid, Failure
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from dagster_utils.contrib.data_repo.typing import JobId
 from typing import Optional
@@ -34,6 +34,7 @@ def validate_and_notify(
             short_run_id(context.run_id)
         )
         context.resources.slack.send_message(message)
+        raise Failure(f"Dataset {target_hca_dataset.dataset_id} failed validation")
     else:
         kvs = {
             "Staging area": context.run_config["solids"]["pre_process_metadata"]["config"]["input_prefix"],
