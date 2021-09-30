@@ -1,6 +1,11 @@
+"""
+This is the primary ingest pipeline for HCA to TDR. It is responsible for extracting data from a staging
+area, transforming via Google Cloud Dataflow jobs into a form suitable for ingestion to TDR and the final
+load to TDR itself.
+"""
+
 from dagster import ModeDefinition, pipeline
 from dagster_gcp.gcs import gcs_pickle_io_manager
-from dagster_utils.resources.beam.dataflow_beam_runner import dataflow_beam_runner
 from dagster_utils.resources.beam.k8s_beam_runner import k8s_dataflow_beam_runner
 from dagster_utils.resources.beam.local_beam_runner import local_beam_runner
 from dagster_utils.resources.beam.noop_beam_runner import noop_beam_runner
@@ -19,7 +24,7 @@ from hca_orchestration.solids.load_hca.data_files.load_data_files import import_
 from hca_orchestration.solids.load_hca.data_files.load_data_metadata_files import file_metadata_fanout
 from hca_orchestration.solids.load_hca.non_file_metadata.load_non_file_metadata import non_file_metadata_fanout
 from hca_orchestration.solids.load_hca.stage_data import clear_scratch_dir, pre_process_metadata, create_scratch_dataset
-from hca_orchestration.solids.load_hca.utilities import initial_solid, validate_and_notify
+from hca_orchestration.solids.load_hca.utilities import send_start_notification, validate_and_send_finish_notification
 
 prod_mode = ModeDefinition(
     name="prod",
@@ -57,6 +62,7 @@ dev_mode = ModeDefinition(
     }
 )
 
+# useful for debugging locally, uses a local beam runner dispatched via a raw call to sbt
 local_mode = ModeDefinition(
     name="local",
     resource_defs={
@@ -75,6 +81,7 @@ local_mode = ModeDefinition(
     }
 )
 
+# mocks all resources for unit testing (e2e tests should use one of the above modes)
 test_mode = ModeDefinition(
     name="test",
     resource_defs={
@@ -100,12 +107,14 @@ def load_hca() -> None:
     staging_dataset = create_scratch_dataset(
         pre_process_metadata(
             clear_scratch_dir(
-                initial_solid()
-            )))
+                send_start_notification()
+            )
+        )
+    )
 
     result = import_data_files(staging_dataset).collect()
 
     file_metadata_results = file_metadata_fanout(result, staging_dataset).collect()
     non_file_metadata_results = non_file_metadata_fanout(result, staging_dataset).collect()
 
-    validate_and_notify(file_metadata_results, non_file_metadata_results)
+    validate_and_send_finish_notification(file_metadata_results, non_file_metadata_results)

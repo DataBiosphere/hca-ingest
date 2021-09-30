@@ -44,7 +44,7 @@ def copy_project_to_new_dataset_job() -> PipelineDefinition:
         })
 
 
-def base_jobs(mode: str) -> list[Union[PipelineDefinition, SensorDefinition]]:
+def base_jobs() -> list[Union[PipelineDefinition, SensorDefinition]]:
     defs = [
         cut_snapshot,
         load_hca,
@@ -52,4 +52,4 @@ def base_jobs(mode: str) -> list[Union[PipelineDefinition, SensorDefinition]]:
         validate_ingress_job()
     ]
 
-    return defs + load_dcp_release_manifests(mode)
+    return defs
