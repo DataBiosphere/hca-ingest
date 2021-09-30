@@ -13,7 +13,7 @@ from hca_orchestration.solids.validate_egress import construct_validation_messag
 @solid(
     required_resource_keys={'slack', 'target_hca_dataset', 'dagit_config', 'data_repo_client'}
 )
-def validate_and_notify(
+def validate_and_send_finish_notification(
         context: AbstractComputeExecutionContext,
         results1: list[Optional[JobId]],
         results2: list[Optional[JobId]]
@@ -48,7 +48,7 @@ def validate_and_notify(
 @solid(
     required_resource_keys={'slack', 'target_hca_dataset', 'dagit_config'}
 )
-def initial_solid(context: AbstractComputeExecutionContext) -> None:
+def send_start_notification(context: AbstractComputeExecutionContext) -> None:
     kvs = {
         "Staging area": context.run_config["solids"]["pre_process_metadata"]["config"]["input_prefix"],
         "Target Dataset": context.resources.target_hca_dataset.dataset_name,

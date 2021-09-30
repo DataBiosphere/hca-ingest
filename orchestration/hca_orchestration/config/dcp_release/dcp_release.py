@@ -11,7 +11,7 @@ from hca_orchestration.contrib.dagster import gs_csv_partition_reader
 
 def load_dcp_release_manifests() -> list[PartitionSetDefinition]:
     """
-    Returns a list of PartitionSetDefinitions for all DCP release manifests located at DCP_RELEASE_MANIFEST_PATH.
+    Returns a list of PartitionSetDefinitions for all DCP release manifests located in PARTITIONS_BUCKET/load_hca.
     DCP_RELEASE_MANIFEST_PATH must be a Google Cloud Storage path. Release manifests must named in the following
     format:
 
