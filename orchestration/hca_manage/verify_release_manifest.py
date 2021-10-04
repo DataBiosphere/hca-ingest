@@ -23,6 +23,8 @@ from datetime import datetime
 from collections import defaultdict
 from functools import partial
 from multiprocessing import Pool
+
+from typing import Tuple
 from urllib.parse import urlparse
 from dateutil import parser
 
@@ -127,7 +129,7 @@ def process_staging_area(area: str, gs_project: str, bq_project: str, dataset: s
 
 def inspect_entities_at_path(storage_client: Client, bq_client: bigquery.Client, bq_project: str,
                              bq_dataset: str, staging_area: str, prefix: str, entity_type: str, release_cutoff: datetime) -> None:
-    metadata_entities = {}
+    metadata_entities: dict[str, Tuple[str, str]] = {}
 
     url = urlparse(staging_area)
     if prefix:
@@ -211,7 +213,7 @@ def verify_metadata(staging_area: str, bq_project: str, bq_dataset: str, release
 def verify(manifest_file: str, gs_project: str, bq_project: str,
            dataset: str, pool_size: int, release_cutoff: str) -> bool:
     logging.info("Parsing manifest...")
-    release_cutoff = datetime.fromisoformat(release_cutoff)
+    parsed_cutoff = datetime.fromisoformat(release_cutoff)
     logging.info(f"Release cutoff = {release_cutoff}")
     staging_areas = parse_manifest_file(manifest_file)
     logging.info(f"{len(staging_areas)} staging areas in manifest.")
@@ -223,7 +225,7 @@ def verify(manifest_file: str, gs_project: str, bq_project: str,
         gs_project=gs_project,
         bq_project=bq_project,
         dataset=dataset,
-        release_cutoff=release_cutoff)
+        release_cutoff=parsed_cutoff)
     if pool_size > 0:
         with Pool(pool_size) as p:
             p.map(frozen, staging_areas)
