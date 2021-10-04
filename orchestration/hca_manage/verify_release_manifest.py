@@ -19,9 +19,11 @@ import json
 import logging
 import sys
 from dataclasses import dataclass
+from datetime import datetime
 from collections import defaultdict
 from functools import partial
 from multiprocessing import Pool
+from typing import Tuple
 from urllib.parse import urlparse
 from dateutil import parser
 
@@ -31,6 +33,7 @@ from dagster_utils.contrib.google import get_credentials
 
 from hca_orchestration.solids.load_hca.data_files.load_data_metadata_files import FileMetadataTypes
 from hca_orchestration.solids.load_hca.non_file_metadata.load_non_file_metadata import NonFileMetadataTypes
+from hca_orchestration.support.dates import parse_version_to_datetime
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 
@@ -97,7 +100,7 @@ def parse_manifest_file(manifest_file: str) -> list[str]:
         return [area.rstrip('\n/') for area in manifest]
 
 
-def process_staging_area(area: str, gs_project: str, bq_project: str, dataset: str) -> None:
+def process_staging_area(area: str, gs_project: str, bq_project: str, dataset: str, release_cutoff: datetime) -> None:
     logging.debug(f"Processing staging area = {area}")
 
     creds = get_credentials()
@@ -120,12 +123,12 @@ def process_staging_area(area: str, gs_project: str, bq_project: str, dataset: s
             logging.info(
                 f"✅ area = {area} - (data files) expected files loaded = {staged}, actual loaded = {loaded}")
 
-        verify_metadata(area, bq_project, dataset)
+        verify_metadata(area, bq_project, dataset, release_cutoff)
 
 
 def inspect_entities_at_path(storage_client: Client, bq_client: bigquery.Client, bq_project: str,
-                             bq_dataset: str, staging_area: str, prefix: str, entity_type: str) -> None:
-    metadata_entities = {}
+                             bq_dataset: str, staging_area: str, prefix: str, entity_type: str, release_cutoff: datetime) -> None:
+    metadata_entities: dict[str, Tuple[str, str]] = {}
 
     url = urlparse(staging_area)
     if prefix:
@@ -140,6 +143,19 @@ def inspect_entities_at_path(storage_client: Client, bq_client: bigquery.Client,
         file_name = blob.name.split('/')[-1]
         entity_id = file_name.split('_')[0]
         version = file_name.split('_')[1].replace('.json', '')
+
+        # files may be staged after we import, guard against those versions being present
+        version_timestamp = parse_version_to_datetime(version)
+        if version_timestamp > release_cutoff:
+            logging.info(f"Ignoring file {file_name} staged after cutoff")
+            continue
+
+        # multiple versions may be staged, the latest one should win
+        if entity_id in metadata_entities:
+            existing_version, _ = metadata_entities[entity_id]
+            if existing_version >= version:
+                continue
+
         metadata_entities[entity_id] = (version, content)
 
     if len(metadata_entities) == 0:
@@ -164,40 +180,51 @@ def inspect_entities_at_path(storage_client: Client, bq_client: bigquery.Client,
     rows = {row[f'{entity_type}_id']: (row['version'], row['content']) for row in query_job.result()}
 
     for key, (version, content) in metadata_entities.items():
-        assert key in rows.keys(), f"{entity_type} ID {key} not in table"
+        if key not in rows.keys():
+            logging.error(f"❌ area = {staging_area} {entity_type} ID {key} not in table")
         row = rows[key]
-        assert parser.parse(version) == row[0], f"{entity_type} ID {key} version is incorrect"
-        assert json.loads(content) == json.loads(row[1]), f"{entity_type} ID {key} content is incorrect"
+        if not parser.parse(version) == row[0]:
+            logging.error(f"❌ area = {staging_area} {entity_type} ID {key} version is incorrect")
+        if not json.loads(content) == json.loads(row[1]):
+            logging.error(f"❌ area = {staging_area} {entity_type} ID {key} content is incorrect")
 
     logging.info(
         f"✅ area = {staging_area} - (metadata) all {entity_type} entities found ({len(metadata_entities.keys())} entities)")
 
 
-def verify_metadata(staging_area: str, bq_project: str, bq_dataset: str) -> None:
+def verify_metadata(staging_area: str, bq_project: str, bq_dataset: str, release_cutoff: datetime) -> None:
     creds = get_credentials()
     storage_client = storage.Client(project="broad-dsp-monster-hca-prod", credentials=creds)
 
     client = bigquery.Client(project=bq_project)
-    inspect_entities_at_path(storage_client, client, bq_project, bq_dataset, staging_area, "", "links")
+    inspect_entities_at_path(storage_client, client, bq_project, bq_dataset, staging_area, "", "links", release_cutoff)
     for non_file_metadata_type in NonFileMetadataTypes:
         if non_file_metadata_type.value == 'links':
             continue
         inspect_entities_at_path(storage_client, client, bq_project, bq_dataset, staging_area, "metadata",
-                                 non_file_metadata_type.value)
+                                 non_file_metadata_type.value, release_cutoff)
 
     for file_metadata_type in FileMetadataTypes:
         inspect_entities_at_path(storage_client, client, bq_project, bq_dataset, staging_area, "metadata",
-                                 file_metadata_type.value)
+                                 file_metadata_type.value, release_cutoff)
 
 
-def verify(manifest_file: str, gs_project: str, bq_project: str, dataset: str, pool_size: int) -> bool:
+def verify(manifest_file: str, gs_project: str, bq_project: str,
+           dataset: str, pool_size: int, release_cutoff: str) -> bool:
     logging.info("Parsing manifest...")
+    parsed_cutoff = datetime.fromisoformat(release_cutoff)
+    logging.info(f"Release cutoff = {release_cutoff}")
     staging_areas = parse_manifest_file(manifest_file)
     logging.info(f"{len(staging_areas)} staging areas in manifest.")
     logging.info(f"Inspecting staging areas (pool_size = {pool_size})...")
 
     # we multiprocess because this takes quite awhile for > 10 projects, which is common for our releases
-    frozen = partial(process_staging_area, gs_project=gs_project, bq_project=bq_project, dataset=dataset)
+    frozen = partial(
+        process_staging_area,
+        gs_project=gs_project,
+        bq_project=bq_project,
+        dataset=dataset,
+        release_cutoff=parsed_cutoff)
     if pool_size > 0:
         with Pool(pool_size) as p:
             p.map(frozen, staging_areas)
@@ -215,8 +242,15 @@ if __name__ == '__main__':
     argparser.add_argument("-b", "--bq-project", required=True)
     argparser.add_argument("-d", "--dataset", required=True)
     argparser.add_argument("-p", "--pool-size", type=int, default=4)
+    argparser.add_argument("-r", "--release-cutoff", required=True)
     args = argparser.parse_args()
 
-    result = verify(args.manifest_file, args.gs_project, args.bq_project, args.dataset, args.pool_size)
+    result = verify(
+        args.manifest_file,
+        args.gs_project,
+        args.bq_project,
+        args.dataset,
+        args.pool_size,
+        args.release_cutoff)
     if not result:
         sys.exit(1)
