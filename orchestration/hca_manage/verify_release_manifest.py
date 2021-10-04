@@ -23,7 +23,6 @@ from datetime import datetime
 from collections import defaultdict
 from functools import partial
 from multiprocessing import Pool
-
 from typing import Tuple
 from urllib.parse import urlparse
 from dateutil import parser
