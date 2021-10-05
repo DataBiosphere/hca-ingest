@@ -9,14 +9,17 @@ from hca_manage.snapshot import SnapshotManager
 
 
 @solid(
-    required_resource_keys={'data_repo_client', 'snapshot_config', 'hca_manage_config'}
+    required_resource_keys={'data_repo_client', 'snapshot_config', 'hca_manage_config'},
+    config_schema={
+        "billing_profile_id": str
+    }
 )
 def submit_snapshot_job(context: AbstractComputeExecutionContext) -> JobId:
     return SnapshotManager(
         environment=context.resources.hca_manage_config.gcp_env,
         dataset=context.resources.snapshot_config.dataset_name,
         data_repo_client=context.resources.data_repo_client,
-        data_repo_profile_id=data_repo_profile_ids[context.resources.hca_manage_config.gcp_env],
+        data_repo_profile_id=context.solid_config["billing_profile_id"]
     ).submit_snapshot_request_with_name(
         context.resources.snapshot_config.snapshot_name,
         context.resources.snapshot_config.managed_access

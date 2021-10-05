@@ -4,15 +4,12 @@ resources:
       append_run_id: true
   scratch_config:
     config:
-      scratch_bq_project: broad-dsp-monster-hca-dev
-      scratch_bucket_name: broad-dsp-monster-hca-dev-staging-storage
+      scratch_bq_project: mystical-slate-284720
+      scratch_bucket_name: broad-dsp-monster-hca-prod-staging-storage
       scratch_table_expiration_ms: 86400000
   target_hca_dataset:
     config:
-      billing_profile_id: db61c343-6dfe-4d14-84e9-60ddf97ea73f
       dataset_id: d30e68f8-c826-4639-88f3-ae35f00d4185
-      dataset_name: hca_prod_20201120_dcp2
-      project_id: broad-datarepo-terra-prod-hca2
 solids:
   pre_process_metadata:
     config:

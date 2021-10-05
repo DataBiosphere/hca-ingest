@@ -29,6 +29,13 @@ class CreateSnapshotSolidsTestCase(unittest.TestCase):
                                 'managed_access': False
                             }
                         }
+                    },
+                    'solids': {
+                        'submit_snapshot_job': {
+                            'config': {
+                                'billing_profile_id': "fake_billing_profile_id"
+                            }
+                        }
                     }
                 },
             )

@@ -1,4 +1,4 @@
-from dagster import solid
+from dagster import solid, Failure
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from dagster_utils.contrib.data_repo.typing import JobId
 from typing import Optional
@@ -13,7 +13,7 @@ from hca_orchestration.solids.validate_egress import construct_validation_messag
 @solid(
     required_resource_keys={'slack', 'target_hca_dataset', 'dagit_config', 'data_repo_client'}
 )
-def validate_and_notify(
+def validate_and_send_finish_notification(
         context: AbstractComputeExecutionContext,
         results1: list[Optional[JobId]],
         results2: list[Optional[JobId]]
@@ -34,6 +34,7 @@ def validate_and_notify(
             short_run_id(context.run_id)
         )
         context.resources.slack.send_message(message)
+        raise Failure(f"Dataset {target_hca_dataset.dataset_id} failed validation")
     else:
         kvs = {
             "Staging area": context.run_config["solids"]["pre_process_metadata"]["config"]["input_prefix"],
@@ -47,7 +48,7 @@ def validate_and_notify(
 @solid(
     required_resource_keys={'slack', 'target_hca_dataset', 'dagit_config'}
 )
-def initial_solid(context: AbstractComputeExecutionContext) -> None:
+def send_start_notification(context: AbstractComputeExecutionContext) -> None:
     kvs = {
         "Staging area": context.run_config["solids"]["pre_process_metadata"]["config"]["input_prefix"],
         "Target Dataset": context.resources.target_hca_dataset.dataset_name,

@@ -8,3 +8,6 @@ solids:
   add_steward:
     config:
       snapshot_steward: foo@example.com
+  submit_snapshot_job:
+    config:
+      billing_profile_id: fake_billing_profile_id

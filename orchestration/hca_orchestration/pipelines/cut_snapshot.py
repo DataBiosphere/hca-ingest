@@ -161,7 +161,7 @@ def message_for_snapshot_done(context: HookContext) -> None:
 
 
 @pipeline(
-    mode_defs=[prod_mode, dev_mode, local_mode, test_mode, dev_refresh_mode],
+    mode_defs=[prod_mode, real_prod_mode, dev_mode, local_mode, test_mode, dev_refresh_mode],
     preset_defs=[
         PresetDefinition("dev_preset", mode="dev", run_config={
             "solids": {

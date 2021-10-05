@@ -1,13 +1,11 @@
-from dagster_utils.resources.slack import live_slack_client
 from dagster import PipelineDefinition, SensorDefinition
 from dagster_utils.resources.bigquery import bigquery_client
-from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client
 from dagster_utils.resources.google_storage import google_storage_client
 from dagster_utils.resources.slack import live_slack_client
+from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client
 from typing import Union
 
 from hca_orchestration.config import preconfigure_resource_for_mode
-from hca_orchestration.config.dcp_release.dcp_release import load_dcp_release_manifests
 from hca_orchestration.pipelines import copy_project
 from hca_orchestration.pipelines import cut_snapshot, load_hca, validate_egress
 from hca_orchestration.pipelines.validate_ingress import validate_ingress_graph, staging_area_validator
@@ -33,7 +31,7 @@ def copy_project_to_new_dataset_job() -> PipelineDefinition:
         name="copy_project_to_new_dataset",
         resource_defs={
             "bigquery_client": bigquery_client,
-            "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
+            "data_repo_client": jade_data_repo_client,
             "gcs": google_storage_client,
             "scratch_config": scratch_config,
             "bigquery_service": bigquery_service,
@@ -44,7 +42,7 @@ def copy_project_to_new_dataset_job() -> PipelineDefinition:
         })
 
 
-def base_jobs(mode: str) -> list[Union[PipelineDefinition, SensorDefinition]]:
+def base_jobs() -> list[Union[PipelineDefinition, SensorDefinition]]:
     defs = [
         cut_snapshot,
         load_hca,
@@ -52,4 +50,4 @@ def base_jobs(mode: str) -> list[Union[PipelineDefinition, SensorDefinition]]:
         validate_ingress_job()
     ]
 
-    return defs + load_dcp_release_manifests(mode)
+    return defs
