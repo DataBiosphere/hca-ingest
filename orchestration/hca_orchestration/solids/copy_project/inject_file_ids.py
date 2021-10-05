@@ -29,7 +29,7 @@ def inject_file_ids(context: AbstractComputeExecutionContext, entity_types: set[
                                               f"{scratch_config.scratch_prefix_name}/{entity_type}_with_ids")
         bigquery_service.run_extract_file_ids_job(
             destination_path,
-            entity_type, target_hca_dataset, "us-central1"
+            entity_type, target_hca_dataset, target_hca_dataset.bq_location
         )
         ingest_paths[entity_type] = destination_path
 
