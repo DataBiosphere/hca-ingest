@@ -149,9 +149,9 @@ class DatasetManager:
 
     def __post_init__(self) -> None:
         self.stewards = {
-            "dev": {"monster-dev@dev.test.firecloud.org"},
-            "prod": {"monster@firecloud.org"},
-            "real_prod": {"monster@firecloud.org"},
+            "dev": {"monster-dev@dev.test.firecloud.org", "hca-dagster-runner@broad-dsp-monster-hca-dev.iam.gserviceaccount.com"},
+            "prod": {"monster@firecloud.org", "hca-dagster-runner@mystical-slate-284720.iam.gserviceaccount.com"},
+            "real_prod": {"monster@firecloud.org", "hca-dagster-runner@mystical-slate-284720.iam.gserviceaccount.com"},
         }[self.environment]
 
     def generate_schema(self) -> dict[str, object]:
@@ -227,11 +227,6 @@ class DatasetManager:
             "region": region,
             "cloudPlatform": "gcp"
         }
-
-        if env == "prod":
-            # Jade "prod" does not support these args
-            payload.pop("region")
-            payload.pop("cloudPlatform")
 
         response = self.data_repo_client.create_dataset(
             dataset=payload
