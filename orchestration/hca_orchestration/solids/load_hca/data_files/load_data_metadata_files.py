@@ -42,11 +42,12 @@ def _inject_file_ids(
     FROM {file_metadata_type} S LEFT JOIN `{target_hca_dataset.project_id}.{fq_dataset_id}.datarepo_load_history` J
     ON J.state = 'succeeded'
     AND JSON_EXTRACT_SCALAR(S.descriptor, '$.crc32c') = J.checksum_crc32c
-    AND '/' || JSON_EXTRACT_SCALAR(S.descriptor, '$.file_id') || '/' || JSON_EXTRACT_SCALAR(S.descriptor, '$.file_name') = J.target_path
+    AND '/' || JSON_EXTRACT_SCALAR(S.descriptor, '$.file_id') || '/' || JSON_EXTRACT_SCALAR(S.descriptor, '$.crc32c') || '/' || JSON_EXTRACT_SCALAR(S.descriptor, '$.file_name') = J.target_path
     """
 
     destination_table_name = f"{file_metadata_type}_with_ids"
     source_path = f"{scratch_config.scratch_area()}/metadata/{file_metadata_type}/*"
+
     rows = bigquery_service.run_query_using_external_schema(
         query,
         source_paths=[source_path],
@@ -104,7 +105,7 @@ def inject_file_ids_solid(
         scratch_config=scratch_config,
         file_metadata_type=file_metadata_fanout_result.metadata_type,
         scratch_dataset_name=file_metadata_fanout_result.scratch_dataset_name,
-        bigquery_service=bigquery_service,
+        bigquery_service=bigquery_service
     )
     export_data(
         "file-metadata-with-ids",

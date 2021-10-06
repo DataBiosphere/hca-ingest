@@ -223,16 +223,17 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
     descriptor: Msg,
     inputPrefix: String
   ): (String, Msg) = {
-    val targetPath = descriptor
+    val fileName = descriptor
       .read[String]("file_name")
     val contentId = descriptor
       .read[String]("file_id")
 
+    val targetPath =
+      s"/$contentId/${descriptor.read[String]("crc32c")}/${fileName.substring(fileName.lastIndexOf("/") + 1)}"
+
     contentId -> Obj(
-      Str("source_path") -> Str(s"$inputPrefix/data/$targetPath"),
-      Str("target_path") -> Str(
-        s"/$contentId/${targetPath.substring(targetPath.lastIndexOf("/") + 1)}"
-      )
+      Str("source_path") -> Str(s"$inputPrefix/data/$fileName"),
+      Str("target_path") -> Str(targetPath)
     )
   }
 
