@@ -15,4 +15,4 @@ resources:
 solids:
   pre_process_metadata:
     config:
-      input_prefix: example_input_prefix
+      input_prefix: gs://fake/example

@@ -1,5 +1,4 @@
-import uuid
-from dagster import solid, InputDefinition, Nothing, String
+from dagster import solid, InputDefinition, Nothing, String, Failure
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from dagster_utils.resources.beam.beam_runner import BeamRunner
 from google.cloud.bigquery import Dataset
@@ -48,7 +47,14 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
     """
     Runs the Beam hca transformation pipeline flow over the given input prefix
     """
-    context.log.info("--pre_process_metadata")
+    input_prefix = context.solid_config["input_prefix"]
+    if not input_prefix.startswith("gs://"):
+        raise Failure(f"input_prefix must start with gs:// scheme [input_prefix={input_prefix}]")
+
+    if input_prefix.endswith("/"):
+        raise Failure(f"input_prefix must not end with trailing slash [input_prefix={input_prefix}]")
+
+    context.log.info(f"Pre-processing metadata [input_prefix={input_prefix}]")
 
     # not strictly required, but makes the ensuing lines a lot shorter
     bucket_name = context.resources.scratch_config.scratch_bucket_name
@@ -56,7 +62,7 @@ def pre_process_metadata(context: AbstractComputeExecutionContext) -> Nothing:
 
     beam_runner: BeamRunner = context.resources.beam_runner
     args_dict = {
-        "inputPrefix": context.solid_config["input_prefix"],
+        "inputPrefix": input_prefix,
         "outputPrefix": f'gs://{bucket_name}/{prefix_name}',
     }
     tag = short_run_id(context.run_id)

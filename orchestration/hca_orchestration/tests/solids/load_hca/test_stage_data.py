@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
-from dagster import ModeDefinition, ResourceDefinition, SolidExecutionResult, execute_solid
+import pytest
+from dagster import ModeDefinition, ResourceDefinition, SolidExecutionResult, execute_solid, Failure
 from dagster_utils.resources.beam.local_beam_runner import LocalBeamRunner
 from google.cloud.bigquery import Client
 
@@ -70,7 +71,7 @@ def test_pre_process_metadata():
             "solids": {
                 "pre_process_metadata": {
                     "config": {
-                        "input_prefix": "input_prefix"
+                        "input_prefix": "gs://foobar/example"
                     }
                 }
             },
@@ -88,6 +89,58 @@ def test_pre_process_metadata():
 
     assert result.success
     assert mock_beam_runner.run.called_once()
+
+
+def test_pre_process_metadata_fails_with_non_gs_path():
+    with pytest.raises(Failure, match="must start with gs"):
+        execute_solid(
+            pre_process_metadata,
+            mode_def=stage_data_test_mode,
+            run_config={
+                "solids": {
+                    "pre_process_metadata": {
+                        "config": {
+                            "input_prefix": "input_prefix"
+                        }
+                    }
+                },
+                "resources": {
+                    "scratch_config": scratch_config,
+                    "load_tag": {
+                        "config": {
+                            "append_run_id": False,
+                            "load_tag_prefix": "fake"
+                        }
+                    },
+                }
+            }
+        )
+
+
+def test_pre_process_metadata_fails_with_trailing_slash():
+    with pytest.raises(Failure, match="must not end with trailing slash"):
+        execute_solid(
+            pre_process_metadata,
+            mode_def=stage_data_test_mode,
+            run_config={
+                "solids": {
+                    "pre_process_metadata": {
+                        "config": {
+                            "input_prefix": "gs://example/"
+                        }
+                    }
+                },
+                "resources": {
+                    "scratch_config": scratch_config,
+                    "load_tag": {
+                        "config": {
+                            "append_run_id": False,
+                            "load_tag_prefix": "fake"
+                        }
+                    },
+                }
+            }
+        )
 
 
 def test_create_scratch_dataset():

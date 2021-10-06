@@ -389,6 +389,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
         case (_, descriptor) =>
           generateFileIngestRequest(descriptor, inputPrefix)
       }.distinctByKey.values
+      fileIngestRequests.debug()
 
       StorageIO.writeJsonListsGeneric(
         fileIngestRequests,
