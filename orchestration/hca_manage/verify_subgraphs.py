@@ -50,10 +50,10 @@ def run(bq_project: str, dataset: str, snapshot: bool) -> None:
         dataset = f"datarepo_{dataset}"
 
     print(f"Querying bq... [project={bq_project}, dataset={dataset}]")
+
     query = f"""
     SELECT * FROM `{bq_project}.{dataset}.links`
     """
-
     links_rows = [row for row in client.query(query).result()]
     verify_all_subgraphs_in_dataset(links_rows, bq_project, dataset, client)
 
