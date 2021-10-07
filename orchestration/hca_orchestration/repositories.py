@@ -10,13 +10,12 @@ from hca_orchestration.config.dcp_release.dcp_release import load_dcp_release_ma
 from hca_orchestration.config.dev_refresh.dev_refresh import copy_project_to_new_dataset_partitions, \
     dev_refresh_cut_snapshot_partition_set
 from hca_orchestration.pipelines import copy_project
-from hca_orchestration.pipelines import cut_snapshot, load_hca, validate_egress
+from hca_orchestration.pipelines import cut_snapshot, load_hca
 from hca_orchestration.resources import bigquery_service, load_tag
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.config.target_hca_dataset import build_new_target_hca_dataset
 from hca_orchestration.resources.data_repo_service import data_repo_service
 from hca_orchestration.resources.hca_project_config import hca_project_copying_config
-from hca_orchestration.sensors import build_post_import_sensor
 
 
 def copy_project_to_new_dataset_job() -> PipelineDefinition:
@@ -40,8 +39,6 @@ def all_jobs() -> list[Union[PipelineDefinition, SensorDefinition]]:
     defs = [
         cut_snapshot,
         load_hca,
-        validate_egress,
-        build_post_import_sensor(os.environ.get("ENV", "test")),
         copy_project_to_new_dataset_job(),
     ]
     return defs + load_dcp_release_manifests() + copy_project_to_new_dataset_partitions() + \

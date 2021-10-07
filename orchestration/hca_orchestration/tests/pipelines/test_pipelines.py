@@ -9,7 +9,7 @@ from dagster.utils import load_yaml_from_globs
 from dagster.utils.merger import deep_merge_dicts
 from dagster_utils.resources.slack import console_slack_client
 
-from hca_orchestration.pipelines import cut_snapshot, load_hca, validate_egress, validate_ingress_graph
+from hca_orchestration.pipelines import cut_snapshot, load_hca, validate_ingress_graph
 
 
 def config_path(relative_path: str) -> str:
@@ -58,22 +58,6 @@ class PipelinesTestCase(unittest.TestCase):
             scratch_dataset_name.startswith("fake_bq_project.testing_dataset_prefix_fake"),
             "staging dataset should start with load tag prefix"
         )
-
-    @patch("hca_manage.bq_managers.NullFileRefManager.get_rows")
-    @patch("hca_manage.bq_managers.NullFileRefManager.get_file_table_names")
-    @patch("hca_manage.bq_managers.DuplicatesManager.get_rows")
-    @patch("hca_manage.bq_managers.DuplicatesManager.get_all_table_names")
-    @patch("hca_manage.bq_managers.DanglingFileRefManager.get_rows")
-    @patch("hca_manage.bq_managers.CountsManager.get_rows")
-    def test_validate_egress(self, *mocks):
-        """
-        currently validate_egress is just a thin wrapper around
-        post_import_validate, so this just spins it up and sees if
-        it runs at all
-        """
-        result = self.run_pipeline(validate_egress, config_name="test_validate_egress.yaml")
-
-        self.assertTrue(result.success)
 
     def test_validate_ingress_success(self):
         validate_ingress_graph.to_job(resource_defs={
