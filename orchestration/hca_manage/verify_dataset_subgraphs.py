@@ -15,11 +15,11 @@ def hydrate_subgraph(links_rows: list, bq_project: str, dataset: str, client: Cl
     nodes = defaultdict(list)
     subgraphs = []
     for row in links_rows:
-        subgraphs.append((row['links_id'], json.loads(row["content"])["links"]))
+        subgraphs.append(json.loads(row["content"])["links"])
         nodes["links"].append(MetadataEntity(MetadataType("link"), row["links_id"]))
 
     print(f"Hydrating subgraphs [count={len(subgraphs)}]")
-    for subgraph_id, subgraph in subgraphs:
+    for subgraph in subgraphs:
         for link in subgraph:
             link_type = link["link_type"]
             if link_type == 'process_link':
