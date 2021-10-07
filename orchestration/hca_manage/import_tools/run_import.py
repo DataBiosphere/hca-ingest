@@ -1,3 +1,8 @@
+"""
+Simple tool to run a Dagster import from the CLI. Requires a reachable dagit instance
+(see ops/helmfiles/dagster/forward_ports.sh for info on how to access a dagit instance in K8S)
+"""
+
 import argparse
 import os
 import sys
