@@ -1,8 +1,6 @@
-# Notes
+# Overview
 
-This is an initial introduction of [Dagster](https://dagster.io)
-into our codebase for workflow orchestration. This document captures notes,
-todos and anything else we bump into as we test out this technology.
+This module contains orchestration code necessary for importing data to TDR from HCA staging areas. The orchestration framework we use is [Dagster](https://dagster.io).
 
 ## Setting up your dev environment
 * Make sure you have [Poetry](https://python-poetry.org/docs/#installation) installed.
@@ -11,25 +9,29 @@ todos and anything else we bump into as we test out this technology.
 	* If the hook blocks you from creating a commit, you can just run `git commit` again, unless it reports any linting errors it wasn't able to fix.
 
 ## Running
-Once you have your environment set up:
+Once you have your environment set up verify that you can load our repository of pipelines in the web console:
 
-* Run dagit and our toy pipeline via `poetry run dagit  -f hca_orchestration/pipelines.py`
+* Enter the virtual environment that was setup above: `poetry shell`
+* Run dagit and point it at the local dev repository:
+  * `dagit -f hca_orchestration/repositories/dev_repositories.py`
+* View the web console at http://localhost:3000 and run of the `load_hca` pipeline in test mode
 
-The `load_hca` pipeline is being built to mimic our current HCA `load_hca` workflow.
+## Testing
+* Run unit tests via at the root of the `orchestration` module `pytest -v`.
+* End-to-end tests run after merge to `master`. These are also runnable locally:
+  * `pytest -m e2e hca_orchestration/tests/e2e`
+  * You must have a Google account with sufficient permissions to the `dev` TDR environment to run the e2e tests.
 
-The `pre_process_metadata` solid kicks off a Beam job, either locally or in GCP depending
-on which Dagster mode you're running in.
+## Pipelines
+* *load_hca* : Primary pipeline for importing data to HCA
+* *copy_project*: Copies a single HCA project from one dataset to another
+* *validate_ingress*: Validates an HCA staging area
+* *cut_snapshot*: Submits an HCA snapshot creation job to TDR and polls to completion
+
+All pipelines are runnable in local development configurations.
+
+## Tools
+The [hca_manage](https://github.com/DataBiosphere/hca-ingest/tree/master/orchestration/hca_manage) directory contains useful CLI tools for working with and validating HCA datasets, staging areas and snapshots. 
 
 ## Deployment notes
-These are WIP steps + notes to getting code deployed.
-
-* "User" code is deployed via a docker image. We build it using the Dockerfile located in this dir. It's currently
-using `pip`, there is a TODO to move that to `poetry`.
-* The `helmfile` located in `/ops/helmfiles/dagster/helmfile.yaml` controls the configuration of the Dagster
-deployment. This is how we enumerate the "deployables"; right now we have a single deployable that is the
-  monster-dagster image built by the above referenced image.
-* The dagster deployment is configured to always pull a specific tag for this image.
-  On merge to master and after CI passes, a new image will be pushed to GCR tagged with the current SHA of `master`.
-  * Run `helmfile` against the new sha as well to update GKE: `ENV=dev GIT_SHORTHASH="<the hash that was pushed to GCR>" helmfile apply"
-  * GKE should pick up the updated image and deploy
-You must port forward to be able to access the `dagit` UI in our HCA GCP project: `kubectl port-forward --namespace dagster svc/monster-dagit 8080:80`
+See the [deployment documentation](https://github.com/DataBiosphere/hca-ingest/tree/master/ops/helmfiles).
