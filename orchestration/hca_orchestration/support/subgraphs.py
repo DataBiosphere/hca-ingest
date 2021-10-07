@@ -1,20 +1,19 @@
 from collections import defaultdict
-import json
 
-from hca_orchestration.models.entities import MetadataEntity
+from hca_orchestration.models.entities import MetadataEntity, Subgraph
 from hca_orchestration.support.typing import MetadataType
 
 
-def hydrate_subgraph_nodes(links_rows):
-    nodes = defaultdict(list)
+def build_subgraph_nodes(links: list[Subgraph]) -> dict[MetadataType, list[MetadataEntity]]:
+    nodes: dict[MetadataType, list[MetadataEntity]] = defaultdict(list)
     subgraphs = []
-    for row in links_rows:
-        subgraphs.append(json.loads(row["content"])["links"])
-        nodes["links"].append(MetadataEntity(MetadataType("link"), row["links_id"]))
+    for subgraph in links:
+        subgraphs.append(subgraph.links)
+        nodes[MetadataType("links")].append(MetadataEntity(MetadataType("link"), subgraph.links_id))
 
     print(f"Hydrating subgraphs [count={len(subgraphs)}]")
-    for subgraph in subgraphs:
-        for link in subgraph:
+    for subgraph in subgraphs:   # type: ignore
+        for link in subgraph:    # type: ignore
             link_type = link["link_type"]
             if link_type == 'process_link':
                 process = MetadataEntity(link["process_type"], link["process_id"])
