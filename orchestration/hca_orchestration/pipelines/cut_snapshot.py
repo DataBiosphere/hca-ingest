@@ -151,13 +151,14 @@ def message_for_snapshot_done(context: HookContext) -> None:
     )
     data_repo_project = snapshot_details.data_project
 
-    context.resources.slack.send_message(blocks=key_value_slack_blocks("HCA Snapshot Complete", {
-        "Snapshot name": context.resources.snapshot_config.snapshot_name,
-        "Dataset Google Project ID": context.resources.hca_manage_config.google_project_name,
-        "Source Dataset": context.resources.snapshot_config.dataset_name,
-        "Snapshot Google Data Project ID": data_repo_project,
-        "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
-    }))
+    slack_msg_text = ("HCA Snapshot Complete"
+                      + f"\nSnapshot name: {context.resources.snapshot_config.snapshot_name}"
+                      + f"\nDataset Google Project ID: {context.resources.hca_manage_config.google_project_name}"
+                      + f"\nSource Dataset: {context.resources.snapshot_config.dataset_name}"
+                      + f"\nSnapshot Google Data Project ID: {data_repo_project}"
+                      + "\nDagit link: " + f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
+                      )
+    context.resources.slack.send_message(text=slack_msg_text)
 
 
 @pipeline(
