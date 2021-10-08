@@ -10,7 +10,6 @@ from dagster_utils.resources.slack import console_slack_client, live_slack_clien
 from data_repo_client import SnapshotRequestAccessIncludeModel
 
 from hca_orchestration.config import preconfigure_resource_for_mode
-from hca_orchestration.contrib.slack import key_value_slack_blocks
 from hca_orchestration.resources.data_repo_service import data_repo_service
 from hca_orchestration.solids.create_snapshot import get_completed_snapshot_info, make_snapshot_public, \
     submit_snapshot_job, add_steward
@@ -108,16 +107,16 @@ test_mode = ModeDefinition(
 def snapshot_start_notification(context: HookContext) -> None:
     context.log.info(f"Solid output = {context.solid_output_values}")
     job_id = context.solid_output_values["result"]
-    kvs = {
-        "Snapshot name": context.resources.snapshot_config.snapshot_name,
-        "Google Project ID": context.resources.hca_manage_config.google_project_name,
-        "Dataset": context.resources.snapshot_config.dataset_name,
-        "TDR Job ID": job_id,
-        "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
+    lines = ("HCA Starting Snapshot",
+             f"Snapshot name: {context.resources.snapshot_config.snapshot_name}",
+             f"Google Project ID: {context.resources.hca_manage_config.google_project_name}",
+             f"Dataset: {context.resources.snapshot_config.dataset_name}",
+             f"TDR Job ID: {job_id}",
+             "Dagit link: " + f"<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>"
+             )
 
-    }
-
-    context.resources.slack.send_message(blocks=key_value_slack_blocks("HCA Starting Snapshot", key_values=kvs))
+    slack_msg_text = "\n".join(lines)
+    context.resources.slack.send_message(text=slack_msg_text)
 
 
 @failure_hook(
@@ -129,15 +128,15 @@ def snapshot_job_failed_notification(context: HookContext) -> None:
     else:
         job_id = "N/A"
 
-    kvs = {
-        "Snapshot name": context.resources.snapshot_config.snapshot_name,
-        "Dataset Google Project ID": context.resources.hca_manage_config.google_project_name,
-        "Source Dataset": context.resources.snapshot_config.dataset_name,
-        "TDR Job ID": job_id,
-        "Dagit link": f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
-    }
-
-    context.resources.slack.send_message(blocks=key_value_slack_blocks("HCA Snapshot Failed", key_values=kvs))
+    lines = ("HCA Snapshot Failed",
+             f"Snapshot name: {context.resources.snapshot_config.snapshot_name}",
+             f"Dataset Google Project ID: {context.resources.hca_manage_config.google_project_name}",
+             f"Source Dataset: {context.resources.snapshot_config.dataset_name}",
+             f"TDR Job ID: {job_id}",
+             "Dagit link: " + f"<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>"
+             )
+    slack_msg_text = "\n".join(lines)
+    context.resources.slack.send_message(text=slack_msg_text)
 
 
 @success_hook(
@@ -151,13 +150,14 @@ def message_for_snapshot_done(context: HookContext) -> None:
     )
     data_repo_project = snapshot_details.data_project
 
-    slack_msg_text = ("HCA Snapshot Complete"
-                      + f"\nSnapshot name: {context.resources.snapshot_config.snapshot_name}"
-                      + f"\nDataset Google Project ID: {context.resources.hca_manage_config.google_project_name}"
-                      + f"\nSource Dataset: {context.resources.snapshot_config.dataset_name}"
-                      + f"\nSnapshot Google Data Project ID: {data_repo_project}"
-                      + "\nDagit link: " + f'<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>'
-                      )
+    lines = ("HCA Snapshot Complete",
+             f"Snapshot name: {context.resources.snapshot_config.snapshot_name}",
+             f"Dataset Google Project ID: {context.resources.hca_manage_config.google_project_name}",
+             f"Source Dataset: {context.resources.snapshot_config.dataset_name}",
+             f"Snapshot Google Data Project ID: {data_repo_project}",
+             "Dagit link: " + f"<{context.resources.dagit_config.run_url(context.run_id)}|View in Dagit>"
+             )
+    slack_msg_text = "\n".join(lines)
     context.resources.slack.send_message(text=slack_msg_text)
 
 
