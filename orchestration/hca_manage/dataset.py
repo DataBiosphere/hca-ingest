@@ -96,7 +96,10 @@ def _create_dataset(args: argparse.Namespace) -> None:
     host = data_repo_host[args.env]
     region = args.region
 
-    policy_members = set(args.policy_members.split(','))
+    policy_members = None
+    if args.policy_members:
+        policy_members = set(args.policy_members.split(','))
+
     client = get_api_client(host=host)
 
     hca = DatasetManager(environment=args.env, data_repo_client=client)

@@ -29,7 +29,7 @@ def run(arguments: Optional[list[str]] = None) -> None:
     parser.add_argument("-p", "--hca_project_id", required=True)
     parser.add_argument("-d", "--dataset_name", required=True)
     parser.add_argument("-b", "--bq_project_id", required=True)
-    parser.add_argument("-b", "--bq_region", required=True)
+    parser.add_argument("-r", "--bq_region", required=True)
 
     args = parser.parse_args(arguments)
     _query_for_project(args)
