@@ -82,7 +82,7 @@ local_mode = ModeDefinition(
         "gcs": google_storage_client,
         "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, "dev"),
         "sam_client": preconfigure_resource_for_mode(sam_client, "dev"),
-        "slack": preconfigure_resource_for_mode(live_slack_client, "local"),
+        "slack": console_slack_client,
         "snapshot_config": snapshot_creation_config,
         "dagit_config": preconfigure_resource_for_mode(dagit_config, "local"),
     }
