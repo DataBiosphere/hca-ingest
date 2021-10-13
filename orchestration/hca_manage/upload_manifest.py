@@ -1,10 +1,15 @@
+"""
+Parses a csv of staging areas intended for a DCP release and uploads to a
+bucket for bulk ingest by our pipeline
+"""
+
 import argparse
 import csv
 import logging
+
 from google.cloud.storage import Client, Bucket, Blob
 
 from hca_manage.common import setup_cli_logging_format, query_yes_no
-from hca_orchestration.contrib.gcs import parse_gs_path
 
 ETL_PARTITION_BUCKETS = {
     "dev": "broad-dsp-monster-hca-dev-etl-partitions",
