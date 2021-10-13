@@ -1,13 +1,16 @@
 """
 Parses a csv of staging areas intended for a DCP release and uploads to a
-bucket for bulk ingest by our pipeline
+bucket for bulk ingest by our pipeline.
 """
 
 import argparse
 import csv
+import sys
 import logging
 
 from google.cloud.storage import Client, Bucket, Blob
+from dagster_graphql import DagsterGraphQLClient, ShutdownRepositoryLocationStatus, ReloadRepositoryLocationInfo, \
+    ReloadRepositoryLocationStatus
 
 from hca_manage.common import setup_cli_logging_format, query_yes_no
 
@@ -15,6 +18,7 @@ ETL_PARTITION_BUCKETS = {
     "dev": "broad-dsp-monster-hca-dev-etl-partitions",
     "prod": "broad-dsp-monster-hca-prod-etl-partitions"
 }
+REPOSITORY_LOCATION = "monster-hca-ingest"
 
 
 def _sanitize_gs_path(path: str):
@@ -54,6 +58,27 @@ def parse_and_load_manifest(env: str, csv_path: str, release_tag: str):
 
     logging.info(f"Uploading manifest [bucket={bucket.name}, name={blob_name}]")
     blob.upload_from_string(data="\n".join(paths))
+    reload_manifests(env)
+
+
+def _get_dagster_client() -> DagsterGraphQLClient:
+    return DagsterGraphQLClient("localhost", port_number=8080)
+
+
+def _reload_repository(dagster_client: DagsterGraphQLClient):
+    result = dagster_client.reload_repository_location(REPOSITORY_LOCATION)
+    if result.status != ReloadRepositoryLocationStatus.SUCCESS:
+        logging.error(f"Error reloading user code repository: {result.message}")
+        sys.exit(1)
+
+
+def reload_manifests(env: str):
+    logging.info(f"Reloading dagster user code env to reload partitions [env={env}]")
+
+    dagster_client: DagsterGraphQLClient = DagsterGraphQLClient("localhost", port_number=8080)
+    _reload_repository(dagster_client)
+
+    logging.info("Reload complete (it may take a few minutes before the repository is available again)")
 
 
 def enumerate_manifests(env: str):
@@ -77,6 +102,10 @@ def enumerate(args: argparse.Namespace) -> None:
     enumerate_manifests(args.env)
 
 
+def reload(args: argparse.Namespace) -> None:
+    reload_manifests(args.env)
+
+
 if __name__ == '__main__':
     setup_cli_logging_format()
     parser = argparse.ArgumentParser()
@@ -92,6 +121,10 @@ if __name__ == '__main__':
     list_subparser = subparsers.add_parser("enumerate")
     list_subparser.add_argument("-e", "--env", help="HCA environment", required=True)
     list_subparser.set_defaults(func=enumerate)
+
+    reload_subparser = subparsers.add_parser("reload")
+    reload_subparser.add_argument("-e", "--env", help="HCA environment", required=True)
+    reload_subparser.set_defaults(func=reload)
 
     args = parser.parse_args()
     args.func(args)
