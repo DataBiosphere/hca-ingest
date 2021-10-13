@@ -21,7 +21,7 @@ ETL_PARTITION_BUCKETS = {
 REPOSITORY_LOCATION = "monster-hca-ingest"
 
 
-def _sanitize_gs_path(path: str):
+def _sanitize_gs_path(path: str) -> str:
     return path.strip().strip("/")
 
 
@@ -44,7 +44,7 @@ def _parse_csv(csv_path: str) -> set[str]:
     return paths
 
 
-def parse_and_load_manifest(env: str, csv_path: str, release_tag: str):
+def parse_and_load_manifest(env: str, csv_path: str, release_tag: str) -> None:
     paths = _parse_csv(csv_path)
     assert len(paths), "At least one import path is required"
 
@@ -58,30 +58,21 @@ def parse_and_load_manifest(env: str, csv_path: str, release_tag: str):
 
     logging.info(f"Uploading manifest [bucket={bucket.name}, name={blob_name}]")
     blob.upload_from_string(data="\n".join(paths))
-    reload_manifests(env)
+    _reload_repository(_get_dagster_client())
 
 
 def _get_dagster_client() -> DagsterGraphQLClient:
     return DagsterGraphQLClient("localhost", port_number=8080)
 
 
-def _reload_repository(dagster_client: DagsterGraphQLClient):
+def _reload_repository(dagster_client: DagsterGraphQLClient) -> None:
     result = dagster_client.reload_repository_location(REPOSITORY_LOCATION)
     if result.status != ReloadRepositoryLocationStatus.SUCCESS:
         logging.error(f"Error reloading user code repository: {result.message}")
         sys.exit(1)
 
 
-def reload_manifests(env: str):
-    logging.info(f"Reloading dagster user code env to reload partitions [env={env}]")
-
-    dagster_client: DagsterGraphQLClient = DagsterGraphQLClient("localhost", port_number=8080)
-    _reload_repository(dagster_client)
-
-    logging.info("Reload complete (it may take a few minutes before the repository is available again)")
-
-
-def enumerate_manifests(env: str):
+def enumerate_manifests(env: str) -> None:
     storage_client = Client()
 
     bucket: Bucket = storage_client.bucket(bucket_name=ETL_PARTITION_BUCKETS[env])
@@ -103,7 +94,12 @@ def enumerate(args: argparse.Namespace) -> None:
 
 
 def reload(args: argparse.Namespace) -> None:
-    reload_manifests(args.env)
+    logging.info(f"Reloading dagster user code env to reload partitions.")
+
+    dagster_client: DagsterGraphQLClient = DagsterGraphQLClient("localhost", port_number=8080)
+    _reload_repository(dagster_client)
+
+    logging.info("Reload complete (it may take a few minutes before the repository is available again)")
 
 
 if __name__ == '__main__':
@@ -123,7 +119,6 @@ if __name__ == '__main__':
     list_subparser.set_defaults(func=enumerate)
 
     reload_subparser = subparsers.add_parser("reload")
-    reload_subparser.add_argument("-e", "--env", help="HCA environment", required=True)
     reload_subparser.set_defaults(func=reload)
 
     args = parser.parse_args()
