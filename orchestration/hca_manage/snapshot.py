@@ -231,7 +231,7 @@ class SnapshotManager:
             validate_snapshot_name=validate_snapshot_name
         )
 
-    def _validate_snapshot_name(self, snapshot_name: str):
+    def _validate_snapshot_name(self, snapshot_name: str) -> None:
         if not search(LEGACY_SNAPSHOT_NAME_REGEX, snapshot_name) \
                 and not search(UPDATED_SNAPSHOT_NAME_REGEX, snapshot_name):
             raise InvalidSnapshotNameException(f"Snapshot name {snapshot_name} is invalid")
