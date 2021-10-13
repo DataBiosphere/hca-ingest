@@ -56,8 +56,25 @@ def parse_and_load_manifest(env: str, csv_path: str, release_tag: str):
     blob.upload_from_string(data="\n".join(paths))
 
 
+def enumerate_manifests(env: str):
+    storage_client = Client()
+
+    bucket: Bucket = storage_client.bucket(bucket_name=ETL_PARTITION_BUCKETS[env])
+    blobs = bucket.list_blobs(prefix="load_hca")
+    for blob in blobs:
+        blob.reload()
+        if not blob.size:
+            continue
+
+        logging.info(blob.name)
+
+
 def load(args: argparse.Namespace) -> None:
     parse_and_load_manifest(args.env, args.csv_path, args.release_tag)
+
+
+def enumerate(args: argparse.Namespace) -> None:
+    enumerate_manifests(args.env)
 
 
 if __name__ == '__main__':
@@ -71,6 +88,10 @@ if __name__ == '__main__':
     load_subparser.add_argument("-c", "--csv_path", help="CSV path", required=True)
     load_subparser.add_argument("-r", "--release_tag", help="DCP release tag", required=True)
     load_subparser.set_defaults(func=load)
-    args = parser.parse_args()
 
+    list_subparser = subparsers.add_parser("enumerate")
+    list_subparser.add_argument("-e", "--env", help="HCA environment", required=True)
+    list_subparser.set_defaults(func=enumerate)
+
+    args = parser.parse_args()
     args.func(args)
