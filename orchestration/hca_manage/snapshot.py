@@ -42,6 +42,12 @@ def run(arguments: Optional[list[str]] = None) -> None:
     snapshot_create = subparsers.add_parser("create")
     snapshot_create.add_argument("-d", "--dataset", help="The Jade dataset to target")
     snapshot_create.add_argument("-q", "--qualifier", help="Optional qualifier to append to the snapshot name")
+    snapshot_create.add_argument(
+        "-v",
+        "--validate_snapshot_name",
+        help="Skip snapshot name validation",
+        action=argparse.BooleanOptionalAction,
+        default=True)
     snapshot_create.set_defaults(func=_create_snapshot)
 
     # remove
@@ -165,7 +171,7 @@ def _create_snapshot(args: argparse.Namespace) -> None:
         dataset=args.dataset,
         data_repo_profile_id=profile_id,
         data_repo_client=get_api_client(host=host))
-    hca.submit_snapshot_request(qualifier=args.qualifier)
+    hca.submit_snapshot_request(qualifier=args.qualifier, validate_snapshot_name=args.validate_snapshot_name)
 
 
 @tdr_operation
@@ -217,20 +223,33 @@ class SnapshotManager:
             self,
             qualifier: Optional[str] = None,
             snapshot_date: Optional[date] = None,
+            validate_snapshot_name: bool = True
     ) -> JobId:
         snapshot_date = snapshot_date or datetime.today().date()
-        return self.submit_snapshot_request_with_name(self.snapshot_name(qualifier, snapshot_date))
+        return self.submit_snapshot_request_with_name(
+            self.snapshot_name(qualifier, snapshot_date),
+            validate_snapshot_name=validate_snapshot_name
+        )
 
-    def submit_snapshot_request_with_name(self, snapshot_name: str, managed_access: bool = False) -> JobId:
+    def _validate_snapshot_name(self, snapshot_name: str) -> None:
+        if not search(LEGACY_SNAPSHOT_NAME_REGEX, snapshot_name) \
+                and not search(UPDATED_SNAPSHOT_NAME_REGEX, snapshot_name):
+            raise InvalidSnapshotNameException(f"Snapshot name {snapshot_name} is invalid")
+
+    def submit_snapshot_request_with_name(
+            self,
+            snapshot_name: str,
+            managed_access: bool = False,
+            validate_snapshot_name: bool = True
+    ) -> JobId:
         """
         Submit a snapshot creation request.
         :param snapshot_name: name of snapshot to created
         :param managed_access: Determine which set of readers to grant access to this snapshot (default = False)
         :return: Job ID of the snapshot creation job
         """
-        if not search(LEGACY_SNAPSHOT_NAME_REGEX, snapshot_name) \
-                and not search(UPDATED_SNAPSHOT_NAME_REGEX, snapshot_name):
-            raise InvalidSnapshotNameException(f"Snapshot name {snapshot_name} is invalid")
+        if validate_snapshot_name:
+            self._validate_snapshot_name(snapshot_name)
 
         reader_list = self.managed_access_reader_list if managed_access else self.public_access_reader_list
         snapshot_request = SnapshotRequestModel(

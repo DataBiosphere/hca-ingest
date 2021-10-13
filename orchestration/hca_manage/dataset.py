@@ -43,6 +43,12 @@ def run(arguments: Optional[list[str]] = None) -> None:
     )
     dataset_create.add_argument("-s", "--schema_path", help="Path to JSON schema", required=False)
     dataset_create.add_argument("-r", "--region", help="GCP region for the dataset", required=True)
+    dataset_create.add_argument(
+        "-v",
+        "--validate_dataset_name",
+        help="Validate dataset name",
+        action=argparse.BooleanOptionalAction,
+        default=True)
     dataset_create.set_defaults(func=_create_dataset)
 
     # remove
@@ -89,7 +95,8 @@ def _validate_dataset_name(dataset_name: str) -> None:
 
 @tdr_operation
 def _create_dataset(args: argparse.Namespace) -> None:
-    _validate_dataset_name(args.dataset_name)
+    if args.validate_dataset_name:
+        _validate_dataset_name(args.dataset_name)
     if not query_yes_no(f"This will create dataset name = {args.dataset_name} in env = {args.env}. Are you sure?"):
         return
 
