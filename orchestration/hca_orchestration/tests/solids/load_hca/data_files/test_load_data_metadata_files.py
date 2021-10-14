@@ -1,7 +1,6 @@
 from dagster import SolidExecutionResult, execute_solid
 from dagster_utils.contrib.data_repo.typing import JobId
 
-from hca_orchestration.pipelines.load_hca import test_mode
 from hca_orchestration.solids.load_hca.data_files.load_data_metadata_files import inject_file_ids_solid, \
     file_metadata_fanout
 from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType, MetadataTypeFanoutResult
@@ -40,7 +39,6 @@ metadata_fanout_result = MetadataTypeFanoutResult(
 def test_ingest_metadata_for_file_type():
     result: SolidExecutionResult = execute_solid(
         inject_file_ids_solid,
-        mode_def=test_mode,
         input_values={
             "file_metadata_fanout_result": metadata_fanout_result
         },

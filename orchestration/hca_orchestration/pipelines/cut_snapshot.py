@@ -1,4 +1,7 @@
-from dagster import ModeDefinition, pipeline, success_hook, failure_hook, ResourceDefinition, PresetDefinition, graph
+import warnings
+
+from dagster import ModeDefinition, pipeline, success_hook, failure_hook, ResourceDefinition, PresetDefinition, graph, \
+    ExperimentalWarning
 from dagster import HookContext
 
 from dagster_gcp.gcs import gcs_pickle_io_manager
@@ -17,6 +20,9 @@ from hca_orchestration.solids.data_repo import wait_for_job_completion
 from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.data_repo import hca_manage_config, snapshot_creation_config, \
     dev_refresh_snapshot_creation_config
+
+warnings.filterwarnings("ignore", category=ExperimentalWarning)
+
 
 real_prod_mode = ModeDefinition(
     name="real_prod",
