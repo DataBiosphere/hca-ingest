@@ -11,6 +11,7 @@ from dagster_utils.resources.google_storage import google_storage_client
 from dagster_utils.resources.sam import sam_client
 from dagster_utils.resources.slack import live_slack_client
 
+from hca_orchestration.config.dcp_release.dcp_release import load_dcp_release_manifests
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.config.dev_refresh.dev_refresh import dev_refresh_cut_snapshot_partition_set, \
     copy_project_to_new_dataset_partitions
@@ -93,4 +94,5 @@ def all_jobs() -> list[PipelineDefinition]:
     jobs = [copy_project_to_new_dataset_job(), load_hca_job(), validate_ingress_job()]
     jobs += copy_project_to_new_dataset_partitions()
     jobs += dev_refresh_cut_snapshot_partition_set()
+    jobs += load_dcp_release_manifests()
     return jobs
