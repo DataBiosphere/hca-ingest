@@ -19,7 +19,7 @@ from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.config.target_hca_dataset import target_hca_dataset
 from hca_orchestration.resources.data_repo_service import data_repo_service
-from resources.config.data_repo import snapshot_creation_config, hca_manage_config
+from hca_orchestration.resources.config.data_repo import snapshot_creation_config, hca_manage_config
 
 
 def load_hca_job() -> PipelineDefinition:
