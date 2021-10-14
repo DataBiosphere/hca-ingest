@@ -1,4 +1,4 @@
-from dagster import ModeDefinition, pipeline, success_hook, failure_hook, ResourceDefinition, PresetDefinition
+from dagster import ModeDefinition, pipeline, success_hook, failure_hook, ResourceDefinition, PresetDefinition, graph
 from dagster import HookContext
 
 from dagster_gcp.gcs import gcs_pickle_io_manager
@@ -160,30 +160,33 @@ def message_for_snapshot_done(context: HookContext) -> None:
     slack_msg_text = "\n".join(lines)
     context.resources.slack.send_message(text=slack_msg_text)
 
+#
+# @pipeline(
+#     mode_defs=[prod_mode, real_prod_mode, dev_mode, local_mode, test_mode, dev_refresh_mode],
+#     preset_defs=[
+#         PresetDefinition("dev_preset", mode="dev", run_config={
+#             "solids": {
+#                 "add_steward": {
+#                     "config": {
+#                         "snapshot_steward": "monster-dev@dev.test.firecloud.org"
+#                     }
+#                 }
+#             }
+#         }),
+#         PresetDefinition("prod_preset", mode="prod", run_config={
+#             "solids": {
+#                 "add_steward": {
+#                     "config": {
+#                         "snapshot_steward": "monster@firecloud.org"
+#                     }
+#                 }
+#             }
+#         })
+#     ]
+# )
 
-@pipeline(
-    mode_defs=[prod_mode, real_prod_mode, dev_mode, local_mode, test_mode, dev_refresh_mode],
-    preset_defs=[
-        PresetDefinition("dev_preset", mode="dev", run_config={
-            "solids": {
-                "add_steward": {
-                    "config": {
-                        "snapshot_steward": "monster-dev@dev.test.firecloud.org"
-                    }
-                }
-            }
-        }),
-        PresetDefinition("prod_preset", mode="prod", run_config={
-            "solids": {
-                "add_steward": {
-                    "config": {
-                        "snapshot_steward": "monster@firecloud.org"
-                    }
-                }
-            }
-        })
-    ]
-)
+
+@graph
 def cut_snapshot() -> None:
     hooked_submit_snapshot_job = submit_snapshot_job.with_hooks({snapshot_start_notification})
     hooked_wait_for_job_completion = wait_for_job_completion.with_hooks({snapshot_job_failed_notification})
