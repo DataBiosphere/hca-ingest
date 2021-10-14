@@ -1,23 +1,30 @@
+from unittest.mock import MagicMock
+
 import pytest
 from dagster import SolidExecutionResult, execute_solid, ModeDefinition, ResourceDefinition
 from dagster_utils.contrib.data_repo.typing import JobId
+from data_repo_client import RepositoryApi
+from google.cloud.storage import Client
 
+from hca_orchestration.contrib.bigquery import BigQueryService
+from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
+from hca_orchestration.models.hca_dataset import TdrDataset
+from hca_orchestration.models.scratch import ScratchConfig
 from hca_orchestration.solids.load_hca.data_files.load_data_metadata_files import inject_file_ids_solid, \
     file_metadata_fanout
 from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType, MetadataTypeFanoutResult
-from hca_orchestration.models.hca_dataset import TdrDataset
 
 
 @pytest.fixture
 def testing_mode_def():
     return ModeDefinition(
         resource_defs={
-            "scratch_config": ResourceDefinition.mock_resource(),
-            "bigquery_service": ResourceDefinition.mock_resource(),
-            "data_repo_client": ResourceDefinition.mock_resource(),
+            "scratch_config": ResourceDefinition.hardcoded_resource(ScratchConfig("fake", "fake", "fake", "fake", 123)),
+            "bigquery_service": ResourceDefinition.hardcoded_resource(MagicMock(spec=BigQueryService)),
+            "data_repo_client": ResourceDefinition.hardcoded_resource(MagicMock(spec=RepositoryApi)),
             "target_hca_dataset": ResourceDefinition.hardcoded_resource(TdrDataset("fake", "fake", "fake", "fake", "fake")),
-            "data_repo_service": ResourceDefinition.mock_resource(),
-            "gcs": ResourceDefinition.mock_resource()
+            "data_repo_service": ResourceDefinition.hardcoded_resource(MagicMock(spec=DataRepoService)),
+            "gcs": ResourceDefinition.hardcoded_resource(MagicMock(spec=Client))
         }
     )
 
