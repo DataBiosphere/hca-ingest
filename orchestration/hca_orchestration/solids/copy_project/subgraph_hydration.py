@@ -1,4 +1,3 @@
-import json
 import logging
 from collections import defaultdict
 from urllib.parse import urlparse
@@ -15,9 +14,10 @@ from google.oauth2.credentials import Credentials
 from requests.structures import CaseInsensitiveDict
 
 from hca_orchestration.contrib.bigquery import BigQueryService
-from hca_orchestration.models.entities import DataFileEntity, MetadataEntity
+from hca_orchestration.models.entities import DataFileEntity, MetadataEntity, build_subgraph_from_links_row
 from hca_orchestration.models.scratch import ScratchConfig
 from hca_orchestration.resources.hca_project_config import HcaProjectCopyingConfig
+from hca_orchestration.support.subgraphs import build_subgraph_nodes
 from hca_orchestration.support.typing import MetadataType
 
 
@@ -50,47 +50,15 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
         hca_project_config.source_bigquery_project_id,
         hca_project_config.source_bigquery_region
     )
-    nodes = defaultdict(list)
-    subgraphs = []
-    for row in rows:
-        subgraphs.append(json.loads(row["content"])["links"])
-        nodes["links"].append(MetadataEntity(MetadataType("link"), row["links_id"]))
-
-    context.log.info("Hydrating subgraphs...")
-    for subgraph in subgraphs:
-
-        for link in subgraph:
-            link_type = link["link_type"]
-            if link_type == 'process_link':
-                process = MetadataEntity(link["process_type"], link["process_id"])
-                nodes[process.entity_type].append(process)
-
-                for input_link in link["inputs"]:
-                    input_entity = MetadataEntity(input_link["input_type"], input_link["input_id"])
-                    nodes[input_entity.entity_type].append(input_entity)
-
-                for output_link in link["outputs"]:
-                    output_entity = MetadataEntity(output_link["output_type"], output_link["output_id"])
-                    nodes[output_entity.entity_type].append(output_entity)
-
-                for protocol_link in link["protocols"]:
-                    protocol_entity = MetadataEntity(protocol_link["protocol_type"], protocol_link["protocol_id"])
-                    nodes[protocol_entity.entity_type].append(protocol_entity)
-
-            elif link_type == 'supplementary_file_link':
-                entity = MetadataEntity(link["entity"]["entity_type"], link["entity"]["entity_id"])
-                nodes[entity.entity_type].append(entity)
-
-                for file_link in link['files']:
-                    file_entity = MetadataEntity(file_link["file_type"], file_link["file_id"])
-                    nodes[file_entity.entity_type].append(file_entity)
-            else:
-                raise Exception(f"Unknown link type {link_type} encountered")
+    links = [
+        build_subgraph_from_links_row(row) for row in rows
+    ]
+    nodes = build_subgraph_nodes(links)
 
     context.log.info("Saving entities to extract scratch path...")
     if 'project' not in nodes:
         # some subgraphs don't explicitly include the parent project
-        nodes['project'].append(
+        nodes[MetadataType('project')].append(
             MetadataEntity(MetadataType('project'), hca_project_config.source_hca_project_id)
         )
     _extract_entities_to_path(
@@ -170,7 +138,7 @@ def _fetch_drs_access_info(drs_host: str, drs_object: str, session: requests.Ses
 
 
 def _extract_entities_to_path(
-        nodes: dict[str, list[MetadataEntity]],
+        nodes: dict[MetadataType, list[MetadataEntity]],
         destination_path: str,
         bigquery_project_id: str,
         snapshot_name: str,
@@ -214,7 +182,7 @@ def _extract_entities_to_path(
 
 
 def fetch_entities(
-        entities_by_type: dict[str, list[MetadataEntity]],
+        entities_by_type: dict[MetadataType, list[MetadataEntity]],
         bigquery_project_id: str,
         snapshot_name: str,
         bigquery_region: str,
