@@ -1,3 +1,7 @@
+"""
+Pipelines here are intended to be run in the DEV HCA GCP project
+"""
+
 from dagster import PipelineDefinition, repository
 from dagster_gcp.gcs import gcs_pickle_io_manager
 from dagster_utils.resources.beam.k8s_beam_runner import k8s_dataflow_beam_runner

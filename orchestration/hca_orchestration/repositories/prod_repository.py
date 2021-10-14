@@ -1,3 +1,7 @@
+"""
+Pipelines here are intended to be run in the PROD HCA GCP project
+"""
+
 from dagster import PipelineDefinition, repository
 from dagster_gcp.gcs import gcs_pickle_io_manager
 from dagster_utils.resources.beam.k8s_beam_runner import k8s_dataflow_beam_runner
@@ -8,7 +12,6 @@ from dagster_utils.resources.slack import live_slack_client
 
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.config.dcp_release.dcp_release import load_dcp_release_manifests
-from hca_orchestration.repositories.base_repositories import base_jobs
 from hca_orchestration.pipelines.load_hca import load_hca
 from hca_orchestration.resources import load_tag
 from hca_orchestration.resources.config.scratch import scratch_config
@@ -39,6 +42,6 @@ def load_hca_job() -> PipelineDefinition:
 
 @repository
 def all_jobs() -> list[PipelineDefinition]:
-    jobs = base_jobs()
+    jobs = [load_hca_job()]
     jobs += load_dcp_release_manifests()
     return jobs

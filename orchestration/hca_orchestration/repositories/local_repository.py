@@ -1,3 +1,7 @@
+"""
+Pipelines here are intended to be run in a local context on a developer's box
+"""
+
 from dagster import repository, PipelineDefinition, in_process_executor
 from dagster_gcp.gcs import gcs_pickle_io_manager
 from dagster_utils.resources.beam.local_beam_runner import local_beam_runner
