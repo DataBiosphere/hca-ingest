@@ -10,10 +10,12 @@ from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.resources.hca_project_config import HcaProjectCopyingConfig
 
 
-@resource(required_resource_keys={"data_repo_service"},
-          config_schema={
-    "dataset_id": String
-})
+@resource(
+    required_resource_keys={"data_repo_service"},
+    config_schema={
+        "dataset_id": String
+    }
+)
 def target_hca_dataset(init_context: InitResourceContext) -> TdrDataset:
     data_repo_service: DataRepoService = init_context.resources.data_repo_service
     target_dataset = data_repo_service.get_dataset(init_context.resource_config["dataset_id"])
