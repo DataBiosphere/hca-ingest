@@ -42,7 +42,7 @@ def load_hca_job() -> PipelineDefinition:
     )
 
 
-def cut_snapshot_job():
+def cut_snapshot_job() -> PipelineDefinition:
     return cut_snapshot.to_job(
         resource_defs={
             "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
@@ -58,7 +58,7 @@ def cut_snapshot_job():
 
 
 @repository
-def all_jobs():
+def all_jobs() -> list[PipelineDefinition]:
     return [
         load_hca_job(),
         cut_snapshot_job()
