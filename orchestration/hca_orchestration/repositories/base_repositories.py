@@ -7,7 +7,7 @@ from typing import Union
 
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.pipelines import copy_project
-from hca_orchestration.pipelines import cut_snapshot, load_hca, validate_egress
+from hca_orchestration.pipelines import cut_snapshot, load_hca
 from hca_orchestration.pipelines.validate_ingress import validate_ingress_graph, staging_area_validator
 from hca_orchestration.resources import bigquery_service, load_tag
 from hca_orchestration.resources.config.scratch import scratch_config
@@ -46,7 +46,6 @@ def base_jobs() -> list[Union[PipelineDefinition, SensorDefinition]]:
     defs = [
         cut_snapshot,
         load_hca,
-        validate_egress,
         validate_ingress_job()
     ]
 
