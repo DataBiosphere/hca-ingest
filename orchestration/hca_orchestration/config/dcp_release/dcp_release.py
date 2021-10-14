@@ -31,7 +31,6 @@ def load_dcp_release_manifests() -> list[PartitionSetDefinition]:
         release_manifest_path,
         "load_hca",
         client,
-        "prod",
         run_config_for_dcp_release_partition)
 
     return partition_sets

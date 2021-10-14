@@ -64,7 +64,6 @@ def dev_refresh_cut_snapshot_partition_set() -> list[PartitionSetDefinition]:
         return []
 
     result = gs_csv_partition_reader(dev_refresh_partitions_path, "cut_snapshot", Client(),
-                                     "dev_refresh",
                                      run_config_for_cut_snapshot_partition)
     logging.warning(f"Found partitions for cut_snapshot: {result}")
     return result
@@ -78,7 +77,6 @@ def copy_project_to_new_dataset_partitions() -> list[PartitionSetDefinition]:
 
     result = gs_csv_partition_reader(dev_refresh_partitions_path, "copy_project_to_new_dataset",
                                      Client(),
-                                     "dev",
                                      run_config_for_per_project_dataset_partition)
     logging.warning(f"Found partitions for copy_project_to_new_dataset: {result}")
     return result

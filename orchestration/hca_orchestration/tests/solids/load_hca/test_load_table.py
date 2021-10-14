@@ -9,7 +9,6 @@ from hca_orchestration.contrib.bigquery import BigQueryService
 from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
 from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.models.scratch import ScratchConfig
-from hca_orchestration.pipelines.load_hca import test_mode
 from hca_orchestration.solids.load_hca.load_table import load_table_solid, clear_outdated
 from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType, MetadataTypeFanoutResult
 from hca_orchestration.tests.support.gcs import FakeGCSClient, FakeGoogleBucket, HexBlobInfo
@@ -24,12 +23,6 @@ def test_bucket_name():
 def run_config(test_bucket_name):
     return {
         "resources": {
-            "load_tag": {
-                "config": {
-                    "load_tag_prefix": "fake",
-                    "append_run_id": False
-                }
-            },
             "scratch_config": {
                 "config": {
                     "scratch_bucket_name": test_bucket_name,
@@ -66,15 +59,24 @@ def data_repo_service():
 
 @pytest.fixture
 def load_table_test_mode(data_repo_service, test_bucket_name):
+    fake_bucket_name = "my-fake-bucket"
+    fake_prefix = "fake-prefix"
+    scratch_config = ScratchConfig(fake_bucket_name, fake_prefix, "fake", "fake", 123)
+    target_dataset = TdrDataset("fake", "fake", "fake", "fake", "fake")
+    bigquery_service = Mock(spec=BigQueryService)
+    bigquery_service.get_num_rows_in_table = Mock(return_value=0)
+
     base_def = ModeDefinition(
         "test_load_table",
         resource_defs={
-            **test_mode.resource_defs,
+            "bigquery_service": ResourceDefinition.hardcoded_resource(bigquery_service),
+            "scratch_config": ResourceDefinition.hardcoded_resource(scratch_config),
+            "target_hca_dataset": ResourceDefinition.hardcoded_resource(target_dataset)
         }
     )
 
     test_bucket = FakeGoogleBucket(
-        {"gs://my-fake-bucket/fake-prefix": HexBlobInfo(
+        {f"gs://{fake_bucket_name}/{fake_prefix}": HexBlobInfo(
             hex_md5="b2d6ec45472467c836f253bd170182c7", content="test content")}
     )
     base_def.resource_defs["gcs"] = ResourceDefinition.hardcoded_resource(

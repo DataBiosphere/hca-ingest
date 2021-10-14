@@ -4,6 +4,7 @@ from dagster import execute_pipeline
 from google.cloud.bigquery import QueryJobConfig, Client
 
 from hca_orchestration.pipelines import load_hca
+from hca_orchestration.repositories.local_repository import load_hca_job
 
 
 @pytest.mark.e2e
@@ -16,9 +17,9 @@ def test_load_updated_staging_area(
     base_area_config = load_hca_run_config.copy()
     base_area_config["solids"]["pre_process_metadata"]["config"][
         "input_prefix"] = "gs://broad-dsp-monster-hca-dev-test-storage/integration/ebi_micro/test_data"
+    job = load_hca_job()
     execute_pipeline(
-        load_hca,
-        mode="local",
+        job,
         run_config=load_hca_run_config
     )
     assert_correct_version(

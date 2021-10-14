@@ -2,14 +2,14 @@ import pytest
 from dagster import execute_pipeline
 from google.cloud.bigquery.client import Client, QueryJobConfig
 
-from hca_orchestration.pipelines import load_hca
+from hca_orchestration.repositories.local_repository import load_hca_job
 
 
 @pytest.mark.e2e
 def test_load_hca(load_hca_run_config, dataset_name, tdr_bigquery_client, dataset_info):
+    job = load_hca_job()
     execute_pipeline(
-        load_hca,
-        mode="local",
+        job,
         run_config=load_hca_run_config
     )
 

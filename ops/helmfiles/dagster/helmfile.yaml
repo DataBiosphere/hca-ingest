@@ -64,7 +64,7 @@ releases:
                 pullPolicy: Always
               dagsterApiGrpcArgs:
                 - "-f"
-                - 'hca_orchestration/repositories/{{ requiredEnv "ENV" }}_repositories.py'
+                - 'hca_orchestration/repositories/{{ requiredEnv "ENV" }}_repository.py'
               port: 3030
               envConfigMaps:
                 # we can't use values.yaml to insert env vars into deployments, since overwriting lists
