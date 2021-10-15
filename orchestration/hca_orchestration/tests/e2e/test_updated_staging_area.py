@@ -33,8 +33,7 @@ def test_load_updated_staging_area(
     updated_load_hca_run_config["solids"]["pre_process_metadata"]["config"][
         "input_prefix"] = "gs://broad-dsp-monster-hca-dev-test-storage/integration/ebi_micro/test_data_with_updates"
     execute_pipeline(
-        load_hca,
-        mode="local",
+        job,
         run_config=updated_load_hca_run_config
     )
 
