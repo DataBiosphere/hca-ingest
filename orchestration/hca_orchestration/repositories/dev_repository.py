@@ -2,7 +2,7 @@
 Pipelines here are intended to be run in the DEV HCA GCP project
 """
 
-from dagster import PipelineDefinition, repository, ModeDefinition
+from dagster import PipelineDefinition, repository, ConfigMapping
 from dagster_gcp.gcs import gcs_pickle_io_manager
 from dagster_utils.resources.beam.k8s_beam_runner import k8s_dataflow_beam_runner
 from dagster_utils.resources.bigquery import bigquery_client
@@ -25,8 +25,8 @@ from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.config.target_hca_dataset import target_hca_dataset, build_new_target_hca_dataset
 from hca_orchestration.resources.data_repo_service import data_repo_service
 from hca_orchestration.resources.hca_project_config import hca_project_copying_config
-from hca_orchestration.resources.config.data_repo import snapshot_creation_config, hca_manage_config
-from hca_orchestration.pipelines.cut_snapshot import cut_snapshot
+from hca_orchestration.resources.config.data_repo import snapshot_creation_config, hca_manage_config, project_snapshot_creation_config
+from hca_orchestration.pipelines.cut_snapshot import cut_snapshot, legacy_cut_snapshot_job, cut_project_snapshot_job
 
 
 def validate_ingress_job() -> PipelineDefinition:
@@ -74,24 +74,15 @@ def copy_project_to_new_dataset_job() -> PipelineDefinition:
         })
 
 
-def cut_snapshot_job() -> PipelineDefinition:
-    return cut_snapshot.to_job(
-        resource_defs={
-            "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
-            "gcs": google_storage_client,
-            "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, "dev"),
-            "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "dev"),
-            "sam_client": preconfigure_resource_for_mode(sam_client, "dev"),
-            "slack": preconfigure_resource_for_mode(live_slack_client, "dev"),
-            "snapshot_config": snapshot_creation_config,
-            "dagit_config": preconfigure_resource_for_mode(dagit_config, "dev"),
-        }
-    )
-
-
 @repository
 def all_jobs() -> list[PipelineDefinition]:
-    jobs = [copy_project_to_new_dataset_job(), load_hca_job(), validate_ingress_job()]
+    jobs = [
+        copy_project_to_new_dataset_job(),
+        load_hca_job(),
+        validate_ingress_job(),
+        legacy_cut_snapshot_job("dev", "monster-dev@dev.test.firecloud.org"),
+        cut_project_snapshot_job("dev", "dev", "monster-dev@dev.test.firecloud.org")
+    ]
     jobs += copy_project_to_new_dataset_partitions()
     jobs += dev_refresh_cut_snapshot_partition_set()
     jobs += load_dcp_release_manifests()

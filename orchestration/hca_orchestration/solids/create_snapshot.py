@@ -1,25 +1,29 @@
-from data_repo_client import RepositoryApi, PolicyMemberRequest, PolicyResponse
 from typing import Iterator
 
 from dagster import AssetMaterialization, EventMetadataEntry, Output, OutputDefinition, solid, Failure
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
+from data_repo_client import RepositoryApi, PolicyMemberRequest, PolicyResponse
 
-from hca_manage.common import JobId, data_repo_profile_ids
+from hca_manage.common import JobId
 from hca_manage.snapshot import SnapshotManager
+from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
 
 
 @solid(
-    required_resource_keys={'data_repo_client', 'snapshot_config', 'hca_manage_config'},
-    config_schema={
-        "billing_profile_id": str
-    }
+    required_resource_keys={'data_repo_client', 'snapshot_config', 'hca_manage_config', 'data_repo_service'},
 )
 def submit_snapshot_job(context: AbstractComputeExecutionContext) -> JobId:
+    data_repo_service: DataRepoService = context.resources.data_repo_service
+    dataset_name = context.resources.snapshot_config.dataset_name
+    dataset = data_repo_service.find_dataset(dataset_name)
+    if not dataset:
+        raise Failure(f"Dataset not found for dataset name [dataset_name={dataset_name}]")
+
     return SnapshotManager(
         environment=context.resources.hca_manage_config.gcp_env,
         dataset=context.resources.snapshot_config.dataset_name,
         data_repo_client=context.resources.data_repo_client,
-        data_repo_profile_id=context.solid_config["billing_profile_id"]
+        data_repo_profile_id=dataset.billing_profile_id
     ).submit_snapshot_request_with_name(
         context.resources.snapshot_config.snapshot_name,
         context.resources.snapshot_config.managed_access

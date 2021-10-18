@@ -45,7 +45,7 @@ def build_new_target_hca_dataset(init_context: InitResourceContext) -> Optional[
 
     init_context.log.info(f"Checking for existing dataset with prefix = {target_hca_dataset_prefix}")
     data_repo_service: DataRepoService = init_context.resources.data_repo_service
-    result = data_repo_service.find_dataset(target_hca_dataset_prefix, env)
+    result = data_repo_service.find_dataset(target_hca_dataset_prefix)
 
     dataset_metadata = {
         "hca_project_id": hca_project_id.hex

@@ -46,6 +46,7 @@ def cut_snapshot_job() -> PipelineDefinition:
     return cut_snapshot.to_job(
         resource_defs={
             "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
+            "data_repo_service": data_repo_service,
             "gcs": google_storage_client,
             "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, "dev"),
             "sam_client": preconfigure_resource_for_mode(sam_client, "dev"),

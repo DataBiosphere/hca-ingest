@@ -61,7 +61,7 @@ class DataRepoService:
         poll_job(job_id, 600, 2, self.data_repo_client)
         return job_id
 
-    def find_dataset(self, dataset_name: str, env: str) -> Optional[TdrDataset]:
+    def find_dataset(self, dataset_name: str) -> Optional[TdrDataset]:
         result: EnumerateDatasetModel = self.data_repo_client.enumerate_datasets(filter=dataset_name)
 
         if result.filtered_total > 1:
