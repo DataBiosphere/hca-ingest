@@ -14,14 +14,16 @@ from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoServic
 )
 def submit_snapshot_job(context: AbstractComputeExecutionContext) -> JobId:
     data_repo_service: DataRepoService = context.resources.data_repo_service
-    dataset = data_repo_service.find_dataset(context.resources.snapshot_config.dataset_name)
-    billing_profile_id = dataset.billing_profile_id
+    dataset_name = context.resources.snapshot_config.dataset_name
+    dataset = data_repo_service.find_dataset(dataset_name)
+    if not dataset:
+        raise Failure(f"Dataset not found for dataset name [dataset_name={dataset_name}]")
 
     return SnapshotManager(
         environment=context.resources.hca_manage_config.gcp_env,
         dataset=context.resources.snapshot_config.dataset_name,
         data_repo_client=context.resources.data_repo_client,
-        data_repo_profile_id=billing_profile_id
+        data_repo_profile_id=dataset.billing_profile_id
     ).submit_snapshot_request_with_name(
         context.resources.snapshot_config.snapshot_name,
         context.resources.snapshot_config.managed_access
