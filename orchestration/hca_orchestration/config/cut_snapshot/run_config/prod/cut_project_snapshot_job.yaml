@@ -1,0 +1,12 @@
+resources:
+  snapshot_config:
+    config:
+      managed_access: false
+      source_hca_project_id: ''
+solids:
+  add_steward:
+    config:
+      snapshot_steward: monster-dev@dev.test.firecloud.org
+  submit_snapshot_job:
+    config:
+      billing_profile_id: ''

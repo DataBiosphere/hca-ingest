@@ -12,6 +12,7 @@ from dagster_utils.resources.sam import noop_sam_client
 from dagster_utils.resources.slack import console_slack_client
 
 import hca_orchestration.resources.data_repo_service
+from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.pipelines import cut_snapshot, load_hca, validate_ingress_graph
@@ -127,6 +128,7 @@ def test_cut_snapshot(*mocks):
     job = cut_snapshot.to_job(
         resource_defs={
             "data_repo_client": noop_data_repo_client,
+            "data_repo_service": ResourceDefinition.hardcoded_resource(Mock(spec=DataRepoService)),
             "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, "test"),
             "sam_client": noop_sam_client,
             "slack": console_slack_client,

@@ -3,6 +3,7 @@ from dagster_utils.resources.sam import Sam
 from unittest.mock import patch, Mock
 from data_repo_client import RepositoryApi
 
+from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
 from hca_manage.common import JobId
 from hca_orchestration.resources.config.data_repo import SnapshotCreationConfig, HcaManageConfig
 from hca_orchestration.solids.create_snapshot import make_snapshot_public, submit_snapshot_job
@@ -16,6 +17,7 @@ def test_submit_snapshot_job_calls_submit_snapshot_job_in_hca_manage():
             mode_def=ModeDefinition(
                 resource_defs={
                     "data_repo_client": ResourceDefinition.hardcoded_resource(Mock(spec=RepositoryApi)),
+                    "data_repo_service": ResourceDefinition.hardcoded_resource(Mock(spec=DataRepoService)),
                     "sam_client": ResourceDefinition.hardcoded_resource(Mock(spec=Sam)),
                     "snapshot_config": ResourceDefinition.hardcoded_resource(
                         SnapshotCreationConfig("fake", "fake", False)),
