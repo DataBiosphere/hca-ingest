@@ -82,5 +82,7 @@ releases:
                 tagConcurrencyLimits:
                   - key: dev_refresh_snapshot_backfill
                     limit: 1
+                  - key: dcp_release
+                    limit: 1
           envSecrets:
             - name: monster-dagster-secrets
