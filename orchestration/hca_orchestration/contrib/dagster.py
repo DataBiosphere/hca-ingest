@@ -1,4 +1,5 @@
 import logging
+import os
 import uuid
 from dagster import Partition, PartitionSetDefinition
 
@@ -6,6 +7,19 @@ from google.cloud.storage import Client
 from typing import Callable, Any, TypeVar, Optional
 
 T = TypeVar("T")
+
+
+def configure_partitions_for_pipeline(pipeline_name: str, config_fn: Callable[[
+                                      Partition[T]], Any]) -> list[PartitionSetDefinition]:
+    partitions_path = os.environ.get("PARTITIONS_BUCKET", "")
+    if not partitions_path:
+        logging.warning(f"PARTITIONS_BUCKET not set, skipping partitioning for pipeline {pipeline_name}")
+        return []
+
+    result = gs_csv_partition_reader(partitions_path, pipeline_name, Client(),
+                                     config_fn)
+    logging.info(f"Found partitions for {pipeline_name}")
+    return result
 
 
 def gs_csv_partition_reader(gs_partitions_bucket_name: str, pipeline_name: str, gs_client: Client,

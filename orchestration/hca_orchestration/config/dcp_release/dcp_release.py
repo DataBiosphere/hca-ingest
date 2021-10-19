@@ -1,39 +1,9 @@
-import logging
 import os
-from dagster import Partition, file_relative_path, PartitionSetDefinition
+from datetime import datetime
+
+from dagster import Partition, file_relative_path
 from dagster.utils import load_yaml_from_path
 from dagster_utils.typing import DagsterObjectConfigSchema
-from datetime import datetime
-from google.cloud.storage.client import Client
-
-from hca_orchestration.contrib.dagster import gs_csv_partition_reader
-
-
-def load_dcp_release_manifests() -> list[PartitionSetDefinition]:
-    """
-    Returns a list of PartitionSetDefinitions for all DCP release manifests located in PARTITIONS_BUCKET/load_hca.
-    DCP_RELEASE_MANIFEST_PATH must be a Google Cloud Storage path. Release manifests must named in the following
-    format:
-
-    <dcp_release_id>_manifest.csv
-
-    Each manifest must consist of line separated Google Cloud storage paths.
-
-    :return: The list of DCP releases parsed from any discovered manifest files.
-    """
-    release_manifest_path = os.environ.get("PARTITIONS_BUCKET", "")
-    if not release_manifest_path:
-        logging.info("DCP_RELEASE_MANIFEST_PATH not set, skipping DCP release partitioning.")
-        return []
-
-    client = Client()
-    partition_sets = gs_csv_partition_reader(
-        release_manifest_path,
-        "load_hca",
-        client,
-        run_config_for_dcp_release_partition)
-
-    return partition_sets
 
 
 def run_config_for_dcp_release_partition(partition: Partition) -> DagsterObjectConfigSchema:

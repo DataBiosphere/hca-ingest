@@ -3,14 +3,10 @@ Defines partitioning logic for the Q3 2021 dev refresh
 """
 
 import os
-import logging
 
-from dagster import file_relative_path, Partition, PartitionSetDefinition
+from dagster import file_relative_path, Partition
 from dagster.utils import load_yaml_from_path
 from dagster_utils.typing import DagsterObjectConfigSchema
-from google.cloud.storage import Client
-
-from hca_orchestration.contrib.dagster import gs_csv_partition_reader
 
 
 def run_config_for_dev_refresh_partition(partition: Partition) -> DagsterObjectConfigSchema:
@@ -55,28 +51,3 @@ def run_config_for_cut_snapshot_partition(partition: Partition) -> DagsterObject
     }
 
     return run_config
-
-
-def dev_refresh_cut_snapshot_partition_set() -> list[PartitionSetDefinition]:
-    dev_refresh_partitions_path = os.environ.get("PARTITIONS_BUCKET", "")
-    if not dev_refresh_partitions_path:
-        logging.warning("PARTITIONS_BUCKET not set, skipping dev refresh partitioning.")
-        return []
-
-    result = gs_csv_partition_reader(dev_refresh_partitions_path, "cut_snapshot", Client(),
-                                     run_config_for_cut_snapshot_partition)
-    logging.warning(f"Found partitions for cut_snapshot: {result}")
-    return result
-
-
-def copy_project_to_new_dataset_partitions() -> list[PartitionSetDefinition]:
-    dev_refresh_partitions_path = os.environ.get("PARTITIONS_BUCKET", "")
-    if not dev_refresh_partitions_path:
-        logging.warning("PARTITIONS_BUCKET not set, skipping dev refresh partitioning.")
-        return []
-
-    result = gs_csv_partition_reader(dev_refresh_partitions_path, "copy_project_to_new_dataset",
-                                     Client(),
-                                     run_config_for_per_project_dataset_partition)
-    logging.warning(f"Found partitions for copy_project_to_new_dataset: {result}")
-    return result

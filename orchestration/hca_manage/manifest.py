@@ -44,21 +44,20 @@ def _parse_csv(csv_path: str) -> set[str]:
     return paths
 
 
-def parse_and_load_manifest(env: str, csv_path: str, release_tag: str) -> None:
+def parse_and_load_manifest(env: str, csv_path: str, release_tag: str, pipeline_name: str) -> None:
     paths = _parse_csv(csv_path)
     assert len(paths), "At least one import path is required"
 
-    blob_name = f"load_hca/{release_tag}_manifest.csv"
+    blob_name = f"{pipeline_name}/{release_tag}_manifest.csv"
     storage_client = Client()
     bucket: Bucket = storage_client.bucket(bucket_name=ETL_PARTITION_BUCKETS[env])
     blob = Blob(bucket=bucket, name=blob_name)
     if blob.exists():
-        if not query_yes_no(f"Manifest {blob.name} already exists, overwrite?"):
+        if not query_yes_no(f"Manifest {blob.name} already exists for pipeline {pipeline_name}, overwrite?"):
             return
 
     logging.info(f"Uploading manifest [bucket={bucket.name}, name={blob_name}]")
     blob.upload_from_string(data="\n".join(paths))
-    _reload_repository(_get_dagster_client())
 
 
 def _get_dagster_client() -> DagsterGraphQLClient:
@@ -86,7 +85,9 @@ def enumerate_manifests(env: str) -> None:
 
 
 def load(args: argparse.Namespace) -> None:
-    parse_and_load_manifest(args.env, args.csv_path, args.release_tag)
+    parse_and_load_manifest(args.env, args.csv_path, args.release_tag, "load_hca")
+    parse_and_load_manifest(args.env, args.csv_path, args.release_tag, "validate_ingress")
+    _reload_repository(_get_dagster_client())
 
 
 def enumerate(args: argparse.Namespace) -> None:

@@ -1,7 +1,20 @@
-from dagster import failure_hook, HookContext, graph, resource, InitResourceContext
+from dagster import failure_hook, HookContext, graph, resource, InitResourceContext, Partition
+from dagster_utils.typing import DagsterObjectConfigSchema
 
 from hca_manage.validation import HcaValidator
 from hca_orchestration.solids.validate_ingress import pre_flight_validate, notify_slack_of_succesful_ingress_validation
+
+
+def run_config_for_validation_ingress_partition(partition: Partition) -> DagsterObjectConfigSchema:
+    return {
+        "solids": {
+            "pre_flight_validate": {
+                "config": {
+                    "staging_area": partition.value
+                }
+            }
+        }
+    }
 
 
 @resource

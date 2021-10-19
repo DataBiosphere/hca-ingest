@@ -10,11 +10,13 @@ from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_clie
 from dagster_utils.resources.google_storage import google_storage_client
 from dagster_utils.resources.slack import live_slack_client
 
+from hca_orchestration.contrib.dagster import configure_partitions_for_pipeline
 from hca_orchestration.config import preconfigure_resource_for_mode
-from hca_orchestration.config.dcp_release.dcp_release import load_dcp_release_manifests
+from hca_orchestration.config.dcp_release.dcp_release import run_config_for_dcp_release_partition
 from hca_orchestration.pipelines.cut_snapshot import cut_project_snapshot_job, legacy_cut_snapshot_job
 from hca_orchestration.pipelines.load_hca import load_hca
-from hca_orchestration.pipelines.validate_ingress import validate_ingress_graph, staging_area_validator
+from hca_orchestration.pipelines.validate_ingress import validate_ingress_graph, staging_area_validator, \
+    run_config_for_validation_ingress_partition
 from hca_orchestration.resources import bigquery_service
 from hca_orchestration.resources import load_tag
 from hca_orchestration.resources.config.dagit import dagit_config
@@ -61,6 +63,7 @@ def all_jobs() -> list[PipelineDefinition]:
         cut_project_snapshot_job("prod", "prod", "monster@firecloud.org"),
         cut_project_snapshot_job("prod", "real_prod", "monster@firecloud.org")
     ]
-    jobs += load_dcp_release_manifests()
+    jobs += configure_partitions_for_pipeline("load_hca", run_config_for_dcp_release_partition)
+    jobs += configure_partitions_for_pipeline("validate_ingress", run_config_for_validation_ingress_partition)
 
     return jobs

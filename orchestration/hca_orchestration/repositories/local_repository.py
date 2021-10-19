@@ -11,15 +11,28 @@ from dagster_utils.resources.google_storage import google_storage_client
 from dagster_utils.resources.sam import sam_client
 from dagster_utils.resources.slack import console_slack_client, live_slack_client
 
+from hca_orchestration.contrib.dagster import configure_partitions_for_pipeline
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.pipelines.load_hca import load_hca
 from hca_orchestration.pipelines.cut_snapshot import cut_snapshot
+from hca_orchestration.pipelines.validate_ingress import run_config_for_validation_ingress_partition, \
+    validate_ingress_graph, staging_area_validator
 from hca_orchestration.resources import load_tag, bigquery_service
 from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.config.target_hca_dataset import target_hca_dataset
 from hca_orchestration.resources.data_repo_service import data_repo_service
 from hca_orchestration.resources.config.data_repo import snapshot_creation_config, hca_manage_config
+
+
+def validate_ingress_job() -> PipelineDefinition:
+    return validate_ingress_graph.to_job(
+        name="validate_ingress",
+        resource_defs={
+            "slack": console_slack_client,
+            "staging_area_validator": staging_area_validator
+        }
+    )
 
 
 def load_hca_job() -> PipelineDefinition:
@@ -60,7 +73,10 @@ def cut_snapshot_job() -> PipelineDefinition:
 
 @repository
 def all_jobs() -> list[PipelineDefinition]:
-    return [
+    jobs = [
         load_hca_job(),
-        cut_snapshot_job()
+        cut_snapshot_job(),
+        validate_ingress_job()
     ]
+    jobs += configure_partitions_for_pipeline("validate_ingress", run_config_for_validation_ingress_partition)
+    return jobs
