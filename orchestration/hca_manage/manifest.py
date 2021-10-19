@@ -5,14 +5,19 @@ bucket for bulk ingest by our pipeline.
 
 import argparse
 import csv
-import sys
 import logging
+import sys
+import warnings
 
+import dagster
+from dagster_graphql import DagsterGraphQLClient, ShutdownRepositoryLocationStatus, DagsterGraphQLClientError
 from google.cloud.storage import Client, Bucket, Blob
-from dagster_graphql import DagsterGraphQLClient, ShutdownRepositoryLocationStatus, ReloadRepositoryLocationInfo, \
-    ReloadRepositoryLocationStatus
 
 from hca_manage.common import setup_cli_logging_format, query_yes_no
+
+
+warnings.filterwarnings("ignore", category=dagster.ExperimentalWarning)
+
 
 ETL_PARTITION_BUCKETS = {
     "dev": "broad-dsp-monster-hca-dev-etl-partitions",
@@ -61,12 +66,16 @@ def parse_and_load_manifest(env: str, csv_path: str, release_tag: str, pipeline_
 
 
 def _get_dagster_client() -> DagsterGraphQLClient:
-    return DagsterGraphQLClient("localhost", port_number=8080)
+    try:
+        return DagsterGraphQLClient("localhost", port_number=8080)
+    except DagsterGraphQLClientError:
+        logging.error("Could not connect to dagster instance on port 8080, ensure you are port forwarding")
+        sys.exit(1)
 
 
 def _reload_repository(dagster_client: DagsterGraphQLClient) -> None:
-    result = dagster_client.reload_repository_location(REPOSITORY_LOCATION)
-    if result.status != ReloadRepositoryLocationStatus.SUCCESS:
+    result = dagster_client.shutdown_repository_location(REPOSITORY_LOCATION)
+    if result.status != ShutdownRepositoryLocationStatus.SUCCESS:
         logging.error(f"Error reloading user code repository: {result.message}")
         sys.exit(1)
 
