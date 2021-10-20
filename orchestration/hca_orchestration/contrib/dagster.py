@@ -18,7 +18,7 @@ def configure_partitions_for_pipeline(pipeline_name: str, config_fn: Callable[[
 
     result = gs_csv_partition_reader(partitions_path, pipeline_name, Client(),
                                      config_fn)
-    logging.info(f"Found partitions for {pipeline_name}")
+    logging.warning(f"Found partitions for {pipeline_name}")
     return result
 
 
