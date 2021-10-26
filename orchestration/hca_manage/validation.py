@@ -38,7 +38,7 @@ class HcaValidator:
         for well_known_dir in well_known_dirs:
             expected_blob = f"{bucket_with_prefix.prefix}{well_known_dir}"
             blobs = list(gs_client.list_blobs(bucket, prefix=expected_blob))
-            if len(blobs) == 0:
+            if not blobs:
                 logging.error(f"No {well_known_dir} dir found at path {path}")
                 exit_code = 1
 
