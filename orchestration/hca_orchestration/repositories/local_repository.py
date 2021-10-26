@@ -32,7 +32,8 @@ def validate_ingress_job() -> PipelineDefinition:
         name="validate_ingress",
         resource_defs={
             "slack": console_slack_client,
-            "staging_area_validator": staging_area_validator
+            "staging_area_validator": staging_area_validator,
+            "gcs": google_storage_client
         }
     )
 
