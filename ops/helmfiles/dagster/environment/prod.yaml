@@ -15,5 +15,5 @@ computeLogManager:
   type: GCSComputeLogManager
   config:
     gcsComputeLogManager:
-      bucket: broad-dsp-monster-hca-dev-dagster-storage
+      bucket: broad-dsp-monster-hca-prod-dagster-storage
       prefix: logs
