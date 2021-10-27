@@ -10,6 +10,7 @@ from dagster.utils.merger import deep_merge_dicts
 from dagster_utils.resources.data_repo.jade_data_repo import noop_data_repo_client
 from dagster_utils.resources.sam import noop_sam_client
 from dagster_utils.resources.slack import console_slack_client
+from google.cloud.storage import Client
 
 import hca_orchestration.resources.data_repo_service
 from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
@@ -21,6 +22,7 @@ from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.data_repo import hca_manage_config, snapshot_creation_config
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.config.target_hca_dataset import target_hca_dataset
+from hca_manage.validation import HcaValidator
 
 
 def config_path(relative_path: str) -> str:
@@ -84,43 +86,37 @@ def test_load_hca_noop_resources(*mocks):
 
 
 def test_validate_ingress_success():
-    validate_ingress_graph.to_job(resource_defs={
+    validator = Mock(spec=HcaValidator)
+    validator.validate_staging_area = Mock(return_value=0)
+    job = validate_ingress_graph.to_job(resource_defs={
         "slack": console_slack_client,
-        "staging_area_validator": ResourceDefinition.mock_resource()
-    })
+        "staging_area_validator": ResourceDefinition.hardcoded_resource(validator),
+        "gcs": ResourceDefinition.hardcoded_resource(Mock(spec=Client))
+    }, config=load_yaml_from_globs(
+        config_path("test_validate_ingress.yaml")
+    ))
 
     mock_validator = MagicMock()
     mock_validator.validate_staging_area = MagicMock(return_value=0)
-    result = validate_ingress_graph.execute_in_process(
-        config=load_yaml_from_globs(
-            config_path("test_validate_ingress.yaml")
-        ),
-        resources={
-            'slack': MagicMock(),
-            "staging_area_validator": mock_validator
-        })
+    result = job.execute_in_process()
 
     assert result.success
 
 
 def test_validate_ingress_failure():
-    validate_ingress_graph.to_job(resource_defs={
+    job = validate_ingress_graph.to_job(resource_defs={
         "slack": console_slack_client,
-        "staging_area_validator": ResourceDefinition.mock_resource()
-    })
+        "staging_area_validator": ResourceDefinition.hardcoded_resource(Mock(spec=HcaValidator)),
+        "gcs": ResourceDefinition.hardcoded_resource(Mock(spec=Client))
+    }, config=load_yaml_from_globs(
+        config_path("test_validate_ingress.yaml")
+    ))
 
     mock_validator = MagicMock()
     mock_validator.validate_staging_area = MagicMock(return_value=1)
 
     with pytest.raises(Failure):
-        validate_ingress_graph.execute_in_process(
-            config=load_yaml_from_globs(
-                config_path("test_validate_ingress.yaml")
-            ),
-            resources={
-                'slack': MagicMock(),
-                "staging_area_validator": mock_validator
-            })
+        job.execute_in_process()
 
 
 @patch('dagster_utils.resources.data_repo.jade_data_repo.NoopDataRepoClient.add_snapshot_policy_member')
