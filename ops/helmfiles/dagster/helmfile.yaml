@@ -83,6 +83,6 @@ releases:
                   - key: dev_refresh_snapshot_backfill
                     limit: 1
                   - key: dcp_release
-                    limit: 1
+                    limit: 5
           envSecrets:
             - name: monster-dagster-secrets
