@@ -2,10 +2,13 @@ from typing import Any
 
 from dagster import solid, String, Failure
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
+from google.cloud.storage import Client
+
+from hca_manage.validation import HcaValidator
 
 
 @solid(
-    required_resource_keys={'staging_area_validator'},
+    required_resource_keys={'staging_area_validator', 'gcs'},
     config_schema={
         "staging_area": String
     }
@@ -15,7 +18,10 @@ def pre_flight_validate(context: AbstractComputeExecutionContext) -> Any:
     Runs the external validation code on the provided staging area.
     """
     staging_area = context.solid_config["staging_area"]
-    exit_code = context.resources.staging_area_validator.validate_staging_area(path=staging_area, ignore_inputs=True)
+    gcs_client: Client = context.resources.gcs
+    validator: HcaValidator = context.resources.staging_area_validator
+
+    exit_code = validator.validate_staging_area(path=staging_area, ignore_inputs=True, client=gcs_client)
     if exit_code:
         raise Failure(f"Staging area {staging_area} is invalid")
 
