@@ -204,7 +204,7 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
         """
           | {
           |   "source_path": "some/local/directory/data/a-directory/sub_directory/file-id_file-version_filename.json",
-          |   "target_path": "/v1//my-file-id/54321zyx/file-id_file-version_filename.json"
+          |   "target_path": "/v1/my-file-id/54321zyx/file-id_file-version_filename.json"
           | }
           |""".stripMargin
     )
