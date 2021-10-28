@@ -37,8 +37,7 @@ def _inject_file_ids(
         scratch_config: ScratchConfig,
         file_metadata_type: str,
         scratch_dataset_name: HcaScratchDatasetName,
-        bigquery_service: BigQueryService,
-        context: AbstractComputeExecutionContext
+        bigquery_service: BigQueryService
 ) -> RowIterator:
     fq_dataset_id = target_hca_dataset.fully_qualified_jade_dataset_name()
 
@@ -113,8 +112,7 @@ def inject_file_ids_solid(
         scratch_config=scratch_config,
         file_metadata_type=file_metadata_fanout_result.metadata_type,
         scratch_dataset_name=file_metadata_fanout_result.scratch_dataset_name,
-        bigquery_service=bigquery_service,
-        context=context
+        bigquery_service=bigquery_service
     )
     export_data(
         "file-metadata-with-ids",
