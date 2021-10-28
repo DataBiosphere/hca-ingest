@@ -91,7 +91,7 @@ def _inject_file_ids(
     for row in rows:
         if not row["file_id"]:
             raise NullFileIdException(
-                f"File metadata with null file ID detected, check crc32c and target_path [table={file_metadata_type}]")
+                f"File metadata with null file ID detected, will not ingest. Check crc32c and target_path [table={file_metadata_type}]")
     return rows
 
 
