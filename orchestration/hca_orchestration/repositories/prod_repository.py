@@ -32,8 +32,9 @@ def validate_ingress_job() -> PipelineDefinition:
     return validate_ingress_graph.to_job(
         name="validate_ingress",
         resource_defs={
-            "slack": preconfigure_resource_for_mode(live_slack_client, "dev"),
-            "staging_area_validator": staging_area_validator
+            "slack": preconfigure_resource_for_mode(live_slack_client, "prod"),
+            "staging_area_validator": staging_area_validator,
+            "gcs": google_storage_client
         },
         executor_def=in_process_executor
     )

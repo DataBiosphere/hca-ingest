@@ -1,7 +1,5 @@
-import pdb
-
-from hca_orchestration.support.subgraphs import build_subgraph_nodes
 from hca_orchestration.models.entities import Subgraph, MetadataEntity
+from hca_orchestration.support.subgraphs import build_subgraph_nodes
 from hca_orchestration.support.typing import MetadataType
 
 

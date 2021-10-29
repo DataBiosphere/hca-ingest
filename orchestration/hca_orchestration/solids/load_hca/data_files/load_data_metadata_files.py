@@ -1,6 +1,6 @@
 from enum import Enum
 
-from dagster import solid, composite_solid, configured, DynamicOutputDefinition, Optional
+from dagster import solid, composite_solid, configured, DynamicOutputDefinition, Optional, Failure
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from google.cloud.bigquery.client import RowIterator
 
@@ -28,12 +28,16 @@ ingest_file_metadata_type = configured(ingest_metadata_type, name="ingest_file_m
     {"metadata_types": FileMetadataTypes, "prefix": "file-metadata-with-ids"})
 
 
+class NullFileIdException(Failure):
+    pass
+
+
 def _inject_file_ids(
         target_hca_dataset: TdrDataset,
         scratch_config: ScratchConfig,
         file_metadata_type: str,
         scratch_dataset_name: HcaScratchDatasetName,
-        bigquery_service: BigQueryService,
+        bigquery_service: BigQueryService
 ) -> RowIterator:
     fq_dataset_id = target_hca_dataset.fully_qualified_jade_dataset_name()
 
@@ -42,7 +46,7 @@ def _inject_file_ids(
     FROM {file_metadata_type} S LEFT JOIN `{target_hca_dataset.project_id}.{fq_dataset_id}.datarepo_load_history` J
     ON J.state = 'succeeded'
     AND JSON_EXTRACT_SCALAR(S.descriptor, '$.crc32c') = J.checksum_crc32c
-    AND '/' || JSON_EXTRACT_SCALAR(S.descriptor, '$.file_id') || '/' || JSON_EXTRACT_SCALAR(S.descriptor, '$.crc32c') || '/' || JSON_EXTRACT_SCALAR(S.descriptor, '$.file_name') = J.target_path
+    AND '/v1/' || JSON_EXTRACT_SCALAR(S.descriptor, '$.file_id') || '/' || JSON_EXTRACT_SCALAR(S.descriptor, '$.crc32c') || '/' || JSON_EXTRACT_SCALAR(S.descriptor, '$.file_name') = J.target_path
     """
 
     destination_table_name = f"{file_metadata_type}_with_ids"
@@ -83,7 +87,10 @@ def _inject_file_ids(
         bigquery_project=scratch_config.scratch_bq_project,
         location=target_hca_dataset.bq_location
     )
-
+    for row in rows:
+        if not row["file_id"]:
+            raise NullFileIdException(
+                f"File metadata with null file ID detected, will not ingest. Check crc32c and target_path [table={file_metadata_type}]")
     return rows
 
 
