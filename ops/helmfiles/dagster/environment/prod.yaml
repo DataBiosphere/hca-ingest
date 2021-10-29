@@ -9,3 +9,11 @@ dagit:
   env: *envConfig
 dagsterDaemon:
   env: *envConfig
+
+# capture stdout + stderr to a GCS file so we can debug if needed
+computeLogManager:
+  type: GCSComputeLogManager
+  config:
+    gcsComputeLogManager:
+      bucket: broad-dsp-monster-hca-prod-dagster-storage
+      prefix: logs

@@ -2,7 +2,7 @@
 Pipelines here are intended to be run in the PROD HCA GCP project
 """
 
-from dagster import PipelineDefinition, repository
+from dagster import PipelineDefinition, repository, in_process_executor
 from dagster_gcp.gcs import gcs_pickle_io_manager
 from dagster_utils.resources.beam.k8s_beam_runner import k8s_dataflow_beam_runner
 from dagster_utils.resources.bigquery import bigquery_client
@@ -35,7 +35,8 @@ def validate_ingress_job() -> PipelineDefinition:
             "slack": preconfigure_resource_for_mode(live_slack_client, "prod"),
             "staging_area_validator": staging_area_validator,
             "gcs": google_storage_client
-        }
+        },
+        executor_def=in_process_executor
     )
 
 
@@ -54,7 +55,8 @@ def load_hca_job() -> PipelineDefinition:
             "data_repo_service": data_repo_service,
             "slack": preconfigure_resource_for_mode(live_slack_client, "prod"),
             "dagit_config": preconfigure_resource_for_mode(dagit_config, "prod")
-        }
+        },
+        executor_def=in_process_executor
     )
 
 
