@@ -9,7 +9,8 @@ contain the same file). While this is discouraged, it's technically possible and
 So, we check if the target path was loaded, disregarding the source staging dir.
 
 Additonally, this will check that metadata was loaded properly (including links) by pull the entity_id, version and
-content from the files in GS and checking that the expected row is present in the given dataset.
+content from the files in GS and checking that the expected row is present in the given dataset. If a newer version
+is present in the repo than is staged, we consider that valid.
 
 Example invocation:
 python verify_release_manifest.py -f testing.csv -g fake-gs-project -b fake-bq-project -d fake-dataset
@@ -76,6 +77,7 @@ def find_files_in_load_history(bq_project: str, dataset: str,
     for area, paths_with_crc in areas.items():
         logging.debug(f"\tPulling loaded files for area {area}...")
         target_paths = [path_with_crc.path for path_with_crc in paths_with_crc]
+        new_paths = ["/v1" + path_with_crc.path for path_with_crc in paths_with_crc]
         query = f"""
             SELECT target_path, checksum_crc32c
             FROM `datarepo_{dataset}.datarepo_load_history` dlh
@@ -85,11 +87,12 @@ def find_files_in_load_history(bq_project: str, dataset: str,
 
         job_config = bigquery.QueryJobConfig(
             query_parameters=[
-                bigquery.ArrayQueryParameter("paths", "STRING", target_paths),
+                bigquery.ArrayQueryParameter("paths", "STRING", target_paths + new_paths),
             ]
         )
         query_job = client.query(query, job_config=job_config)
-        loaded_paths[area] = {PathWithCrc(row["target_path"], row["checksum_crc32c"]) for row in query_job}
+        loaded_paths[area] = {PathWithCrc(row["target_path"].replace("/v1", ""), row["checksum_crc32c"]) for row in
+                              query_job}
 
     return loaded_paths
 
@@ -97,11 +100,11 @@ def find_files_in_load_history(bq_project: str, dataset: str,
 def parse_manifest_file(manifest_file: str) -> list[str]:
     with open(manifest_file) as manifest:
         # some of the staging areas submitted via the form need slight cleanup
-        return [area.rstrip('\n/') for area in manifest]
+        return [area.rstrip('\n/').strip() for area in manifest]
 
 
-def process_staging_area(area: str, gs_project: str, bq_project: str, dataset: str, release_cutoff: datetime) -> None:
-    logging.debug(f"Processing staging area = {area}")
+def process_staging_area(area: str, gs_project: str, bq_project: str, dataset: str, release_cutoff: datetime) -> bool:
+    logging.info(f"Processing staging area = {area}")
 
     creds = get_credentials()
     storage_client = storage.Client(project=gs_project, credentials=creds)
@@ -118,16 +121,22 @@ def process_staging_area(area: str, gs_project: str, bq_project: str, dataset: s
             logging.warning(
                 f"❌ area = {area} - (data files) Mismatched loaded paths; expected files loaded = {staged}, actual loaded = {loaded}"
             )
-            logging.warning(diff)
+            logging.debug(diff)
         else:
             logging.info(
                 f"✅ area = {area} - (data files) expected files loaded = {staged}, actual loaded = {loaded}")
 
-        verify_metadata(area, bq_project, dataset, release_cutoff)
+    has_error = verify_metadata(area, bq_project, dataset, release_cutoff)
+    if has_error:
+        logging.error(f"❌ area = {area} - has metadata issues")
+    else:
+        logging.info(f"✅ area = {area} - all metadata files loaded")
+    return has_error
 
 
 def inspect_entities_at_path(storage_client: Client, bq_client: bigquery.Client, bq_project: str,
-                             bq_dataset: str, staging_area: str, prefix: str, entity_type: str, release_cutoff: datetime) -> None:
+                             bq_dataset: str, staging_area: str, prefix: str, entity_type: str,
+                             release_cutoff: datetime) -> bool:
     metadata_entities: dict[str, Tuple[str, str]] = {}
 
     url = urlparse(staging_area)
@@ -147,7 +156,7 @@ def inspect_entities_at_path(storage_client: Client, bq_client: bigquery.Client,
         # files may be staged after we import, guard against those versions being present
         version_timestamp = parse_version_to_datetime(version)
         if version_timestamp > release_cutoff:
-            logging.info(f"Ignoring file {file_name} staged after cutoff")
+            logging.info(f"⚠️ Ignoring file {file_name} staged after cutoff")
             continue
 
         # multiple versions may be staged, the latest one should win
@@ -160,12 +169,13 @@ def inspect_entities_at_path(storage_client: Client, bq_client: bigquery.Client,
 
     if len(metadata_entities) == 0:
         if entity_type == 'links':
-            raise Exception(f"❌ area = {staging_area} no links data found")
+            logging.warning(f"⚠️ area = {staging_area} no links data found")
+            return False
 
-        logging.debug(f"❌ area = {staging_area} No metadata for {entity_type} expected, skipping")
-        return
+        logging.debug(f"️area = {staging_area} No metadata for {entity_type} expected, skipping")
+        return False
 
-    logging.debug(f"querying for metadata entities of type {entity_type}")
+    logging.debug(f"Querying for metadata entities of type {entity_type} [area={staging_area}]")
     entity_ids = metadata_entities.keys()
     query = f"""
     SELECT {entity_type}_id, content, version FROM `{bq_project}.datarepo_{bq_dataset}.{entity_type}`
@@ -179,34 +189,57 @@ def inspect_entities_at_path(storage_client: Client, bq_client: bigquery.Client,
     query_job = bq_client.query(query, job_config=job_config)
     rows = {row[f'{entity_type}_id']: (row['version'], row['content']) for row in query_job.result()}
 
+    has_error = False
     for key, (version, content) in metadata_entities.items():
         if key not in rows.keys():
-            logging.error(f"❌ area = {staging_area} {entity_type} ID {key} not in table")
+            logging.info(f"❌ area = {staging_area} {entity_type} ID {key} not in table")
+            return True
+
         row = rows[key]
+        parsed_version = parser.parse(version)
+        if parsed_version < row[0]:
+            # old version staged but a newer version was present, ignore
+            logging.debug(
+                f"Newer version of entity present in repo, ignoring. [area={staging_area}, entity_type={entity_type}, id={key}]"
+            )
+            continue
+
         if not parser.parse(version) == row[0]:
-            logging.error(f"❌ area = {staging_area} {entity_type} ID {key} version is incorrect")
+            has_error = True
+            logging.info(f"❌ area = {staging_area} {entity_type} ID {key} version is incorrect")
         if not json.loads(content) == json.loads(row[1]):
-            logging.error(f"❌ area = {staging_area} {entity_type} ID {key} content is incorrect")
+            has_error = True
+            logging.info(f"❌ area = {staging_area} {entity_type} ID {key} content is incorrect")
 
-    logging.info(
+    logging.debug(
         f"✅ area = {staging_area} - (metadata) all {entity_type} entities found ({len(metadata_entities.keys())} entities)")
+    return has_error
 
 
-def verify_metadata(staging_area: str, bq_project: str, bq_dataset: str, release_cutoff: datetime) -> None:
+def verify_metadata(staging_area: str, bq_project: str, bq_dataset: str, release_cutoff: datetime) -> bool:
     creds = get_credentials()
     storage_client = storage.Client(project="broad-dsp-monster-hca-prod", credentials=creds)
-
     client = bigquery.Client(project=bq_project)
+
+    logging.debug(f"Verifying metadata for {staging_area}")
+
     inspect_entities_at_path(storage_client, client, bq_project, bq_dataset, staging_area, "", "links", release_cutoff)
+    has_error = False
     for non_file_metadata_type in NonFileMetadataTypes:
         if non_file_metadata_type.value == 'links':
             continue
-        inspect_entities_at_path(storage_client, client, bq_project, bq_dataset, staging_area, "metadata",
-                                 non_file_metadata_type.value, release_cutoff)
+        result = inspect_entities_at_path(storage_client, client, bq_project, bq_dataset, staging_area, "metadata",
+                                          non_file_metadata_type.value, release_cutoff)
+        if result:
+            has_error = True
 
     for file_metadata_type in FileMetadataTypes:
-        inspect_entities_at_path(storage_client, client, bq_project, bq_dataset, staging_area, "metadata",
-                                 file_metadata_type.value, release_cutoff)
+        result = inspect_entities_at_path(storage_client, client, bq_project, bq_dataset, staging_area, "metadata",
+                                          file_metadata_type.value, release_cutoff)
+        if result:
+            has_error = True
+
+    return has_error
 
 
 def verify(manifest_file: str, gs_project: str, bq_project: str,
@@ -225,14 +258,21 @@ def verify(manifest_file: str, gs_project: str, bq_project: str,
         bq_project=bq_project,
         dataset=dataset,
         release_cutoff=parsed_cutoff)
+
     if pool_size > 0:
         with Pool(pool_size) as p:
-            p.map(frozen, staging_areas)
+            has_error = p.map(frozen, staging_areas)
     else:
+        has_error = []
         for area in staging_areas:
-            frozen(area)
+            has_error.append(frozen(area))
 
-    return True
+    logging.info('-' * 80)
+    if any(has_error):
+        logging.error(f"❌ Manifest {manifest_file} had errors")
+        return False
+    else:
+        logging.info(f"✅ Manifest {manifest_file} had no errors")
 
 
 if __name__ == '__main__':
@@ -252,5 +292,6 @@ if __name__ == '__main__':
         args.dataset,
         args.pool_size,
         args.release_cutoff)
+
     if not result:
         sys.exit(1)
