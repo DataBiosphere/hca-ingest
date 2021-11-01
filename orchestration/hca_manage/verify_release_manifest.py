@@ -75,7 +75,7 @@ def get_staging_area_file_descriptors(storage_client: Client, staging_areas: set
 
 
 def target_path_from_descriptor(descriptor: dict[str, str]) -> str:
-    return f"/v1//{descriptor['file_id']}/{descriptor['crc32c']}/{descriptor['file_name']}"
+    return f"/v1/{descriptor['file_id']}/{descriptor['crc32c']}/{descriptor['file_name']}"
 
 
 def find_files_in_load_history(bq_project: str, dataset: str,
