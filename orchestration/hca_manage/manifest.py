@@ -13,6 +13,7 @@ import csv
 import logging
 import sys
 import warnings
+from more_itertools import chunked
 import requests
 import json
 
@@ -31,6 +32,7 @@ ETL_PARTITION_BUCKETS = {
     "prod": "broad-dsp-monster-hca-prod-etl-partitions"
 }
 REPOSITORY_LOCATION = "monster-hca-ingest"
+MAX_STAGING_AREAS_PER_PARTITION_SET = 20
 RUN_STATUS_QUERY = """
             query FilteredRunsQuery {{
               pipelineRunsOrError(
@@ -59,7 +61,7 @@ def _sanitize_gs_path(path: str) -> str:
     return path.strip().strip("/")
 
 
-def _parse_csv(csv_path: str) -> set[str]:
+def _parse_csv(csv_path: str) -> list[list[str]]:
     paths = set()
     with open(csv_path, "r") as f:
         reader = csv.reader(f)
@@ -75,23 +77,28 @@ def _parse_csv(csv_path: str) -> set[str]:
             assert path.startswith("gs://"), "Staging area path must start with gs:// scheme"
             paths.add(path)
 
-    return paths
+    chunked_paths = chunked(paths, MAX_STAGING_AREAS_PER_PARTITION_SET)
+    return [chunk for chunk in chunked_paths]
 
 
 def parse_and_load_manifest(env: str, csv_path: str, release_tag: str, pipeline_name: str) -> None:
-    paths = _parse_csv(csv_path)
-    assert len(paths), "At least one import path is required"
-
-    blob_name = f"{pipeline_name}/{release_tag}_manifest.csv"
+    chunked_paths = _parse_csv(csv_path)
     storage_client = Client()
     bucket: Bucket = storage_client.bucket(bucket_name=ETL_PARTITION_BUCKETS[env])
-    blob = Blob(bucket=bucket, name=blob_name)
-    if blob.exists():
-        if not query_yes_no(f"Manifest {blob.name} already exists for pipeline {pipeline_name}, overwrite?"):
-            return
 
-    logging.info(f"Uploading manifest [bucket={bucket.name}, name={blob_name}]")
-    blob.upload_from_string(data="\n".join(paths))
+    for pos, chunk in enumerate(chunked_paths):
+        assert len(chunk), "At least one import path is required"
+
+        qualifier = chr(pos + 97)  # dcp11_a, dcp11_b, etc.
+        blob_name = f"{pipeline_name}/{release_tag}_{qualifier}_manifest.csv"
+
+        blob = Blob(bucket=bucket, name=blob_name)
+        if blob.exists():
+            if not query_yes_no(f"Manifest {blob.name} already exists for pipeline {pipeline_name}, overwrite?"):
+                return
+
+        logging.info(f"Uploading manifest [bucket={bucket.name}, name={blob_name}]")
+        blob.upload_from_string(data="\n".join(chunk))
 
 
 def _get_dagster_client() -> DagsterGraphQLClient:
@@ -109,7 +116,7 @@ def _reload_repository(dagster_client: DagsterGraphQLClient) -> None:
         sys.exit(1)
 
 
-def enumerate_manifests(env: str) -> None:
+def _enumerate_manifests(env: str) -> None:
     storage_client = Client()
 
     bucket: Bucket = storage_client.bucket(bucket_name=ETL_PARTITION_BUCKETS[env])
@@ -128,8 +135,8 @@ def load(args: argparse.Namespace) -> None:
     _reload_repository(_get_dagster_client())
 
 
-def enumerate(args: argparse.Namespace) -> None:
-    enumerate_manifests(args.env)
+def enumerate_manifests(args: argparse.Namespace) -> None:
+    _enumerate_manifests(args.env)
 
 
 def reload(args: argparse.Namespace) -> None:
@@ -178,7 +185,7 @@ if __name__ == '__main__':
 
     list_subparser = subparsers.add_parser("enumerate")
     list_subparser.add_argument("-e", "--env", help="HCA environment", required=True)
-    list_subparser.set_defaults(func=enumerate)
+    list_subparser.set_defaults(func=enumerate_manifests)
 
     reload_subparser = subparsers.add_parser("reload")
     reload_subparser.set_defaults(func=reload)
