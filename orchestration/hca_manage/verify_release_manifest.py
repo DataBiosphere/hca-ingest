@@ -164,7 +164,7 @@ def inspect_entities_at_path(storage_client: Client, bq_client: bigquery.Client,
         # files may be staged after we import, guard against those versions being present
         version_timestamp = parse_version_to_datetime(version)
         if version_timestamp > release_cutoff:
-            logging.info(f"⚠️ Ignoring file {file_name} staged after cutoff")
+            logging.info(f"Ignoring file {file_name} staged after cutoff")
             continue
 
         # multiple versions may be staged, the latest one should win
