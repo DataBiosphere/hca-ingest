@@ -50,7 +50,7 @@ class StagingAreaVerificationResult:
     has_metadata_errors: bool
     has_file_errors: bool
 
-    def has_errors(self):
+    def has_errors(self) -> bool:
         return self.has_metadata_errors or self.has_file_errors
 
 
