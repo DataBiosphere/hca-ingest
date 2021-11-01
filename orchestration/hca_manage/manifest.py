@@ -31,6 +31,28 @@ ETL_PARTITION_BUCKETS = {
     "prod": "broad-dsp-monster-hca-prod-etl-partitions"
 }
 REPOSITORY_LOCATION = "monster-hca-ingest"
+RUN_STATUS_QUERY = """
+            query FilteredRunsQuery {{
+              pipelineRunsOrError(
+                filter: {{
+                  statuses: [SUCCESS]
+                  tags: [
+                    {{
+                      key: "dagster/partition"
+                      value: "{area}"
+                    }}
+                  ]
+                }}
+              ) {{
+                __typename
+                ... on PipelineRuns {{
+                  results {{
+                    runId
+                  }}
+                }}
+              }}
+            }}
+            """
 
 
 def _sanitize_gs_path(path: str) -> str:
@@ -127,32 +149,8 @@ def status(args: argparse.Namespace) -> None:
             paths.append(row[0])
 
     for area in paths:
-        # todo Find a more idiomatic way in python to work w/GraphQL
-        qry = f"""
-            query FilteredRunsQuery {{
-              pipelineRunsOrError(
-                filter: {{
-                  statuses: [SUCCESS]
-                  tags: [
-                    {{
-                      key: "dagster/partition"
-                      value: "{area}"
-                    }}
-                  ]
-                }}
-              ) {{
-                __typename
-                ... on PipelineRuns {{
-                  results {{
-                    runId
-                  }}
-                }}
-              }}
-            }}
-            """
-
         body = {
-            "operationName": "FilteredRunsQuery", "variables": {}, "query": qry
+            "operationName": "FilteredRunsQuery", "variables": {}, "query": RUN_STATUS_QUERY.format(area=area)
         }
         response = requests.post(
             "http://localhost:8080/graphql",
