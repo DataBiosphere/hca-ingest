@@ -8,7 +8,7 @@ areas descriptors. It's possible that an expected file was loaded by another sta
 contain the same file). While this is discouraged, it's technically possible and we need to accommodate that.
 So, we check if the target path was loaded, disregarding the source staging dir.
 
-Additonally, this will check that metadata was loaded properly (including links) by pull the entity_id, version and
+Additionally, this will check that metadata was loaded properly (including links) by pull the entity_id, version and
 content from the files in GS and checking that the expected row is present in the given dataset. If a newer version
 is present in the repo than is staged, we consider that valid.
 
@@ -45,6 +45,15 @@ class PathWithCrc:
     crc32c: str
 
 
+@dataclass(frozen=True)
+class StagingAreaVerificationResult:
+    has_metadata_errors: bool
+    has_file_errors: bool
+
+    def has_errors(self):
+        return self.has_metadata_errors or self.has_file_errors
+
+
 def get_staging_area_file_descriptors(storage_client: Client, staging_areas: set[str]) -> dict[str, set[PathWithCrc]]:
     """
     Given a set of GS staging areas, return the downloaded descriptors present in each area
@@ -66,7 +75,7 @@ def get_staging_area_file_descriptors(storage_client: Client, staging_areas: set
 
 
 def target_path_from_descriptor(descriptor: dict[str, str]) -> str:
-    return f"/{descriptor['file_id']}/{descriptor['crc32c']}/{descriptor['file_name']}"
+    return f"/v1//{descriptor['file_id']}/{descriptor['crc32c']}/{descriptor['file_name']}"
 
 
 def find_files_in_load_history(bq_project: str, dataset: str,
@@ -77,7 +86,6 @@ def find_files_in_load_history(bq_project: str, dataset: str,
     for area, paths_with_crc in areas.items():
         logging.debug(f"\tPulling loaded files for area {area}...")
         target_paths = [path_with_crc.path for path_with_crc in paths_with_crc]
-        new_paths = ["/v1" + path_with_crc.path for path_with_crc in paths_with_crc]
         query = f"""
             SELECT target_path, checksum_crc32c
             FROM `datarepo_{dataset}.datarepo_load_history` dlh
@@ -87,11 +95,11 @@ def find_files_in_load_history(bq_project: str, dataset: str,
 
         job_config = bigquery.QueryJobConfig(
             query_parameters=[
-                bigquery.ArrayQueryParameter("paths", "STRING", target_paths + new_paths),
+                bigquery.ArrayQueryParameter("paths", "STRING", target_paths),
             ]
         )
         query_job = client.query(query, job_config=job_config)
-        loaded_paths[area] = {PathWithCrc(row["target_path"].replace("/v1", ""), row["checksum_crc32c"]) for row in
+        loaded_paths[area] = {PathWithCrc(row["target_path"], row["checksum_crc32c"]) for row in
                               query_job}
 
     return loaded_paths
@@ -103,7 +111,8 @@ def parse_manifest_file(manifest_file: str) -> list[str]:
         return [area.rstrip('\n/').strip() for area in manifest]
 
 
-def process_staging_area(area: str, gs_project: str, bq_project: str, dataset: str, release_cutoff: datetime) -> bool:
+def process_staging_area(area: str, gs_project: str, bq_project: str, dataset: str,
+                         release_cutoff: datetime) -> StagingAreaVerificationResult:
     logging.info(f"Processing staging area = {area}")
 
     creds = get_credentials()
@@ -111,6 +120,7 @@ def process_staging_area(area: str, gs_project: str, bq_project: str, dataset: s
     expected_loaded_paths = get_staging_area_file_descriptors(storage_client, {area})
     loaded_paths_by_staging_area = find_files_in_load_history(bq_project, dataset, expected_loaded_paths)
 
+    has_file_error = False
     for area, paths_with_crc in expected_loaded_paths.items():
         load_paths_for_staging_area = loaded_paths_by_staging_area[area]
         diff = paths_with_crc - load_paths_for_staging_area
@@ -122,16 +132,14 @@ def process_staging_area(area: str, gs_project: str, bq_project: str, dataset: s
                 f"❌ area = {area} - (data files) Mismatched loaded paths; expected files loaded = {staged}, actual loaded = {loaded}"
             )
             logging.debug(diff)
+            has_file_error = True
         else:
             logging.info(
-                f"✅ area = {area} - (data files) expected files loaded = {staged}, actual loaded = {loaded}")
+                f"✅ area = {area} - (data files) expected files loaded = {staged}, actual loaded = {loaded}"
+            )
 
-    has_error = verify_metadata(area, bq_project, dataset, release_cutoff)
-    if has_error:
-        logging.error(f"❌ area = {area} - has metadata issues")
-    else:
-        logging.info(f"✅ area = {area} - all metadata files loaded")
-    return has_error
+    has_metadata_error = verify_metadata(area, bq_project, dataset, release_cutoff)
+    return StagingAreaVerificationResult(has_metadata_error, has_file_error)
 
 
 def inspect_entities_at_path(storage_client: Client, bq_client: bigquery.Client, bq_project: str,
@@ -169,7 +177,7 @@ def inspect_entities_at_path(storage_client: Client, bq_client: bigquery.Client,
 
     if len(metadata_entities) == 0:
         if entity_type == 'links':
-            logging.warning(f"⚠️ area = {staging_area} no links data found")
+            logging.debug(f"area = {staging_area} no links data found")
             return False
 
         logging.debug(f"️area = {staging_area} No metadata for {entity_type} expected, skipping")
@@ -223,31 +231,50 @@ def verify_metadata(staging_area: str, bq_project: str, bq_dataset: str, release
 
     logging.debug(f"Verifying metadata for {staging_area}")
 
-    inspect_entities_at_path(storage_client, client, bq_project, bq_dataset, staging_area, "", "links", release_cutoff)
-    has_error = False
-    for non_file_metadata_type in NonFileMetadataTypes:
-        if non_file_metadata_type.value == 'links':
-            continue
-        result = inspect_entities_at_path(storage_client, client, bq_project, bq_dataset, staging_area, "metadata",
-                                          non_file_metadata_type.value, release_cutoff)
-        if result:
-            has_error = True
+    links_errors = inspect_entities_at_path(
+        storage_client,
+        client,
+        bq_project,
+        bq_dataset,
+        staging_area,
+        "",
+        "links",
+        release_cutoff
+    )
 
-    for file_metadata_type in FileMetadataTypes:
-        result = inspect_entities_at_path(storage_client, client, bq_project, bq_dataset, staging_area, "metadata",
-                                          file_metadata_type.value, release_cutoff)
-        if result:
-            has_error = True
+    non_file_metadata_errors = [
+        inspect_entities_at_path(
+            storage_client,
+            client,
+            bq_project,
+            bq_dataset,
+            staging_area,
+            "metadata",
+            non_file_metadata_type.value,
+            release_cutoff
+        ) for non_file_metadata_type in
+        NonFileMetadataTypes]
+    file_metadata_errors = [
+        inspect_entities_at_path(
+            storage_client,
+            client, bq_project,
+            bq_dataset,
+            staging_area,
+            "metadata",
+            file_metadata_type.value,
+            release_cutoff
+        ) for file_metadata_type in FileMetadataTypes]
 
-    return has_error
+    return any(file_metadata_errors) or any(non_file_metadata_errors) or links_errors
 
 
 def verify(manifest_file: str, gs_project: str, bq_project: str,
-           dataset: str, pool_size: int, release_cutoff: str) -> bool:
-    logging.info("Parsing manifest...")
-    parsed_cutoff = datetime.fromisoformat(release_cutoff)
-    logging.info(f"Release cutoff = {release_cutoff}")
+           dataset: str, pool_size: int, release_cutoff: str) -> int:
     staging_areas = parse_manifest_file(manifest_file)
+    parsed_cutoff = datetime.fromisoformat(release_cutoff)
+
+    logging.info("Parsing manifest...")
+    logging.info(f"Release cutoff = {release_cutoff}")
     logging.info(f"{len(staging_areas)} staging areas in manifest.")
     logging.info(f"Inspecting staging areas (pool_size = {pool_size})...")
 
@@ -261,18 +288,18 @@ def verify(manifest_file: str, gs_project: str, bq_project: str,
 
     if pool_size > 0:
         with Pool(pool_size) as p:
-            has_error = p.map(frozen, staging_areas)
+            results = p.map(frozen, staging_areas)
     else:
-        has_error = []
-        for area in staging_areas:
-            has_error.append(frozen(area))
+        results = [frozen(area) for area in staging_areas]
 
     logging.info('-' * 80)
-    if any(has_error):
+    if any(map(lambda x: x.has_errors(), results)):
         logging.error(f"❌ Manifest {manifest_file} had errors")
-        return False
+        return 1
     else:
         logging.info(f"✅ Manifest {manifest_file} had no errors")
+
+    return 0
 
 
 if __name__ == '__main__':
@@ -285,7 +312,7 @@ if __name__ == '__main__':
     argparser.add_argument("-r", "--release-cutoff", required=True)
     args = argparser.parse_args()
 
-    result = verify(
+    exit_code = verify(
         args.manifest_file,
         args.gs_project,
         args.bq_project,
@@ -293,5 +320,4 @@ if __name__ == '__main__':
         args.pool_size,
         args.release_cutoff)
 
-    if not result:
-        sys.exit(1)
+    sys.exit(exit_code)
