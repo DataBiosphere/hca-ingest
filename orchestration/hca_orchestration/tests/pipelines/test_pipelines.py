@@ -7,9 +7,10 @@ from dagster import file_relative_path, ResourceDefinition, Failure, JobDefiniti
 from dagster.core.execution.execution_results import InProcessGraphResult
 from dagster.utils import load_yaml_from_globs
 from dagster.utils.merger import deep_merge_dicts
-from dagster_utils.resources.data_repo.jade_data_repo import noop_data_repo_client
-from dagster_utils.resources.sam import noop_sam_client
+from dagster_utils.resources.sam import Sam
 from dagster_utils.resources.slack import console_slack_client
+from data_repo_client import RepositoryApi
+
 from google.cloud.storage import Client
 
 import hca_orchestration.resources.data_repo_service
@@ -119,14 +120,19 @@ def test_validate_ingress_failure():
         job.execute_in_process()
 
 
-@patch('dagster_utils.resources.data_repo.jade_data_repo.NoopDataRepoClient.add_snapshot_policy_member')
 def test_cut_snapshot(*mocks):
+    data_repo = MagicMock(spec=RepositoryApi)
+    data_repo.retrieve_job_result = MagicMock(
+        return_value={
+            "id": "fake_object_id",
+            "name": "fake_object_name",
+            "failedFiles": 0})
     job = cut_snapshot.to_job(
         resource_defs={
-            "data_repo_client": noop_data_repo_client,
+            "data_repo_client": ResourceDefinition.hardcoded_resource(data_repo),
             "data_repo_service": ResourceDefinition.hardcoded_resource(Mock(spec=DataRepoService)),
             "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, "test"),
-            "sam_client": noop_sam_client,
+            "sam_client": ResourceDefinition.hardcoded_resource(Mock(spec=Sam)),
             "slack": console_slack_client,
             "snapshot_config": snapshot_creation_config,
             "dagit_config": preconfigure_resource_for_mode(dagit_config, "test"),

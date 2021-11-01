@@ -1,6 +1,11 @@
 """
-Parses a csv of staging areas intended for a DCP release and uploads to a
+Utilities for working with a DCP release manifest (the set of staging areas intended for a DCP release)
+
+This utility will:
+* parse a csv of staging areas intended for a DCP release and upload to a
 bucket for bulk ingest by our pipeline.
+* enumerate any loaded manifests
+* check on the ingest status of staging areas in a local manifest file
 """
 
 import argparse
@@ -9,6 +14,8 @@ import logging
 import sys
 import warnings
 from more_itertools import chunked
+import requests
+import json
 
 import dagster
 from dagster_graphql import DagsterGraphQLClient, ShutdownRepositoryLocationStatus, DagsterGraphQLClientError
@@ -26,6 +33,28 @@ ETL_PARTITION_BUCKETS = {
 }
 REPOSITORY_LOCATION = "monster-hca-ingest"
 MAX_STAGING_AREAS_PER_PARTITION_SET = 20
+RUN_STATUS_QUERY = """
+            query FilteredRunsQuery {{
+              pipelineRunsOrError(
+                filter: {{
+                  statuses: [SUCCESS]
+                  tags: [
+                    {{
+                      key: "dagster/partition"
+                      value: "{area}"
+                    }}
+                  ]
+                }}
+              ) {{
+                __typename
+                ... on PipelineRuns {{
+                  results {{
+                    runId
+                  }}
+                }}
+              }}
+            }}
+            """
 
 
 def _sanitize_gs_path(path: str) -> str:
@@ -119,6 +148,29 @@ def reload(args: argparse.Namespace) -> None:
     logging.info("Reload complete (it may take a few minutes before the repository is available again)")
 
 
+def status(args: argparse.Namespace) -> None:
+    paths = []
+    with open(args.csv_path, "r") as f:
+        reader = csv.reader(f)
+        for row in reader:
+            paths.append(row[0])
+
+    for area in paths:
+        body = {
+            "operationName": "FilteredRunsQuery", "variables": {}, "query": RUN_STATUS_QUERY.format(area=area)
+        }
+        response = requests.post(
+            "http://localhost:8080/graphql",
+            data=json.dumps(body),
+            headers={
+                "content-type": "application/json"})
+        runs = response.json()['data']['pipelineRunsOrError']['results']
+        if not runs:
+            logging.error(f"{area}\t<no successful runs>")
+        else:
+            logging.error(f"{area}\t{runs[0]['runId']}")
+
+
 if __name__ == '__main__':
     setup_cli_logging_format()
     parser = argparse.ArgumentParser()
@@ -137,6 +189,10 @@ if __name__ == '__main__':
 
     reload_subparser = subparsers.add_parser("reload")
     reload_subparser.set_defaults(func=reload)
+
+    status_subparser = subparsers.add_parser("status")
+    status_subparser.add_argument("-c", "--csv_path", help="CSV path", required=True)
+    status_subparser.set_defaults(func=status)
 
     args = parser.parse_args()
     args.func(args)

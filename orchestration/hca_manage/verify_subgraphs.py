@@ -2,6 +2,7 @@
 Verifies that all nodes in the subgraphs of a dataset or snapshot are loaded
 """
 import argparse
+from typing import Optional
 
 from google.cloud.bigquery import Client, ArrayQueryParameter, QueryJobConfig, Row
 
@@ -44,16 +45,19 @@ def verify_entities_loaded(entity_type: MetadataType, expected_entities: list[Me
     assert len(set_diff) == 0, f"Not all expected IDs found [diff = {set_diff}]"
 
 
-def run(bq_project: str, dataset: str, snapshot: bool) -> None:
+def run(bq_project: str, dataset: str, snapshot: bool, project_id: Optional[str]) -> None:
     client = Client(project=bq_project)
     if not snapshot:
         dataset = f"datarepo_{dataset}"
 
     print(f"Querying bq... [project={bq_project}, dataset={dataset}]")
-
     query = f"""
     SELECT * FROM `{bq_project}.{dataset}.links`
     """
+
+    if project_id:
+        query = query + f"""  WHERE project_id = '{project_id}'"""
+
     links_rows = [row for row in client.query(query).result()]
     verify_all_subgraphs_in_dataset(links_rows, bq_project, dataset, client)
 
@@ -63,6 +67,7 @@ if __name__ == '__main__':
     argparser.add_argument("-b", "--bq-project", required=True)
     argparser.add_argument("-d", "--dataset", required=True)
     argparser.add_argument("-s", "--snapshot", action="store_true")
+    argparser.add_argument("-p", "--project_id")
     args = argparser.parse_args()
 
-    run(args.bq_project, args.dataset, args.snapshot)
+    run(args.bq_project, args.dataset, args.snapshot, args.project_id)
