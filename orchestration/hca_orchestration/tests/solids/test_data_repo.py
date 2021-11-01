@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from dagster import execute_solid, Failure, ModeDefinition
-from dagster_utils.resources.data_repo.jade_data_repo import noop_data_repo_client
+from dagster import execute_solid, Failure, ModeDefinition, ResourceDefinition
+from data_repo_client import RepositoryApi
 
 from hca_manage.common import JobId
 from hca_orchestration.solids.data_repo import base_wait_for_job_completion
@@ -20,12 +20,15 @@ def mock_job_status(completed: bool, successful: bool = True) -> Mock:
     return fake_job_status
 
 
+data_repo = Mock(spec=RepositoryApi)
+
+
 class WaitForJobCompletionTestCase(unittest.TestCase):
     def setUp(self):
         self.test_mode = ModeDefinition(
             name="test",
             resource_defs={
-                "data_repo_client": noop_data_repo_client,
+                "data_repo_client": ResourceDefinition.hardcoded_resource(data_repo)
             }
         )
 
@@ -46,17 +49,18 @@ class WaitForJobCompletionTestCase(unittest.TestCase):
             mock_job_status(True)
         ]
 
-        with patch('dagster_utils.resources.data_repo.jade_data_repo.NoopDataRepoClient.retrieve_job',
-                   side_effect=job_status_sequence) as mocked_retrieve_job:
-            result = execute_solid(
-                base_wait_for_job_completion,
-                run_config=solid_config,
-                mode_def=self.test_mode,
-                input_values={
-                    'job_id': JobId('steve-was-here'),
-                })
-            self.assertTrue(result.success)
-            self.assertEqual(mocked_retrieve_job.call_count, 3)
+        data_repo.retrieve_job = Mock(side_effect=job_status_sequence)
+        self.test_mode.resource_defs["data_repo_client"] = ResourceDefinition.hardcoded_resource(data_repo)
+
+        result = execute_solid(
+            base_wait_for_job_completion,
+            run_config=solid_config,
+            mode_def=self.test_mode,
+            input_values={
+                'job_id': JobId('steve-was-here'),
+            })
+        self.assertTrue(result.success)
+        self.assertEqual(data_repo.retrieve_job.call_count, 3)
 
     def test_fails_if_job_failed(self):
         solid_config = {
@@ -70,18 +74,17 @@ class WaitForJobCompletionTestCase(unittest.TestCase):
             }
         }
 
-        with patch('dagster_utils.resources.data_repo.jade_data_repo.NoopDataRepoClient.retrieve_job',
-                   return_value=mock_job_status(completed=True, successful=False)) as mocked_retrieve_job:
-            with self.assertRaisesRegex(Failure, "Job did not complete successfully."):
-                result = execute_solid(
-                    base_wait_for_job_completion,
-                    run_config=solid_config,
-                    mode_def=self.test_mode,
-                    input_values={
-                        'job_id': JobId('steve-was-here'),
-                    })
-                self.assertTrue(result.success)
-                self.assertEqual(mocked_retrieve_job.call_count, 3)
+        data_repo.retrieve_job = Mock(return_value=mock_job_status(completed=True, successful=False))
+        self.test_mode.resource_defs["data_repo_client"] = ResourceDefinition.hardcoded_resource(data_repo)
+
+        with self.assertRaisesRegex(Failure, "Job did not complete successfully."):
+            result = execute_solid(
+                base_wait_for_job_completion,
+                run_config=solid_config,
+                mode_def=self.test_mode,
+                input_values={
+                    'job_id': JobId('steve-was-here'),
+                })
 
     def test_fails_if_max_time_exceeded(self):
         solid_config = {
@@ -95,13 +98,14 @@ class WaitForJobCompletionTestCase(unittest.TestCase):
             }
         }
 
-        with patch('dagster_utils.resources.data_repo.jade_data_repo.NoopDataRepoClient.retrieve_job',
-                   return_value=mock_job_status(False)):
-            with self.assertRaisesRegex(Failure, "Exceeded max wait time"):
-                execute_solid(
-                    base_wait_for_job_completion,
-                    run_config=solid_config,
-                    mode_def=self.test_mode,
-                    input_values={
-                        'job_id': JobId('steve-was-here'),
-                    })
+        data_repo.retrieve_job = Mock(return_value=mock_job_status(False))
+        self.test_mode.resource_defs["data_repo_client"] = ResourceDefinition.hardcoded_resource(data_repo)
+
+        with self.assertRaisesRegex(Failure, "Exceeded max wait time"):
+            execute_solid(
+                base_wait_for_job_completion,
+                run_config=solid_config,
+                mode_def=self.test_mode,
+                input_values={
+                    'job_id': JobId('steve-was-here'),
+                })
