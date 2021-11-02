@@ -1,6 +1,6 @@
 import warnings
 
-from dagster import HookContext, PipelineDefinition
+from dagster import HookContext, PipelineDefinition, in_process_executor
 from dagster import success_hook, failure_hook, graph, \
     ExperimentalWarning
 from dagster_gcp.gcs import gcs_pickle_io_manager
@@ -55,7 +55,8 @@ def cut_project_snapshot_job(hca_env: str, jade_env: str, steward: str) -> Pipel
                     },
                 }
             }
-        }
+        },
+        executor_def=in_process_executor
     )
 
 
@@ -93,7 +94,8 @@ def legacy_cut_snapshot_job(hca_env: str, steward: str) -> PipelineDefinition:
                     },
                 }
             }
-        }
+        },
+        executor_def=in_process_executor
     )
 
 
