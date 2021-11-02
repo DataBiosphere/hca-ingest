@@ -77,13 +77,13 @@ class WaitForJobCompletionTestCase(unittest.TestCase):
         data_repo.retrieve_job = Mock(return_value=mock_job_status(completed=True, successful=False))
         self.test_mode.resource_defs["data_repo_client"] = ResourceDefinition.hardcoded_resource(data_repo)
 
-        with self.assertRaisesRegex(Failure, "Job did not complete successfully."):
-            result = execute_solid(
+        with self.assertRaisesRegex(Failure, f"job_id test_job did not complete successfully."):
+            execute_solid(
                 base_wait_for_job_completion,
                 run_config=solid_config,
                 mode_def=self.test_mode,
                 input_values={
-                    'job_id': JobId('steve-was-here'),
+                    'job_id': JobId('test_job'),
                 })
 
     def test_fails_if_max_time_exceeded(self):
