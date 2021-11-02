@@ -78,7 +78,7 @@ class WaitForJobCompletionTestCase(unittest.TestCase):
         self.test_mode.resource_defs["data_repo_client"] = ResourceDefinition.hardcoded_resource(data_repo)
 
         with self.assertRaisesRegex(Failure, f"job_id test_job did not complete successfully."):
-            result = execute_solid(
+            execute_solid(
                 base_wait_for_job_completion,
                 run_config=solid_config,
                 mode_def=self.test_mode,
