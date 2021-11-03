@@ -94,8 +94,35 @@ def run(arguments: Optional[list[str]] = None) -> None:
     snapshot_public.add_argument("-i", "--snapshot_id", help="Id of snapshot", required=True)
     snapshot_public.set_defaults(func=_mark_snapshot_private)
 
+    # bulk add policy member
+    snapshot_bulk_add_policy_member = subparsers.add_parser("bulk_add_policy_member")
+    snapshot_bulk_add_policy_member.add_argument(
+        "-p",
+        "--policy_member",
+        help="Email address of user to add as a policy member",
+        required=True)
+    snapshot_bulk_add_policy_member.add_argument("-s", "--snapshot_name", help="Name of snapshot(s)", required=True)
+    snapshot_bulk_add_policy_member.add_argument(
+        "-n",
+        "--policy_name",
+        help="Name of policy (one of steward, reader, discoverer)",
+        required=True)
+    snapshot_bulk_add_policy_member.set_defaults(func=_bulk_add_policy_member)
+
     args = parser.parse_args(arguments)
     args.func(args)
+
+
+@tdr_operation
+def _bulk_add_policy_member(args: argparse.Namespace) -> None:
+    host = data_repo_host[args.env]
+
+    policy_member = args.policy_member
+    snapshot_name = args.snapshot_name
+    policy_name = args.policy_name
+
+    hca = SnapshotManager(environment=args.env, data_repo_client=get_api_client(host=host))
+    hca.bulk_add_policy_member(policy_member, policy_name, snapshot_name)
 
 
 @tdr_operation
@@ -327,6 +354,20 @@ class SnapshotManager:
 
     def retrieve_snapshot(self, snapshot_id: str) -> SnapshotModel:
         return self.data_repo_client.retrieve_snapshot(id=snapshot_id, include=["PROFILE,DATA_PROJECT"])
+
+    def bulk_add_policy_member(self, policy_member: str, policy_name: str, snapshot_name_filter: str) -> None:
+        snapshots = self.query_snapshot(snapshot_name_filter)
+        if not snapshots.items:
+            logging.error(f"No snapshots found for filter {snapshot_name_filter}")
+            return
+
+        logging.info(
+            f"Adding {policy_member} as a {policy_name} to {len(snapshots.items)} snapshots matching filter {snapshot_name_filter}"
+        )
+        for snapshot in snapshots.items:
+            payload = PolicyMemberRequest(email=policy_member)
+            self.data_repo_client.add_snapshot_policy_member(snapshot.id, policy_name, policy_member=payload)
+            logging.info(f"Added {policy_member} as a {policy_name} to {snapshot.name} ({snapshot.id})")
 
 
 if __name__ == '__main__':
