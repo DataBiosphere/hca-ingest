@@ -1,15 +1,12 @@
-import uuid
-
 import pytest
 from dagster import execute_pipeline, in_process_executor, PipelineExecutionResult
 from dagster_gcp.gcs import gcs_pickle_io_manager
-from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client, build_client
+from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client
 from dagster_utils.resources.google_storage import google_storage_client
 from dagster_utils.resources.sam import sam_client
 from dagster_utils.resources.slack import console_slack_client
 
 from hca_manage.common import data_repo_host, get_api_client
-from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.pipelines.cut_snapshot import cut_snapshot
 from hca_orchestration.repositories.local_repository import load_hca_job, copy_project_to_new_dataset_job
@@ -98,7 +95,7 @@ def copied_dataset(snapshot, copy_project_config):
     _get_data_repo_client().delete_dataset(id=copied_dataset.tags["dataset_id"])
 
 
-# @pytest.mark.e2e
+@pytest.mark.e2e
 def test_copy_project(copied_dataset, tdr_bigquery_client):
     copied_dataset_bq_project = copied_dataset.tags['project_id']
     copied_dataset_name = copied_dataset.tags['dataset_name']

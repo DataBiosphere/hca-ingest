@@ -9,7 +9,7 @@ from dagster.utils import load_yaml_from_globs
 from dagster.utils.merger import deep_merge_dicts
 from dagster_utils.resources.sam import Sam
 from dagster_utils.resources.slack import console_slack_client
-from data_repo_client import RepositoryApi
+from data_repo_client import RepositoryApi, SnapshotModel
 
 from google.cloud.storage import Client
 
@@ -127,6 +127,9 @@ def test_cut_snapshot(*mocks):
             "id": "fake_object_id",
             "name": "fake_object_name",
             "failedFiles": 0})
+    data_repo.retrieve_snapshot = MagicMock(
+        return_value=SnapshotModel(data_project="fake_data_project")
+    )
     job = cut_snapshot.to_job(
         resource_defs={
             "data_repo_client": ResourceDefinition.hardcoded_resource(data_repo),

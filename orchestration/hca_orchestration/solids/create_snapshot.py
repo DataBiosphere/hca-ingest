@@ -26,7 +26,7 @@ def submit_snapshot_job(context: AbstractComputeExecutionContext) -> JobId:
         data_repo_profile_id=dataset.billing_profile_id
     ).submit_snapshot_request_with_name(
         context.resources.snapshot_config.snapshot_name,
-        context.resources.snapshot_config.managed_access, validate_snapshot_name=False
+        context.resources.snapshot_config.managed_access
     )
 
 
