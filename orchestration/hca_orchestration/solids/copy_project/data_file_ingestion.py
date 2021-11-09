@@ -6,6 +6,8 @@ from dagster_utils.contrib.data_repo.jobs import poll_job
 from dagster_utils.contrib.data_repo.typing import JobId
 from data_repo_client import JobModel, RepositoryApi
 from google.cloud.storage import Client
+from google.cloud.storage.blob import Blob
+from google.cloud.storage.bucket import Bucket
 from hca_orchestration.models.hca_dataset import TdrDataset
 
 from hca_orchestration.contrib.gcs import parse_gs_path
@@ -74,8 +76,18 @@ def _generate_control_file(context: AbstractComputeExecutionContext,
     ingest_items = []
     for data_entity in data_entities:
         file_bucket_and_prefix = parse_gs_path(data_entity.path)
+        bucket = Bucket(storage_client, file_bucket_and_prefix.bucket)
+        dest_bucket = Bucket(storage_client, scratch_config.scratch_bucket_name)
+
+        blob: Blob = Blob(file_bucket_and_prefix.prefix, bucket)
+        file_name = blob.name.split("/")[-1]
+
+        context.log.info(
+            f"Copying from {blob.name} to gs://{dest_bucket.name} / {scratch_config.scratch_prefix_name}/data_files/{file_name}")
+
+        new_blob = bucket.copy_blob(blob, dest_bucket, f"{scratch_config.scratch_prefix_name}/data_files/{file_name}")
         ingest_items.append(
-            f'{{"sourcePath":"{data_entity.path}", "targetPath":"{data_entity.hca_file_path}"}}')
+            f'{{"sourcePath":"gs://{dest_bucket.name}/{new_blob.name}", "targetPath":"{data_entity.hca_file_path}"}}')
 
     # write out a JSONL control file for TDR to consume
     control_file_str = "\n".join(ingest_items)

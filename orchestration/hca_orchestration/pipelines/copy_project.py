@@ -12,15 +12,15 @@ from hca_orchestration.solids.validate_dataset import validate_copied_dataset
 @graph
 def copy_project() -> None:
     validate_copied_dataset(
-        delete_outdated_tabular_data(
-            inject_file_ids(
-                ingest_tabular_data(
-                    ingest_data_files(
-                        hydrate_subgraphs(
-                            clear_scratch_dir()
-                        )
-                    )
-                )
-            )
-        )
+        # delete_outdated_tabular_data(
+        #     inject_file_ids(
+        #         ingest_tabular_data(
+        #             ingest_data_files(
+        #                 hydrate_subgraphs(
+        #                     clear_scratch_dir()
+        #                 )
+        #             )
+        #         )
+        #     )
+        # )
     )

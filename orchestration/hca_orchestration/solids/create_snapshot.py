@@ -26,7 +26,7 @@ def submit_snapshot_job(context: AbstractComputeExecutionContext) -> JobId:
         data_repo_profile_id=dataset.billing_profile_id
     ).submit_snapshot_request_with_name(
         context.resources.snapshot_config.snapshot_name,
-        context.resources.snapshot_config.managed_access
+        context.resources.snapshot_config.managed_access, validate_snapshot_name=False
     )
 
 
@@ -40,6 +40,9 @@ def get_completed_snapshot_info(context: AbstractComputeExecutionContext, job_id
     # retrieve_job_result returns a raw dict (since it can return many kinds of data), so we need to make
     # a second call to the snapshot endpoint to get the actual SnapshotModel from it
     snapshot_info_dict = context.resources.data_repo_client.retrieve_job_result(job_id)
+    snapshot_details = context.resources.data_repo_client.retrieve_snapshot(
+        id=snapshot_info_dict['id'], include=["PROFILE,DATA_PROJECT"])
+
     yield AssetMaterialization(
         asset_key=snapshot_info_dict['id'],
         description="Dataset snapshot created in the data repo",
@@ -55,7 +58,12 @@ def get_completed_snapshot_info(context: AbstractComputeExecutionContext, job_id
             EventMetadataEntry.text(snapshot_info_dict['id'], "snapshot_id",
                                     description="Snapshot ID in the data repo"),
             EventMetadataEntry.text(job_id, "job_id", description="Successful data repo job ID"),
-        ]
+        ],
+        tags={
+            "snapshot_id": snapshot_info_dict['id'],
+            "data_project": snapshot_details.data_project,
+            "snapshot_name": snapshot_info_dict['name']
+        }
     )
     yield Output(snapshot_info_dict['id'])
 

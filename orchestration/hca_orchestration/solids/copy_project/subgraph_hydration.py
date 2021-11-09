@@ -197,7 +197,7 @@ def fetch_entities(
             """
         else:
             fetch_entities_query = f"""
-            SELECT '/' || JSON_EXTRACT_SCALAR(descriptor, '$.file_id') || '/' || JSON_EXTRACT_SCALAR(descriptor, '$.file_name') as target_path, * EXCEPT (datarepo_row_id)
+            SELECT '/v1/' || JSON_EXTRACT_SCALAR(descriptor, '$.file_id') || '/' || JSON_EXTRACT_SCALAR(descriptor, '$.file_name') as target_path, * EXCEPT (datarepo_row_id)
             FROM `{bigquery_project_id}.{snapshot_name}.{entity_type}` WHERE {entity_type}_id IN
             UNNEST(@entity_ids)
             """
