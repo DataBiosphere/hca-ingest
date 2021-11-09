@@ -75,8 +75,8 @@ def snapshot(load_hca_run_config, dataset_info: DatasetInfo):
     _get_data_repo_client().delete_snapshot(id=snapshot_info.tags["snapshot_id"])
 
 
-@pytest.mark.e2e
-def test_copy_project(snapshot, copy_project_config, tdr_bigquery_client, request):
+@pytest.fixture
+def copied_dataset(snapshot, copy_project_config):
     base_copy_project_config = copy_project_config.copy()
     base_copy_project_config["resources"]["hca_project_copying_config"] = {
         "config": {
@@ -92,12 +92,16 @@ def test_copy_project(snapshot, copy_project_config, tdr_bigquery_client, reques
         run_config=base_copy_project_config
     )
     copied_dataset = result.result_for_solid("validate_copied_dataset").materializations_during_compute[0]
+
+    yield copied_dataset
+
+    _get_data_repo_client().delete_dataset(id=copied_dataset.tags["dataset_id"])
+
+
+# @pytest.mark.e2e
+def test_copy_project(copied_dataset, tdr_bigquery_client):
     copied_dataset_bq_project = copied_dataset.tags['project_id']
     copied_dataset_name = copied_dataset.tags['dataset_name']
-
-    def delete_copied_dataset():
-        _get_data_repo_client().delete_dataset(id=copied_dataset.tags["dataset_id"])
-    request.addFinalizer(delete_copied_dataset)
 
     assert_metadata_loaded("links", copied_dataset_name, copied_dataset_bq_project, tdr_bigquery_client)
     assert_metadata_loaded("analysis_file", copied_dataset_name, copied_dataset_bq_project, tdr_bigquery_client)
@@ -118,5 +122,4 @@ def test_copy_project(snapshot, copy_project_config, tdr_bigquery_client, reques
         copied_dataset_name,
         copied_dataset_bq_project,
         tdr_bigquery_client)
-
     assert_data_loaded("analysis_file", copied_dataset_name, copied_dataset_bq_project, tdr_bigquery_client)
