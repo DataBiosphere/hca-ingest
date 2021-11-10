@@ -26,11 +26,11 @@ def snapshot(monkeypatch, hca_project_id, load_hca_run_config,
              dataset_info: DatasetInfo, data_repo_client: RepositoryApi):
     monkeypatch.setenv("ENV", "dev")
 
-    # load_job = load_hca_job()
-    # execute_pipeline(
-    #     load_job,
-    #     run_config=load_hca_run_config
-    # )
+    load_job = load_hca_job()
+    execute_pipeline(
+        load_job,
+        run_config=load_hca_run_config
+    )
 
     snapshot_config = {
         "resources": {

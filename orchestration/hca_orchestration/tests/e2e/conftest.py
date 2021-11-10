@@ -34,7 +34,7 @@ def tdr_bigquery_client():
 
 @pytest.fixture
 def delete_dataset_on_exit():
-    return False
+    return True
 
 
 @pytest.fixture
