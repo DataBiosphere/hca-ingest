@@ -14,7 +14,7 @@ from hca_orchestration.resources.data_repo_service import data_repo_service
 
 def copy_project_to_new_dataset_job(src_env: str, target_env: str) -> PipelineDefinition:
     return copy_project.to_job(
-        name="copy_project_to_new_dataset",
+        name=f"copy_project_from_{src_env}_to_{target_env}",
         description=f"Copies a project from {src_env} to {target_env}",
         resource_defs={
             "bigquery_client": bigquery_client,
