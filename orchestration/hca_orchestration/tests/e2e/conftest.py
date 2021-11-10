@@ -22,13 +22,19 @@ class DatasetInfo:
 
 
 @pytest.fixture
+def data_repo_client():
+    host = data_repo_host["dev"]
+    return get_api_client(host=host)
+
+
+@pytest.fixture
 def tdr_bigquery_client():
     return Client()
 
 
 @pytest.fixture
 def delete_dataset_on_exit():
-    return True
+    return False
 
 
 @pytest.fixture
@@ -43,8 +49,7 @@ def dataset_name() -> str:
 
 
 @pytest.fixture
-def dataset_info(dataset_name, delete_dataset_on_exit, existing_dataset_id) -> Iterable[DatasetInfo]:
-    data_repo_client = get_api_client(data_repo_host["dev"])
+def dataset_info(dataset_name, delete_dataset_on_exit, existing_dataset_id, data_repo_client) -> Iterable[DatasetInfo]:
     dataset_manager = DatasetManager("dev", data_repo_client)
 
     # setup, either create the dataset or re-use the existing one if passed in as a fixture

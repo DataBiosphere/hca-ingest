@@ -5,8 +5,8 @@ from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_clie
 from dagster_utils.resources.google_storage import google_storage_client
 from dagster_utils.resources.sam import sam_client
 from dagster_utils.resources.slack import console_slack_client
+from google.cloud.bigquery import Client
 
-from hca_manage.common import data_repo_host, get_api_client
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.pipelines.cut_snapshot import cut_snapshot
 from hca_orchestration.repositories.local_repository import load_hca_job, copy_project_to_new_dataset_job
@@ -14,16 +14,12 @@ from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.data_repo import hca_manage_config, snapshot_creation_config
 from hca_orchestration.resources.data_repo_service import data_repo_service
 from hca_orchestration.tests.e2e.conftest import DatasetInfo
-from hca_orchestration.tests.support.bigquery import assert_metadata_loaded, assert_data_loaded
-
-
-def _get_data_repo_client():
-    host = data_repo_host["dev"]
-    return get_api_client(host=host)
+from hca_orchestration.tests.support.bigquery import assert_metadata_loaded, assert_data_loaded, exec_query, \
+    query_metadata_table
 
 
 @pytest.fixture
-def snapshot(load_hca_run_config, dataset_info: DatasetInfo):
+def snapshot(load_hca_run_config, dataset_info: DatasetInfo, data_repo_client):
     load_job = load_hca_job()
     execute_pipeline(
         load_job,
@@ -69,11 +65,11 @@ def snapshot(load_hca_run_config, dataset_info: DatasetInfo):
 
     yield snapshot_info
 
-    _get_data_repo_client().delete_snapshot(id=snapshot_info.tags["snapshot_id"])
+    data_repo_client.delete_snapshot(id=snapshot_info.tags["snapshot_id"])
 
 
 @pytest.fixture
-def copied_dataset(snapshot, copy_project_config):
+def copied_dataset(snapshot, copy_project_config, data_repo_client):
     base_copy_project_config = copy_project_config.copy()
     base_copy_project_config["resources"]["hca_project_copying_config"] = {
         "config": {
@@ -92,10 +88,10 @@ def copied_dataset(snapshot, copy_project_config):
 
     yield copied_dataset
 
-    _get_data_repo_client().delete_dataset(id=copied_dataset.tags["dataset_id"])
+    data_repo_client.delete_dataset(id=copied_dataset.tags["dataset_id"])
 
 
-@pytest.mark.e2e
+# @pytest.mark.e2e
 def test_copy_project(copied_dataset, tdr_bigquery_client):
     copied_dataset_bq_project = copied_dataset.tags['project_id']
     copied_dataset_name = copied_dataset.tags['dataset_name']
@@ -120,3 +116,23 @@ def test_copy_project(copied_dataset, tdr_bigquery_client):
         copied_dataset_bq_project,
         tdr_bigquery_client)
     assert_data_loaded("analysis_file", copied_dataset_name, copied_dataset_bq_project, tdr_bigquery_client)
+
+    assert_single_project_loaded("90bf705c-d891-5ce2-aa54-094488b445c6", copied_dataset_name, copied_dataset_bq_project,
+                                 tdr_bigquery_client)
+
+
+def assert_single_project_loaded(project_id: str, dataset_name: str, bq_project: str, client: Client):
+    query = f"""
+    SELECT * FROM `datarepo_{dataset_name}.project` WHERE project_id = {project_id}
+    """
+
+    entity_loaded = exec_query(query, client, bq_project)
+    assert len(entity_loaded) == 1, f"Should have loaded project with id {project_id}"
+
+    total_rows_loaded = query_metadata_table("project", dataset_name, bq_project, client)
+    assert len(total_rows_loaded) == 1, f"Should have 1 row in project table, found {len(total_rows_loaded)}"
+
+    links_rows = query_metadata_table("links", dataset_name, bq_project, client)
+    for row in links_rows:
+        assert row["project_id"] == project_id, \
+            f"Should only have rows for project_id {project_id} in links table, found row for project_id {row['project_id']}"

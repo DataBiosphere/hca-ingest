@@ -12,7 +12,7 @@ def assert_data_loaded(file_type: str, dataset_name: str, bq_project: str, tdr_b
 
 
 def assert_metadata_loaded(metadata_type: str, dataset_name: str, bq_project: str, tdr_bigquery_client: Client):
-    data_loaded = _query_metadata_table(
+    data_loaded = query_metadata_table(
         metadata_type,
         dataset_name,
         bq_project,
@@ -22,11 +22,11 @@ def assert_metadata_loaded(metadata_type: str, dataset_name: str, bq_project: st
     assert len(data_loaded) > 0, f"Should have loaded {metadata_type} rows"
 
 
-def _query_metadata_table(metadata_type: str, dataset_name: str, bq_project: str, client: Client):
+def query_metadata_table(metadata_type: str, dataset_name: str, bq_project: str, client: Client):
     query = f"""
     SELECT * FROM `datarepo_{dataset_name}.{metadata_type}`
     """
-    return _exec_query(query, client, bq_project)
+    return exec_query(query, client, bq_project)
 
 
 def _query_files_loaded(file_type: str, dataset_name: str, bq_project: str, client: Client):
@@ -35,10 +35,10 @@ def _query_files_loaded(file_type: str, dataset_name: str, bq_project: str, clie
     INNER JOIN `datarepo_{dataset_name}.datarepo_load_history` dlh
     ON dlh.file_id = f.file_id
     """
-    return _exec_query(query, client, bq_project)
+    return exec_query(query, client, bq_project)
 
 
-def _exec_query(query, client, bq_project):
+def exec_query(query, client, bq_project):
     job_config = QueryJobConfig()
     job_config.use_legacy_sql = False
 
