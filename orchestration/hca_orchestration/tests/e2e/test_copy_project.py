@@ -83,7 +83,7 @@ def copied_dataset(snapshot, copy_project_config):
             "source_snapshot_name": snapshot.tags['snapshot_name']
         }
     }
-    copy_project_job = copy_project_to_new_dataset_job("dev")
+    copy_project_job = copy_project_to_new_dataset_job("dev", "dev")
     result: PipelineExecutionResult = execute_pipeline(
         copy_project_job,
         run_config=base_copy_project_config

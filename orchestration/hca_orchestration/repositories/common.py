@@ -12,12 +12,13 @@ from hca_orchestration.resources.config.target_hca_dataset import build_new_targ
 from hca_orchestration.resources.data_repo_service import data_repo_service
 
 
-def copy_project_to_new_dataset_job(env: str) -> PipelineDefinition:
+def copy_project_to_new_dataset_job(src_env: str, target_env: str) -> PipelineDefinition:
     return copy_project.to_job(
         name="copy_project_to_new_dataset",
+        description=f"Copies a project from {src_env} to {target_env}",
         resource_defs={
             "bigquery_client": bigquery_client,
-            "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, env),
+            "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, target_env),
             "gcs": google_storage_client,
             "scratch_config": scratch_config,
             "bigquery_service": bigquery_service,
