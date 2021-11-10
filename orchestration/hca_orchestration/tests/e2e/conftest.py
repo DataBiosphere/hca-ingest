@@ -34,17 +34,17 @@ def tdr_bigquery_client():
 
 @pytest.fixture
 def delete_dataset_on_exit():
-    return True
+    return False
 
 
 @pytest.fixture
 def existing_dataset_id():
-    return None
+    return "bf0cfdd9-556e-4dc0-a93e-cab9fc80e140"
 
 
 @pytest.fixture
 def hca_project_id():
-    return "90bf705c-d891-5ce2-aa54-094488b445c6"
+    return "f1da0c8a-5153-4d7c-96ef-92ac06677f0d"
 
 
 @pytest.fixture

@@ -1,6 +1,7 @@
 import pytest
 from dagster import execute_pipeline, in_process_executor, PipelineExecutionResult
 from dagster_gcp.gcs import gcs_pickle_io_manager
+from dagster_utils.contrib.data_repo.jobs import poll_job
 from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client
 from dagster_utils.resources.google_storage import google_storage_client
 from dagster_utils.resources.sam import sam_client
@@ -21,12 +22,15 @@ from hca_orchestration.tests.support.bigquery import assert_metadata_loaded, ass
 
 
 @pytest.fixture
-def snapshot(hca_project_id, load_hca_run_config, dataset_info: DatasetInfo, data_repo_client: RepositoryApi):
-    load_job = load_hca_job()
-    execute_pipeline(
-        load_job,
-        run_config=load_hca_run_config
-    )
+def snapshot(monkeypatch, hca_project_id, load_hca_run_config,
+             dataset_info: DatasetInfo, data_repo_client: RepositoryApi):
+    monkeypatch.setenv("ENV", "dev")
+
+    # load_job = load_hca_job()
+    # execute_pipeline(
+    #     load_job,
+    #     run_config=load_hca_run_config
+    # )
 
     snapshot_config = {
         "resources": {
@@ -67,7 +71,9 @@ def snapshot(hca_project_id, load_hca_run_config, dataset_info: DatasetInfo, dat
 
     yield snapshot_info
 
-    data_repo_client.delete_snapshot(id=snapshot_info.tags["snapshot_id"])
+    print(f"Deleting snapshot, name = {snapshot_info.tags['snapshot_name']}, id = {snapshot_info.tags['snapshot_id']}")
+    job_id = data_repo_client.delete_snapshot(id=snapshot_info.tags["snapshot_id"])
+    poll_job(job_id, 300, 2, data_repo_client)
 
 
 @pytest.fixture
