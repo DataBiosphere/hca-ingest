@@ -34,7 +34,7 @@ def tdr_bigquery_client():
 
 @pytest.fixture
 def delete_dataset_on_exit():
-    return False
+    return True
 
 
 @pytest.fixture
@@ -43,9 +43,15 @@ def existing_dataset_id():
 
 
 @pytest.fixture
-def dataset_name() -> str:
+def hca_project_id():
+    return "90bf705c-d891-5ce2-aa54-094488b445c6"
+
+
+@pytest.fixture
+def dataset_name(hca_project_id) -> str:
     dt = dataset_snapshot_formatted_date(datetime.now())
-    return f"hca_dev_{str(uuid.uuid4()).replace('-', '').lower()}__{dt}"
+    suffix = uuid.uuid4().hex[:6]
+    return f"hca_dev_{hca_project_id.replace('-', '')}__{dt}_{suffix}"
 
 
 @pytest.fixture

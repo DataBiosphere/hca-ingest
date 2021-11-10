@@ -26,7 +26,7 @@ def snapshot_creation_config(init_context: InitResourceContext) -> SnapshotCreat
     # points during the pipeline run and therefore the time may change and lead to differing snapshot names
     pipeline_start_time = int(init_context.instance.get_run_stats(init_context.pipeline_run.run_id).start_time)
     dt_suffix = dataset_snapshot_formatted_date(datetime.utcfromtimestamp(pipeline_start_time))
-    snapshot_name = f"{init_context.resource_config['dataset_name']}___{dt_suffix}"
+    snapshot_name = f"{init_context.resource_config['dataset_name']}_{dt_suffix}"
 
     qualifier = init_context.resource_config.get('qualifier', None)
     if qualifier:

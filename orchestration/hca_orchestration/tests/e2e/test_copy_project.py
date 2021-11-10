@@ -12,7 +12,8 @@ from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.pipelines.cut_snapshot import cut_snapshot
 from hca_orchestration.repositories.local_repository import load_hca_job, copy_project_to_new_dataset_job
 from hca_orchestration.resources.config.dagit import dagit_config
-from hca_orchestration.resources.config.data_repo import hca_manage_config, snapshot_creation_config
+from hca_orchestration.resources.config.data_repo import hca_manage_config, snapshot_creation_config, \
+    project_snapshot_creation_config
 from hca_orchestration.resources.data_repo_service import data_repo_service
 from hca_orchestration.tests.e2e.conftest import DatasetInfo
 from hca_orchestration.tests.support.bigquery import assert_metadata_loaded, assert_data_loaded, exec_query, \
@@ -20,7 +21,7 @@ from hca_orchestration.tests.support.bigquery import assert_metadata_loaded, ass
 
 
 @pytest.fixture
-def snapshot(load_hca_run_config, dataset_info: DatasetInfo, data_repo_client: RepositoryApi):
+def snapshot(hca_project_id, load_hca_run_config, dataset_info: DatasetInfo, data_repo_client: RepositoryApi):
     load_job = load_hca_job()
     execute_pipeline(
         load_job,
@@ -31,7 +32,7 @@ def snapshot(load_hca_run_config, dataset_info: DatasetInfo, data_repo_client: R
         "resources": {
             "snapshot_config": {
                 "config": {
-                    "dataset_name": dataset_info.dataset_name,
+                    "source_hca_project_id": hca_project_id,
                     "managed_access": False,
                     "qualifier": None
                 }
@@ -54,7 +55,7 @@ def snapshot(load_hca_run_config, dataset_info: DatasetInfo, data_repo_client: R
             "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "dev"),
             "sam_client": preconfigure_resource_for_mode(sam_client, "dev"),
             "slack": console_slack_client,
-            "snapshot_config": snapshot_creation_config,
+            "snapshot_config": project_snapshot_creation_config,
             "dagit_config": preconfigure_resource_for_mode(dagit_config, "dev"),
         },
         executor_def=in_process_executor
@@ -70,13 +71,13 @@ def snapshot(load_hca_run_config, dataset_info: DatasetInfo, data_repo_client: R
 
 
 @pytest.fixture
-def copied_dataset(snapshot, copy_project_config, data_repo_client: RepositoryApi):
+def copied_dataset(snapshot, copy_project_config, hca_project_id: str, data_repo_client: RepositoryApi):
     base_copy_project_config = copy_project_config.copy()
     base_copy_project_config["resources"]["hca_project_copying_config"] = {
         "config": {
             "source_bigquery_project_id": snapshot.tags['data_project'],
             "source_bigquery_region": "US",
-            "source_hca_project_id": "90bf705c-d891-5ce2-aa54-094488b445c6",
+            "source_hca_project_id": hca_project_id,
             "source_snapshot_name": snapshot.tags['snapshot_name']
         }
     }
@@ -93,7 +94,7 @@ def copied_dataset(snapshot, copy_project_config, data_repo_client: RepositoryAp
 
 
 # @pytest.mark.e2e
-def test_copy_project(copied_dataset, tdr_bigquery_client: Client):
+def test_copy_project(copied_dataset, tdr_bigquery_client: Client):  # (copied_dataset,
     copied_dataset_bq_project = copied_dataset.tags['project_id']
     copied_dataset_name = copied_dataset.tags['dataset_name']
 
@@ -124,7 +125,7 @@ def test_copy_project(copied_dataset, tdr_bigquery_client: Client):
 
 def assert_single_project_loaded(project_id: str, dataset_name: str, bq_project: str, client: Client):
     query = f"""
-    SELECT * FROM `datarepo_{dataset_name}.project` WHERE project_id = {project_id}
+    SELECT * FROM `datarepo_{dataset_name}.project` WHERE project_id = '{project_id}'
     """
 
     entity_loaded = exec_query(query, client, bq_project)
