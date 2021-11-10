@@ -5,6 +5,7 @@ from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_clie
 from dagster_utils.resources.google_storage import google_storage_client
 from dagster_utils.resources.sam import sam_client
 from dagster_utils.resources.slack import console_slack_client
+from data_repo_client import RepositoryApi
 from google.cloud.bigquery import Client
 
 from hca_orchestration.config import preconfigure_resource_for_mode
@@ -19,7 +20,7 @@ from hca_orchestration.tests.support.bigquery import assert_metadata_loaded, ass
 
 
 @pytest.fixture
-def snapshot(load_hca_run_config, dataset_info: DatasetInfo, data_repo_client):
+def snapshot(load_hca_run_config, dataset_info: DatasetInfo, data_repo_client: RepositoryApi):
     load_job = load_hca_job()
     execute_pipeline(
         load_job,
@@ -69,7 +70,7 @@ def snapshot(load_hca_run_config, dataset_info: DatasetInfo, data_repo_client):
 
 
 @pytest.fixture
-def copied_dataset(snapshot, copy_project_config, data_repo_client):
+def copied_dataset(snapshot, copy_project_config, data_repo_client: RepositoryApi):
     base_copy_project_config = copy_project_config.copy()
     base_copy_project_config["resources"]["hca_project_copying_config"] = {
         "config": {
@@ -92,7 +93,7 @@ def copied_dataset(snapshot, copy_project_config, data_repo_client):
 
 
 # @pytest.mark.e2e
-def test_copy_project(copied_dataset, tdr_bigquery_client):
+def test_copy_project(copied_dataset, tdr_bigquery_client: Client):
     copied_dataset_bq_project = copied_dataset.tags['project_id']
     copied_dataset_name = copied_dataset.tags['dataset_name']
 
