@@ -1,15 +1,13 @@
 import logging
-from datetime import datetime
+import uuid
 from dataclasses import dataclass
 from typing import Iterable
-import uuid
 
 import pytest
 from google.cloud.bigquery.client import Client
 
 from hca_manage.common import data_repo_host, get_api_client, data_repo_profile_ids
 from hca_manage.dataset import DatasetManager
-from hca_orchestration.support.dates import dataset_snapshot_formatted_date
 
 MONSTER_TEST_DATASET_SENTINEL = "MONSTER_TEST_DELETEME"
 
@@ -39,7 +37,7 @@ def delete_dataset_on_exit():
 
 @pytest.fixture
 def existing_dataset_id():
-    return "bf0cfdd9-556e-4dc0-a93e-cab9fc80e140"
+    return None
 
 
 @pytest.fixture
@@ -49,9 +47,7 @@ def hca_project_id():
 
 @pytest.fixture
 def dataset_name(hca_project_id) -> str:
-    dt = dataset_snapshot_formatted_date(datetime.now())
-    suffix = uuid.uuid4().hex[:6]
-    return f"hca_dev_{hca_project_id.replace('-', '')}__{dt}_{suffix}"
+    return f"monster_hca_test_{str(uuid.uuid4()).replace('-', '_')}"
 
 
 @pytest.fixture

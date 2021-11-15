@@ -1,5 +1,7 @@
+import logging
+
 import pytest
-from dagster import execute_pipeline, in_process_executor, PipelineExecutionResult
+from dagster import execute_pipeline, in_process_executor, PipelineExecutionResult, ResourceDefinition
 from dagster_gcp.gcs import gcs_pickle_io_manager
 from dagster_utils.contrib.data_repo.jobs import poll_job
 from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client
@@ -13,8 +15,7 @@ from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.pipelines.cut_snapshot import cut_snapshot
 from hca_orchestration.repositories.local_repository import load_hca_job, copy_project_to_new_dataset_job
 from hca_orchestration.resources.config.dagit import dagit_config
-from hca_orchestration.resources.config.data_repo import hca_manage_config, snapshot_creation_config, \
-    project_snapshot_creation_config
+from hca_orchestration.resources.config.data_repo import hca_manage_config, SnapshotCreationConfig
 from hca_orchestration.resources.data_repo_service import data_repo_service
 from hca_orchestration.tests.e2e.conftest import DatasetInfo
 from hca_orchestration.tests.support.bigquery import assert_metadata_loaded, assert_data_loaded, exec_query, \
@@ -43,6 +44,13 @@ def snapshot(monkeypatch, hca_project_id, load_hca_run_config,
             }
         },
         "solids": {
+            "submit_snapshot_job": {
+                "config": {
+                    # we are using a snapshot name for testing that
+                    # will not pass our validation regex
+                    "validate_snapshot_name": False
+                }
+            },
             "add_steward": {
                 "config": {
                     "snapshot_steward": "monster-dev@dev.test.firecloud.org"
@@ -50,6 +58,11 @@ def snapshot(monkeypatch, hca_project_id, load_hca_run_config,
             }
         }
     }
+    creation_config = SnapshotCreationConfig(
+        dataset_info.dataset_name,
+        f"{dataset_info.dataset_name}_snapshot_test",
+        False
+    )
     snapshot_job = cut_snapshot.to_job(
         resource_defs={
             "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
@@ -59,7 +72,7 @@ def snapshot(monkeypatch, hca_project_id, load_hca_run_config,
             "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "dev"),
             "sam_client": preconfigure_resource_for_mode(sam_client, "dev"),
             "slack": console_slack_client,
-            "snapshot_config": project_snapshot_creation_config,
+            "snapshot_config": ResourceDefinition.hardcoded_resource(creation_config),
             "dagit_config": preconfigure_resource_for_mode(dagit_config, "dev"),
         },
         executor_def=in_process_executor
@@ -71,9 +84,11 @@ def snapshot(monkeypatch, hca_project_id, load_hca_run_config,
 
     yield snapshot_info
 
-    print(f"Deleting snapshot, name = {snapshot_info.tags['snapshot_name']}, id = {snapshot_info.tags['snapshot_id']}")
-    job_id = data_repo_client.delete_snapshot(id=snapshot_info.tags["snapshot_id"])
-    poll_job(job_id, 300, 2, data_repo_client)
+    # clean up the snapshot when finished
+    logging.info(
+        f"Deleting snapshot, name = {snapshot_info.tags['snapshot_name']}, id = {snapshot_info.tags['snapshot_id']}")
+    response = data_repo_client.delete_snapshot(id=snapshot_info.tags["snapshot_id"])
+    poll_job(response.id, 300, 2, data_repo_client)
 
 
 @pytest.fixture
@@ -96,11 +111,14 @@ def copied_dataset(snapshot, copy_project_config, hca_project_id: str, data_repo
 
     yield copied_dataset
 
-    data_repo_client.delete_dataset(id=copied_dataset.tags["dataset_id"])
+    # clean up the copied dataset when finished
+    logging.info(f"Deleting copied dataset, id = {copied_dataset.tags['dataset_id']}")
+    response = data_repo_client.delete_dataset(id=copied_dataset.tags["dataset_id"])
+    poll_job(response.id, 600, 2, data_repo_client)
 
 
-# @pytest.mark.e2e
-def test_copy_project(copied_dataset, tdr_bigquery_client: Client):  # (copied_dataset,
+@pytest.mark.e2e
+def test_copy_project(hca_project_id, copied_dataset, tdr_bigquery_client: Client):  # (copied_dataset,
     copied_dataset_bq_project = copied_dataset.tags['project_id']
     copied_dataset_name = copied_dataset.tags['dataset_name']
 
@@ -125,7 +143,7 @@ def test_copy_project(copied_dataset, tdr_bigquery_client: Client):  # (copied_d
         tdr_bigquery_client)
     assert_data_loaded("analysis_file", copied_dataset_name, copied_dataset_bq_project, tdr_bigquery_client)
 
-    assert_single_project_loaded("90bf705c-d891-5ce2-aa54-094488b445c6", copied_dataset_name, copied_dataset_bq_project,
+    assert_single_project_loaded(hca_project_id, copied_dataset_name, copied_dataset_bq_project,
                                  tdr_bigquery_client)
 
 

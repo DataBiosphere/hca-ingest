@@ -63,7 +63,7 @@ def load_hca_job() -> PipelineDefinition:
 @repository
 def all_jobs() -> list[PipelineDefinition]:
     jobs = [
-        copy_project_to_new_dataset_job("dev", "dev"),
+        copy_project_to_new_dataset_job("prod", "dev"),
         cut_project_snapshot_job("dev", "dev", "monster-dev@dev.test.firecloud.org"),
         legacy_cut_snapshot_job("dev", "monster-dev@dev.test.firecloud.org"),
         load_hca_job(),

@@ -41,6 +41,7 @@ check = "hca_manage.check:run"
 dataset = "hca_manage.dataset:run"
 snapshot = "hca_manage.snapshot:run"
 soft_delete = "hca_manage.soft_delete:run"
+job = "hca_manage.job:fetch_job_info"
 
 [build-system]
 requires = ["poetry-core=^1.1.8"]
