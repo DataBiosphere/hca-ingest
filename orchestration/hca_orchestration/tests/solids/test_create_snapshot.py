@@ -36,7 +36,7 @@ def test_submit_snapshot_job_calls_submit_snapshot_job_in_hca_manage():
         )
         assert result.success
         assert result.output_value() == JobId('abcde')
-        submit_snap.assert_called_once_with('fake', False)
+        submit_snap.assert_called_once_with('fake', False, True)
 
 
 def test_make_snapshot_public_hits_correct_sam_path():

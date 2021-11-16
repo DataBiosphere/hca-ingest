@@ -1,7 +1,7 @@
 from typing import Iterator
 
 from dagster import AssetMaterialization, EventMetadataEntry, Output, OutputDefinition, solid, Failure, Optional, \
-    Noneable, Field
+    Noneable, Field, Permissive
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from data_repo_client import RepositoryApi, PolicyMemberRequest, PolicyResponse
 
@@ -11,9 +11,7 @@ from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoServic
 
 
 @solid(
-    config_schema={
-        "validate_snapshot_name": Field(bool, default_value=True)
-    },
+    config_schema=Field(Permissive({"validate_snapshot_name": Field(bool, default_value=True, is_required=False)})),
     required_resource_keys={'data_repo_client', 'snapshot_config', 'hca_manage_config', 'data_repo_service'},
 )
 def submit_snapshot_job(context: AbstractComputeExecutionContext) -> JobId:
@@ -31,7 +29,7 @@ def submit_snapshot_job(context: AbstractComputeExecutionContext) -> JobId:
     ).submit_snapshot_request_with_name(
         context.resources.snapshot_config.snapshot_name,
         context.resources.snapshot_config.managed_access,
-        context.solid_config["validate_snapshot_name"]
+        context.solid_config["validate_snapshot_name"],
     )
 
 
