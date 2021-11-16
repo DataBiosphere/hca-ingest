@@ -1,7 +1,7 @@
 resources:
   snapshot_config:
     config:
-      dataset_name: 'hca_prod_20201120_dcp2'
+      dataset_name: 'hca_dev_1f1a2b806abd4d2185301800b4320a88__20211101'
       managed_access: False
 solids:
   add_steward:

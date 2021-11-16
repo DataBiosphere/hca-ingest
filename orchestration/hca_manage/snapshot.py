@@ -273,6 +273,7 @@ class SnapshotManager:
         Submit a snapshot creation request.
         :param snapshot_name: name of snapshot to created
         :param managed_access: Determine which set of readers to grant access to this snapshot (default = False)
+        :param validate_snapshot_name: Validate the submitted snapshot name against the DCP2 specification naming regex
         :return: Job ID of the snapshot creation job
         """
         if validate_snapshot_name:

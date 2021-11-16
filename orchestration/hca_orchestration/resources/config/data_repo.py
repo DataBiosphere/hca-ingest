@@ -26,7 +26,7 @@ def snapshot_creation_config(init_context: InitResourceContext) -> SnapshotCreat
     # points during the pipeline run and therefore the time may change and lead to differing snapshot names
     pipeline_start_time = int(init_context.instance.get_run_stats(init_context.pipeline_run.run_id).start_time)
     dt_suffix = dataset_snapshot_formatted_date(datetime.utcfromtimestamp(pipeline_start_time))
-    snapshot_name = f"{init_context.resource_config['dataset_name']}___{dt_suffix}"
+    snapshot_name = f"{init_context.resource_config['dataset_name']}_{dt_suffix}"
 
     qualifier = init_context.resource_config.get('qualifier', None)
     if qualifier:
@@ -52,14 +52,16 @@ def project_snapshot_creation_config(init_context: InitResourceContext) -> Snaps
 
     # find the existing dataset, bail out if none are found
     env = os.environ["ENV"]
-    source_hca_dataset_prefix = f"hca_{env}_{source_hca_project_id.replace('-', '')}"
+    sanitized_hca_project_name = source_hca_project_id.replace('-', '')
+    source_hca_dataset_prefix = f"hca_{env}_{sanitized_hca_project_name}"
     result = data_repo_service.find_dataset(source_hca_dataset_prefix)
     if not result:
         raise Exception(f"No dataset for project_id {source_hca_project_id} found")
 
     # craft a new snapshot name
     creation_date = datetime.now().strftime("%Y%m%d")
-    snapshot_name = f"{result.dataset_name}_{creation_date}"
+    dataset_creation_date = result.dataset_name.split('__')[1].split('_')[0]
+    snapshot_name = f"hca_{env}_{sanitized_hca_project_name}__{dataset_creation_date}_{creation_date}"
     qualifier = init_context.resource_config.get('qualifier', None)
     if qualifier:
         snapshot_name = f"{snapshot_name}_{qualifier}"
