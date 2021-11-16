@@ -27,4 +27,4 @@ def test_load_hca(load_hca_run_config, dataset_name, tdr_bigquery_client, datase
     assert_metadata_loaded("links", dataset_name, bq_project, tdr_bigquery_client)
     assert_metadata_loaded("specimen_from_organism", dataset_name, bq_project, tdr_bigquery_client)
     assert_metadata_loaded("specimen_from_organism", dataset_name, bq_project, tdr_bigquery_client)
-    assert_data_loaded("sequence_file", dataset_name, bq_project, tdr_bigquery_client)
+    assert_data_loaded("analysis_file", dataset_name, bq_project, tdr_bigquery_client)
