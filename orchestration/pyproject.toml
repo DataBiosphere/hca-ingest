@@ -22,9 +22,7 @@ pyyaml = "^5.3"
 dagster-gcp = "^0.12.14"
 broad-dagster-utils = "0.6.7"
 graphql-ws = "<0.4.0"
-jsonschema = "3.2.0"
-hca-import-validation = "^0.0.3"
-more-itertools = "^8.11.0"
+hca-import-validation = "^0.0.4"
 
 [tool.poetry.dev-dependencies]
 autopep8 = "^1.5.5"
