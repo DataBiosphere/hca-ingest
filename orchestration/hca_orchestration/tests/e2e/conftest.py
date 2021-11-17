@@ -57,7 +57,6 @@ def dataset_info(dataset_name, delete_dataset_on_exit, existing_dataset_id, data
     # setup, either create the dataset or re-use the existing one if passed in as a fixture
     if existing_dataset_id:
         logging.info(f"Existing dataset ID = {existing_dataset_id}")
-        logging.info("This dataset will not be deleted at the end of the test")
         dataset_id = existing_dataset_id
     else:
         logging.info("No existing dataset ID passed, creating new dataset")
@@ -71,6 +70,9 @@ def dataset_info(dataset_name, delete_dataset_on_exit, existing_dataset_id, data
             MONSTER_TEST_DATASET_SENTINEL
         )
         dataset_id = info.id
+
+    if not delete_dataset_on_exit:
+        logging.info("This dataset will not be deleted at the end of the test")
 
     info = dataset_manager.retrieve_dataset(dataset_id)
     yield DatasetInfo(dataset_id, info.data_project, info.name)
