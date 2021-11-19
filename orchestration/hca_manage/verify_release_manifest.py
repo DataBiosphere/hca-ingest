@@ -85,7 +85,7 @@ def find_files_in_load_history(bq_project: str, dataset: str,
 
     for area, paths_with_crc in areas.items():
         logging.debug(f"\tPulling loaded files for area {area}...")
-        target_paths = [path_with_crc.access_url for path_with_crc in paths_with_crc]
+        target_paths = [path_with_crc.path for path_with_crc in paths_with_crc]
         query = f"""
             SELECT target_path, checksum_crc32c
             FROM `datarepo_{dataset}.datarepo_load_history` dlh
