@@ -21,8 +21,8 @@ def build_subgraph_from_links_row(row: Row) -> Subgraph:
 @dataclass(eq=True, frozen=True)
 class DataFileEntity:
     """Represents an HCA data file"""
-    path: str
-    hca_file_path: str
+    access_url: str
+    target_path: str
 
 
 @dataclass

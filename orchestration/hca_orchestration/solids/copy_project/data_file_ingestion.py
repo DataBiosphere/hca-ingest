@@ -74,20 +74,21 @@ def _generate_control_file(context: AbstractComputeExecutionContext,
                            scratch_config: ScratchConfig,
                            storage_client: Client) -> str:
     ingest_items = []
+    context.log.info("Copying files to staging bucket...")
     for data_entity in data_entities:
-        file_bucket_and_prefix = parse_gs_path(data_entity.path)
+        file_bucket_and_prefix = parse_gs_path(data_entity.access_url)
         bucket = Bucket(storage_client, file_bucket_and_prefix.bucket)
         dest_bucket = Bucket(storage_client, scratch_config.scratch_bucket_name)
 
         blob: Blob = Blob(file_bucket_and_prefix.prefix, bucket)
-        file_name = blob.name.split("/")[-1]
+        file_name = "/".join(blob.name.split("/")[1:])
 
-        context.log.info(
+        context.log.debug(
             f"Copying from {blob.name} to gs://{dest_bucket.name} / {scratch_config.scratch_prefix_name}/data_files/{file_name}")
 
         new_blob = bucket.copy_blob(blob, dest_bucket, f"{scratch_config.scratch_prefix_name}/data_files/{file_name}")
         ingest_items.append(
-            f'{{"sourcePath":"gs://{dest_bucket.name}/{new_blob.name}", "targetPath":"{data_entity.hca_file_path}"}}')
+            f'{{"sourcePath":"gs://{dest_bucket.name}/{new_blob.name}", "targetPath":"{data_entity.target_path}"}}')
 
     # write out a JSONL control file for TDR to consume
     control_file_str = "\n".join(ingest_items)

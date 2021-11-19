@@ -1,4 +1,5 @@
 from dagster import PipelineDefinition, in_process_executor
+from dagster_gcp.gcs import gcs_pickle_io_manager
 from dagster_utils.resources.bigquery import bigquery_client
 from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client
 from dagster_utils.resources.google_storage import google_storage_client
@@ -26,6 +27,7 @@ def copy_project_to_new_dataset_job(src_env: str, target_env: str) -> PipelineDe
             "target_hca_dataset": build_new_target_hca_dataset,
             "load_tag": load_tag,
             "data_repo_service": data_repo_service,
+            "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, src_env),
         },
         executor_def=in_process_executor
     )
