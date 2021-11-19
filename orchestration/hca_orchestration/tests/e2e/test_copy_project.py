@@ -117,7 +117,7 @@ def copied_dataset(snapshot, copy_project_config, hca_project_id: str, data_repo
     poll_job(response.id, 600, 2, data_repo_client)
 
 
-# TODO uncomment @pytest.mark.e2e
+@pytest.mark.e2e
 def test_copy_project(hca_project_id, copied_dataset, tdr_bigquery_client: Client):  # (copied_dataset,
     copied_dataset_bq_project = copied_dataset.tags['project_id']
     copied_dataset_name = copied_dataset.tags['dataset_name']
