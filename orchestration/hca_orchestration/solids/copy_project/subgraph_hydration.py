@@ -19,13 +19,17 @@ from hca_orchestration.models.scratch import ScratchConfig
 from hca_orchestration.resources.hca_project_config import HcaProjectCopyingConfig
 from hca_orchestration.support.subgraphs import build_subgraph_nodes
 from hca_orchestration.support.typing import MetadataType
+import json
+
+from hca_orchestration.models.hca_dataset import TdrDataset
 
 
 @op(
     required_resource_keys={
         "bigquery_service",
         "hca_project_copying_config",
-        "scratch_config"
+        "scratch_config",
+        "target_hca_dataset"
     },
     ins={"start": In(Nothing)}
 )
@@ -37,9 +41,11 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
     hca_project_config: HcaProjectCopyingConfig = context.resources.hca_project_copying_config
     project_id = hca_project_config.source_hca_project_id
     scratch_config: ScratchConfig = context.resources.scratch_config
-
+    target_hca_dataset: TdrDataset = context.resources.target_hca_dataset
     scratch_bucket_name = f"{scratch_config.scratch_bucket_name}/{scratch_config.scratch_prefix_name}"
 
+    # fetch the links rows that make up this project and then build the subgraphs in memory
+    # we will then traverse the subgraphs and pull out all related entities and any files they refer to
     query = f"""
       SELECT *
         FROM `{hca_project_config.source_bigquery_project_id}.{hca_project_config.source_snapshot_name}.links`
@@ -61,6 +67,8 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
         nodes[MetadataType('project')].append(
             MetadataEntity(MetadataType('project'), hca_project_config.source_hca_project_id)
         )
+
+    # save metadata entities to our staging area
     _extract_entities_to_path(
         nodes,
         f"{scratch_bucket_name}/tabular_data_for_ingest",
@@ -70,54 +78,88 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
         bigquery_service
     )
 
+    # fetch file metadata entities so we can determine the access URL for extraction to our
+    # staging area downstream
     context.log.info("Determining files to load...")
+    entity_rows: dict[str, list[Row]] = _fetch_file_entities(
+        nodes,
+        hca_project_config.source_bigquery_project_id,
+        hca_project_config.source_snapshot_name,
+        hca_project_config.source_bigquery_region,
+        bigquery_service
+    )
 
-    entity_rows: dict[str, list[Row]] = fetch_entities(nodes,
-                                                       hca_project_config.source_bigquery_project_id,
-                                                       hca_project_config.source_snapshot_name,
-                                                       hca_project_config.source_bigquery_region,
-                                                       bigquery_service)
-
-    drs_objects = {}
-    entity_file_ids = {}
+    # construct a target path from each file entity row
+    target_path_to_drs_uri = {}
     for entity_type, rows in entity_rows.items():
         if not entity_type.endswith("_file"):
             continue
+
         for row in rows:
-            tdr_file_id = row['file_id']
-            drs_object = urlparse(tdr_file_id).path[1:]
-            drs_objects[drs_object] = urlparse(tdr_file_id).netloc
+            # file_id is actually a DRS URI in snapshots (vs a uuid in the origin dataset)
+            drs_uri = row['file_id']
+            descriptor = json.loads(row['descriptor'])
+            data_file_id = descriptor['file_id']
+            file_name = descriptor['file_name']
+            crc32c = descriptor['crc32c']
 
-            entity_file_ids[drs_object] = row[f"target_path"]
+            target_path = f"/v1/{data_file_id}/{crc32c}/{file_name}"
+            target_path_to_drs_uri[target_path] = drs_uri
 
-    # get the actual GS path for the DRS object
-    context.log.info(f"Resolving DRS object GCS paths ({len(drs_objects)} objects)...")
+    # determine which target paths have already been loaded to save ourselves some work
+    previously_loaded = _find_previously_loaded_target_paths(
+        set(target_path_to_drs_uri.keys()),
+        target_hca_dataset,
+        bigquery_service
+    )
 
     data_entities = set()
-    with requests.Session() as s:
-        creds = _get_credentials()
-        s.headers = CaseInsensitiveDict[str]()
-        s.headers["Authorization"] = f"Bearer {creds.token}"
+    creds = _get_credentials()
+    context.log.info(f"Resolving DRS object GCS paths ({len(target_path_to_drs_uri)} objects)...")
 
-        for cnt, (drs_object, drs_host) in enumerate(drs_objects.items(), start=1):
-            if creds.expired:
-                context.log.info("Refreshing expired credentials")
-                creds = _get_credentials()
-                s.headers["Authorization"] = f"Bearer {creds.token}"
+    with requests.Session() as s:
+        for cnt, (target_path, drs_uri) in enumerate(target_path_to_drs_uri.items(), start=1):
+            if target_path in previously_loaded:
+                context.log.debug(f"Skipping load of {target_path}, already loaded")
+                continue
 
             if cnt % 100 == 0:
                 context.log.info(f"Resolved {cnt} paths...")
 
-            data_entities.add(
-                DataFileEntity(
-                    _fetch_drs_access_info(
-                        drs_host,
-                        drs_object,
-                        s),
-                    entity_file_ids[drs_object]))
-        context.log.info(f"Resolved {len(data_entities)} total paths")
+            s.headers = CaseInsensitiveDict[str]()
+            s.headers["Authorization"] = f"Bearer {creds.token}"
+
+            if creds.expired:
+                # our refresh token expires after 1/2 hour
+                context.log.info("Refreshing expired credentials")
+                creds = _get_credentials()
+                s.headers["Authorization"] = f"Bearer {creds.token}"
+
+            drs_object_id = urlparse(drs_uri).path[1:]
+            drs_host = urlparse(drs_uri).netloc
+
+            access_url = _fetch_drs_access_info(drs_host, drs_object_id, s)
+            data_entities.add(DataFileEntity(access_url, target_path))
 
     return data_entities
+
+
+def _find_previously_loaded_target_paths(
+        target_paths: set[str],
+        target_hca_dataset: TdrDataset,
+        bigquery_service: BigQueryService
+) -> set[str]:
+    query = f"""
+    SELECT target_path FROM  `{target_hca_dataset.project_id}.datarepo_{target_hca_dataset.dataset_name}.datarepo_load_history`
+    WHERE target_path IN UNNEST(@target_paths)
+    AND state = 'succeeded'
+    """
+    query_params = [
+        ArrayQueryParameter("target_paths", "STRING", target_paths)
+    ]
+    previously_loaded = {row["target_path"] for row in bigquery_service.run_query(
+        query, target_hca_dataset.project_id, target_hca_dataset.bq_location, query_params)}
+    return previously_loaded
 
 
 def _get_credentials() -> Credentials:
@@ -126,10 +168,10 @@ def _get_credentials() -> Credentials:
     return creds
 
 
-def _fetch_drs_access_info(drs_host: str, drs_object: str, session: requests.Session) -> str:
+def _fetch_drs_access_info(drs_host: str, drs_object_id: str, session: requests.Session) -> str:
     # direct call via python requests as the jade client throws a validation error on an empty/null
     # "self_uri" field in all responses
-    drs_url = f"https://{drs_host}/ga4gh/drs/v1/objects/{drs_object}?expand=false"
+    drs_url = f"https://{drs_host}/ga4gh/drs/v1/objects/{drs_object_id}?expand=false"
     response = session.get(drs_url).json()
     for method in response['access_methods']:
         if method['type'] == 'gs':
@@ -181,7 +223,7 @@ def _extract_entities_to_path(
             fetch_entities_query, bigquery_project_id, bigquery_region, query_params)
 
 
-def fetch_entities(
+def _fetch_file_entities(
         entities_by_type: dict[MetadataType, list[MetadataEntity]],
         bigquery_project_id: str,
         snapshot_name: str,
@@ -190,17 +232,13 @@ def fetch_entities(
     result: dict[str, list[Row]] = defaultdict(list[Row])
     for entity_type, entities in entities_by_type.items():
         if not entity_type.endswith("_file"):
-            fetch_entities_query = f"""
-            SELECT * EXCEPT (datarepo_row_id)
-            FROM `{bigquery_project_id}.{snapshot_name}.{entity_type}` WHERE {entity_type}_id IN
-            UNNEST(@entity_ids)
-            """
-        else:
-            fetch_entities_query = f"""
-            SELECT '/v1/' || JSON_EXTRACT_SCALAR(descriptor, '$.file_id') || '/' || JSON_EXTRACT_SCALAR(descriptor, '$.file_name') as target_path, * EXCEPT (datarepo_row_id)
-            FROM `{bigquery_project_id}.{snapshot_name}.{entity_type}` WHERE {entity_type}_id IN
-            UNNEST(@entity_ids)
-            """
+            continue
+
+        fetch_entities_query = f"""
+        SELECT '/v1/' || JSON_EXTRACT_SCALAR(descriptor, '$.file_id') || '/' || JSON_EXTRACT_SCALAR(descriptor, '$.file_name') as target_path, * EXCEPT (datarepo_row_id)
+        FROM `{bigquery_project_id}.{snapshot_name}.{entity_type}` WHERE {entity_type}_id IN
+        UNNEST(@entity_ids)
+        """
         entity_ids = [entity.entity_id for entity in entities]
         query_params = [
             ArrayQueryParameter("entity_ids", "STRING", entity_ids)
