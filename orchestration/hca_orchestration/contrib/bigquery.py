@@ -228,3 +228,27 @@ class BigQueryService:
             target_hca_dataset.project_id,
             location=location
         )
+
+    def get_projects_in_dataset(
+            self,
+            bigquery_dataset: str,
+            bigquery_project: str,
+            bigquery_location: str
+    ) -> set[str]:
+        links_rows = self.get_links_in_dataset(bigquery_dataset, bigquery_project, bigquery_location)
+        return {row["project_id"] for row in links_rows}
+
+    def get_links_in_dataset(
+        self,
+        bigquery_dataset: str,
+        bigquery_project: str,
+        bigquery_location: str
+    ) -> RowIterator:
+        query = f"""
+            SELECT * FROM `{bigquery_project}.datarepo_{bigquery_dataset}.links`
+        """
+        return self.run_query(
+            query,
+            bigquery_project,
+            bigquery_location
+        )

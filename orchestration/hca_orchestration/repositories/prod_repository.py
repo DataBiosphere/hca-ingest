@@ -10,11 +10,13 @@ from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_clie
 from dagster_utils.resources.google_storage import google_storage_client
 from dagster_utils.resources.slack import live_slack_client
 
-from hca_orchestration.config.dev_refresh.dev_refresh import run_config_for_per_project_dataset_partition, \
-    run_config_for_cut_snapshot_partition
-from hca_orchestration.contrib.dagster import configure_partitions_for_pipeline
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.config.dcp_release.dcp_release import run_config_for_dcp_release_partition
+from hca_orchestration.config.dev_refresh.dev_refresh import run_config_for_cut_snapshot_partition
+from hca_orchestration.config.prod_migration.prod_migration import run_config_for_real_prod_migration_dcp1, \
+    run_config_for_real_prod_migration_dcp2
+from hca_orchestration.contrib.dagster import configure_partitions_for_pipeline
+from hca_orchestration.pipelines import copy_project
 from hca_orchestration.pipelines.cut_snapshot import cut_project_snapshot_job, legacy_cut_snapshot_job
 from hca_orchestration.pipelines.load_hca import load_hca
 from hca_orchestration.pipelines.validate_ingress import validate_ingress_graph, staging_area_validator, \
@@ -23,9 +25,11 @@ from hca_orchestration.resources import bigquery_service
 from hca_orchestration.resources import load_tag
 from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.scratch import scratch_config
-from hca_orchestration.resources.config.target_hca_dataset import target_hca_dataset
+from hca_orchestration.resources.config.target_hca_dataset import target_hca_dataset, build_new_target_hca_dataset
 from hca_orchestration.resources.data_repo_service import data_repo_service
-from hca_orchestration.repositories.common import copy_project_to_new_dataset_job
+from hca_orchestration.resources.hca_project_config import hca_project_copying_config
+from hca_orchestration.repositories.common import slack_on_pipeline_start, slack_on_pipeline_success, \
+    build_pipeline_failure_sensor
 
 
 def validate_ingress_job() -> PipelineDefinition:
@@ -60,18 +64,64 @@ def load_hca_job() -> PipelineDefinition:
     )
 
 
+def dcp1_real_prod_migration() -> PipelineDefinition:
+    return copy_project.to_job(
+        name=f"dcp1_real_prod_migration",
+        description=f"Copies a DCP1 project from prod to real_prod",
+        resource_defs={
+            "bigquery_client": bigquery_client,
+            "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "real_prod"),
+            "gcs": google_storage_client,
+            "scratch_config": scratch_config,
+            "bigquery_service": bigquery_service,
+            "hca_project_copying_config": hca_project_copying_config,
+            "target_hca_dataset": build_new_target_hca_dataset,
+            "load_tag": load_tag,
+            "data_repo_service": data_repo_service,
+            "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "prod"),
+        },
+        executor_def=in_process_executor
+    )
+
+
+def dcp2_real_prod_migration() -> PipelineDefinition:
+    return copy_project.to_job(
+        name=f"dcp2_real_prod_migration",
+        description=f"Copies a DCP2 project from prod to real_prod",
+        resource_defs={
+            "bigquery_client": bigquery_client,
+            "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "real_prod"),
+            "gcs": google_storage_client,
+            "scratch_config": scratch_config,
+            "bigquery_service": bigquery_service,
+            "hca_project_copying_config": hca_project_copying_config,
+            "target_hca_dataset": build_new_target_hca_dataset,
+            "load_tag": load_tag,
+            "data_repo_service": data_repo_service,
+            "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "prod"),
+        },
+        executor_def=in_process_executor
+    )
+
+
 @repository
 def all_jobs() -> list[PipelineDefinition]:
     jobs = [
-        copy_project_to_new_dataset_job("prod", "real_prod"),
+        dcp1_real_prod_migration(),
+        dcp2_real_prod_migration(),
         cut_project_snapshot_job("prod", "prod", "monster@firecloud.org"),
         cut_project_snapshot_job("prod", "real_prod", "monster@firecloud.org"),
         legacy_cut_snapshot_job("prod", "monster@firecloud.org"),
         load_hca_job(),
-        validate_ingress_job()
+        validate_ingress_job(),
+        slack_on_pipeline_start,
+        slack_on_pipeline_success,
+        build_pipeline_failure_sensor(),
     ]
-    jobs += configure_partitions_for_pipeline("copy_project_to_new_dataset",
-                                              run_config_for_per_project_dataset_partition)
+    jobs += configure_partitions_for_pipeline("dcp1_real_prod_migration",
+                                              run_config_for_real_prod_migration_dcp1)
+    jobs += configure_partitions_for_pipeline("dcp2_real_prod_migration",
+                                              run_config_for_real_prod_migration_dcp2)
     jobs += configure_partitions_for_pipeline("cut_snapshot", run_config_for_cut_snapshot_partition)
     jobs += configure_partitions_for_pipeline("load_hca", run_config_for_dcp_release_partition)
     jobs += configure_partitions_for_pipeline("validate_ingress", run_config_for_validation_ingress_partition)
