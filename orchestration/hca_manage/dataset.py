@@ -65,7 +65,6 @@ def run(arguments: Optional[list[str]] = None) -> None:
     # retrieve
     dataset_retrieve = subparsers.add_parser("retrieve")
     dataset_retrieve.add_argument("-i", "--id", help="UUID of dataset to retrieve")
-    dataset_retrieve.add_argument("-n", "--dataset_name", help="Name of dataset to retrieve")
     dataset_retrieve.set_defaults(func=_retrieve_dataset)
 
     args = parser.parse_args(arguments)
@@ -149,7 +148,7 @@ def _retrieve_dataset(args: argparse.Namespace) -> None:
     host = data_repo_host[args.env]
 
     hca = DatasetManager(environment=args.env, data_repo_client=get_api_client(host=host))
-    logging.info(hca.retrieve_dataset(dataset_id=args.id, dataset_name=args.dataset_name))
+    logging.info(hca.retrieve_dataset(dataset_id=args.id))
 
 
 @dataclass
@@ -160,8 +159,7 @@ class DatasetManager:
 
     def __post_init__(self) -> None:
         self.stewards = {
-            "dev": {"monster-dev@dev.test.firecloud.org",
-                    "hca-dagster-runner@broad-dsp-monster-hca-dev.iam.gserviceaccount.com"},
+            "dev": {"monster-dev@dev.test.firecloud.org", "hca-dagster-runner@broad-dsp-monster-hca-dev.iam.gserviceaccount.com"},
             "prod": {"monster@firecloud.org", "hca-dagster-runner@mystical-slate-284720.iam.gserviceaccount.com"},
             "real_prod": {"monster@firecloud.org", "hca-dagster-runner@mystical-slate-284720.iam.gserviceaccount.com"},
         }[self.environment]
@@ -295,21 +293,8 @@ class DatasetManager:
         """
         return self.data_repo_client.enumerate_datasets(filter=dataset_name, limit=1000)
 
-    def retrieve_dataset(self, dataset_id: Optional[str], dataset_name: Optional[str] = None) -> DatasetModel:
-        if not dataset_id and not dataset_name:
-            raise ValueError("One of dataset ID or dataset name is required")
-
-        includes = ["DATA_PROJECT", "ACCESS_INFORMATION"]
-        if dataset_id:
-            return self.data_repo_client.retrieve_dataset(dataset_id, include=includes)
-        elif dataset_name:
-            matches = self.enumerate_dataset(dataset_name).items
-            if len(matches) > 1:
-                raise ValueError(f"More than one dataset matches name {dataset_name}")
-            if not matches:
-                raise ValueError(f"No datasets found matching name {dataset_name}")
-
-            return self.data_repo_client.retrieve_dataset(matches[0].id, include=includes)
+    def retrieve_dataset(self, dataset_id: str) -> DatasetModel:
+        return self.data_repo_client.retrieve_dataset(dataset_id)
 
     def add_policy_members(
             self,
