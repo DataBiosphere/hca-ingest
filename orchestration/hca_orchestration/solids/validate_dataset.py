@@ -20,6 +20,10 @@ from hca_manage.verify_subgraphs import verify_all_subgraphs_in_dataset
     }
 )
 def verify_subgraphs(context: AbstractComputeExecutionContext, result: ProblemCount) -> None:
+    """
+    Loads all subgraphs from the copied dataset and ensures all descendent entities for each subgraph
+    are present.
+    """
     bigquery_service: BigQueryService = context.resources.bigquery_service
     target_hca_dataset: TdrDataset = context.resources.target_hca_dataset
     project_copying_config: HcaProjectCopyingConfig = context.resources.hca_project_copying_config
@@ -53,6 +57,10 @@ def verify_subgraphs(context: AbstractComputeExecutionContext, result: ProblemCo
     ins={"start": In(Nothing)}
 )
 def validate_copied_dataset(context: AbstractComputeExecutionContext) -> Iterator[Output]:
+    """
+    Ensures no null file IDs, duplicated rows or other structural issues are present in the copied
+    dataset
+    """
     target_hca_dataset: TdrDataset = context.resources.target_hca_dataset
     hca_project_config: HcaProjectCopyingConfig = context.resources.hca_project_copying_config
 

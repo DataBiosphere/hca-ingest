@@ -47,22 +47,7 @@ def verify_entities_loaded(entity_type: MetadataType, expected_entities: list[Me
     assert len(set_diff) == 0, f"Not all expected IDs found [diff = {set_diff}]"
 
 
-def run(bq_project: str, dataset: str, snapshot: bool, project_id: Optional[str]) -> None:
-    real_prod_dataset = False
-    if not bq_project and not dataset and project_id:
-        print("No bq project or dataset provided, assuming this is in real_prod and looking for project-specific dataset...")
-        host = data_repo_host["real_prod"]
-        data_repo_client = get_api_client(host=host)
-        data_repo_service = DataRepoService(data_repo_client)
-        tdr_dataset = data_repo_service.find_dataset(project_id)
-        if not tdr_dataset:
-            raise ValueError(f"Couldn't find dataset for query {dataset}")
-
-        bq_project = tdr_dataset.project_id
-        dataset = tdr_dataset.dataset_name
-        real_prod_dataset = True
-        print("Found dataset")
-
+def run(bq_project: str, dataset: str, snapshot: bool, project_id: str) -> None:
     bigquery_service = BigQueryService(Client(project=bq_project))
     if not snapshot:
         dataset = f"datarepo_{dataset}"
@@ -72,25 +57,17 @@ def run(bq_project: str, dataset: str, snapshot: bool, project_id: Optional[str]
     SELECT * FROM `{bq_project}.{dataset}.links`
     """
 
-    if project_id and not real_prod_dataset:
+    if project_id:
         query = query + f"""  WHERE project_id = '{project_id}'"""
 
     links_rows = [row for row in bigquery_service.run_query(query, bq_project, 'US')]
-
-    if real_prod_dataset:
-        projects_found = set()
-        for row in links_rows:
-            projects_found.add(row["project_id"])
-        print(f"Projects in dataset = {projects_found}")
-        assert len(projects_found) == 1, "Should only be one project in real_prod datasets"
-
     verify_all_subgraphs_in_dataset(links_rows, bq_project, dataset, bigquery_service)
 
 
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser()
-    argparser.add_argument("-b", "--bq-project")
-    argparser.add_argument("-d", "--dataset")
+    argparser.add_argument("-b", "--bq-project", required=True)
+    argparser.add_argument("-d", "--dataset", required=True)
     argparser.add_argument("-s", "--snapshot", action="store_true")
     argparser.add_argument("-p", "--project_id")
     args = argparser.parse_args()
