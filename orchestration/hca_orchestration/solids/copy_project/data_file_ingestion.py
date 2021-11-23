@@ -1,4 +1,4 @@
-from dagster import solid, op
+from dagster import solid, op, Field
 from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
@@ -22,6 +22,12 @@ from hca_orchestration.solids.copy_project.subgraph_hydration import DataFileEnt
         "scratch_config",
         "target_hca_dataset",
         "load_tag"
+    },
+    config_schema={
+        "direct_copy_from_tdr": Field(
+            bool, True, False, "Attempts to copy files directly from TDR; "
+                               "if False, will copy to the staging area bucket first"
+        )
     }
 )
 def ingest_data_files(context: AbstractComputeExecutionContext, data_entities: set[DataFileEntity]) -> None:
@@ -36,8 +42,9 @@ def ingest_data_files(context: AbstractComputeExecutionContext, data_entities: s
     scratch_config: ScratchConfig = context.resources.scratch_config
     target_hca_dataset: TdrDataset = context.resources.target_hca_dataset
     load_tag = context.resources.load_tag
+    direct_copy = context.solid_config["direct_copy_from_tdr"]
 
-    control_file_path = _generate_control_file(context, data_entities, scratch_config, storage_client)
+    control_file_path = _generate_control_file(context, data_entities, scratch_config, storage_client, direct_copy)
     _bulk_ingest_to_tdr(
         context,
         control_file_path,
@@ -69,26 +76,37 @@ def _bulk_ingest_to_tdr(context: AbstractComputeExecutionContext,
     poll_job(job_id, 86400, 2, data_repo_client)
 
 
-def _generate_control_file(context: AbstractComputeExecutionContext,
-                           data_entities: set[DataFileEntity],
-                           scratch_config: ScratchConfig,
-                           storage_client: Client) -> str:
+def _generate_control_file(
+    context: AbstractComputeExecutionContext,
+        data_entities: set[DataFileEntity],
+        scratch_config: ScratchConfig,
+        storage_client: Client,
+        direct_copy: bool
+) -> str:
     ingest_items = []
     context.log.info("Copying files to staging bucket...")
     for data_entity in data_entities:
-        file_bucket_and_prefix = parse_gs_path(data_entity.access_url)
-        bucket = Bucket(storage_client, file_bucket_and_prefix.bucket)
-        dest_bucket = Bucket(storage_client, scratch_config.scratch_bucket_name)
+        # for extremely large datasets, we implement this workaround to directly copy out of TDR
+        # this is not desirable as it requires a custom permission setting per source TDR dataset
+        # and a manual intervention from a Jade team member to setup
+        if direct_copy:
+            ingest_items.append(
+                f'{{"sourcePath":"{data_entity.access_url}", "targetPath":"{data_entity.target_path}"}}')
+        else:
+            file_bucket_and_prefix = parse_gs_path(data_entity.access_url)
+            bucket = Bucket(storage_client, file_bucket_and_prefix.bucket)
+            dest_bucket = Bucket(storage_client, scratch_config.scratch_bucket_name)
 
-        blob: Blob = Blob(file_bucket_and_prefix.prefix, bucket)
-        file_name = "/".join(blob.name.split("/")[1:])
+            blob: Blob = Blob(file_bucket_and_prefix.prefix, bucket)
+            file_name = "/".join(blob.name.split("/")[1:])
 
-        context.log.debug(
-            f"Copying from {blob.name} to gs://{dest_bucket.name} / {scratch_config.scratch_prefix_name}/data_files/{file_name}")
+            context.log.debug(
+                f"Copying from {blob.name} to gs://{dest_bucket.name} / {scratch_config.scratch_prefix_name}/data_files/{file_name}")
 
-        new_blob = bucket.copy_blob(blob, dest_bucket, f"{scratch_config.scratch_prefix_name}/data_files/{file_name}")
-        ingest_items.append(
-            f'{{"sourcePath":"gs://{dest_bucket.name}/{new_blob.name}", "targetPath":"{data_entity.target_path}"}}')
+            new_blob = bucket.copy_blob(
+                blob, dest_bucket, f"{scratch_config.scratch_prefix_name}/data_files/{file_name}")
+            ingest_items.append(
+                f'{{"sourcePath":"gs://{dest_bucket.name}/{new_blob.name}", "targetPath":"{data_entity.target_path}"}}')
 
     # write out a JSONL control file for TDR to consume
     control_file_str = "\n".join(ingest_items)
