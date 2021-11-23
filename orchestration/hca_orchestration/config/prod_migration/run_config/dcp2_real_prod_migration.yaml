@@ -16,3 +16,7 @@ resources:
   target_hca_dataset:
     config:
       env: "real_prod"
+solids:
+  ingest_data_files:
+    config:
+      direct_copy_from_tdr: True
