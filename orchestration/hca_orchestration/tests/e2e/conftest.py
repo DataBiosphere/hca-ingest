@@ -114,6 +114,13 @@ def copy_project_config():
                     "region": "US"
                 }
             }
+        },
+        "solids": {
+            "direct_copy_from_tdr": {
+                "config": {
+                    "direct_copy_from_tdr": False
+                }
+            }
         }
     }
 
