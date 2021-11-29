@@ -20,3 +20,7 @@ resources:
       policy_members: ["monster@firecloud.org"]
       billing_profile_id: 87bfdaf8-9216-4795-90c9-7ae5e7946871
       region: US
+solids:
+  ingest_data_files:
+    config:
+      direct_copy_from_tdr: True
