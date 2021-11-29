@@ -46,7 +46,7 @@ def build_new_target_hca_dataset(init_context: InitResourceContext) -> Optional[
     target_hca_dataset_prefix = f"hca_{env_prefix}_{hca_project_id.hex.replace('-', '')}"
     target_hca_dataset_name = f"{target_hca_dataset_prefix}__{creation_date}"
     if qualifier:
-        target_hca_dataset_name = f"{target_hca_dataset_prefix}_{qualifier}"
+        target_hca_dataset_name = f"{target_hca_dataset_name}_{qualifier}"
 
     init_context.log.info(f"Checking for existing dataset with prefix = {target_hca_dataset_prefix}")
     data_repo_service: DataRepoService = init_context.resources.data_repo_service
