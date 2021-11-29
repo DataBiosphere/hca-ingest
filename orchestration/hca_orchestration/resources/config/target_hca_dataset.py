@@ -66,10 +66,9 @@ def build_new_target_hca_dataset(init_context: InitResourceContext) -> Optional[
     if len(matching_datasets) > 1:
         raise Failure(f"More than one dataset found for project id {hca_project_id}")
 
+    result: Optional[TdrDataset] = None
     if matching_datasets:
         result = data_repo_service.get_dataset(matching_datasets[0].id)
-    else:
-        raise Failure(f"No matching dataset found for project id {hca_project_id}")
 
     dataset_metadata = {
         "hca_project_id": hca_project_id.hex
