@@ -1,3 +1,3 @@
-channel: "#arh-testing-ingest"
+channel: "#arh_testing_ingest"
 token:
   env: SLACK_TOKEN
