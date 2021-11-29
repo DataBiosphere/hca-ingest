@@ -116,7 +116,7 @@ def copy_project_config():
             }
         },
         "solids": {
-            "direct_copy_from_tdr": {
+            "ingest_data_files": {
                 "config": {
                     "direct_copy_from_tdr": False
                 }
