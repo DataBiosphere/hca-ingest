@@ -44,7 +44,8 @@ def snapshot_creation_config(init_context: InitResourceContext) -> SnapshotCreat
     config_schema={
         "source_hca_project_id": String,
         "qualifier": Noneable(String),
-        "managed_access": Bool
+        "managed_access": Bool,
+        "dataset_qualifier": Noneable(String)
     })
 def project_snapshot_creation_config(init_context: InitResourceContext) -> SnapshotCreationConfig:
     source_hca_project_id = init_context.resource_config["source_hca_project_id"]
@@ -53,18 +54,26 @@ def project_snapshot_creation_config(init_context: InitResourceContext) -> Snaps
     # find the existing dataset, bail out if none are found
     env = os.environ["ENV"]
     sanitized_hca_project_name = source_hca_project_id.replace('-', '')
+    dataset_qualifier = init_context.resource_config.get('dataset_qualifier', None)
     source_hca_dataset_prefix = f"hca_{env}_{sanitized_hca_project_name}"
-    result = data_repo_service.find_dataset(source_hca_dataset_prefix)
+
+    result = data_repo_service.find_dataset(source_hca_dataset_prefix, qualifier=dataset_qualifier)
     if not result:
-        raise Exception(f"No dataset for project_id {source_hca_project_id} found")
+        raise Exception(f"No dataset for project_id {source_hca_project_id} found (qualifier={dataset_qualifier})")
 
     # craft a new snapshot name
     creation_date = datetime.now().strftime("%Y%m%d")
-    dataset_creation_date = result.dataset_name.split('__')[1].split('_')[0]
-    snapshot_name = f"hca_{env}_{sanitized_hca_project_name}__{dataset_creation_date}_{creation_date}"
-    qualifier = init_context.resource_config.get('qualifier', None)
-    if qualifier:
-        snapshot_name = f"{snapshot_name}_{qualifier}"
+    dataset_suffix = result.dataset_name.split('__')[1].split('_')
+    snapshot_suffix = dataset_suffix[0]
+    if dataset_qualifier:
+        dataset_qualifier = dataset_suffix[1]
+        snapshot_suffix = f"{snapshot_suffix}_{dataset_qualifier}"
+
+    snapshot_name = f"hca_{env}_{sanitized_hca_project_name}__{snapshot_suffix}_{creation_date}"
+
+    snapshot_qualifier = init_context.resource_config.get('qualifier', None)
+    if snapshot_qualifier:
+        snapshot_name = f"{snapshot_name}_{snapshot_qualifier}"
 
     return SnapshotCreationConfig(result.dataset_name, snapshot_name, init_context.resource_config["managed_access"])
 

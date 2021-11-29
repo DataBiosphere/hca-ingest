@@ -61,16 +61,27 @@ class DataRepoService:
         poll_job(job_id, 600, 2, self.data_repo_client)
         return job_id
 
-    def find_dataset(self, dataset_name: str) -> Optional[TdrDataset]:
+    def find_dataset(self, dataset_name: str, qualifier: Optional[str] = None) -> Optional[TdrDataset]:
         result: EnumerateDatasetModel = self.data_repo_client.enumerate_datasets(filter=dataset_name)
-
-        if result.filtered_total > 1:
-            raise Exception(f"More than one match for dataset name {dataset_name}")
 
         if result.filtered_total == 0:
             return None
 
-        dataset_summary: DatasetSummaryModel = result.items[0]
+        # since the qualifer comes after the date in the HCA naming format, we need to do a two step match
+        # 1. Find all datasets matching the prefix
+        # 2. and if a qualifier is provided, search through those with a trailing _{qualifier}
+        matching_datasets = []
+        dataset: DatasetSummaryModel
+        for dataset in result.items:
+            if not qualifier:
+                matching_datasets.append(dataset)
+            elif dataset.name.endswith(qualifier):
+                matching_datasets.append(dataset)
+
+        if len(matching_datasets) > 1:
+            raise Exception(f"More than one match for dataset name {dataset_name}")
+
+        dataset_summary: DatasetSummaryModel = matching_datasets[0]
         return self.get_dataset(dataset_summary.id)
 
     def list_datasets(self, dataset_name: str) -> EnumerateDatasetModel:
