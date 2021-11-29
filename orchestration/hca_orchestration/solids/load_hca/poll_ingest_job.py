@@ -9,6 +9,10 @@ from hca_manage.common import JobId
 from hca_orchestration.contrib.retry import is_truthy, retry
 
 
+class DataFileIngestionFailure(Failure):
+    pass
+
+
 @solid(
     required_resource_keys={"data_repo_client"},
     config_schema={
@@ -25,7 +29,8 @@ def base_check_data_ingest_job_result(context: AbstractComputeExecutionContext, 
         context.log
     )
     if job_results['failedFiles'] > 0:
-        raise Failure(f"Bulk file load (job_id = {job_id} had failedFiles = {job_results['failedFiles']})")
+        raise DataFileIngestionFailure(
+            f"Bulk file load (job_id = {job_id} had failedFiles = {job_results['failedFiles']})")
 
     return job_id
 

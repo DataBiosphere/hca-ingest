@@ -13,6 +13,7 @@ from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.contrib.gcs import parse_gs_path
 from hca_orchestration.models.scratch import ScratchConfig
 from hca_orchestration.solids.copy_project.subgraph_hydration import DataFileEntity
+from hca_orchestration.solids.load_hca.poll_ingest_job import DataFileIngestionFailure
 
 
 @op(
@@ -77,7 +78,8 @@ def _bulk_ingest_to_tdr(context: AbstractComputeExecutionContext,
 
     result = data_repo_client.retrieve_job_result(id=job_id)
     if result['failedFiles'] > 0:
-        raise Failure(f"File ingestion failed; job_id = {job_id} had failedFiles = {result['failedFiles']})")
+        raise DataFileIngestionFailure(
+            f"File ingestion failed; job_id = {job_id} had failedFiles = {result['failedFiles']})")
 
 
 def _generate_control_file(

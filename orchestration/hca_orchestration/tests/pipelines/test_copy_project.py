@@ -8,6 +8,7 @@ from hca_orchestration.contrib.bigquery import BigQueryService
 from hca_orchestration.pipelines.copy_project import copy_project
 from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.resources.hca_project_config import HcaProjectCopyingConfig
+from hca_orchestration.solids.load_hca.poll_ingest_job import DataFileIngestionFailure
 
 
 @patch("hca_manage.bq_managers.DanglingFileRefManager.get_rows", return_value=set())
@@ -49,7 +50,7 @@ def test_copy_project_fails_on_file_load_failure() -> None:
         "failedFiles": 1
     })
 
-    with pytest.raises(Failure, match="had failedFiles = "):
+    with pytest.raises(DataFileIngestionFailure):
         copy_project.execute_in_process(
             resources={
                 "bigquery_client": MagicMock(),
