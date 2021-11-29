@@ -1,4 +1,4 @@
-from dagster import solid, op, Field
+from dagster import solid, op, Field, Failure
 from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
@@ -74,6 +74,10 @@ def _bulk_ingest_to_tdr(context: AbstractComputeExecutionContext,
     job_id = JobId(job_response.id)
     context.log.info(f"Bulk file ingest submitted, polling on job_id = {job_id}")
     poll_job(job_id, 86400, 2, data_repo_client)
+
+    result = data_repo_client.retrieve_job_result(id=job_id)
+    if result['failedFiles'] > 0:
+        raise Failure(f"File ingestion failed; job_id = {job_id} had failedFiles = {result['failedFiles']})")
 
 
 def _generate_control_file(
