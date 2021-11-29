@@ -16,7 +16,7 @@ from hca_manage import __version__ as hca_manage_version
 from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client, query_yes_no, tdr_operation, \
     setup_cli_logging_format
 
-MAX_DATASET_OP_POLL_SECONDS = 120
+MAX_DATASET_OP_POLL_SECONDS = 300
 DATASET_OP_POLL_INTERVAL_SECONDS = 2
 DATASET_NAME_REGEX = r"^hca_(dev|prod|staging)_([0-9a-f]{32})?__(\d{4})(\d{2})(\d{2})(?:_([a-zA-Z][a-zA-Z0-9]{0,15}))?$"
 

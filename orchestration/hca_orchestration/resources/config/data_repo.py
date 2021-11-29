@@ -57,6 +57,8 @@ def project_snapshot_creation_config(init_context: InitResourceContext) -> Snaps
     dataset_qualifier = init_context.resource_config.get('dataset_qualifier', None)
     source_hca_dataset_prefix = f"hca_{env}_{sanitized_hca_project_name}"
 
+    # we provide the dataset qualifier to allow distinction between dcp1/dcp2 datasets
+    # (i.e., two datasets, same hca project ID but one is from dcp1 and the other from dcp2)
     result = data_repo_service.find_dataset(source_hca_dataset_prefix, qualifier=dataset_qualifier)
     if not result:
         raise Exception(f"No dataset for project_id {source_hca_project_id} found (qualifier={dataset_qualifier})")
