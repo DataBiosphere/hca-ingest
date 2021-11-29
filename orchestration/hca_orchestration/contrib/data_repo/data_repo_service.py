@@ -73,6 +73,10 @@ class DataRepoService:
         dataset_summary: DatasetSummaryModel = result.items[0]
         return self.get_dataset(dataset_summary.id)
 
+    def list_datasets(self, dataset_name: str) -> EnumerateDatasetModel:
+        result: EnumerateDatasetModel = self.data_repo_client.enumerate_datasets(filter=dataset_name)
+        return result
+
     def get_dataset(self, dataset_id: str) -> TdrDataset:
         dataset_model: DatasetModel = self.data_repo_client.retrieve_dataset(id=dataset_id)
         bq_location = self._get_dataset_bq_location(dataset_model)

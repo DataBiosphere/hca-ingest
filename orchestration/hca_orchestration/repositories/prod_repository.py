@@ -108,12 +108,12 @@ def dcp2_real_prod_migration() -> PipelineDefinition:
 def all_jobs() -> list[PipelineDefinition]:
     jobs = [
         dcp1_real_prod_migration(),
-        dcp2_real_prod_migration(),
-        cut_project_snapshot_job("prod", "prod", "monster@firecloud.org"),
-        cut_project_snapshot_job("prod", "real_prod", "monster@firecloud.org"),
-        legacy_cut_snapshot_job("prod", "monster@firecloud.org"),
-        load_hca_job(),
-        validate_ingress_job(),
+        # dcp2_real_prod_migration(),
+        # cut_project_snapshot_job("prod", "prod", "monster@firecloud.org"),
+        # cut_project_snapshot_job("prod", "real_prod", "monster@firecloud.org"),
+        # legacy_cut_snapshot_job("prod", "monster@firecloud.org"),
+        # load_hca_job(),
+        # validate_ingress_job(),
         slack_on_pipeline_start,
         slack_on_pipeline_success,
         build_pipeline_failure_sensor(),
