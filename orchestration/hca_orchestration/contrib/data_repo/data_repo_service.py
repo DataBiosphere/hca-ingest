@@ -14,6 +14,10 @@ from hca_manage.dataset import DatasetManager
 from hca_orchestration.models.hca_dataset import TdrDataset
 
 
+class MultipleDatasetException(Exception):
+    pass
+
+
 @dataclass
 class DataRepoService:
     data_repo_client: RepositoryApi
@@ -79,7 +83,10 @@ class DataRepoService:
                 matching_datasets.append(dataset)
 
         if len(matching_datasets) > 1:
-            raise Exception(f"More than one match for dataset name {dataset_name}")
+            raise MultipleDatasetException(f"More than one match for dataset name {dataset_name}")
+
+        if not matching_datasets:
+            return None
 
         dataset_summary: DatasetSummaryModel = matching_datasets[0]
         return self.get_dataset(dataset_summary.id)
