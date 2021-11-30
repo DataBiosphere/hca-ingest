@@ -21,6 +21,7 @@ def submit_snapshot_job(context: AbstractComputeExecutionContext) -> JobId:
     if not dataset:
         raise Failure(f"Dataset not found for dataset name [dataset_name={dataset_name}]")
 
+    context.log.info(f"Source dataset for snapshot = {dataset_name}")
     return SnapshotManager(
         environment=context.resources.hca_manage_config.gcp_env,
         dataset=context.resources.snapshot_config.dataset_name,

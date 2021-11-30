@@ -45,7 +45,8 @@ def verify_subgraphs(context: AbstractComputeExecutionContext, result: ProblemCo
         links_rows,
         target_hca_dataset.project_id,
         target_hca_dataset.dataset_name,
-        context.resources.bigquery_client)
+        bigquery_service
+    )
 
 
 @op(
