@@ -294,7 +294,7 @@ class DatasetManager:
         return self.data_repo_client.enumerate_datasets(filter=dataset_name, limit=1000)
 
     def retrieve_dataset(self, dataset_id: str) -> DatasetModel:
-        return self.data_repo_client.retrieve_dataset(dataset_id, include=["ACCESS_INFORMATION"])
+        return self.data_repo_client.retrieve_dataset(dataset_id)
 
     def add_policy_members(
             self,

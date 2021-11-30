@@ -50,26 +50,7 @@ def build_new_target_hca_dataset(init_context: InitResourceContext) -> Optional[
 
     init_context.log.info(f"Checking for existing dataset with prefix = {target_hca_dataset_prefix}")
     data_repo_service: DataRepoService = init_context.resources.data_repo_service
-    datasets_list = data_repo_service.list_datasets(target_hca_dataset_prefix)
-
-    # since the qualifer comes after the date in the HCA naming format, we need to do a two step match
-    # 1. Find all datasets matching the prefix
-    # 2. and if a qualifier is provided, search through those with a trailing _{qualifier}
-    matching_datasets = []
-    dataset: DatasetModel
-    for dataset in datasets_list.items:
-        if not qualifier:
-            matching_datasets.append(dataset)
-        elif dataset.name.endswith(qualifier):
-            matching_datasets.append(dataset)
-
-    if len(matching_datasets) > 1:
-        raise Failure(f"More than one dataset found for project id {hca_project_id}")
-
-    result: Optional[TdrDataset] = None
-    if matching_datasets:
-        result = data_repo_service.get_dataset(matching_datasets[0].id)
-
+    result = data_repo_service.find_dataset(target_hca_dataset_prefix, qualifier)
     dataset_metadata = {
         "hca_project_id": hca_project_id.hex
     }

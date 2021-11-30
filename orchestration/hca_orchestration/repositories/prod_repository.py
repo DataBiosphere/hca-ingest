@@ -107,23 +107,23 @@ def dcp2_real_prod_migration() -> PipelineDefinition:
 @repository
 def all_jobs() -> list[PipelineDefinition]:
     jobs = [
-        # dcp1_real_prod_migration(),
-        # dcp2_real_prod_migration(),
+        dcp1_real_prod_migration(),
+        dcp2_real_prod_migration(),
         cut_project_snapshot_job("prod", "prod", "monster@firecloud.org"),
         cut_project_snapshot_job("prod", "real_prod", "monster@firecloud.org"),
-        # legacy_cut_snapshot_job("prod", "monster@firecloud.org"),
-        # load_hca_job(),
-        # validate_ingress_job(),
-        # slack_on_pipeline_start,
-        # slack_on_pipeline_success,
-        # build_pipeline_failure_sensor(),
+        legacy_cut_snapshot_job("prod", "monster@firecloud.org"),
+        load_hca_job(),
+        validate_ingress_job(),
+        slack_on_pipeline_start,
+        slack_on_pipeline_success,
+        build_pipeline_failure_sensor(),
     ]
-    # jobs += configure_partitions_for_pipeline("dcp1_real_prod_migration",
-    #                                           run_config_for_real_prod_migration_dcp1)
-    # jobs += configure_partitions_for_pipeline("dcp2_real_prod_migration",
-    #                                           run_config_for_real_prod_migration_dcp2)
-    # jobs += configure_partitions_for_pipeline("cut_snapshot", run_config_for_cut_snapshot_partition)
-    # jobs += configure_partitions_for_pipeline("load_hca", run_config_for_dcp_release_partition)
-    # jobs += configure_partitions_for_pipeline("validate_ingress", run_config_for_validation_ingress_partition)
+    jobs += configure_partitions_for_pipeline("dcp1_real_prod_migration",
+                                              run_config_for_real_prod_migration_dcp1)
+    jobs += configure_partitions_for_pipeline("dcp2_real_prod_migration",
+                                              run_config_for_real_prod_migration_dcp2)
+    jobs += configure_partitions_for_pipeline("cut_snapshot", run_config_for_cut_snapshot_partition)
+    jobs += configure_partitions_for_pipeline("load_hca", run_config_for_dcp_release_partition)
+    jobs += configure_partitions_for_pipeline("validate_ingress", run_config_for_validation_ingress_partition)
 
     return jobs
