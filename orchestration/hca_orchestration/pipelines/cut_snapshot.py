@@ -17,7 +17,7 @@ from hca_orchestration.solids.data_repo import wait_for_job_completion
 from hca_orchestration.resources.data_repo_service import data_repo_service
 from hca_orchestration.resources.config.data_repo import hca_manage_config, project_snapshot_creation_config, \
     snapshot_creation_config
-from hca_orchestration.resources.config.data_repo import run_start_time
+from hca_orchestration.resources.utils import run_start_time
 
 from hca_orchestration.resources.config.dagit import dagit_config
 

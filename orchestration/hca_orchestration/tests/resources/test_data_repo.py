@@ -120,5 +120,4 @@ def test_snapshot_creation_config():
 
     config = snapshot_creation_config(init_context)
     result = search(LEGACY_SNAPSHOT_NAME_REGEX, config.snapshot_name)
-    print(config.snapshot_name)
     assert result, "Snapshot name should pass legacy snapshot regex"
