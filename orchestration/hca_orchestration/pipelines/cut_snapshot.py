@@ -17,6 +17,7 @@ from hca_orchestration.solids.data_repo import wait_for_job_completion
 from hca_orchestration.resources.data_repo_service import data_repo_service
 from hca_orchestration.resources.config.data_repo import hca_manage_config, project_snapshot_creation_config, \
     snapshot_creation_config
+from hca_orchestration.resources.config.data_repo import run_start_time
 
 from hca_orchestration.resources.config.dagit import dagit_config
 
@@ -77,6 +78,7 @@ def legacy_cut_snapshot_job(hca_env: str, steward: str) -> PipelineDefinition:
             "slack": preconfigure_resource_for_mode(live_slack_client, hca_env),
             "snapshot_config": snapshot_creation_config,
             "dagit_config": preconfigure_resource_for_mode(dagit_config, hca_env),
+            "run_start_time": run_start_time
         },
         config={
             "resources": {

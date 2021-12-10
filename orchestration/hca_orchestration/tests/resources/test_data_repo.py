@@ -1,13 +1,15 @@
 from unittest.mock import MagicMock, Mock
 from datetime import datetime
+from re import search
 
 import pytest
-from dagster import build_init_resource_context
+from dagster import build_init_resource_context, ResourceDefinition
 
 from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
-from hca_orchestration.resources.config.data_repo import project_snapshot_creation_config
+from hca_orchestration.resources.config.data_repo import project_snapshot_creation_config, snapshot_creation_config
 from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.support.dates import dataset_snapshot_formatted_date
+from hca_manage.snapshot import LEGACY_SNAPSHOT_NAME_REGEX
 
 
 def test_project_snapshot_creation_config(monkeypatch):
@@ -104,3 +106,19 @@ def test_project_snapshot_creation_config_no_snapshot_qualifier(monkeypatch):
 
     snapshot_creation_time = dataset_snapshot_formatted_date(datetime.now())
     assert snapshot_creation_config.snapshot_name == f"hca_dev_abc123__20210505_{snapshot_creation_time}"
+
+
+def test_snapshot_creation_config():
+    init_context = build_init_resource_context(
+        resources={"run_start_time": ResourceDefinition.hardcoded_resource(1234)},
+        config={
+            "dataset_name": "hca_prod_20201120_dcp2",
+            "managed_access": False,
+            "qualifier": "dcp12"
+        }
+    )
+
+    config = snapshot_creation_config(init_context)
+    result = search(LEGACY_SNAPSHOT_NAME_REGEX, config.snapshot_name)
+    print(config.snapshot_name)
+    assert result, "Snapshot name should pass legacy snapshot regex"

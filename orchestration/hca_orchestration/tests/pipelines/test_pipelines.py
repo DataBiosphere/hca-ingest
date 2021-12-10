@@ -139,6 +139,7 @@ def test_cut_snapshot(*mocks):
             "slack": console_slack_client,
             "snapshot_config": snapshot_creation_config,
             "dagit_config": preconfigure_resource_for_mode(dagit_config, "test"),
+            "run_start_time": ResourceDefinition.hardcoded_resource(123456)
         }
     )
     result = run_pipeline(job, config_name="test_create_snapshot.yaml")

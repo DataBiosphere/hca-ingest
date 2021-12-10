@@ -16,17 +16,26 @@ class SnapshotCreationConfig:
     managed_access: bool
 
 
-@resource({
-    'dataset_name': String,
-    'qualifier': Noneable(String),
-    'managed_access': Bool
-})
+@resource
+def run_start_time(init_context: InitResourceContext) -> int:
+    return int(init_context.instance.get_run_stats(init_context.pipeline_run.run_id).start_time)
+
+
+@resource(
+    required_resource_keys={"run_start_time"},
+    config_schema={
+        'dataset_name': String,
+        'qualifier': Noneable(String),
+        'managed_access': Bool
+    }
+)
 def snapshot_creation_config(init_context: InitResourceContext) -> SnapshotCreationConfig:
     # we use the pipeline start time instead of datetime.now() as this resource may be reconstructed at various
     # points during the pipeline run and therefore the time may change and lead to differing snapshot names
-    pipeline_start_time = int(init_context.instance.get_run_stats(init_context.pipeline_run.run_id).start_time)
-    dt_suffix = dataset_snapshot_formatted_date(datetime.utcfromtimestamp(pipeline_start_time))
-    snapshot_name = f"{init_context.resource_config['dataset_name']}_{dt_suffix}"
+
+    run_start_time = init_context.resources.run_start_time
+    dt_suffix = dataset_snapshot_formatted_date(datetime.utcfromtimestamp(run_start_time))
+    snapshot_name = f"{init_context.resource_config['dataset_name']}___{dt_suffix}"
 
     qualifier = init_context.resource_config.get('qualifier', None)
     if qualifier:
