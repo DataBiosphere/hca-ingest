@@ -66,17 +66,17 @@ def project_load_hca_job() -> PipelineDefinition:
         resource_defs={
             "beam_runner": preconfigure_resource_for_mode(k8s_dataflow_beam_runner, "dev"),
             "bigquery_client": bigquery_client,
+            "bigquery_service": bigquery_service,
+            "dagit_config": preconfigure_resource_for_mode(dagit_config, "dev"),
             "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
+            "data_repo_service": data_repo_service,
             "gcs": google_storage_client,
             "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "dev"),
             "load_tag": load_tag,
-            "scratch_config": scratch_config,
-            "target_hca_dataset": find_or_create_project_dataset,
-            "bigquery_service": bigquery_service,
-            "data_repo_service": data_repo_service,
-            "slack": preconfigure_resource_for_mode(live_slack_client, "dev"),
-            "dagit_config": preconfigure_resource_for_mode(dagit_config, "dev"),
             "run_start_time": run_start_time
+            "scratch_config": scratch_config,
+            "slack": preconfigure_resource_for_mode(live_slack_client, "dev"),
+            "target_hca_dataset": find_or_create_project_dataset,
         }
     )
 
