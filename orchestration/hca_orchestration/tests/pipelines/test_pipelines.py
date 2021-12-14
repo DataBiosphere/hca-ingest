@@ -22,7 +22,7 @@ from hca_orchestration.resources import load_tag
 from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.data_repo import hca_manage_config, snapshot_creation_config
 from hca_orchestration.resources.config.scratch import scratch_config
-from hca_orchestration.resources.config.target_hca_dataset import target_hca_dataset
+from hca_orchestration.resources.config.datasets import passthrough_hca_dataset
 from hca_manage.validation import HcaValidator
 
 
@@ -70,7 +70,7 @@ def test_load_hca_noop_resources(*mocks):
             "bigquery_client": ResourceDefinition.mock_resource(),
             "load_tag": load_tag,
             "scratch_config": scratch_config,
-            "target_hca_dataset": target_hca_dataset,
+            "target_hca_dataset": passthrough_hca_dataset,
             "bigquery_service": ResourceDefinition.mock_resource(),
             "data_repo_service": ResourceDefinition.hardcoded_resource(data_repo_service),
             "slack": console_slack_client,
