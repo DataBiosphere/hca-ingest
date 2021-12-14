@@ -38,7 +38,7 @@ def copy_project_to_new_dataset_job(src_env: str, target_env: str) -> PipelineDe
             "load_tag": load_tag,
             "data_repo_service": data_repo_service,
             "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, src_env),
-            "run_start_time": run_start_time
+            "run_start_time": run_start_time,
         },
         executor_def=in_process_executor
     )

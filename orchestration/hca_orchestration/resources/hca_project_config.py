@@ -10,12 +10,13 @@ class HcaProjectCopyingConfig:
     source_bigquery_region: str
 
 
-@resource(required_resource_keys={"hca_project_id"},
-          config_schema={
-    "source_snapshot_name": str,
-    "source_bigquery_project_id": str,
-    "source_bigquery_region": str
-})
+@resource(
+    required_resource_keys={"hca_project_id"},
+    config_schema={
+        "source_snapshot_name": str,
+        "source_bigquery_project_id": str,
+        "source_bigquery_region": str
+    })
 def hca_project_copying_config(context: InitResourceContext) -> HcaProjectCopyingConfig:
     return HcaProjectCopyingConfig(
         source_hca_project_id=context.resources.hca_project_id,

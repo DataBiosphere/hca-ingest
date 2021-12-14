@@ -73,7 +73,7 @@ def project_load_hca_job() -> PipelineDefinition:
             "gcs": google_storage_client,
             "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "dev"),
             "load_tag": load_tag,
-            "run_start_time": run_start_time
+            "run_start_time": run_start_time,
             "scratch_config": scratch_config,
             "slack": preconfigure_resource_for_mode(live_slack_client, "dev"),
             "target_hca_dataset": find_or_create_project_dataset,
