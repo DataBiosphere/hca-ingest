@@ -22,7 +22,7 @@ from hca_orchestration.pipelines.validate_ingress import run_config_for_validati
 from hca_orchestration.resources import load_tag, bigquery_service
 from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.scratch import scratch_config
-from hca_orchestration.resources.config.target_hca_dataset import target_hca_dataset
+from hca_orchestration.resources.config.datasets import passthrough_hca_dataset
 from hca_orchestration.resources.data_repo_service import data_repo_service
 from hca_orchestration.repositories.common import copy_project_to_new_dataset_job
 
@@ -48,7 +48,7 @@ def load_hca_job() -> PipelineDefinition:
             "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "dev"),
             "load_tag": load_tag,
             "scratch_config": scratch_config,
-            "target_hca_dataset": target_hca_dataset,
+            "target_hca_dataset": passthrough_hca_dataset,
             "bigquery_service": bigquery_service,
             "data_repo_service": data_repo_service,
             "slack": console_slack_client,

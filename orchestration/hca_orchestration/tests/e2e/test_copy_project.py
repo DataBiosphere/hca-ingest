@@ -37,11 +37,10 @@ def snapshot(monkeypatch, hca_project_id, load_hca_run_config,
         "resources": {
             "snapshot_config": {
                 "config": {
-                    "source_hca_project_id": hca_project_id,
                     "managed_access": False,
                     "qualifier": None
                 }
-            }
+            },
         },
         "solids": {
             "submit_snapshot_job": {
@@ -98,8 +97,12 @@ def copied_dataset(snapshot, copy_project_config, hca_project_id: str, data_repo
         "config": {
             "source_bigquery_project_id": snapshot.tags['data_project'],
             "source_bigquery_region": "US",
-            "source_hca_project_id": hca_project_id,
             "source_snapshot_name": snapshot.tags['snapshot_name']
+        }
+    }
+    base_copy_project_config["resources"]["hca_project_id"] = {
+        "config": {
+            "hca_project_id": hca_project_id,
         }
     }
     copy_project_job = copy_project_to_new_dataset_job("dev", "dev")

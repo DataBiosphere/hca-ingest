@@ -16,9 +16,10 @@ from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.pipelines import copy_project
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources import bigquery_service, load_tag
-from hca_orchestration.resources.hca_project_config import hca_project_copying_config
-from hca_orchestration.resources.config.target_hca_dataset import build_new_target_hca_dataset
+from hca_orchestration.resources.hca_project_config import hca_project_copying_config, hca_project_id
+from hca_orchestration.resources.config.datasets import find_or_create_project_dataset
 from hca_orchestration.resources.data_repo_service import data_repo_service
+from hca_orchestration.resources.utils import run_start_time
 
 
 def copy_project_to_new_dataset_job(src_env: str, target_env: str) -> PipelineDefinition:
@@ -32,10 +33,12 @@ def copy_project_to_new_dataset_job(src_env: str, target_env: str) -> PipelineDe
             "scratch_config": scratch_config,
             "bigquery_service": bigquery_service,
             "hca_project_copying_config": hca_project_copying_config,
-            "target_hca_dataset": build_new_target_hca_dataset,
+            "target_hca_dataset": find_or_create_project_dataset,
+            "hca_project_id": hca_project_id,
             "load_tag": load_tag,
             "data_repo_service": data_repo_service,
             "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, src_env),
+            "run_start_time": run_start_time,
         },
         executor_def=in_process_executor
     )

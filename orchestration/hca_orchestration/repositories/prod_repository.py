@@ -25,11 +25,12 @@ from hca_orchestration.resources import bigquery_service
 from hca_orchestration.resources import load_tag
 from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.scratch import scratch_config
-from hca_orchestration.resources.config.target_hca_dataset import target_hca_dataset, build_new_target_hca_dataset
+from hca_orchestration.resources.config.datasets import passthrough_hca_dataset, find_or_create_project_dataset
 from hca_orchestration.resources.data_repo_service import data_repo_service
-from hca_orchestration.resources.hca_project_config import hca_project_copying_config
+from hca_orchestration.resources.hca_project_config import hca_project_copying_config, hca_project_id
 from hca_orchestration.repositories.common import slack_on_pipeline_start, slack_on_pipeline_success, \
     build_pipeline_failure_sensor
+from hca_orchestration.resources.utils import run_start_time
 
 
 def validate_ingress_job() -> PipelineDefinition:
@@ -54,7 +55,7 @@ def load_hca_job() -> PipelineDefinition:
             "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "prod"),
             "load_tag": load_tag,
             "scratch_config": scratch_config,
-            "target_hca_dataset": target_hca_dataset,
+            "target_hca_dataset": passthrough_hca_dataset,
             "bigquery_service": bigquery_service,
             "data_repo_service": data_repo_service,
             "slack": preconfigure_resource_for_mode(live_slack_client, "prod"),
@@ -70,15 +71,17 @@ def dcp1_real_prod_migration() -> PipelineDefinition:
         description=f"Copies a DCP1 project from prod to real_prod",
         resource_defs={
             "bigquery_client": bigquery_client,
-            "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "real_prod"),
-            "gcs": google_storage_client,
-            "scratch_config": scratch_config,
             "bigquery_service": bigquery_service,
-            "hca_project_copying_config": hca_project_copying_config,
-            "target_hca_dataset": build_new_target_hca_dataset,
-            "load_tag": load_tag,
+            "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "real_prod"),
             "data_repo_service": data_repo_service,
+            "gcs": google_storage_client,
+            "hca_project_id": hca_project_id,
+            "hca_project_copying_config": hca_project_copying_config,
+            "load_tag": load_tag,
             "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "prod"),
+            "run_start_time": run_start_time,
+            "target_hca_dataset": find_or_create_project_dataset,
+            "scratch_config": scratch_config,
         },
         executor_def=in_process_executor
     )
@@ -90,15 +93,17 @@ def dcp2_real_prod_migration() -> PipelineDefinition:
         description=f"Copies a DCP2 project from prod to real_prod",
         resource_defs={
             "bigquery_client": bigquery_client,
-            "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "real_prod"),
-            "gcs": google_storage_client,
-            "scratch_config": scratch_config,
             "bigquery_service": bigquery_service,
-            "hca_project_copying_config": hca_project_copying_config,
-            "target_hca_dataset": build_new_target_hca_dataset,
-            "load_tag": load_tag,
+            "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "real_prod"),
             "data_repo_service": data_repo_service,
+            "gcs": google_storage_client,
+            "hca_project_copying_config": hca_project_copying_config,
+            "hca_project_id": hca_project_id,
             "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "prod"),
+            "target_hca_dataset": find_or_create_project_dataset,
+            "load_tag": load_tag,
+            "run_start_time": run_start_time,
+            "scratch_config": scratch_config,
         },
         executor_def=in_process_executor
     )
