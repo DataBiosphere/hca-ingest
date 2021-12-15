@@ -2,7 +2,8 @@ resources:
   hca_project_copying_config:
     config:
       source_bigquery_project_id: broad-datarepo-terra-prod-hca2
-      source_snapshot_name: hca_prod_20201120_dcp2___20211101_dcp11
+      source_snapshot_name: hca_prod_20201120_dcp2___2021213_dcp12
+      source_bigquery_region: US
   load_tag:
     config:
       append_run_id: true
@@ -19,6 +20,8 @@ resources:
       policy_members: ["monster@firecloud.org"]
       billing_profile_id: 87bfdaf8-9216-4795-90c9-7ae5e7946871
       region: US
+  hca_project_id:
+    config: {}
 solids:
   ingest_data_files:
     config:
