@@ -1,6 +1,7 @@
 import logging
 from collections import defaultdict
 from urllib.parse import urlparse
+from more_itertools import chunked
 
 import requests
 from dagster import Nothing, op, In
@@ -147,18 +148,28 @@ def hydrate_subgraphs(context: AbstractComputeExecutionContext) -> set[DataFileE
 def _find_previously_loaded_target_paths(
         target_paths: set[str],
         target_hca_dataset: TdrDataset,
-        bigquery_service: BigQueryService
+        bigquery_service: BigQueryService,
+        chunk_size: int = 20000
 ) -> set[str]:
-    query = f"""
-    SELECT target_path FROM  `{target_hca_dataset.project_id}.datarepo_{target_hca_dataset.dataset_name}.datarepo_load_history`
-    WHERE target_path IN UNNEST(@target_paths)
-    AND state = 'succeeded'
-    """
-    query_params = [
-        ArrayQueryParameter("target_paths", "STRING", target_paths)
-    ]
-    previously_loaded = {row["target_path"] for row in bigquery_service.run_query(
-        query, target_hca_dataset.project_id, target_hca_dataset.bq_location, query_params)}
+    chunked_target_paths = chunked(target_paths, chunk_size)
+    logging.info(f"Searching for previously loaded paths, split paths set of size {len(target_paths)}")
+    previously_loaded = set()
+    for cnt, chunk in enumerate(chunked_target_paths):
+        logging.info(f"Chunk {cnt}")
+        query = f"""
+        SELECT target_path FROM  `{target_hca_dataset.project_id}.datarepo_{target_hca_dataset.dataset_name}.datarepo_load_history`
+        WHERE target_path IN UNNEST(@target_paths_chunk)
+        AND state = 'succeeded'
+        """
+        query_params = [
+            ArrayQueryParameter("target_paths_chunk", "STRING", chunk)
+        ]
+        result = {
+            row["target_path"] for row in bigquery_service.run_query(
+                query, target_hca_dataset.project_id, target_hca_dataset.bq_location, query_params)
+        }
+        previously_loaded.update(result)
+
     return previously_loaded
 
 
