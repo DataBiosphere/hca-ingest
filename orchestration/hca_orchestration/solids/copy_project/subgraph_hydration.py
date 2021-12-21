@@ -1,10 +1,10 @@
+import json
 import logging
 from collections import defaultdict
 from urllib.parse import urlparse
-from more_itertools import chunked
 
 import requests
-from dagster import Nothing, op, In
+from dagster import In, Nothing, op
 from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
@@ -12,17 +12,24 @@ from dagster_utils.contrib.google import get_credentials
 from google.auth.transport.requests import Request
 from google.cloud.bigquery import ArrayQueryParameter, Row
 from google.oauth2.credentials import Credentials
+from more_itertools import chunked
 from requests.structures import CaseInsensitiveDict
 
 from hca_orchestration.contrib.bigquery import BigQueryService
-from hca_orchestration.models.entities import DataFileEntity, MetadataEntity, build_subgraph_from_links_row
+from hca_orchestration.models.entities import (
+    DataFileEntity,
+    MetadataEntity,
+    build_subgraph_from_links_row,
+)
+from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.models.scratch import ScratchConfig
-from hca_orchestration.resources.hca_project_config import HcaProjectCopyingConfig
+from hca_orchestration.resources.hca_project_config import (
+    HcaProjectCopyingConfig,
+)
 from hca_orchestration.support.subgraphs import build_subgraph_nodes
 from hca_orchestration.support.typing import MetadataType
-import json
 
-from hca_orchestration.models.hca_dataset import TdrDataset
+BQ_CHUNK_SIZE = 20000
 
 
 @op(
@@ -149,7 +156,7 @@ def _find_previously_loaded_target_paths(
         target_paths: set[str],
         target_hca_dataset: TdrDataset,
         bigquery_service: BigQueryService,
-        chunk_size: int = 20000
+        chunk_size: int = BQ_CHUNK_SIZE
 ) -> set[str]:
     chunked_target_paths = chunked(target_paths, chunk_size)
     logging.info(f"Searching for previously loaded paths, split paths set of size {len(target_paths)}")
@@ -196,42 +203,46 @@ def _extract_entities_to_path(
         bigquery_project_id: str,
         snapshot_name: str,
         bigquery_region: str,
-        bigquery_service: BigQueryService
+        bigquery_service: BigQueryService,
+        chunk_size: int = BQ_CHUNK_SIZE
 ) -> None:
     for entity_type, entities in nodes.items():
-        data_file = False
-        if entity_type.endswith("_file"):
-            data_file = True
 
-        if data_file:
-            fetch_entities_query = f"""
-                EXPORT DATA OPTIONS(
-                  uri='gs://{destination_path}/{entity_type}/*',
-                  format='JSON',
-                  overwrite=true
-                ) AS
-                SELECT * EXCEPT (datarepo_row_id, file_id)
-                FROM `{bigquery_project_id}.{snapshot_name}.{entity_type}` WHERE {entity_type}_id IN
-                UNNEST(@entity_ids)
-            """
-        else:
-            fetch_entities_query = f"""
-                EXPORT DATA OPTIONS(
-                  uri='gs://{destination_path}/{entity_type}/*',
-                  format='JSON',
-                  overwrite=true
-                ) AS
-                SELECT * EXCEPT (datarepo_row_id)
-                FROM `{bigquery_project_id}.{snapshot_name}.{entity_type}` WHERE {entity_type}_id IN
-                UNNEST(@entity_ids)
+        chunked_entities = chunked(entities, chunk_size)
+        for chunk in chunked_entities:
+            data_file = False
+            if entity_type.endswith("_file"):
+                data_file = True
+
+            if data_file:
+                fetch_entities_query = f"""
+                    EXPORT DATA OPTIONS(
+                      uri='gs://{destination_path}/{entity_type}/*',
+                      format='JSON',
+                      overwrite=true
+                    ) AS
+                    SELECT * EXCEPT (datarepo_row_id, file_id)
+                    FROM `{bigquery_project_id}.{snapshot_name}.{entity_type}` WHERE {entity_type}_id IN
+                    UNNEST(@entity_ids)
                 """
-        entity_ids = [entity.entity_id for entity in entities]
-        query_params = [
-            ArrayQueryParameter("entity_ids", "STRING", entity_ids)
-        ]
-        logging.info(f"Saved tabular data for ingest to gs://{destination_path}/{entity_type}/*")
-        bigquery_service.run_query(
-            fetch_entities_query, bigquery_project_id, bigquery_region, query_params)
+            else:
+                fetch_entities_query = f"""
+                    EXPORT DATA OPTIONS(
+                      uri='gs://{destination_path}/{entity_type}/*',
+                      format='JSON',
+                      overwrite=true
+                    ) AS
+                    SELECT * EXCEPT (datarepo_row_id)
+                    FROM `{bigquery_project_id}.{snapshot_name}.{entity_type}` WHERE {entity_type}_id IN
+                    UNNEST(@entity_ids)
+                    """
+            entity_ids = [entity.entity_id for entity in chunk]
+            query_params = [
+                ArrayQueryParameter("entity_ids", "STRING", entity_ids)
+            ]
+            logging.info(f"Saved tabular data for ingest to gs://{destination_path}/{entity_type}/*")
+            bigquery_service.run_query(
+                fetch_entities_query, bigquery_project_id, bigquery_region, query_params)
 
 
 def _fetch_file_entities(
