@@ -250,7 +250,9 @@ def _fetch_file_entities(
         bigquery_project_id: str,
         snapshot_name: str,
         bigquery_region: str,
-        bigquery_service: BigQueryService) -> dict[str, list[Row]]:
+        bigquery_service: BigQueryService,
+        chunk_size: int = BQ_CHUNK_SIZE
+) -> dict[str, list[Row]]:
     result: dict[str, list[Row]] = defaultdict(list[Row])
     for entity_type, entities in entities_by_type.items():
         if not entity_type.endswith("_file"):
@@ -261,13 +263,15 @@ def _fetch_file_entities(
         FROM `{bigquery_project_id}.{snapshot_name}.{entity_type}` WHERE {entity_type}_id IN
         UNNEST(@entity_ids)
         """
-        entity_ids = [entity.entity_id for entity in entities]
-        query_params = [
-            ArrayQueryParameter("entity_ids", "STRING", entity_ids)
-        ]
-        result[entity_type] = [row for row in bigquery_service.run_query(fetch_entities_query,
-                                                                         bigquery_project_id,
-                                                                         bigquery_region,
-                                                                         query_params)]
+
+        chunked_entity_ids = chunked([entity.entity_id for entity in entities], chunk_size)
+        for entity_ids in chunked_entity_ids:
+            query_params = [
+                ArrayQueryParameter("entity_ids", "STRING", entity_ids)
+            ]
+            result[entity_type] += [row for row in bigquery_service.run_query(fetch_entities_query,
+                                                                              bigquery_project_id,
+                                                                              bigquery_region,
+                                                                              query_params)]
 
     return result
