@@ -68,7 +68,7 @@ def run(bq_project: str, dataset: str, snapshot: bool, project_id: str, project_
     if not snapshot:
         dataset = f"datarepo_{dataset}"
 
-    logging.info(f"Querying bq... [project={bq_project}, dataset={dataset}, hca_project_id={project_id}]")
+    logging.debug(f"Querying bq... [project={bq_project}, dataset={dataset}, hca_project_id={project_id}]")
     query = f"""
     SELECT * FROM `{bq_project}.{dataset}.links`
     """
@@ -80,7 +80,7 @@ def run(bq_project: str, dataset: str, snapshot: bool, project_id: str, project_
     assert len(links_rows) > 0, f"Should have links rows for project_id {project_id}"
 
     if project_only:
-        logging.info(f"Verifying dataset contains data for single project only [project_id={project_id}]")
+        logging.debug(f"Verifying dataset contains data for single project only [project_id={project_id}]")
         for row in links_rows:
             assert row[
                 "project_id"] == project_id, f"Dataset should only contain links rows for single project [project_id={project_id}]"
