@@ -1,11 +1,21 @@
 from enum import Enum
 
-from dagster import composite_solid, configured, DynamicOutputDefinition, Optional
+from dagster import (
+    DynamicOutputDefinition,
+    Optional,
+    composite_solid,
+    configured,
+)
 
 from hca_manage.common import JobId
-from hca_orchestration.solids.load_hca.ingest_metadata_type import ingest_metadata_type
+from hca_orchestration.solids.load_hca.ingest_metadata_type import (
+    ingest_metadata_type,
+)
 from hca_orchestration.solids.load_hca.load_table import load_table_solid
-from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType
+from hca_orchestration.support.typing import (
+    HcaScratchDatasetName,
+    MetadataType,
+)
 
 
 class NonFileMetadataTypes(Enum):
@@ -36,7 +46,7 @@ class NonFileMetadataTypes(Enum):
     LINKS = MetadataType("links")
 
 
-ingest_non_file_metadata_type = configured(ingest_metadata_type, name="ingest_non_file_metadata_type")(
+hingest_non_file_metadata_type = configured(ingest_metadata_type, name="ingest_non_file_metadata_type")(
     {"metadata_types": NonFileMetadataTypes, "prefix": "metadata"})
 
 
