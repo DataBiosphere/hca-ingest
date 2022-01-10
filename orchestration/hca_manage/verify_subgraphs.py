@@ -88,7 +88,7 @@ def run(bq_project: str, dataset: str, snapshot: bool, project_id: str, project_
     verify_all_subgraphs_in_dataset(links_rows, bq_project, dataset, bigquery_service)
 
     logging.info(
-        f"✅ Subgraphs verified [project_id={project_id}, dataset={dataset}, bq_project={bq_project}, num_links={len(links_rows)}]")
+        f"✅ Subgraphs verified [project_id = {project_id}, dataset = {dataset}, bq_project = {bq_project}, num_links = {len(links_rows)}]")
 
 
 def verify_snapshot_for_project(source_hca_project_id: str, dataset_qualifier: str) -> SnapshotModel:
