@@ -5,6 +5,7 @@ from hca_orchestration.models.entities import MetadataEntity
 from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.solids.copy_project.subgraph_hydration import (
     _extract_entities_to_path,
+    _fetch_file_entities,
     _find_previously_loaded_target_paths,
 )
 from hca_orchestration.support.typing import MetadataType
@@ -69,3 +70,47 @@ def test_extract_entities_to_path():
     assert query_params[1] == ['fake_id_3', 'fake_id_4']
     assert query_params[2] == ['fake_id_4', 'fake_id_5']
     assert query_params[3] == ['fake_id_6', 'fake_id_7']
+
+
+def test_fetch_file_entities():
+    entities_by_type = {
+        MetadataType("sequence_file"): [
+            MetadataEntity(MetadataType("sequence_file"), "abc"),
+            MetadataEntity(MetadataType("sequence_file"), "cde"),
+            MetadataEntity(MetadataType("sequence_file"), "efg"),
+            MetadataEntity(MetadataType("sequence_file"), "ghi")
+        ],
+        MetadataType("analysis_file"): [
+            MetadataEntity(MetadataType("analysis_file"), "ijk"),
+            MetadataEntity(MetadataType("analysis_file"), "klm"),
+            MetadataEntity(MetadataType("analysis_file"), "mno"),
+            MetadataEntity(MetadataType("analysis_file"), "pqr")
+        ]
+    }
+    bq_service = Mock(spec=BigQueryService)
+    results = [
+        [{"sequence_file_id": "chunk_1"}],
+        [{"sequence_file_id": "chunk_2"}],
+        [{"analysis_file_id": "chunk_2"}],
+        [{"analysis_file_id": "chunk_3"}]
+    ]
+    bq_service.run_query = Mock(side_effect=results)
+
+    result = _fetch_file_entities(
+        entities_by_type,
+        "fake_project_id",
+        "fake_snapshot_name",
+        "us-fake-1",
+        bq_service,
+        2
+    )
+
+    assert bq_service.run_query.call_count == 4
+    assert result[MetadataType("sequence_file")] == [
+        {"sequence_file_id": "chunk_1"},
+        {"sequence_file_id": "chunk_2"},
+    ]
+    assert result[MetadataType("analysis_file")] == [
+        {"analysis_file_id": "chunk_2"},
+        {"analysis_file_id": "chunk_3"}
+    ]
