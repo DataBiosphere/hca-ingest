@@ -209,7 +209,7 @@ def _extract_entities_to_path(
     for entity_type, entities in nodes.items():
 
         chunked_entities = chunked(entities, chunk_size)
-        for chunk in chunked_entities:
+        for i, chunk in enumerate(chunked_entities):
             data_file = False
             if entity_type.endswith("_file"):
                 data_file = True
@@ -217,7 +217,7 @@ def _extract_entities_to_path(
             if data_file:
                 fetch_entities_query = f"""
                     EXPORT DATA OPTIONS(
-                      uri='gs://{destination_path}/{entity_type}/*',
+                      uri='gs://{destination_path}/{entity_type}/{entity_type}_chunk_{i}_*.json',
                       format='JSON',
                       overwrite=true
                     ) AS
@@ -228,7 +228,7 @@ def _extract_entities_to_path(
             else:
                 fetch_entities_query = f"""
                     EXPORT DATA OPTIONS(
-                      uri='gs://{destination_path}/{entity_type}/*',
+                      uri='gs://{destination_path}/{entity_type}/{entity_type}_chunk_{i}_*.json',
                       format='JSON',
                       overwrite=true
                     ) AS
