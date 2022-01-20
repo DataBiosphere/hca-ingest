@@ -1,0 +1,11 @@
+resources:
+  snapshot_config:
+    config:
+      managed_access: false
+      qualifier: dcp12
+      dataset_qualifier: dcp2
+solids:
+  add_steward:
+    config:
+      snapshot_steward: monster@firecloud.org
+

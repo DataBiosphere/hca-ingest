@@ -84,5 +84,7 @@ releases:
                     limit: 1
                   - key: dcp_release
                     limit: 5
+                  - key: dcp2_prod_migration
+                    limit: 1
           envSecrets:
             - name: monster-dagster-secrets

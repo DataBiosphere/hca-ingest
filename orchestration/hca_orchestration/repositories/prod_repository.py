@@ -2,34 +2,56 @@
 Pipelines here are intended to be run in the PROD HCA GCP project
 """
 
-from dagster import PipelineDefinition, repository, in_process_executor
+from dagster import PipelineDefinition, in_process_executor, repository
 from dagster_gcp.gcs import gcs_pickle_io_manager
-from dagster_utils.resources.beam.k8s_beam_runner import k8s_dataflow_beam_runner
+from dagster_utils.resources.beam.k8s_beam_runner import (
+    k8s_dataflow_beam_runner,
+)
 from dagster_utils.resources.bigquery import bigquery_client
-from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client
+from dagster_utils.resources.data_repo.jade_data_repo import (
+    jade_data_repo_client,
+)
 from dagster_utils.resources.google_storage import google_storage_client
 from dagster_utils.resources.slack import live_slack_client
 
 from hca_orchestration.config import preconfigure_resource_for_mode
-from hca_orchestration.config.dcp_release.dcp_release import run_config_for_dcp_release_partition
-from hca_orchestration.config.dev_refresh.dev_refresh import run_config_for_cut_snapshot_partition
-from hca_orchestration.config.prod_migration.prod_migration import run_config_for_real_prod_migration_dcp1, \
-    run_config_for_real_prod_migration_dcp2
+from hca_orchestration.config.dcp_release.dcp_release import (
+    run_config_for_dcp_release_partition,
+)
+from hca_orchestration.config.prod_migration.prod_migration import (
+    run_config_cut_project_snapshot_job_real_prod_dcp2,
+    run_config_for_real_prod_migration_dcp1,
+    run_config_for_real_prod_migration_dcp2,
+)
 from hca_orchestration.contrib.dagster import configure_partitions_for_pipeline
 from hca_orchestration.pipelines import copy_project
-from hca_orchestration.pipelines.cut_snapshot import cut_project_snapshot_job, legacy_cut_snapshot_job
+from hca_orchestration.pipelines.cut_snapshot import (
+    cut_project_snapshot_job,
+    legacy_cut_snapshot_job,
+)
 from hca_orchestration.pipelines.load_hca import load_hca
-from hca_orchestration.pipelines.validate_ingress import validate_ingress_graph, staging_area_validator, \
-    run_config_for_validation_ingress_partition
-from hca_orchestration.resources import bigquery_service
-from hca_orchestration.resources import load_tag
+from hca_orchestration.pipelines.validate_ingress import (
+    run_config_for_validation_ingress_partition,
+    staging_area_validator,
+    validate_ingress_graph,
+)
+from hca_orchestration.repositories.common import (
+    build_pipeline_failure_sensor,
+    slack_on_pipeline_start,
+    slack_on_pipeline_success,
+)
+from hca_orchestration.resources import bigquery_service, load_tag
 from hca_orchestration.resources.config.dagit import dagit_config
+from hca_orchestration.resources.config.datasets import (
+    find_or_create_project_dataset,
+    passthrough_hca_dataset,
+)
 from hca_orchestration.resources.config.scratch import scratch_config
-from hca_orchestration.resources.config.datasets import passthrough_hca_dataset, find_or_create_project_dataset
 from hca_orchestration.resources.data_repo_service import data_repo_service
-from hca_orchestration.resources.hca_project_config import hca_project_copying_config, hca_project_id
-from hca_orchestration.repositories.common import slack_on_pipeline_start, slack_on_pipeline_success, \
-    build_pipeline_failure_sensor
+from hca_orchestration.resources.hca_project_config import (
+    hca_project_copying_config,
+    hca_project_id,
+)
 from hca_orchestration.resources.utils import run_start_time
 
 
@@ -127,7 +149,8 @@ def all_jobs() -> list[PipelineDefinition]:
                                               run_config_for_real_prod_migration_dcp1)
     jobs += configure_partitions_for_pipeline("dcp2_real_prod_migration",
                                               run_config_for_real_prod_migration_dcp2)
-    jobs += configure_partitions_for_pipeline("cut_snapshot", run_config_for_cut_snapshot_partition)
+    jobs += configure_partitions_for_pipeline("cut_project_snapshot_job_real_prod",
+                                              run_config_cut_project_snapshot_job_real_prod_dcp2)
     jobs += configure_partitions_for_pipeline("load_hca", run_config_for_dcp_release_partition)
     jobs += configure_partitions_for_pipeline("validate_ingress", run_config_for_validation_ingress_partition)
 
