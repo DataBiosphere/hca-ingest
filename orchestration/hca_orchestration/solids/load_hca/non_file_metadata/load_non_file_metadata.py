@@ -46,7 +46,7 @@ class NonFileMetadataTypes(Enum):
     LINKS = MetadataType("links")
 
 
-hingest_non_file_metadata_type = configured(ingest_metadata_type, name="ingest_non_file_metadata_type")(
+ingest_non_file_metadata_type = configured(ingest_metadata_type, name="ingest_non_file_metadata_type")(
     {"metadata_types": NonFileMetadataTypes, "prefix": "metadata"})
 
 
