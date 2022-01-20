@@ -63,7 +63,12 @@ def verify_entities_loaded(entity_type: MetadataType, expected_entities: list[Me
     assert len(set_diff) == 0, f"Not all expected IDs found [diff = {set_diff}]"
 
 
-def run(bq_project: str, dataset: str, snapshot: bool, project_id: str, project_only: bool = True) -> None:
+def run_verify_single_project(args: argparse.Namespace):
+    verify_single_project(args.bq_project, args.dataset, args.snapshot, args.project_id)
+
+
+def verify_single_project(bq_project: str, dataset: str, snapshot: bool,
+                          project_id: str, project_only: bool = True) -> None:
     bigquery_service = BigQueryService(Client(project=bq_project))
     if not snapshot:
         dataset = f"datarepo_{dataset}"
@@ -115,7 +120,7 @@ def verify_snapshot_for_project(source_hca_project_id: str, dataset_qualifier: s
     snapshot = snapshots.items[0]
     full_snapshot_info: SnapshotModel = data_repo_client.retrieve_snapshot(id=snapshot.id)
 
-    run(
+    verify_single_project(
         bq_project=full_snapshot_info.data_project,
         dataset=full_snapshot_info.name,
         snapshot=True,
@@ -126,7 +131,11 @@ def verify_snapshot_for_project(source_hca_project_id: str, dataset_qualifier: s
     return full_snapshot_info
 
 
-def verify_snapshots(project_list_path):
+def run_verify_snapshots(args: argparse.Namespace) -> None:
+    verify_snapshots(args.project_list)
+
+
+def verify_snapshots(project_list_path: str) -> None:
     with open(project_list_path) as f:
         reader = csv.reader(f)
         for row in reader:
@@ -139,17 +148,18 @@ def verify_snapshots(project_list_path):
 if __name__ == '__main__':
     setup_cli_logging_format()
     argparser = argparse.ArgumentParser()
-    argparser.add_argument("-c", "--project_list")
+    subparsers = argparser.add_subparsers()
+
+    batch_snapshot_verify = subparsers.add_parser("batch")
+    batch_snapshot_verify.add_argument("-c", "--project_list")
+    batch_snapshot_verify.set_defaults(func=run_verify_snapshots)
+
+    single_project_verify = subparsers.add_parser("single")
+    single_project_verify.add_argument("-b", "--bq-project", required=True)
+    single_project_verify.add_argument("-d", "--dataset", required=True)
+    single_project_verify.add_argument("-s", "--snapshot", action="store_true")
+    single_project_verify.add_argument("-p", "--project_id")
+    single_project_verify.set_defaults(func=run_verify_single_project)
 
     args = argparser.parse_args()
-    verify_snapshots(args.project_list)
-    #find_snapshot_for_project(args.project_id, args.dataset_qualifier)
-
-    #
-    # argparser.add_argument("-b", "--bq-project", required=True)
-    # argparser.add_argument("-d", "--dataset", required=True)
-    # argparser.add_argument("-s", "--snapshot", action="store_true")
-    # argparser.add_argument("-p", "--project_id")
-    # args = argparser.parse_args()
-    #
-    # run(args.bq_project, args.dataset, args.snapshot, args.project_id)
+    args.func(args)
