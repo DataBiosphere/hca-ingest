@@ -63,7 +63,7 @@ def verify_entities_loaded(entity_type: MetadataType, expected_entities: list[Me
     assert len(set_diff) == 0, f"Not all expected IDs found [diff = {set_diff}]"
 
 
-def run_verify_single_project(args: argparse.Namespace):
+def run_verify_single_project(args: argparse.Namespace) -> None:
     verify_single_project(args.bq_project, args.dataset, args.snapshot, args.project_id)
 
 
@@ -104,6 +104,10 @@ def verify_snapshot_for_project(source_hca_project_id: str, dataset_qualifier: s
     source_hca_dataset_prefix = f"hca_prod_{sanitized_hca_project_name}"
 
     tdr_dataset = data_repo_service.find_dataset(source_hca_dataset_prefix, qualifier=dataset_qualifier)
+    if not tdr_dataset:
+        logging.info(f"❌ No dataset found [hca_project_id={source_hca_project_id}")
+        raise SubgraphValidationException()
+
     snapshots = data_repo_client.enumerate_snapshots(filter=tdr_dataset.dataset_name)
 
     if not snapshots.items:
