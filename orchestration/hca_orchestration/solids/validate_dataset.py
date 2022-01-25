@@ -1,14 +1,27 @@
 from typing import Iterator
 
-from dagster import op, Failure, In, Nothing, AssetMaterialization, AssetKey, Out, Output
-from dagster.core.execution.context.compute import AbstractComputeExecutionContext
+from dagster import (
+    AssetKey,
+    AssetMaterialization,
+    Failure,
+    In,
+    Nothing,
+    Out,
+    Output,
+    op,
+)
+from dagster.core.execution.context.compute import (
+    AbstractComputeExecutionContext,
+)
 
-from hca_manage.common import ProblemCount
-from hca_orchestration.contrib.bigquery import BigQueryService
 from hca_manage.check import CheckManager
-from hca_orchestration.models.hca_dataset import TdrDataset
-from hca_orchestration.resources.hca_project_config import HcaProjectCopyingConfig
+from hca_manage.common import ProblemCount
 from hca_manage.verify_subgraphs import verify_all_subgraphs_in_dataset
+from hca_orchestration.contrib.bigquery import BigQueryService
+from hca_orchestration.models.hca_dataset import TdrDataset
+from hca_orchestration.resources.hca_project_config import (
+    HcaProjectCopyingConfig,
+)
 
 
 @op(
@@ -44,7 +57,7 @@ def verify_subgraphs(context: AbstractComputeExecutionContext, result: ProblemCo
     verify_all_subgraphs_in_dataset(
         links_rows,
         target_hca_dataset.project_id,
-        target_hca_dataset.dataset_name,
+        f"datarepo_{target_hca_dataset.dataset_name}",
         bigquery_service
     )
 
