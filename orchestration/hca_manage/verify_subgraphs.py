@@ -8,6 +8,7 @@ import logging
 from data_repo_client import SnapshotModel
 from google.cloud.bigquery import ArrayQueryParameter, Client
 from google.cloud.bigquery.table import RowIterator
+from more_itertools import chunked
 
 from hca_manage.common import (
     data_repo_host,
@@ -44,23 +45,26 @@ def verify_all_subgraphs_in_dataset(links_rows: RowIterator, bq_project: str,
 
 def verify_entities_loaded(entity_type: MetadataType, expected_entities: list[MetadataEntity], bq_project: str,
                            dataset: str, bigquery_service: BigQueryService) -> None:
-    fetch_entities_query = f"""
-        SELECT {entity_type}_id
-        FROM `{bq_project}.{dataset}.{entity_type}` WHERE {entity_type}_id IN
-        UNNEST(@entity_ids)
-    """
 
     expected_ids = {entity.entity_id for entity in expected_entities}
-    query_params = [
-        ArrayQueryParameter("entity_ids", "STRING", expected_ids)
-    ]
+    chunked_ids = chunked(expected_ids, 20000)
+    for cnt, entity_ids in enumerate(chunked_ids):
+        fetch_entities_query = f"""
+            SELECT {entity_type}_id
+            FROM `{bq_project}.{dataset}.{entity_type}` WHERE {entity_type}_id IN
+            UNNEST(@entity_ids)
+        """
 
-    loaded_ids = {row[f'{entity_type}_id'] for row in bigquery_service.run_query(
-        fetch_entities_query, bigquery_project=bq_project, location='US', query_params=query_params
-    )}
+        query_params = [
+            ArrayQueryParameter("entity_ids", "STRING", entity_ids)
+        ]
 
-    set_diff = expected_ids - loaded_ids
-    assert len(set_diff) == 0, f"Not all expected IDs found [diff = {set_diff}]"
+        loaded_ids = {row[f'{entity_type}_id'] for row in bigquery_service.run_query(
+            fetch_entities_query, bigquery_project=bq_project, location='US', query_params=query_params
+        )}
+
+        set_diff = set(entity_ids) - loaded_ids
+        assert len(set_diff) == 0, f"Not all expected IDs found [diff = {set_diff}]"
 
 
 def run_verify_single_project(args: argparse.Namespace) -> None:
