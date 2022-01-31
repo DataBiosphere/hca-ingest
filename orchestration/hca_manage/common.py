@@ -1,17 +1,22 @@
 import argparse
 import csv
-from dataclasses import dataclass
-import logging
 import functools
+import logging
 import sys
+from dataclasses import dataclass
 from typing import Any, Callable, NoReturn, TextIO, TypeVar, cast
 
 from dagster import make_python_type_usable_as_dagster_type
 from dagster.core.types.dagster_type import String as DagsterString
-
-from dagster_utils.contrib.google import default_google_access_token
 from dagster_utils.contrib.data_repo.typing import JobId
-from data_repo_client import ApiClient, Configuration, RepositoryApi, ApiException, ResourcesApi
+from dagster_utils.contrib.google import default_google_access_token
+from data_repo_client import (
+    ApiClient,
+    ApiException,
+    Configuration,
+    RepositoryApi,
+    ResourcesApi,
+)
 
 make_python_type_usable_as_dagster_type(JobId, DagsterString)
 
@@ -23,7 +28,8 @@ data_repo_host = {
 
 sam_host = {
     "dev": "https://sam.dsde-dev.broadinstitute.org",
-    "prod": "https://sam.dsde-prod.broadinstitute.org"
+    "prod": "https://sam.dsde-prod.broadinstitute.org",
+    "real_prod": "https://sam.dsde-prod.broadinstitute.org"
 }
 
 data_repo_profile_ids = {
