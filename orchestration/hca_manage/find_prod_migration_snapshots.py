@@ -22,7 +22,7 @@ CATALOGS = {
 }
 
 
-def run(catalog: str):
+def run(catalog: str) -> None:
     host = data_repo_host["real_prod"]
     client = get_api_client(host=host)
 
