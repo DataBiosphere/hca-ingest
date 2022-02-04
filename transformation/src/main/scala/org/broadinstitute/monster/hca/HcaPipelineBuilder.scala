@@ -1,12 +1,9 @@
 package org.broadinstitute.monster.hca
 
-import cats.data.Validated
-import com.spotify.scio.{ScioContext, ScioMetrics}
 import com.spotify.scio.coders.Coder
 import com.spotify.scio.io.ClosedTap
 import com.spotify.scio.values.SCollection
-import io.circe.parser._
-import io.circe.schema.Schema
+import com.spotify.scio.{ScioContext, ScioMetrics}
 import org.apache.beam.sdk.io.FileIO.ReadableFile
 import org.apache.beam.sdk.io.fs.{EmptyMatchTreatment, MatchResult}
 import org.apache.beam.sdk.io.{FileIO, ReadableFileCoder}
@@ -16,8 +13,6 @@ import org.broadinstitute.monster.hca.PostProcess.errCount
 import org.slf4j.{Logger, LoggerFactory}
 import ujson.StringRenderer
 import upack.{Msg, Obj, Str}
-
-import scala.util.{Failure, Success}
 
 object HcaPipelineBuilder extends PipelineBuilder[Args] {
 
@@ -451,65 +446,8 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
   def validateJson(inputPrefix: String)(
     filenamesAndMsg: SCollection[(String, Msg)]
   ): SCollection[(String, Msg)] = {
-    val urlAndFilenameWithMsg = filenamesAndMsg.filter {
-      case (filename, msg) => filterProperty(filename, msg, "describedBy", inputPrefix)
-    }.keyBy { case (_, msg) => msg.read[String]("describedBy") }
-
-    // get the distinct urls (so as to minimize the number of get requests) and then get the schemas as strings
-    val schemas = urlAndFilenameWithMsg
-      .withName("Validate: Schema Content URL")
-      .map(_._1)
-      .distinct
-      .withName("Validate: Schema Content")
-      .map(url => (url, requests.get(url).text))
-    // join the schemas to the data keyed by the schema url
-    val joined = urlAndFilenameWithMsg.leftOuterJoin(schemas)
-    // go over each row
-    joined.withName("Validate: Metadata files against schema definition").map {
-      case (url, ((filename, data), schemaOption)) =>
-        val errPath = s"$inputPrefix/$filename"
-        // if there is nothing in the schemaOption, then something went wrong; if there is, try to validate
-        val outOption = schemaOption match {
-          case Some(schema) =>
-            // if the schema is not able to load, log an error, otherwise try to use it to validate
-            Schema.loadFromString(schema) match {
-              case Failure(_) =>
-                Option(
-                  SchemaValidationError(
-                    errPath,
-                    s"Schema not loaded properly for schema at $url"
-                  )
-                )
-              case Success(value) =>
-                // try to parse the actual data into a json format for validation
-                parse(encode(data)) match {
-                  case Left(_) =>
-                    Option(
-                      SchemaValidationError(
-                        errPath,
-                        "Unable to parse data into json for file"
-                      )
-                    )
-                  // if everything is parsed/encoded/etc correctly, actually try to validate against schema here
-                  // if not valid, will return list of issues
-                  case Right(success) =>
-                    value.validate(success) match {
-                      case Validated.Valid(_) => None
-                      case Validated.Invalid(e) =>
-                        Option(
-                          SchemaValidationError(
-                            errPath,
-                            s"Data in file does not conform to schema from $url; ${e.map(_.getMessage).toList.mkString(",")}"
-                          )
-                        )
-                    }
-                }
-            }
-          case None =>
-            Option(SchemaValidationError(errPath, s"No schema found at $url"))
-        }
-        outOption.foreach { _.log }
-    }
+    // todo remove this method altogether
+    println(inputPrefix)
     filenamesAndMsg
   }
 }
