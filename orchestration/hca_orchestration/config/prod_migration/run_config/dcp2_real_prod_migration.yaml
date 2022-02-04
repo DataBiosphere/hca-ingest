@@ -1,8 +1,8 @@
 resources:
   hca_project_copying_config:
     config:
-      source_bigquery_project_id: tdr-fp-fea71bda
-      source_snapshot_name: hca_prod_20201120_dcp2___20211213_dcp12
+      source_bigquery_project_id: tdr-fp-a064907e
+      source_snapshot_name: hca_prod_20201120_dcp2___20220201_dcp13
       source_bigquery_region: US
   load_tag:
     config:
