@@ -212,43 +212,4 @@ class HcaPipelineBuilderSpec extends AnyFlatSpec with Matchers with PipelineSpec
     actualId shouldBe exampleId
     actualOutput shouldBe expectedOutput
   }
-
-  it should "not mutate the json when validating" in {
-    val exampleFileContent = JsonParser.parseEncodedJson(
-      """
-        |{
-        |    "organ": {
-        |        "text": "bräîn",
-        |        "ontology": "astrocyte"
-        |    },
-        |    "schema_type": "biomaterial",
-        |    "biomaterial_core": {
-        |        "ncbi_taxon_id": [
-        |            960600000000
-        |        ],
-        |        "biomaterial_id": "Q4_DEMO-sample_SAMN02797092",
-        |        "has_input_biomaterial": "Q4_DEMO-donor_MGH30",
-        |        "biomaterial_name": "Q4_DEMO-Single cell mRNA-seq_MGH30_A01",
-        |        "supplementary_files": [
-        |            "Q4_DEMO-protocol"
-        |        ]
-        |    },
-        |    "organ_part": {
-        |        "text": "glioblastoma"
-        |    },
-        |    "genus_species": [
-        |        {
-        |            "text": "Homo sapiens",
-        |            "ontology": "NCBITaxon:9606"
-        |        }
-        |    ],
-        |    "describedBy": "https://schema.humancellatlas.org/type/biomaterial/5.1.0/specimen_from_organism"
-        |}
-        |""".stripMargin
-    )
-
-    val exampleUrlAndFile = ("sampleFileName.json", exampleFileContent)
-    runWithData(Seq(exampleUrlAndFile))(HcaPipelineBuilder.validateJson("prefix")) shouldBe
-      Seq(exampleUrlAndFile)
-  }
 }
