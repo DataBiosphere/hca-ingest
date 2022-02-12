@@ -180,7 +180,7 @@ class BigQueryService:
                 ) AS
                 WITH rows_ordered_by_version AS (
                     SELECT datarepo_row_id, {table_name}_id, version, rank() OVER (
-                        PARTITION BY {table_name}_id ORDER BY version ASC, datarepo_row_id ASC
+                        PARTITION BY {table_name}_id ORDER BY version DESC, datarepo_row_id ASC
                     ) AS rank
                     FROM `{target_hca_dataset.project_id}.datarepo_{target_hca_dataset.dataset_name}.{table_name}`
                               ORDER BY {table_name}_id
