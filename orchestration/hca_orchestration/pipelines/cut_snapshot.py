@@ -1,25 +1,38 @@
 import warnings
 
-from dagster import HookContext, PipelineDefinition, in_process_executor
-from dagster import success_hook, failure_hook, graph, \
-    ExperimentalWarning
+from dagster import (
+    ExperimentalWarning,
+    HookContext,
+    PipelineDefinition,
+    failure_hook,
+    graph,
+    in_process_executor,
+    success_hook,
+)
 from dagster_gcp.gcs import gcs_pickle_io_manager
-from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client
+from dagster_utils.resources.data_repo.jade_data_repo import (
+    jade_data_repo_client,
+)
 from dagster_utils.resources.google_storage import google_storage_client
 from dagster_utils.resources.sam import sam_client
 from dagster_utils.resources.slack import live_slack_client
-from data_repo_client import SnapshotRequestAccessIncludeModel
 
 from hca_orchestration.config import preconfigure_resource_for_mode
-from hca_orchestration.solids.create_snapshot import get_completed_snapshot_info, make_snapshot_public, \
-    submit_snapshot_job, add_steward
-from hca_orchestration.solids.data_repo import wait_for_job_completion
-from hca_orchestration.resources.data_repo_service import data_repo_service
-from hca_orchestration.resources.config.data_repo import hca_manage_config, project_snapshot_creation_config, \
-    snapshot_creation_config
-from hca_orchestration.resources.utils import run_start_time
-
 from hca_orchestration.resources.config.dagit import dagit_config
+from hca_orchestration.resources.config.data_repo import (
+    hca_manage_config,
+    project_snapshot_creation_config,
+    snapshot_creation_config,
+)
+from hca_orchestration.resources.data_repo_service import data_repo_service
+from hca_orchestration.resources.utils import run_start_time
+from hca_orchestration.solids.create_snapshot import (
+    add_steward,
+    get_completed_snapshot_info,
+    make_snapshot_public,
+    submit_snapshot_job,
+)
+from hca_orchestration.solids.data_repo import wait_for_job_completion
 
 warnings.filterwarnings("ignore", category=ExperimentalWarning)
 
@@ -144,7 +157,7 @@ def snapshot_job_failed_notification(context: HookContext) -> None:
 )
 def message_for_snapshot_done(context: HookContext) -> None:
     snapshot_id = context.solid_output_values["result"]
-    snapshot_details: SnapshotRequestAccessIncludeModel = context.resources.data_repo_client.retrieve_snapshot(
+    snapshot_details = context.resources.data_repo_client.retrieve_snapshot(
         id=snapshot_id,
         include=["DATA_PROJECT"]
     )
