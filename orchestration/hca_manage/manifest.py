@@ -10,19 +10,22 @@ bucket for bulk ingest by our pipeline.
 
 import argparse
 import csv
+import json
 import logging
 import sys
 import warnings
-from more_itertools import chunked
-import requests
-import json
 
 import dagster
-from dagster_graphql import DagsterGraphQLClient, ShutdownRepositoryLocationStatus, DagsterGraphQLClientError
-from google.cloud.storage import Client, Bucket, Blob
+import requests
+from dagster_graphql import (
+    DagsterGraphQLClient,
+    DagsterGraphQLClientError,
+    ShutdownRepositoryLocationStatus,
+)
+from google.cloud.storage import Blob, Bucket, Client
+from more_itertools import chunked
 
-from hca_manage.common import setup_cli_logging_format, query_yes_no
-
+from hca_manage.common import query_yes_no, setup_cli_logging_format
 
 warnings.filterwarnings("ignore", category=dagster.ExperimentalWarning)
 
@@ -30,6 +33,14 @@ warnings.filterwarnings("ignore", category=dagster.ExperimentalWarning)
 ETL_PARTITION_BUCKETS = {
     "dev": "broad-dsp-monster-hca-dev-etl-partitions",
     "prod": "broad-dsp-monster-hca-prod-etl-partitions"
+}
+STAGING_AREA_BUCKETS = {
+    "prod": {
+        "EBI": "gs://broad-dsp-monster-hca-prod-ebi-storage/prod",
+        "UCSC": "gs://broad-dsp-monster-hca-prod-ebi-storage/prod",
+        "LANTERN": "gs://broad-dsp-monster-hca-prod-lantern",
+        "LATTICE": "gs://broad-dsp-monster-hca-prod-lattice/staging"
+    }
 }
 REPOSITORY_LOCATION = "monster-hca-ingest"
 MAX_STAGING_AREAS_PER_PARTITION_SET = 20
@@ -61,7 +72,7 @@ def _sanitize_gs_path(path: str) -> str:
     return path.strip().strip("/")
 
 
-def _parse_csv(csv_path: str) -> list[list[str]]:
+def _parse_csv(csv_path: str, env: str) -> list[list[str]]:
     paths = set()
     with open(csv_path, "r") as f:
         reader = csv.reader(f)
@@ -70,10 +81,18 @@ def _parse_csv(csv_path: str) -> list[list[str]]:
                 logging.debug("Empty path detected, skipping")
                 continue
 
-            assert len(row) == 1
+            assert len(row) == 2
+
+            institution = row[0]
+            project_id = row[1]
+            if institution not in STAGING_AREA_BUCKETS[env]:
+                raise Exception(f"Unknown institution {institution} found")
+
+            institution_bucket = STAGING_AREA_BUCKETS[env][institution]
+            path = institution_bucket + "/" + project_id
 
             # sanitize and dedupe
-            path = _sanitize_gs_path(row[0])
+            path = _sanitize_gs_path(path)
             assert path.startswith("gs://"), "Staging area path must start with gs:// scheme"
             paths.add(path)
 
@@ -82,7 +101,7 @@ def _parse_csv(csv_path: str) -> list[list[str]]:
 
 
 def parse_and_load_manifest(env: str, csv_path: str, release_tag: str, pipeline_name: str) -> None:
-    chunked_paths = _parse_csv(csv_path)
+    chunked_paths = _parse_csv(csv_path, env)
     storage_client = Client()
     bucket: Bucket = storage_client.bucket(bucket_name=ETL_PARTITION_BUCKETS[env])
 
@@ -91,7 +110,6 @@ def parse_and_load_manifest(env: str, csv_path: str, release_tag: str, pipeline_
 
         qualifier = chr(pos + 97)  # dcp11_a, dcp11_b, etc.
         blob_name = f"{pipeline_name}/{release_tag}_{qualifier}_manifest.csv"
-
         blob = Blob(bucket=bucket, name=blob_name)
         if blob.exists():
             if not query_yes_no(f"Manifest {blob.name} already exists for pipeline {pipeline_name}, overwrite?"):
@@ -131,6 +149,7 @@ def _enumerate_manifests(env: str) -> None:
 
 def load(args: argparse.Namespace) -> None:
     parse_and_load_manifest(args.env, args.csv_path, args.release_tag, "load_hca")
+    parse_and_load_manifest(args.env, args.csv_path, args.release_tag, "load_hca_per_project")
     parse_and_load_manifest(args.env, args.csv_path, args.release_tag, "validate_ingress")
     _reload_repository(_get_dagster_client())
 
