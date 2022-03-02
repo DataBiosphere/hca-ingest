@@ -70,6 +70,7 @@ def validate_ingress_job() -> PipelineDefinition:
 
 def load_hca_job() -> PipelineDefinition:
     return load_hca.to_job(
+        name="load_hca",
         resource_defs={
             "beam_runner": preconfigure_resource_for_mode(k8s_dataflow_beam_runner, "prod"),
             "bigquery_client": bigquery_client,
@@ -88,9 +89,9 @@ def load_hca_job() -> PipelineDefinition:
     )
 
 
-def load_hca_per_project_job() -> PipelineDefinition:
+def per_project_load_hca() -> PipelineDefinition:
     return load_hca.to_job(
-        name="load_hca_per_project_job",
+        name="per_project_load_hca",
         resource_defs={
             "beam_runner": preconfigure_resource_for_mode(k8s_dataflow_beam_runner, "prod"),
             "bigquery_client": bigquery_client,
@@ -158,7 +159,7 @@ def dcp2_real_prod_migration() -> PipelineDefinition:
 @repository
 def all_jobs() -> list[PipelineDefinition]:
     jobs = [
-        load_hca_per_project_job(),
+        per_project_load_hca(),
         dcp1_real_prod_migration(),
         dcp2_real_prod_migration(),
         cut_project_snapshot_job("prod", "prod", "monster@firecloud.org"),
@@ -177,7 +178,7 @@ def all_jobs() -> list[PipelineDefinition]:
     jobs += configure_partitions_for_pipeline("cut_project_snapshot_job_real_prod",
                                               run_config_cut_project_snapshot_job_real_prod_dcp2)
     jobs += configure_partitions_for_pipeline("load_hca", run_config_for_dcp_release_partition)
-    jobs += configure_partitions_for_pipeline("load_hca_per_project_job",
+    jobs += configure_partitions_for_pipeline("per_project_load_hca",
                                               run_config_for_dcp_release_per_project_partition)
     jobs += configure_partitions_for_pipeline("validate_ingress", run_config_for_validation_ingress_partition)
 
