@@ -23,6 +23,7 @@ from hca_orchestration.config.prod_migration.prod_migration import (
     run_config_cut_project_snapshot_job_real_prod_dcp2,
     run_config_for_real_prod_migration_dcp1,
     run_config_for_real_prod_migration_dcp2,
+    run_config_per_project_snapshot_job,
 )
 from hca_orchestration.contrib.dagster import configure_partitions_for_pipeline
 from hca_orchestration.pipelines import copy_project
@@ -176,7 +177,7 @@ def all_jobs() -> list[PipelineDefinition]:
     jobs += configure_partitions_for_pipeline("dcp2_real_prod_migration",
                                               run_config_for_real_prod_migration_dcp2)
     jobs += configure_partitions_for_pipeline("cut_project_snapshot_job_real_prod",
-                                              run_config_cut_project_snapshot_job_real_prod_dcp2)
+                                              run_config_per_project_snapshot_job)
     jobs += configure_partitions_for_pipeline("load_hca", run_config_for_dcp_release_partition)
     jobs += configure_partitions_for_pipeline("per_project_load_hca",
                                               run_config_for_dcp_release_per_project_partition)

@@ -73,7 +73,8 @@ def _sanitize_gs_path(path: str) -> str:
     return path.strip().strip("/")
 
 
-def _parse_csv(csv_path: str, env: str, project_id_only: bool = False) -> list[list[str]]:
+def _parse_csv(csv_path: str, env: str, project_id_only: bool = False,
+               include_release_tag: bool = False, release_tag: str = "") -> list[list[str]]:
     keys = set()
     with open(csv_path, "r") as f:
         reader = csv.reader(f)
@@ -86,9 +87,10 @@ def _parse_csv(csv_path: str, env: str, project_id_only: bool = False) -> list[l
             institution = row[0]
             project_id = find_project_id_in_str(row[1])
 
+            key = None
             if project_id_only:
                 project_id = row[1]
-                keys.add(project_id)
+                key = project_id
             else:
 
                 if institution not in STAGING_AREA_BUCKETS[env]:
@@ -100,21 +102,24 @@ def _parse_csv(csv_path: str, env: str, project_id_only: bool = False) -> list[l
                 # sanitize and dedupe
                 path = _sanitize_gs_path(path)
                 assert path.startswith("gs://"), "Staging area path must start with gs:// scheme"
-                keys.add(path)
+                key = path
+
+            if include_release_tag:
+                key = key + f",{release_tag}"
+            keys.add(key)
 
     chunked_paths = chunked(keys, MAX_STAGING_AREAS_PER_PARTITION_SET)
     return [chunk for chunk in chunked_paths]
 
 
 def parse_and_load_manifest(env: str, csv_path: str, release_tag: str,
-                            pipeline_name: str, project_id_only: bool = False) -> None:
-    chunked_paths = _parse_csv(csv_path, env, project_id_only)
+                            pipeline_name: str, project_id_only: bool = False, include_release_tag: bool = False) -> None:
+    chunked_paths = _parse_csv(csv_path, env, project_id_only, include_release_tag, release_tag)
     storage_client = Client()
     bucket: Bucket = storage_client.bucket(bucket_name=ETL_PARTITION_BUCKETS[env])
 
     for pos, chunk in enumerate(chunked_paths):
         assert len(chunk), "At least one import path is required"
-
         qualifier = chr(pos + 97)  # dcp11_a, dcp11_b, etc.
         blob_name = f"{pipeline_name}/{release_tag}_{qualifier}_manifest.csv"
         blob = Blob(bucket=bucket, name=blob_name)
@@ -163,7 +168,9 @@ def load(args: argparse.Namespace) -> None:
         args.csv_path,
         args.release_tag,
         "cut_project_snapshot_job_real_prod",
-        project_id_only=True)
+        project_id_only=True,
+        include_release_tag=True
+    )
     _reload_repository(_get_dagster_client())
 
 

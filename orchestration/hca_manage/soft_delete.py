@@ -1,19 +1,25 @@
 import argparse
-from dataclasses import dataclass, field
 import logging
-from typing import BinaryIO, Optional
 import uuid
+from dataclasses import dataclass, field
+from typing import BinaryIO, Optional
 
+import google.auth.credentials
 from dagster_utils.contrib import google as hca_google
 from dagster_utils.contrib.data_repo.jobs import poll_job
-from data_repo_client import RepositoryApi, DataDeletionRequest
-import google.auth.credentials
+from dagster_utils.contrib.data_repo.typing import JobId
+from data_repo_client import DataDeletionRequest, RepositoryApi
 from google.cloud import storage
 
-from dagster_utils.contrib.data_repo.typing import JobId
 from hca_manage import __version__ as hca_manage_version
-from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client, get_dataset_id, query_yes_no, \
-    setup_cli_logging_format
+from hca_manage.common import (
+    DefaultHelpParser,
+    data_repo_host,
+    get_api_client,
+    get_dataset_id,
+    query_yes_no,
+    setup_cli_logging_format,
+)
 
 
 def run(arguments: Optional[list[str]] = None) -> None:
@@ -21,7 +27,8 @@ def run(arguments: Optional[list[str]] = None) -> None:
 
     parser = DefaultHelpParser(description="A simple CLI to soft delete rows in a TDR dataset.")
     parser.add_argument("-V", "--version", action="version", version="%(prog)s " + hca_manage_version)
-    parser.add_argument("-e", "--env", help="The Jade environment to target", choices=["dev", "prod"], required=True)
+    parser.add_argument("-e", "--env", help="The Jade environment to target",
+                        choices=["dev", "prod", "real_prod"], required=True)
 
     parser.add_argument("-p", "--path", help="Path to csv containing row IDs to soft delete")
     parser.add_argument("-t", "--target_table", help="Table containing the rows slated for soft deletion")
@@ -58,7 +65,7 @@ class SoftDeleteManager:
         self.bucket_project = {"prod": "mystical-slate-284720",
                                "real_prod": "mystical-slate-284720",
                                "dev": "broad-dsp-monster-hca-dev"}[self.environment]
-        self.bucket = f"broad-dsp-monster-hca-{self.environment}-staging-storage"
+        self.bucket = f"broad-dsp-monster-hca-prod-staging-storage"
 
     @property
     def gcp_creds(self) -> google.auth.credentials.Credentials:
