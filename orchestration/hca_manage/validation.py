@@ -3,9 +3,9 @@ from typing import Any, Optional
 
 from dagster_utils.contrib.google import parse_gs_path
 from google.cloud.storage import Client
+from hca.staging_area_validator import StagingAreaValidator
 
 from hca_manage.common import DefaultHelpParser
-from hca.staging_area_validator import StagingAreaValidator
 
 
 class HcaValidator:
@@ -14,13 +14,12 @@ class HcaValidator:
         Run the validation pre-checks on the staging area
         :param path: Google Cloud Storage path for staging area
         """
-        exit_code = self.validate_structure(path, client)
         adapter = StagingAreaValidator(
             staging_area=path,
             ignore_dangling_inputs=ignore_inputs,
             validate_json=True
         )
-        exit_code |= adapter.main()
+        exit_code = adapter.main()
         if not exit_code:
             logging.info(f'Staging area {path} is valid')
         else:
