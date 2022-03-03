@@ -1,0 +1,23 @@
+resources:
+  load_tag:
+    config:
+      append_run_id: true
+  scratch_config:
+    config:
+      scratch_bq_project: mystical-slate-284720
+      scratch_bucket_name: broad-dsp-monster-hca-prod-staging-storage
+      scratch_table_expiration_ms: 86400000
+  target_hca_dataset:
+    config:
+      env: "real_prod"
+      policy_members: ["monster@firecloud.org"]
+      billing_profile_id: 87bfdaf8-9216-4795-90c9-7ae5e7946871
+      region: US
+      qualifier: dcp2
+  hca_project_id:
+    config: {}
+solids:
+  pre_process_metadata:
+    config:
+      input_prefix:
+
