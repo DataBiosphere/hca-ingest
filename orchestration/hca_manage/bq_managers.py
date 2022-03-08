@@ -1,11 +1,10 @@
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
 import logging
 import os
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Callable
 
 from google.cloud import bigquery
-
 
 from hca_manage.common import populate_row_id_csv
 from hca_manage.soft_delete import SoftDeleteManager
@@ -215,9 +214,13 @@ class NullFileRefManager(BQRowManager):
         :param target_table: The particular table to operate on.
         :return: A set of row ids to soft delete.
         """
+
+        # TODO we are allowing null file_ids if there is a `drs_uri` field in the descriptor (these are
+        # "bring your own" DRS file references that are hosted outside of TDR). We should be smarter about parsing
+        # the descriptor and ensuring a sane value rather than the fuzzy matching we're doing here
         query = f"""
         SELECT datarepo_row_id
-        FROM `{self.project}.{self.dataset}.{target_table}` WHERE file_id IS NULL
+        FROM `{self.project}.{self.dataset}.{target_table}` WHERE file_id IS NULL AND descriptor NOT LIKE '%"drs_uri":%'
         """
 
         return self._hit_bigquery(query)

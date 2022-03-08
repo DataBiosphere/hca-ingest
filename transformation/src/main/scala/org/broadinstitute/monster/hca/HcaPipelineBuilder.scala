@@ -230,7 +230,7 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
 
     val targetPath =
       s"/v1/$contentId/${descriptor
-        .read[String]("crc32c")}/${fileName.substring(fileName.lastIndexOf("/") + 1)}"
+        .read[String]("crc32c")}/${fileName}"
 
     contentId -> Obj(
       Str("source_path") -> Str(s"$inputPrefix/data/$fileName"),
@@ -385,11 +385,16 @@ object HcaPipelineBuilder extends PipelineBuilder[Args] {
             transformFileMetadata(entityType, filename, metadata, descriptor, inputPrefix)
         }
 
-      // Generate file ingest requests from descriptors. Deduplicate by the content hash.
-      val fileIngestRequests = validatedDescriptors.map {
-        case (_, descriptor) =>
-          generateFileIngestRequest(descriptor, inputPrefix)
-      }.distinctByKey.values
+      // Generate file ingest requests from descriptors. Deduplicate by the content hash and exclude any
+      // with external drs_uri references
+      val fileIngestRequests = validatedDescriptors
+        .filter(!_._2.asInstanceOf[Obj].value.keySet.contains(Str("drs_uri")))
+        .map {
+          case (_, descriptor: Msg) =>
+            generateFileIngestRequest(descriptor, inputPrefix)
+        }
+        .distinctByKey
+        .values
 
       StorageIO.writeJsonListsGeneric(
         fileIngestRequests,
