@@ -1,25 +1,40 @@
 import argparse
-from dataclasses import dataclass, field
-from datetime import datetime, date
 import logging
-from re import search
 import sys
+from dataclasses import dataclass, field
+from datetime import date, datetime
+from re import search
 from typing import Optional
 
-from dagster_utils.resources.sam import Sam
-from data_repo_client import RepositoryApi, SnapshotRequestModel, SnapshotRequestContentsModel, \
-    EnumerateSnapshotModel, PolicyMemberRequest, PolicyResponse, SnapshotModel
-from dagster_utils.contrib.data_repo.jobs import poll_job, JobPollException
+from dagster_utils.contrib.data_repo.jobs import JobPollException, poll_job
 from dagster_utils.contrib.data_repo.typing import JobId
+from dagster_utils.resources.sam import Sam
+from data_repo_client import (
+    EnumerateSnapshotModel,
+    PolicyMemberRequest,
+    PolicyResponse,
+    RepositoryApi,
+    SnapshotModel,
+    SnapshotRequestContentsModel,
+    SnapshotRequestModel,
+)
 
 from hca_manage import __version__ as hca_manage_version
-from hca_manage.common import data_repo_host, data_repo_profile_ids, DefaultHelpParser, get_api_client, \
-    query_yes_no, tdr_operation, setup_cli_logging_format, sam_host
+from hca_manage.common import (
+    DefaultHelpParser,
+    data_repo_host,
+    data_repo_profile_ids,
+    get_api_client,
+    query_yes_no,
+    sam_host,
+    setup_cli_logging_format,
+    tdr_operation,
+)
 
 MAX_SNAPSHOT_DELETE_POLL_SECONDS = 120
 SNAPSHOT_DELETE_POLL_INTERVAL_SECONDS = 2
-LEGACY_SNAPSHOT_NAME_REGEX = r"^hca_(dev|prod|staging)_(\d{4})(\d{2})(\d{2})(_[a-zA-Z][a-zA-Z0-9]{0,13})?_([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})?__(\d{4})(\d{2})(\d{2})(?:_([a-zA-Z][a-zA-Z0-9]{0,13}))?$"
-UPDATED_SNAPSHOT_NAME_REGEX = r"^hca_(dev|prod|staging)_([0-9a-f]{32})?__(\d{4})(\d{2})(\d{2})(?:_([a-zA-Z][a-zA-Z0-9]{0,15}))?_(\d{4})(\d{2})(\d{2})(?:_([a-zA-Z][a-zA-Z0-9]{0,15}))?$"
+LEGACY_SNAPSHOT_NAME_REGEX = r"^(hca|lungmap)_(dev|prod|staging)_(\d{4})(\d{2})(\d{2})(_[a-zA-Z][a-zA-Z0-9]{0,13})?_([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})?__(\d{4})(\d{2})(\d{2})(?:_([a-zA-Z][a-zA-Z0-9]{0,13}))?$"
+UPDATED_SNAPSHOT_NAME_REGEX = r"^(hca|lungmap)_(dev|prod|staging)_([0-9a-f]{32})?__(\d{4})(\d{2})(\d{2})(?:_([a-zA-Z][a-zA-Z0-9]{0,15}))?_(\d{4})(\d{2})(\d{2})(?:_([a-zA-Z][a-zA-Z0-9]{0,15}))?$"
 
 
 class InvalidSnapshotNameException(ValueError):

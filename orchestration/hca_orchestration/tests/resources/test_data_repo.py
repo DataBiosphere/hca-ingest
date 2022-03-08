@@ -1,15 +1,20 @@
-from unittest.mock import MagicMock, Mock
 from datetime import datetime
 from re import search
+from unittest.mock import MagicMock, Mock
 
 import pytest
-from dagster import build_init_resource_context, ResourceDefinition
+from dagster import ResourceDefinition, build_init_resource_context
 
-from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
-from hca_orchestration.resources.config.data_repo import project_snapshot_creation_config, snapshot_creation_config
-from hca_orchestration.models.hca_dataset import TdrDataset
-from hca_orchestration.support.dates import dataset_snapshot_formatted_date
 from hca_manage.snapshot import LEGACY_SNAPSHOT_NAME_REGEX
+from hca_orchestration.contrib.data_repo.data_repo_service import (
+    DataRepoService,
+)
+from hca_orchestration.models.hca_dataset import TdrDataset
+from hca_orchestration.resources.config.data_repo import (
+    project_snapshot_creation_config,
+    snapshot_creation_config,
+)
+from hca_orchestration.support.dates import dataset_snapshot_formatted_date
 
 
 def test_project_snapshot_creation_config(monkeypatch):
@@ -29,7 +34,8 @@ def test_project_snapshot_creation_config(monkeypatch):
             "source_hca_project_id": "abc123",
             "qualifier": "dcp999",
             "managed_access": False,
-            "dataset_qualifier": "dcp1"
+            "dataset_qualifier": "dcp1",
+            "atlas": "hca"
         }
     )
 
@@ -49,7 +55,8 @@ def test_project_snapshot_creation_config_none_found(monkeypatch):
             "source_hca_project_id": "abc123",
             "qualifier": "dcp999",
             "managed_access": False,
-            "dataset_qualifier": "dcp1"
+            "dataset_qualifier": "dcp1",
+            "atlas": "hca"
         }
     )
 
@@ -74,6 +81,7 @@ def test_project_snapshot_creation_config_no_dataset_qualifier(monkeypatch):
             "source_hca_project_id": "abc123",
             "qualifier": "dcp999",
             "managed_access": False,
+            "atlas": "hca"
         }
     )
 
@@ -99,6 +107,7 @@ def test_project_snapshot_creation_config_no_snapshot_qualifier(monkeypatch):
         config={
             "source_hca_project_id": "abc123",
             "managed_access": False,
+            "atlas": "hca"
         }
     )
 
