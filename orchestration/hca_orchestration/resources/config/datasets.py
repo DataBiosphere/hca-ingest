@@ -3,9 +3,11 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from dagster import InitResourceContext, resource, Array, Field, Noneable
+from dagster import Array, Field, InitResourceContext, Noneable, resource
 
-from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
+from hca_orchestration.contrib.data_repo.data_repo_service import (
+    DataRepoService,
+)
 from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.support.dates import dataset_snapshot_formatted_date
 
@@ -33,6 +35,7 @@ def passthrough_hca_dataset(init_context: InitResourceContext) -> TdrDataset:
         "region": str,
         "policy_members": Array(str),
         "billing_profile_id": str,
+        "atlas": str,
         "qualifier": Field(Noneable(str), default_value=None, is_required=False),
     },
     required_resource_keys={"hca_project_id", "data_repo_service", "run_start_time"}
@@ -48,9 +51,10 @@ def find_or_create_project_dataset(init_context: InitResourceContext) -> Optiona
     hca_project_id = uuid.UUID(init_context.resources.hca_project_id)
     qualifier = init_context.resource_config['qualifier']
     env = init_context.resource_config['env']
+    atlas = init_context.resource_config['atlas']
     env_prefix = "prod" if env == "real_prod" else env
 
-    target_hca_dataset_prefix = f"hca_{env_prefix}_{hca_project_id.hex.replace('-', '')}"
+    target_hca_dataset_prefix = f"{atlas}_{env_prefix}_{hca_project_id.hex.replace('-', '')}"
     run_start_time = init_context.resources.run_start_time
     creation_date = dataset_snapshot_formatted_date(datetime.utcfromtimestamp(run_start_time))
 

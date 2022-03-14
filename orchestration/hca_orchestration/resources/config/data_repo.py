@@ -2,10 +2,12 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 
-from dagster import resource, String, Bool, Noneable
+from dagster import Bool, Noneable, String, resource
 from dagster.core.execution.context.init import InitResourceContext
 
-from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
+from hca_orchestration.contrib.data_repo.data_repo_service import (
+    DataRepoService,
+)
 from hca_orchestration.support.dates import dataset_snapshot_formatted_date
 
 
@@ -49,17 +51,19 @@ def snapshot_creation_config(init_context: InitResourceContext) -> SnapshotCreat
         "source_hca_project_id": String,
         "qualifier": Noneable(String),
         "managed_access": Bool,
-        "dataset_qualifier": Noneable(String)
+        "dataset_qualifier": Noneable(String),
+        "atlas": String
     })
 def project_snapshot_creation_config(init_context: InitResourceContext) -> SnapshotCreationConfig:
     source_hca_project_id = init_context.resource_config["source_hca_project_id"]
     data_repo_service: DataRepoService = init_context.resources.data_repo_service
+    atlas = init_context.resource_config["atlas"]
 
     # find the existing dataset, bail out if none are found
     env = os.environ["ENV"]
     sanitized_hca_project_name = source_hca_project_id.replace('-', '')
     dataset_qualifier = init_context.resource_config.get('dataset_qualifier', None)
-    source_hca_dataset_prefix = f"hca_{env}_{sanitized_hca_project_name}"
+    source_hca_dataset_prefix = f"{atlas}_{env}_{sanitized_hca_project_name}"
 
     # we provide the dataset qualifier to allow distinction between dcp1/dcp2 datasets
     # (i.e., two datasets, same hca project ID but one is from dcp1 and the other from dcp2)
@@ -75,7 +79,7 @@ def project_snapshot_creation_config(init_context: InitResourceContext) -> Snaps
         dataset_qualifier = dataset_suffix[1]
         snapshot_suffix = f"{snapshot_suffix}_{dataset_qualifier}"
 
-    snapshot_name = f"hca_{env}_{sanitized_hca_project_name}__{snapshot_suffix}_{creation_date}"
+    snapshot_name = f"{atlas}_{env}_{sanitized_hca_project_name}__{snapshot_suffix}_{creation_date}"
 
     snapshot_qualifier = init_context.resource_config.get('qualifier', None)
     if snapshot_qualifier:

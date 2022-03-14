@@ -60,6 +60,7 @@ def cut_project_snapshot_job(hca_env: str, jade_env: str, steward: str) -> Pipel
                         "managed_access": False,
                         "source_hca_project_id": "",
                         "qualifier": None,
+                        "atlas": "hca"
                     }
                 }
             }, "solids": {

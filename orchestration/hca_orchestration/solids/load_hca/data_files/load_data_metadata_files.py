@@ -1,16 +1,34 @@
 from enum import Enum
 
-from dagster import solid, composite_solid, configured, DynamicOutputDefinition, Optional, Failure
-from dagster.core.execution.context.compute import AbstractComputeExecutionContext
+from dagster import (
+    DynamicOutputDefinition,
+    Failure,
+    Optional,
+    composite_solid,
+    configured,
+    solid,
+)
+from dagster.core.execution.context.compute import (
+    AbstractComputeExecutionContext,
+)
 from google.cloud.bigquery.client import RowIterator
 
 from hca_manage.common import JobId
 from hca_orchestration.contrib.bigquery import BigQueryService
 from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.resources.config.scratch import ScratchConfig
-from hca_orchestration.solids.load_hca.ingest_metadata_type import ingest_metadata_type
-from hca_orchestration.solids.load_hca.load_table import load_table_solid, export_data
-from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataType, MetadataTypeFanoutResult
+from hca_orchestration.solids.load_hca.ingest_metadata_type import (
+    ingest_metadata_type,
+)
+from hca_orchestration.solids.load_hca.load_table import (
+    export_data,
+    load_table_solid,
+)
+from hca_orchestration.support.typing import (
+    HcaScratchDatasetName,
+    MetadataType,
+    MetadataTypeFanoutResult,
+)
 
 
 class FileMetadataTypes(Enum):
@@ -87,8 +105,12 @@ def _inject_file_ids(
         bigquery_project=scratch_config.scratch_bq_project,
         location=target_hca_dataset.bq_location
     )
+
     for row in rows:
-        if not row["file_id"]:
+        # check for rows with no file_id
+        # we allow null file_ids in the case where there is a `drs_uri` in the file descriptor (i.e., the file is
+        # hosted in a repo external to TDR but we still want to expose the file metadata)
+        if not row["file_id"] and "drs_uri" not in row["descriptor"]:
             raise NullFileIdException(
                 f"File metadata with null file ID detected, will not ingest. Check crc32c and target_path [table={file_metadata_type}]")
     return rows

@@ -1,10 +1,14 @@
 from unittest.mock import Mock
 
-from dagster import build_init_resource_context, ResourceDefinition
+from dagster import ResourceDefinition, build_init_resource_context
 
-from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
-from hca_orchestration.resources.config.datasets import find_or_create_project_dataset
+from hca_orchestration.contrib.data_repo.data_repo_service import (
+    DataRepoService,
+)
 from hca_orchestration.models.hca_dataset import TdrDataset
+from hca_orchestration.resources.config.datasets import (
+    find_or_create_project_dataset,
+)
 
 
 def test_find_or_create_project_dataset_returns_existing_dataset():
@@ -24,7 +28,8 @@ def test_find_or_create_project_dataset_returns_existing_dataset():
             "region": "US",
             "policy_members": ["example@example.com"],
             "billing_profile_id": "fake_billing_profile_id",
-            "qualifier": None
+            "qualifier": None,
+            "atlas": "hca"
         },
         resources={
             "hca_project_id": ResourceDefinition.hardcoded_resource("08BCA7FF-A15A-4D58-806B-7CD45979768B"),
@@ -50,7 +55,8 @@ def test_find_or_create_project_dataset_creates_new_dataset():
             "region": "US",
             "policy_members": ["example@example.com"],
             "billing_profile_id": "fake_billing_profile_id",
-            "qualifier": None
+            "qualifier": None,
+            "atlas": "hca"
         },
         resources={
             "hca_project_id": ResourceDefinition.hardcoded_resource("08BCA7FF-A15A-4D58-806B-7CD45979768B"),
@@ -83,7 +89,8 @@ def test_find_or_create_project_dataset_creates_new_dataset_with_qualifier():
             "region": "US",
             "policy_members": ["example@example.com"],
             "billing_profile_id": "fake_billing_profile_id",
-            "qualifier": "test_qualifier"
+            "qualifier": "test_qualifier",
+            "atlas": "hca"
         },
         resources={
             "hca_project_id": ResourceDefinition.hardcoded_resource("08BCA7FF-A15A-4D58-806B-7CD45979768B"),
@@ -115,7 +122,8 @@ def test_find_or_create_project_dataset_transforms_real_prod_to_prod():
             "region": "US",
             "policy_members": ["example@example.com"],
             "billing_profile_id": "fake_billing_profile_id",
-            "qualifier": None
+            "qualifier": None,
+            "atlas": "hca"
         },
         resources={
             "hca_project_id": ResourceDefinition.hardcoded_resource("08BCA7FF-A15A-4D58-806B-7CD45979768B"),
