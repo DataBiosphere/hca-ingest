@@ -6,7 +6,11 @@ from typing import Iterable
 import pytest
 from google.cloud.bigquery.client import Client
 
-from hca_manage.common import data_repo_host, get_api_client, data_repo_profile_ids
+from hca_manage.common import (
+    data_repo_host,
+    data_repo_profile_ids,
+    get_api_client,
+)
 from hca_manage.dataset import DatasetManager
 
 MONSTER_TEST_DATASET_SENTINEL = "MONSTER_TEST_DELETEME"
@@ -111,7 +115,8 @@ def copy_project_config():
                     "billing_profile_id": data_repo_profile_ids["dev"],
                     "env": "dev",
                     "policy_members": ["monster-dev@dev.test.firecloud.org"],
-                    "region": "US"
+                    "region": "US",
+                    "atlas": "hca"
                 }
             }
         },
