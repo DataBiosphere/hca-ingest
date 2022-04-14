@@ -6,7 +6,8 @@ system design information.
 
 * Clone this repository to a local directory
 * Build and run the dataflow tests
-  * From the repository root: `sbt test`
+  * From the repository root: `sbt test` 
+    * if this fails use `sbt test -Djava.security.manager=allow`
 * Setup a local python environment
   * Make sure you have [poetry](https://python-poetry.org/docs/#installation) installed
   * From `orchestration/`:
