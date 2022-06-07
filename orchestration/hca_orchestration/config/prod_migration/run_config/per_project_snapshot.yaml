@@ -3,6 +3,7 @@ resources:
     config:
       managed_access: false
       dataset_qualifier: dcp2
+      atlas: hca
 solids:
   add_steward:
     config:
