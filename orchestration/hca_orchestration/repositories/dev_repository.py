@@ -87,7 +87,7 @@ def per_project_load_hca() -> PipelineDefinition:
     return load_hca.to_job(
         name="per_project_load_hca",
         resource_defs={
-            "beam_runner": preconfigure_resource_for_mode(dataflow_beam_runner, "dev"),
+            "beam_runner": preconfigure_resource_for_mode(k8s_dataflow_beam_runner, "dev"),
             "bigquery_client": bigquery_client,
             "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "dev"),
             "gcs": google_storage_client,
