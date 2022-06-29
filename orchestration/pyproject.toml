@@ -26,6 +26,7 @@ hca-import-validation = "^0.0.4"
 rfc3339-validator = "^0.1.4"
 markupsafe = "2.0.1"
 protobuf = "3.20.1"
+ipython_genutils = "^0.2.0"
 
 [tool.poetry.dev-dependencies]
 autopep8 = "^1.5.5"
