@@ -12,6 +12,7 @@ system design information.
   * Make sure you have [poetry](https://python-poetry.org/docs/#installation) installed
   * From `orchestration/`:
     * Run `poetry install` to setup a local python virtual environment and install needed dependencies
+      * it may be preferable to use `poetry lock --no-update` to avoid updating dependencies if you have already installed them.
     * Run `pytest` and make sure all tests with the exception of our end-to-end suite run and pass locally
 
 # Development Process
