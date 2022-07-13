@@ -6,6 +6,10 @@ authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
 # until https://bugs.python.org/issue45081 is pushed in an upcoming python version we can't upgrade past 3.9.6
+# ^^ this bug was moved to GitHub https://github.com/python/cpython/issues/89244 and has been closed so we can move beyond 3.9.6.
+# both aherbst & bahill have confirmed this works with 3.9.11 and the latest lock file was built with 3.9.11.
+#
+# to prevent unininteded upgrades we need to provide upperbound versions for the dependencies. For example ~3.4 instead of ^3.4
 python = "3.9.6"
 argo-workflows = "^5.0.0"
 cached-property = "^1.5.2"
@@ -22,7 +26,7 @@ pyyaml = "^5.3"
 dagster-gcp = "^0.12.14"
 broad-dagster-utils = "0.6.7"
 graphql-ws = "<0.4.0"
-hca-import-validation = "^0.0.4"
+hca-import-validation = "^0.0.8"
 rfc3339-validator = "^0.1.4"
 markupsafe = "2.0.1"
 protobuf = "3.20.1"
