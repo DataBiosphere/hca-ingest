@@ -6,6 +6,7 @@ script in this directory.
 ## Process
 
 * Install the helmfile tool via this [repo](https://github.com/helmfile/helmfile)
+    * https://helmfile.readthedocs.io/en/latest/#installation (you can use scoop, homebrew, or download a specific release)
 * Install helmfile diff by running `helm plugin install https://github.com/databus23/helm-diff`
 * Run `apply.sh <env> <SHA1 | ref>`
   * For example, to deploy `master`: `apply.sh dev master`
