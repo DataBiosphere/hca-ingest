@@ -2,7 +2,7 @@ from dagster import failure_hook, HookContext, graph, resource, InitResourceCont
 from dagster_utils.typing import DagsterObjectConfigSchema
 
 from hca_manage.validation import HcaValidator
-from hca_orchestration.solids.validate_ingress import pre_flight_validate, notify_slack_of_succesful_ingress_validation
+from hca_orchestration.solids.validate_ingress import pre_flight_validate, notify_slack_of_successful_ingress_validation
 
 
 def run_config_for_validation_ingress_partition(partition: Partition) -> DagsterObjectConfigSchema:
@@ -35,4 +35,4 @@ def validation_failed_notification(context: HookContext) -> None:
 
 @graph
 def validate_ingress_graph() -> None:
-    notify_slack_of_succesful_ingress_validation(pre_flight_validate())
+    notify_slack_of_successful_ingress_validation(pre_flight_validate())
