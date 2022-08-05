@@ -18,9 +18,9 @@ class HcaValidator:
         """
         adapter = StagingAreaValidator(
             staging_area=path,
+            total_retries=retries,
             ignore_dangling_inputs=ignore_inputs,
             validate_json=True,
-            total_retries=retries,
         )
         exit_code = adapter.main()
         if not exit_code:
