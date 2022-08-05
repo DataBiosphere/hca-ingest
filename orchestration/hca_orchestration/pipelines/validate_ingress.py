@@ -1,17 +1,16 @@
 from dagster import (
-    failure_hook,
     HookContext,
-    graph,
-    resource,
     InitResourceContext,
     Partition,
+    failure_hook,
+    graph,
+    resource,
 )
 from dagster_utils.typing import DagsterObjectConfigSchema
-
 from hca_manage.validation import HcaValidator
 from hca_orchestration.solids.validate_ingress import (
-    pre_flight_validate,
     notify_slack_of_successful_ingress_validation,
+    pre_flight_validate,
 )
 
 
