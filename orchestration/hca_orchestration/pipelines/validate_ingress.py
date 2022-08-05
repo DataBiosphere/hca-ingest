@@ -18,7 +18,7 @@ def run_config_for_validation_ingress_partition(
         partition: Partition,
 ) -> DagsterObjectConfigSchema:
     return {
-        "solids": {"pre_flight_validate": {"config": {"staging_area": partition.value}}}
+        "solids": {"pre_flight_validate": {"config": {"staging_area": partition.value},{"total_retries": partition.value}}},
     }
 
 
