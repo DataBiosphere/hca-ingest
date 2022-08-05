@@ -4,7 +4,6 @@ from typing import Any, Optional
 from dagster_utils.contrib.google import parse_gs_path
 from google.cloud.storage import Client
 from hca.staging_area_validator import StagingAreaValidator
-
 from hca_manage.common import DefaultHelpParser
 
 
