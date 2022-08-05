@@ -9,16 +9,23 @@ from dagster import (
 from dagster_utils.typing import DagsterObjectConfigSchema
 from hca_manage.validation import HcaValidator
 from hca_orchestration.solids.validate_ingress import (
-     notify_slack_of_successful_ingress_validation,
-     pre_flight_validate,
+    notify_slack_of_successful_ingress_validation,
+    pre_flight_validate,
 )
 
 
 def run_config_for_validation_ingress_partition(
-        partition: Partition,
+    partition: Partition,
 ) -> DagsterObjectConfigSchema:
     return {
-        "solids": {"pre_flight_validate": {"config": {"staging_area": partition.value, "total_retries": partition.value}}},
+        "solids": {
+            "pre_flight_validate": {
+                "config": {
+                    "staging_area": partition.value,
+                    "total_retries": partition.value,
+                }
+            }
+        },
     }
 
 
@@ -27,7 +34,7 @@ def staging_area_validator(init_context: InitResourceContext) -> HcaValidator:
     return HcaValidator()
 
 
-@failure_hook(required_resource_keys={'slack', 'dagit_config'})
+@failure_hook(required_resource_keys={"slack", "dagit_config"})
 def validation_failed_notification(context: HookContext) -> None:
     lines = (
         "Validation Ingress Failed",
