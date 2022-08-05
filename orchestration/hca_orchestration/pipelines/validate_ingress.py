@@ -41,4 +41,5 @@ def validation_failed_notification(context: HookContext) -> None:
 
 @graph
 def validate_ingress_graph() -> None:
+    # pylint: disable=no-value-for-parameter
     notify_slack_of_successful_ingress_validation(pre_flight_validate())
