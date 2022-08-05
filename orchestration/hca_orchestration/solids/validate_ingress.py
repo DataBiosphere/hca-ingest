@@ -22,7 +22,7 @@ def pre_flight_validate(context: AbstractComputeExecutionContext) -> Any:
     validator: HcaValidator = context.resources.staging_area_validator
 
     exit_code = validator.validate_staging_area(
-        path=staging_area, ignore_inputs=True, client=gcs_client
+        path=staging_area, retries=total_retries, ignore_inputs=True, client=gcs_client
     )
     if exit_code:
         raise Failure(f"Staging area {staging_area} is invalid")
