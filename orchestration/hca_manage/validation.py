@@ -9,7 +9,9 @@ from hca_manage.common import DefaultHelpParser
 
 
 class HcaValidator:
-    def validate_staging_area(self, path: str, retries: int, ignore_inputs: bool, client: Client) -> Any:
+    def validate_staging_area(
+            self, path: str, retries: int, ignore_inputs: bool, client: Client
+    ) -> Any:
         """
         Run the validation pre-checks on the staging area
         :param path: Google Cloud Storage path for staging area
@@ -23,14 +25,14 @@ class HcaValidator:
         )
         exit_code = adapter.main()
         if not exit_code:
-            logging.info(f'Staging area {path} is valid')
+            logging.info(f"Staging area {path} is valid")
         else:
-            logging.error(f'Staging area {path} is invalid')
+            logging.error(f"Staging area {path} is invalid")
 
         return exit_code
 
     def validate_structure(self, path: str, gs_client: Client) -> int:
-        well_known_dirs = {'/data', '/descriptors', '/links', '/metadata'}
+        well_known_dirs = {"/data", "/descriptors", "/links", "/metadata"}
 
         bucket_with_prefix = parse_gs_path(path)
         bucket = gs_client.bucket(bucket_with_prefix.bucket)
@@ -48,9 +50,13 @@ class HcaValidator:
 
 # CLI
 def run(arguments: Optional[list[str]] = None) -> None:
-    parser = DefaultHelpParser(description="CLI to manage validate GS path and json files.")
+    parser = DefaultHelpParser(
+        description="CLI to manage validate GS path and json files."
+    )
     parser.add_argument("-p", "--path", help="GS path to validate", required=True)
-    parser.add_argument("-i", "--ignore_inputs", help="Ignore input metadata files", default=False)
+    parser.add_argument(
+        "-i", "--ignore_inputs", help="Ignore input metadata files", default=False
+    )
     args = parser.parse_args(arguments)
 
     client = Client()
