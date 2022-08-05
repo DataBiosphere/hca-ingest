@@ -30,9 +30,9 @@ def pre_flight_validate(context: AbstractComputeExecutionContext) -> Any:
     return staging_area, total_retries
 
 
-@solid(required_resource_keys={'slack'})
+@solid(required_resource_keys={"slack"})
 def notify_slack_of_successful_ingress_validation(
-    context: AbstractComputeExecutionContext,staging_area: str
+    context: AbstractComputeExecutionContext, staging_area: str
 ) -> str:
     message_lines = [
         f"{staging_area} has passed pre-validation.",
