@@ -54,6 +54,7 @@ def run(arguments: Optional[list[str]] = None) -> None:
         description="CLI to manage validate GS path and json files."
     )
     parser.add_argument("-p", "--path", help="GS path to validate", required=True)
+    # pylint: disable=no-value-for-parameter
     parser.add_argument(
         "-i", "--ignore_inputs", help="Ignore input metadata files", default=False
     )
