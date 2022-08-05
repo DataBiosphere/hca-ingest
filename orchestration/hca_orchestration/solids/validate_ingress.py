@@ -1,9 +1,10 @@
 from typing import Any
 
-from dagster import solid, String, Failure
-from dagster.core.execution.context.compute import AbstractComputeExecutionContext
+from dagster import Failure, String, solid
+from dagster.core.execution.context.compute import (
+    AbstractComputeExecutionContext,
+)
 from google.cloud.storage import Client
-
 from hca_manage.validation import HcaValidator
 
 
