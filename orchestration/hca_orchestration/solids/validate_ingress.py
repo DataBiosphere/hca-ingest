@@ -1,6 +1,6 @@
 from typing import Any
 
-from dagster import Failure, String, solid
+from dagster import Failure, Output, OutputDefinition, String, solid
 from dagster.core.execution.context.compute import (
     AbstractComputeExecutionContext,
 )
