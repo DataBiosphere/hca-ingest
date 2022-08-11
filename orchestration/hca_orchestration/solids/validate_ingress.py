@@ -31,7 +31,7 @@ def pre_flight_validate(context: AbstractComputeExecutionContext) -> Any:
     if exit_code:
         raise Failure(f"Staging area {staging_area} is invalid")
 
-    #return staging_area, total_retries
+    # return staging_area, total_retries
     yield Output(staging_area, output_name="staging_area")
     yield Output(total_retries, output_name="total_retries")
 
