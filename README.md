@@ -1,5 +1,5 @@
 # HCA Ingest
-Batch ETL workflow for ingesting HCA data into the Terra Data Repository (TDR). See the [architecture doc](https://github.com/DataBiosphere/hca-ingest/blob/master/ARCHITECTURE.md) for more 
+Batch ETL workflow for ingesting HCA data into the Terra Data Repository (TDR). See the [architecture doc](https://github.com/DataBiosphere/hca-ingest/blob/master/ARCHITECTURE.md) for more
 system design information.
 
 # Getting Started
