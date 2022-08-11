@@ -54,6 +54,6 @@ jobs:
     - name: Run test suite
       # run: poetry run pytest -v
       # TODO put this back when you are done debugging.
-      run: poetry run pytest -v hca_orchestration/tests/pipelines/test_pipelines.py::test_validate_ingress_success
+      run: poetry run pytest -v -k "ingress"
       working-directory: ${{ github.workspace }}/orchestration
       if: always() && steps.dependencies.outcome == 'success' # run all three checks, even if a prior check fails
