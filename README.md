@@ -12,7 +12,7 @@ system design information.
   * Make sure you have [poetry](https://python-poetry.org/docs/#installation) installed
   * From `orchestration/`:
     * Run `poetry install` to setup a local python virtual environment and install needed dependencies
-      * It may be preferable to use `poetry lock --no-update` when updating the lock file to avoid updating dependencies if you have already installed them.
+      * It may be preferable to use `poetry lock --no-update` when updating the lockfile to avoid updating dependencies if you have already installed them.
       * FYI the first time you run this in your env, it can take up to 10 hours to complete, due to the large number of dependencies.
     * Run `pytest` and make sure all tests with the exception of our end-to-end suite run and pass locally
 
