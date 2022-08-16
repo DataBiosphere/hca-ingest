@@ -43,7 +43,9 @@ def notify_slack_of_successful_ingress_validation(
     # context: AbstractComputeExecutionContext, pre_flight_validate.staging_area: str
     context: AbstractComputeExecutionContext
 ) -> str:
-    staging_area = pre_flight_validate.staging_area
+    staging_area = pre_flight_validate()[0]
+    # (staging_area, total_retries) = pre_flight_validate()
+    # staging_area = context.output_value("pre_flight_validate")
     message_lines = [
         f"{staging_area} has passed pre-validation.",
     ]
