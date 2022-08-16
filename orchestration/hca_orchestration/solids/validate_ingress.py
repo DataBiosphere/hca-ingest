@@ -31,16 +31,16 @@ def pre_flight_validate(context: AbstractComputeExecutionContext) -> Any:
     if exit_code:
         raise Failure(f"Staging area {staging_area} is invalid")
 
-    # return staging_area, total_retries
-    yield Output(staging_area, output_name="staging_area")
-    yield Output(total_retries, output_name="total_retries")
+    return staging_area, total_retries
+    # yield Output(staging_area, output_name="staging_area")
+    # yield Output(total_retries, output_name="total_retries")
 
 
 @solid(required_resource_keys={"slack"})
 def notify_slack_of_successful_ingress_validation(
-    context: AbstractComputeExecutionContext
+    context: AbstractComputeExecutionContext,
+    staging_area: str
 ) -> str:
-    staging_area = pre_flight_validate()[0]
     message_lines = [
         f"{staging_area} has passed pre-validation.",
     ]
