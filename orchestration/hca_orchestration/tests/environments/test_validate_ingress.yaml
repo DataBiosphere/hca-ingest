@@ -2,4 +2,3 @@ solids:
   pre_flight_validate:
     config:
       staging_area: gs://fake_staging_area
-      total_retries: 5
