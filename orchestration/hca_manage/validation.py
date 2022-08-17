@@ -9,16 +9,16 @@ from hca_manage.common import DefaultHelpParser
 
 class HcaValidator:
     def validate_staging_area(
-        self, path: str, retries: int, ignore_inputs: bool, client: Client
+        # self, path: str, retries: int, ignore_inputs: bool, client: Client
+        self, path: str, ignore_inputs: bool, client: Client
     ) -> Any:
         """
         Run the validation pre-checks on the staging area
         :param path: Google Cloud Storage path for staging area
-        :param retries: Number of times to retry the validation process
         """
         adapter = StagingAreaValidator(
             staging_area=path,
-            total_retries=retries,
+            # total_retries=retries,
             ignore_dangling_inputs=ignore_inputs,
             validate_json=True,
         )
