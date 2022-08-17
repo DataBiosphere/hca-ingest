@@ -7,7 +7,6 @@ from dagster.core.execution.context.compute import (
 from google.cloud.storage import Client
 from hca_manage.validation import HcaValidator
 
-
 @solid(
     required_resource_keys={"staging_area_validator", "gcs"},
     config_schema={"staging_area": String, "total_retries": int},
@@ -36,13 +35,18 @@ def pre_flight_validate(context: AbstractComputeExecutionContext) -> Any:
     # yield Output(total_retries, output_name="total_retries")
 
 
+def get_staging_area_from_tuple():
+    staging_area_from_tuple = pre_flight_validate(AbstractComputeExecutionContext)[0]
+    return staging_area_from_tuple
+
+
 @solid(required_resource_keys={"slack"})
 def notify_slack_of_successful_ingress_validation(
     context: AbstractComputeExecutionContext,
-    staging_area=pre_flight_validate.staging_area,
+    staging_area_from_tuple: str
 ) -> str:
     message_lines = [
-        f"{staging_area} has passed pre-validation.",
+        f"{staging_area_from_tuple} has passed pre-validation.",
     ]
     message = "\n".join(message_lines)
 
