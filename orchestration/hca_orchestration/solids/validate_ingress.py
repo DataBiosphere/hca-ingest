@@ -7,9 +7,11 @@ from dagster.core.execution.context.compute import (
 from google.cloud.storage import Client
 from hca_manage.validation import HcaValidator
 
+
 @solid(
     required_resource_keys={"staging_area_validator", "gcs"},
-    config_schema={"staging_area": String, "total_retries": int},
+    config_schema={"staging_area": String},
+    # config_schema={"staging_area": String, "total_retries": int},
     # output_defs=[
     #     OutputDefinition(name="staging_area"),
     #     OutputDefinition(name="total_retries"),
