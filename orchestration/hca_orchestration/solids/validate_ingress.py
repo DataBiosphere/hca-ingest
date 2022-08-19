@@ -29,7 +29,9 @@ def pre_flight_validate(context: AbstractComputeExecutionContext) -> Any:
     validator: HcaValidator = context.resources.staging_area_validator
 
     exit_code = validator.validate_staging_area(
-        path=staging_area, ignore_inputs=True, client=gcs_client
+        path=staging_area,
+        ignore_inputs=True,
+        client=gcs_client
         # path=staging_area, retries=total_retries, ignore_inputs=True, client=gcs_client
     )
     if exit_code:
@@ -42,9 +44,7 @@ def pre_flight_validate(context: AbstractComputeExecutionContext) -> Any:
 
 
 @solid(required_resource_keys={"slack"})
-def notify_slack_of_successful_ingress_validation(
-    context: AbstractComputeExecutionContext,
-    staging_area: str
+def notify_slack_of_successful_ingress_validation(context: AbstractComputeExecutionContext, staging_area: str
 ) -> str:
     message_lines = [
         f"{staging_area} has passed pre-validation.",
