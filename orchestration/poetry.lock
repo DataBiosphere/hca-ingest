@@ -908,7 +908,7 @@ protobuf = ">=3.12.0"
 
 [[package]]
 name = "hca-import-validation"
-version = "0.0.11"
+version = "0.0.16"
 description = "HCA Staging Import Validation"
 category = "main"
 optional = false
@@ -1956,7 +1956,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "3.9.6"
-content-hash = "27dc343ed09c0f4419d5c67f4ab93f31233483d5a7be4cc844c3ff85e843c733"
+content-hash = "a27eaf08b1e975307eaba7f2d4e18de392cdc26e842ff231044ca42fa1e4130c"
 
 [metadata.files]
 aiohttp = []
