@@ -10,7 +10,10 @@ from hca_manage.common import DefaultHelpParser
 class HcaValidator:
     def validate_staging_area(
         # self, path: str, retries: int, ignore_inputs: bool, client: Client
-        self, path: str, ignore_inputs: bool, client: Client
+        self,
+        path: str,
+        ignore_inputs: bool,
+        client: Client
     ) -> Any:
         """
         Run the validation pre-checks on the staging area
