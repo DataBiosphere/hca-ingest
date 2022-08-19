@@ -13,7 +13,7 @@ class HcaValidator:
         self,
         path: str,
         ignore_inputs: bool,
-        client: Client
+        client: Client,
     ) -> Any:
         """
         Run the validation pre-checks on the staging area
