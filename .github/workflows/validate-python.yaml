@@ -53,5 +53,7 @@ jobs:
       if: always() && steps.dependencies.outcome == 'success' # run all three checks, even if a prior check fails
     - name: Run test suite
       run: poetry run pytest -v
+      # for debugging.
+      # run: poetry run pytest -v -k "ingress"
       working-directory: ${{ github.workspace }}/orchestration
       if: always() && steps.dependencies.outcome == 'success' # run all three checks, even if a prior check fails
