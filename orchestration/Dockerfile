@@ -18,8 +18,9 @@ RUN apt-get update -yqq
 
 COPY pyproject.toml /
 
-RUN poetry config virtualenvs.create false \
-     && poetry install --no-interaction --no-ansi --no-dev | tee /logs/poetry_install.log
+RUN mkdir /logs \
+    poetry config virtualenvs.create false \
+    && poetry install --no-interaction --no-ansi --no-dev | tee /logs/poetry_install.log
 
 # Cleanup
 RUN  rm -rf /var \
