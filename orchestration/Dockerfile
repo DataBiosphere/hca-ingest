@@ -23,7 +23,7 @@ RUN mkdir /logs \
     && poetry install --no-interaction --no-ansi --no-dev | tee /logs/poetry_install.log
 
 # Cleanup
-RUN  rm -rf /var \
+RUN  rm -rf /var/lib/apt/lists/* \
     &&  rm -rf /root/.cache  \
     &&  rm -rf /usr/lib/python2.7 \
     &&  rm -rf /usr/lib/x86_64-linux-gnu/guile
