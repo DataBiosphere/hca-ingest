@@ -30,3 +30,6 @@ RUN  rm -rf /var/lib/apt/lists/* \
 
 # ==> Add user code layer
 COPY ./ /
+
+# built with GitHub Action "Master Validation and Release" ../.github/workflows/build-and-publish-master.yaml
+# tag = us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:${{steps.get-artifact-slug.outputs.slug}}
