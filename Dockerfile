@@ -93,4 +93,17 @@ RUN mv /hca_manage /orchestration/. \
 
  COPY ./ /
 
+# Build and run the dataflow tests >>> In order to do this we need to set up gcloud auth
+RUN sbt test
+
+# set up python environment
+RUN which poetry
+RUN cd orchestration \
+    && poetry lock --no-update
+
+# Run pytest and make sure all tests with the exception of our end-to-end suite run and pass locally
+RUN pytest
+
 CMD ["bin/bash"]
+
+# build -t test_hca_dev_env_local:0.1 .
