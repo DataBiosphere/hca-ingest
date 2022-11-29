@@ -21,3 +21,5 @@ logs/errors.log
 .idea/
 # don't need to copy orchestration again
 orchestration/
+#don't copy the venv
+venv/
