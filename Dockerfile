@@ -31,6 +31,7 @@ RUN apt-get update  \
 # based on https://github.com/AdoptOpenJDK/openjdk-docker/blob/master/11/jdk/debian/Dockerfile.hotspot.releases.full
 ENV JAVA_VERSION jdk-11.0.11+9
 
+#support for multiple architectures
 RUN set -eux; \
     ARCH="$(dpkg --print-architecture)"; \
     case "${ARCH}" in \
@@ -69,7 +70,6 @@ RUN set -eux; \
 ENV JAVA_HOME=/opt/java/openjdk \
     PATH="/opt/java/openjdk/bin:$PATH"
 
-
 # Install sbt
 RUN curl -L -o sbt-$SBT_VERSION.zip https://github.com/sbt/sbt/releases/download/v$SBT_VERSION/sbt-$SBT_VERSION.zip \
     && unzip sbt-$SBT_VERSION.zip -d opt \
@@ -78,7 +78,23 @@ RUN curl -L -o sbt-$SBT_VERSION.zip https://github.com/sbt/sbt/releases/download
 
 ENV PATH /usr/local/bin/sbt/bin:$PATH
 
-# move contents of base image to orchestration & copy in the rest of the codebase
+ENV CLOUDSDK_PYTHON=/usr/local/bin/python
+
+# Install gcloud CLI
+# from https://cloud.google.com/sdk/docs/install#deb
+RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list \
+    && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | tee /usr/share/keyrings/cloud.google.gpg \
+    && apt-get update -y \
+    && apt-get install google-cloud-sdk -y
+# note that your credentials will not be stored in this image, so you'll need to run
+# "gcloud auth login" to authenticate with gcloud with your Broad credentials
+# The set up your billing project "gcloud config set project PROJECT_ID"
+# You should also run “gcloud auth application-default login” after installation
+# and authenticate with your Broad credentials to set a default login for applications
+#
+
+# copy in the rest of the codebase & move contents of base image to orchestration
+COPY . /hca-ingest/.
 RUN mkdir /orchestration
 RUN mv /hca_manage /orchestration/. \
     && mv /hca_orchestration /orchestration/. \
@@ -89,21 +105,12 @@ RUN mv /hca_manage /orchestration/. \
     && mv pyproject.toml /orchestration/. \
     && mv pytest.ini /orchestration/. \
     && mv README.md /orchestration/. \
-    && mv schema.json /orchestration/.
-
- COPY ./ /
-
-# Build and run the dataflow tests >>> In order to do this we need to set up gcloud auth
-RUN sbt test
-
-# set up python environment
-RUN which poetry
-RUN cd orchestration \
-    && poetry lock --no-update
-
-# Run pytest and make sure all tests with the exception of our end-to-end suite run and pass locally
-RUN pytest
+    && mv schema.json /orchestration/. \
+    && mv /orchestration /hca-ingest/. \
+    && cd /hca-ingest/
+# NB sbt test and pytest require that you gcloud auth credentials, so they must be run in the container.
 
 CMD ["bin/bash"]
 
-# build -t test_hca_dev_env_local:0.1 .
+# docker build -t test_hca_dev_env_local:0.1 .
+# docker run --rm -it test_hca_dev_env_local:0.1
