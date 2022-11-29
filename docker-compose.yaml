@@ -1,0 +1,7 @@
+services:
+  app:
+    build: .
+    container_name: hca_dev_env
+    command: bin/bash --reload
+    volumes:
+      - .:/hca-ingest
