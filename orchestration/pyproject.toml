@@ -29,7 +29,7 @@ graphql-ws = "<0.4.0"
 hca-import-validation = "^0.0.16"
 rfc3339-validator = "^0.1.4"
 markupsafe = "2.0.1"
-protobuf = "3.20.1"
+protobuf = "3.20.2"
 
 [tool.poetry.dev-dependencies]
 autopep8 = "^1.5.5"
