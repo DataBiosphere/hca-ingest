@@ -2,8 +2,11 @@ services:
   app:
     # for dev
     # build: .
-    image: us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:latest
+    # image: us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:latest
+    image: us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:0.3
     container_name: hca_dev_env
+    ports:
+      - "8080:80"
     command: bin/bash --reload
     volumes:
       - .:/hca-ingest
