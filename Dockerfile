@@ -3,7 +3,7 @@
 # This is the Dagster user code deployment image
 # Dockerfile is located in orchestration/Dockerfile
 # FROM us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:682b3fc
-FROM us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:WIP_bhill
+FROM us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:latest
 
 ENV LANG='en_US.UTF-8' \
     LANGUAGE='en_US:en' \
@@ -78,6 +78,7 @@ RUN curl -L -o sbt-$SBT_VERSION.zip https://github.com/sbt/sbt/releases/download
 
 ENV PATH /usr/local/bin/sbt/bin:$PATH
 
+# Install gcloud CLI
 ENV CLOUDSDK_PYTHON=/usr/local/bin/python
 
 # Install gcloud CLI
@@ -88,12 +89,12 @@ RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.c
     && apt-get install google-cloud-sdk -y
 # note that your credentials will not be stored in this image, so you'll need to run
 # "gcloud auth login" to authenticate with gcloud with your Broad credentials
-# The set up your billing project "gcloud config set project PROJECT_ID"
+# Then set up your billing project "gcloud config set project PROJECT_ID"
 # You should also run “gcloud auth application-default login” after installation
 # and authenticate with your Broad credentials to set a default login for applications
 #
 
-# copy in the rest of the codebase & move contents of base image to orchestration
+# Copy in the rest of the codebase & move contents of base image to orchestration
 COPY . /hca-ingest/.
 RUN mkdir /orchestration
 RUN mv /hca_manage /orchestration/. \
@@ -112,5 +113,10 @@ RUN mv /hca_manage /orchestration/. \
 
 CMD ["bin/bash"]
 
-# docker build -t test_hca_dev_env_local:0.1 .
-# docker run --rm -it test_hca_dev_env_local:0.1
+# docker build -t us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:<new_version> .
+# docker run --rm -it us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:<new_version>
+
+# to push to Artifact Registry
+# make sure you are logged in to gcloud and that application default credentials are set (https://docs.google.com/document/d/1b03-YphH6Uac5huBopLYTYjzgDAlwS6qf-orMqaph64/edit?usp=sharing)
+
+# docker push "us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:<new_version>"
