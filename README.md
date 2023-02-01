@@ -4,11 +4,17 @@ system design information.
 
 # Getting Started
 
+* Choose whether you will develop in a local virtual environment, like venv, or use the [Docker Compose dev env provided here](docker-compose.yaml).
 * Clone this repository to a local directory
+  * If you are running in a local virtual environment go ahead and set that up. Note that this project uses Python 3.9.12
+    * Also install the [gcloud cloud CLI tool](https://cloud.google.com/sdk/docs/install) if you've not already done so.
+  * If you are using the provided Docker Compose dev env use the follow command to invoke it: `docker compose run -w /hca-ingest app bash`
+* Authenticate with gcloud using your Broad credentials `gcloud auth login`
+* Then set up your billing project `gcloud config set project PROJECT_ID`
+* You should also run `gcloud auth application-default login` to set up your default login for applications
 * Build and run the dataflow tests
-  * From the repository root: `sbt test` 
+  * From the repository/image root: `sbt test` 
     * if this fails use `sbt test -Djava.security.manager=allow`
-* Setup a local python environment or use the provided docker image (`docker compose run -w /hca-ingest app bash`)
   * Make sure you have [poetry](https://python-poetry.org/docs/#installation) installed (already done in Docker image)
   * From `orchestration/`:
     * Run `poetry install` to setup a local python virtual environment and install needed dependencies
@@ -19,7 +25,7 @@ system design information.
 
 # Development Process
 All code should first be developed on a branch off of the `master` branch. Once ready for review,
-submit a PR against `master` and tag the `monster` team for review, and ensure all checks are passing.
+submit a PR against `master` and tag the `broad-data-ingest-admin` team for review, and ensure all checks are passing.
 
 Once approved and merged, the end-to-end test suite will be run. Once this passes, the dataflow
 and orchestration code will be packaged into docker images for consumption by Dataflow and Dagster
