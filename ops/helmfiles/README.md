@@ -14,5 +14,5 @@ script in this directory.
 deployment info.
 
 ## Web UI access
-We are using port forwarding for access to the Dagster web UI for now. To run:
-`forward_ports.sh <env>`
+We are using port forwarding for access to the Dagster web UI for now. 
+To run:`dagster/forward_ports.sh <env>`
