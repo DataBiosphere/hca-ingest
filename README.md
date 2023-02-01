@@ -7,7 +7,7 @@ system design information.
 * Choose whether you will develop in a local virtual environment, like venv, or use the [Docker Compose dev env provided here](docker-compose.yaml).
 * Clone this repository to a local directory
   * If you are running in a local virtual environment go ahead and set that up. Note that this project uses Python 3.9.12
-    * Also install the [gcloud cloud CLI tool](https://cloud.google.com/sdk/docs/install) if you've not already done so.
+    * Also install the [gcloud cloud command-line tool](https://cloud.google.com/sdk/docs/install) if you've not already done so.
   * If you are using the provided Docker Compose dev env use the follow command to invoke it: `docker compose run -w /hca-ingest app bash`
 * Authenticate with gcloud using your Broad credentials `gcloud auth login`
 * Then set up your billing project `gcloud config set project PROJECT_ID`
