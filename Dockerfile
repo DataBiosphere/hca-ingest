@@ -2,8 +2,8 @@
 
 # This is the Dagster user code deployment image
 # Dockerfile is located in orchestration/Dockerfile
-# FROM us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:682b3fc
-FROM us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:latest
+# FROM us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:latest
+FROM us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:WIP_bhill
 
 ENV LANG='en_US.UTF-8' \
     LANGUAGE='en_US:en' \
@@ -86,7 +86,9 @@ ENV CLOUDSDK_PYTHON=/usr/local/bin/python
 RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list \
     && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | tee /usr/share/keyrings/cloud.google.gpg \
     && apt-get update -y \
-    && apt-get install google-cloud-sdk -y
+    && apt-get install google-cloud-sdk -y \
+    && apt-get install google-cloud-sdk-gke-gcloud-auth-plugin \
+    && apt-get install kubectl
 # note that your credentials will not be stored in this image, so you'll need to run
 # "gcloud auth login" to authenticate with gcloud with your Broad credentials
 # Then set up your billing project "gcloud config set project PROJECT_ID"
