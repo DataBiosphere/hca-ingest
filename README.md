@@ -9,12 +9,14 @@ system design information.
   * If you are running in a local virtual environment go ahead and set that up. Note that this project uses Python 3.9.12
     * Also install the [gcloud cloud command-line tool](https://cloud.google.com/sdk/docs/install) if you've not already done so.
   * If you are using the provided Docker Compose dev env use the follow command to invoke it: `docker compose run -w /hca-ingest app bash`
+    * _Note that if you are not already logged in to gcloud, you will need to do so before running \
+      the docker compose command, as this will pull the latest image from Artifact Registry._
 * Authenticate with gcloud using your Broad credentials `gcloud auth login`
 * Then set up your billing project `gcloud config set project PROJECT_ID`
 * You should also run `gcloud auth application-default login` to set up your default login for applications
 * Build and run the dataflow tests
   * From the repository/image root: `sbt test` 
-    * if this fails use `sbt test -Djava.security.manager=allow`
+    * if this fails you may need to run get a clean clone of the repo
   * Make sure you have [poetry](https://python-poetry.org/docs/#installation) installed (already done in Docker image)
   * From `orchestration/`:
     * Run `poetry install` to setup a local python virtual environment and install needed dependencies
