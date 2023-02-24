@@ -87,8 +87,8 @@ RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.c
     && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | tee /usr/share/keyrings/cloud.google.gpg \
     && apt-get update -y \
     && apt-get install google-cloud-sdk -y \
-    && apt-get install google-cloud-sdk-gke-gcloud-auth-plugin \
-    && apt-get install kubectl
+    && apt-get install google-cloud-sdk-gke-gcloud-auth-plugin -y \
+    && apt-get install kubectl -y
 # note that your credentials will not be stored in this image, so you'll need to run
 # "gcloud auth login" to authenticate with gcloud with your Broad credentials
 # Then set up your billing project "gcloud config set project PROJECT_ID"
