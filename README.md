@@ -17,12 +17,16 @@ system design information.
 * Build and run the dataflow tests
   * From the repository/image root: `sbt test` 
     * if this fails you may need to run get a clean clone of the repository
-  * Make sure you have [poetry](https://python-poetry.org/docs/#installation) installed (already done in Docker image)
+    * Note that this will take a while to run, as it will build the project and run all tests
+  * Make sure you have [poetry](https://python-poetry.org/docs/#installation) installed **(already done in Docker image)**
   * From `orchestration/`:
-    * Run `poetry install` to setup a local python virtual environment and install needed dependencies
-      * It may be preferable to use `poetry lock --no-update` when updating the lockfile to avoid updating dependencies if you have already installed them.
-      * FYI the first time you run this in your env, it can take up to 10 hours to complete, due to the large number of dependencies.
-    * Run `pytest` and make sure all tests with the exception of our end-to-end suite run and pass locally
+    * Run `poetry install` to set up a local python virtual environment and install needed dependencies
+      * It may be preferable to use `poetry lock --no-update` when updating the lockfile to avoid updating dependencies 
+      if you have already installed them.
+      * FYI the first time you run this in your env, it can take up to 10 hours to complete, 
+      due to the large number of dependencies.
+        * _This is not true for the Docker image, which will make use of the poetry cache._
+    * Run `pytest` and make sure all tests except our end-to-end suite run and pass locally
       * If you installed pytest via poetry you will need to run `poetry run pytest` instead.
 
 # Development Process
