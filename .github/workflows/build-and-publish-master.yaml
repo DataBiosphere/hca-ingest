@@ -13,7 +13,7 @@ jobs:
         run: git fetch --tags
       - uses: google-github-actions/setup-gcloud@v0.2.1
         name: Setup gcloud for Dataflow tests
-        with:
+      - with:
           project_id: ${{ secrets.DEV_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_TEST_KEY }}
           export_default_credentials: true
@@ -65,7 +65,7 @@ jobs:
         run: sbt publish
       - name: Get artifact slug
         id: get-artifact-slug
-        run: `echo "name=slug::$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_OUTPUT`
+        run: 'echo "name=slug::$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_OUTPUT'
       - name: Push Dagster User Code Docker image
         uses: docker/build-push-action@v2
         with:
