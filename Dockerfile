@@ -123,3 +123,5 @@ CMD ["bin/bash"]
 # make sure you are logged in to gcloud and that application default credentials are set (https://docs.google.com/document/d/1b03-YphH6Uac5huBopLYTYjzgDAlwS6qf-orMqaph64/edit?usp=sharing)
 # set the VERSION field in update_docker_image.sh in this directory and then run the script to build and push
 # NB - this can take a while, so be patient
+# It may be that you are on the split VPN and/or trying to push over IPv6. Either turn off the VPN or turn of IPV6
+  #on your router to speed this up.
