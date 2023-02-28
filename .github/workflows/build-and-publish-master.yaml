@@ -1,3 +1,4 @@
+---
 name: Master Validation and Release
 on:
   push:
