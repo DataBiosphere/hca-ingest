@@ -30,10 +30,15 @@ system design information.
       * If you installed pytest via poetry you will need to run `poetry run pytest` instead.
 
 # Development Process
-All code should first be developed on a branch off of the `master` branch. Once ready for review,
+All code should first be developed on a branch off of the `master` branch. Once ready for review, \
 submit a PR against `master` and tag the `broad-data-ingest-admin` team for review, and ensure all checks are passing.
 
-Once approved and merged, the end-to-end test suite will be run. Once this passes, the dataflow
+If you've updated the Docker image at the top of the repo here, you will need to build & push it to Artifact Registry, \
+using `update_docker_image.sh`. First update the version field, then run the script. \
+This will build the image, tag it with the version, and push the image to Artifact Registry. \
+Note that this may take a bit to establish the connection to Artifact Registry, so be patient.
+
+Once approved and merged, the end-to-end test suite will be run. Once this passes, the dataflow \
 and orchestration code will be packaged into docker images for consumption by Dataflow and Dagster
 respectively.
 
