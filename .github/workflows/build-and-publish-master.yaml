@@ -64,8 +64,7 @@ jobs:
         run: sbt publish
       - name: Get artifact slug
         id: get-artifact-slug
-        # shellcheck disable=SC2016
-        run: "echo 'name=slug::$(git rev-parse --short '$GITHUB_SHA')' >> $GITHUB_OUTPUT"
+        run: echo "name=slug::$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_OUTPUT
       - name: Push Dagster User Code Docker image
         uses: docker/build-push-action@v2
         with:
