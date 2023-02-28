@@ -115,10 +115,11 @@ RUN mv /hca_manage /orchestration/. \
 
 CMD ["bin/bash"]
 
+# to build and run locally
 # docker build -t us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:<new_version> .
 # docker run --rm -it us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:<new_version>
 
-# to push to Artifact Registry
+# to build and push to Artifact Registry
 # make sure you are logged in to gcloud and that application default credentials are set (https://docs.google.com/document/d/1b03-YphH6Uac5huBopLYTYjzgDAlwS6qf-orMqaph64/edit?usp=sharing)
-
-# docker push "us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:<new_version>"
+# set the VERSION field in update_docker_image.sh in this directory and then run the script to build and push
+# NB - this can take a while, so be patient
