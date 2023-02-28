@@ -34,7 +34,7 @@ Once you have your environment set up verify that you can load our repository of
 All pipelines are runnable in local development configurations.
 
 ## Tools
-The [hca_manage](https://github.com/DataBiosphere/hca-ingest/tree/master/orchestration/hca_manage) directory contains useful CLI tools for working with and validating HCA datasets, staging areas and snapshots. 
+The [hca_manage](https://github.com/DataBiosphere/hca-ingest/tree/master/orchestration/hca_manage) directory contains useful command-line tools for working with and validating HCA datasets, staging areas and snapshots. 
 
 ## Deployment notes
 See the [deployment documentation](../ops/helmfiles/README.md).
