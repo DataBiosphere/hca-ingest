@@ -2,8 +2,7 @@
 
 # This is the Dagster user code deployment image
 # Dockerfile is located in orchestration/Dockerfile
-# FROM us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:latest
-FROM us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:WIP_bhill
+FROM us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:latest
 
 ENV LANG='en_US.UTF-8' \
     LANGUAGE='en_US:en' \
