@@ -1,0 +1,25 @@
+.autoenv.zsh
+*.swp
+.metals/
+project/metals.sbt
+.bloop/
+Chart.lock
+charts/
+__pycache__
+.DS_Store
+.mypy_cache
+.pytest_cache
+dagster_home/
+# sbt artifacts
+.scalafmt.conf
+target/
+logs/errors.log
+# don't need the git actions
+.github/
+.pre-commit-config.yaml
+# IDE
+.idea/
+# don't need to copy orchestration again
+orchestration/
+#don't copy the venv
+venv/

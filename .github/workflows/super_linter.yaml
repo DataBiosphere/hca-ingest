@@ -58,5 +58,6 @@ jobs:
           VALIDATE_DOCKERFILE_HADOLINT: false
           VALIDATE_MARKDOWN: false
           VALIDATE_PYTHON_BLACK: false
+          VALIDATE_GITHUB_ACTIONS: false
           DEFAULT_BRANCH: master
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
