@@ -1,7 +1,7 @@
 ## Builds the dagster "user code deployment" image that will
 ## hold our pipelines/solids/etc.
 
-FROM python:3.9.6-slim as base
+FROM python:3.9.12-slim as base
 
 ENV PYTHONFAULTHANDLER=1 \
   PYTHONUNBUFFERED=1 \
