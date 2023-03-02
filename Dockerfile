@@ -114,7 +114,10 @@ RUN mv /hca_manage /orchestration/. \
 
 CMD ["bin/bash"]
 
-# to build and run locally
+# builds with GitHub Action "Master Validation and Release" ../.github/workflows/build-and-publish-master.yaml
+# tag = us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:${{steps.get-artifact-slug.outputs.slug}}, us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:latest
+
+# For local Dev
 # docker build -t us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:<new_version> .
 # docker run --rm -it us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:<new_version>
 
