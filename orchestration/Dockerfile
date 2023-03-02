@@ -31,5 +31,10 @@ RUN  rm -rf /var/lib/apt/lists/* \
 # ==> Add user code layer
 COPY ./ /
 
-# built with GitHub Action "Master Validation and Release" ../.github/workflows/build-and-publish-master.yaml
+# builds with GitHub Action "Master Validation and Release" ../.github/workflows/build-and-publish-master.yaml
 # tag = us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:${{steps.get-artifact-slug.outputs.slug}}
+#
+# For Dev
+# to build and run locally
+# docker build -t us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:<new_version> .
+# docker run --rm -it us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:<new_version>
