@@ -5,7 +5,7 @@ system design information.
 # Getting Started
 
 * Choose whether you will develop in a local virtual environment, like venv, or use the [Docker Compose dev env provided here](docker-compose.yaml).
-* Clone this repository to a local directory
+* Clone this repository to a local directory and create a new dev branch, ideally named after your Jira ticket.
   * If you are running in a local virtual environment go ahead and set that up. Note that this project uses Python 3.9.12
     * Also install the [gcloud cloud command-line tool](https://cloud.google.com/sdk/docs/install) if you've not already done so.
   * If you are using the provided Docker Compose dev env use the follow command to invoke it: `docker compose run -w /hca-ingest app bash`
@@ -22,7 +22,7 @@ system design information.
   * From `orchestration/`:
     * Run `poetry install` to set up a local python virtual environment and install needed dependencies
       * It may be preferable to use `poetry lock --no-update` when updating the lockfile to avoid updating dependencies 
-      if you have already installed them.
+      unintentionally.
       * FYI the first time you run this in your env, it can take up to 10 hours to complete, 
       due to the large number of dependencies.
         * _This is not true for the Docker image, which will make use of the poetry cache._
