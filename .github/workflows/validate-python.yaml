@@ -6,7 +6,7 @@ name: Validate Python
 on:
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   python-validation:

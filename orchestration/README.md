@@ -21,7 +21,7 @@ Once you have your environment set up verify that you can load our repository of
 
 ## Testing
 * Run unit tests via at the root of the `orchestration` module `pytest -v`.
-* End-to-end tests run after merge to `master`. These are also runnable locally:
+* End-to-end tests run after merge to `main`. These are also runnable locally:
   * `pytest -m e2e hca_orchestration/tests/e2e`
   * You must have a Google account with sufficient permissions to the `dev` TDR environment to run the e2e tests.
 
@@ -34,7 +34,7 @@ Once you have your environment set up verify that you can load our repository of
 All pipelines are runnable in local development configurations.
 
 ## Tools
-The [hca_manage](https://github.com/DataBiosphere/hca-ingest/tree/master/orchestration/hca_manage) directory contains useful command-line tools for working with and validating HCA datasets, staging areas and snapshots. 
+The [hca_manage](https://github.com/DataBiosphere/hca-ingest/tree/main/orchestration/hca_manage) directory contains useful command-line tools for working with and validating HCA datasets, staging areas and snapshots. 
 
 ## Deployment notes
 See the [deployment documentation](../ops/helmfiles/README.md).

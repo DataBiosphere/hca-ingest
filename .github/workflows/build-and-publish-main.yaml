@@ -1,10 +1,10 @@
-name: Master Validation and Release
+name: Main Validation and Release
 on:
   push:
     branches:
       - master
 jobs:
-  master-ci:
+  main-ci:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

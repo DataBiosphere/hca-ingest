@@ -114,7 +114,7 @@ RUN mv /hca_manage /orchestration/. \
 
 CMD ["bin/bash"]
 
-# builds with GitHub Action "Master Validation and Release" ../.github/workflows/build-and-publish-master.yaml
+# builds with GitHub Action "Main Validation and Release" ../.github/workflows/build-and-publish-main.yaml
 # tag = us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:${{steps.get-artifact-slug.outputs.slug}}, us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:latest
 
 # For local Dev

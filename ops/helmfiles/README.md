@@ -29,7 +29,7 @@ _Note that this should be done locally, not in the Docker container, if you are 
     * https://helmfile.readthedocs.io/en/latest/#installation (you can use scoop, homebrew, or download a specific release)
 * Install helmfile diff by running `helm plugin install https://github.com/databus23/helm-diff`
 * Run `apply.sh <env> <SHA1 | ref>`
-  * For example, to deploy `master`: `apply.sh dev master`
+  * For example, to deploy `main`: `apply.sh dev main`
 * This will deploy a new helm release to the relevant K8S cluster and send a Slack notification with relevant
 deployment info.
 

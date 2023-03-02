@@ -1,5 +1,5 @@
 # HCA Ingest
-Batch ETL workflow for ingesting HCA data into the Terra Data Repository (TDR). See the [architecture doc](https://github.com/DataBiosphere/hca-ingest/blob/master/ARCHITECTURE.md) for more
+Batch ETL workflow for ingesting HCA data into the Terra Data Repository (TDR). See the [architecture doc](https://github.com/DataBiosphere/hca-ingest/blob/main/ARCHITECTURE.md) for more
 system design information.
 
 # Getting Started
@@ -30,8 +30,8 @@ system design information.
       * If you installed pytest via poetry you will need to run `poetry run pytest` instead.
 
 # Development Process
-All code should first be developed on a branch off of the `master` branch. Once ready for review, \
-submit a PR against `master` and tag the `broad-data-ingest-admin` team for review, and ensure all checks are passing.
+All code should first be developed on a branch off of the `main` branch. Once ready for review, \
+submit a PR against `main` and tag the `broad-data-ingest-admin` team for review, and ensure all checks are passing.
 
 If you've updated the Docker image at the top of the repository here, you will need to build & push it to Artifact Registry, \
 using `update_docker_image.sh`. First update the version field, then run the script. \
@@ -44,4 +44,4 @@ Once approved and merged, the end-to-end test suite will be run. Once this passe
 and orchestration code will be packaged into docker images for consumption by Dataflow and Dagster
 respectively.
 
-See the [deployment doc](https://github.com/DataBiosphere/hca-ingest/tree/master/ops/helmfiles) for next steps on getting code to dev and production.
+See the [deployment doc](https://github.com/DataBiosphere/hca-ingest/tree/main/ops/helmfiles) for next steps on getting code to dev and production.

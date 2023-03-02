@@ -17,7 +17,7 @@ name: Lint Code Base
 on:
   push:
     branches-ignore: [master, main]
-    # Remove the line above to run when pushing to master
+    # Remove the line above to run when pushing to main
   pull_request:
     branches: [master, main]
 
@@ -59,5 +59,5 @@ jobs:
           VALIDATE_MARKDOWN: false
           VALIDATE_PYTHON_BLACK: false
           VALIDATE_GITHUB_ACTIONS: false
-          DEFAULT_BRANCH: master
+          DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
