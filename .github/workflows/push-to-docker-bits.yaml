@@ -1,0 +1,24 @@
+name: Push to Docker bits
+on:
+  push:
+jobs:
+  docker-push-bits:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup GCR auth
+        run: gcloud auth configure-docker --quiet us.gcr.io
+      - name: Get artifact slug
+        id: get-artifact-slug
+        run: 'echo ::set-output name=slug::$(git rev-parse --short "$GITHUB_SHA")'
+      - name: Push Dagster User Code Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: ./orchestration
+          push: true
+          tags: us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:${{steps.get-artifact-slug.outputs.slug}}
+      - name: Push Compose Dev Env Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:${{steps.get-artifact-slug.outputs.slug}}, us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:latest
