@@ -11,7 +11,8 @@
 export TARGET_HEAD=${2:-HEAD}
 export COMMAND=${3:-apply}
 export ENV=${1:-dev}
-export GIT_SHORTHASH=$(git rev-parse --short $TARGET_HEAD)
+GIT_SHORTHASH=$(git rev-parse --short "$TARGET_HEAD")
+export GIT_SHORTHASH
 
 function fire_slack_deployment_notification () {
   local -r environment=$1 rev=$2
@@ -61,5 +62,5 @@ else
 	gcloud container clusters get-credentials hca-cluster --project broad-dsp-monster-hca-dev --region us-central1-c
 fi
 
-helmfile --interactive $COMMAND
-fire_slack_deployment_notification ${ENV} ${GIT_SHORTHASH}
+helmfile --interactive "$COMMAND"
+fire_slack_deployment_notification "${ENV}" "${GIT_SHORTHASH}"
