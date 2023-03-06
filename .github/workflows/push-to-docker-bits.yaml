@@ -5,6 +5,9 @@ jobs:
   docker-push-bits:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
+      - name: Fetch tag history
+        run: git fetch --tags
       - name: Setup GCR auth
         run: gcloud auth configure-docker --quiet us.gcr.io
       - name: Get artifact slug
