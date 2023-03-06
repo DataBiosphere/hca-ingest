@@ -8,6 +8,12 @@ jobs:
       - uses: actions/checkout@v2
       - name: Fetch tag history
         run: git fetch --tags
+      - uses: google-github-actions/setup-gcloud@v0.2.1
+        name: Setup gcloud for pushing Docker images
+        with:
+          service_account_email: jenkins-gcr-pusher@broad-dsp-monster-dev.iam.gserviceaccount.com
+          service_account_key: ${{ secrets.Base64ServiceAccountKey }}
+          export_default_credentials: true
       - name: Setup GCR auth
         run: gcloud auth configure-docker --quiet us.gcr.io
       - name: Get artifact slug
