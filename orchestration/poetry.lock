@@ -1223,7 +1223,7 @@ six = ">=1.6.1"
 
 [[package]]
 name = "oauthlib"
-version = "3.2.0"
+version = "3.2.2"
 description = "A generic, spec-compliant, thorough implementation of the OAuth request-signing logic"
 category = "main"
 optional = false
@@ -1960,7 +1960,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "3.9.12"
-content-hash = "f033136cfaa5717807e8469d0671d2fdb5976aea1deee213a7455966f14c7d22"
+content-hash = "5014192704dd7eaa83af6f03854c850b2638fb4e54f3d067d25add00ecedfe32"
 
 [metadata.files]
 aiohttp = []
