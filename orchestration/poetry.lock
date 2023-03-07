@@ -1067,7 +1067,7 @@ adal = ["adal (>=1.0.2)"]
 
 [[package]]
 name = "mako"
-version = "1.2.0"
+version = "1.2.2"
 description = "A super-fast templating language that borrows the best ideas from the existing templating languages."
 category = "main"
 optional = false
@@ -1960,7 +1960,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "3.9.12"
-content-hash = "8a660ddcc1d59be1929092855eec0b320007394a25d88b974357d7b03887b229"
+content-hash = "f033136cfaa5717807e8469d0671d2fdb5976aea1deee213a7455966f14c7d22"
 
 [metadata.files]
 aiohttp = []
