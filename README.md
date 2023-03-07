@@ -21,7 +21,8 @@ system design information.
   * Make sure you have [poetry](https://python-poetry.org/docs/#installation) installed **(already done in Docker image)**
   * From `orchestration/`:
     * Run `poetry install` to set up a local python virtual environment and install needed dependencies
-      * It may be preferable to use `poetry lock --no-update` when updating the lockfile to avoid updating dependencies 
+      * If you've updated the pyproject.toml you'll need to update the lock file first. \
+      It may be preferable to use `poetry lock --no-update` when updating the lockfile to avoid updating dependencies 
       unintentionally.
       * FYI the first time you run this in your env, it can take up to 10 hours to complete, 
       due to the large number of dependencies.
