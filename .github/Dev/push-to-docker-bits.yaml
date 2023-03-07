@@ -25,9 +25,6 @@ jobs:
           context: ./orchestration
           push: true
           tags: us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:${{steps.get-artifact-slug.outputs.slug}}, us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:latest
-#      - name: Sleep for 2 minutes to wait for GCR to sync
-#        run: sleep 120s
-#        shell: bash
       - name: Push Compose Dev Env Docker image
         uses: docker/build-push-action@v2
         with:
