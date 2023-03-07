@@ -1,10 +1,10 @@
-name: Master Validation and Release
+name: Main Validation and Release
 on:
   push:
-    branches:
-      - master
+     branches:
+      - main
 jobs:
-  master-ci:
+  main-ci:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -19,7 +19,7 @@ jobs:
       - name: Set up Python 3.9 for dataflow tests
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9.6
+          python-version: 3.9.12
       - name: Install Poetry
         uses: snok/install-poetry@v1.2
         with:
@@ -59,12 +59,12 @@ jobs:
           service_account_key: ${{ secrets.Base64ServiceAccountKey }}
           export_default_credentials: true
       - name: Setup GCR auth
-        run: gcloud auth configure-docker --quiet us.gcr.io
+        run: gcloud auth configure-docker --quiet us.gcr.io,us-east4-docker.pkg.dev
       - name: Push Scala Dataflow Docker image
         run: sbt publish
       - name: Get artifact slug
         id: get-artifact-slug
-        run: echo "name=slug::$(git rev-parse --short "$GITHUB_SHA")" >> $GITHUB_OUTPUT
+        run: 'echo ::set-output name=slug::$(git rev-parse --short "$GITHUB_SHA")'
       - name: Push Dagster User Code Docker image
         uses: docker/build-push-action@v2
         with:

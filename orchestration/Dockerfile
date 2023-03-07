@@ -1,7 +1,7 @@
 ## Builds the dagster "user code deployment" image that will
 ## hold our pipelines/solids/etc.
 
-FROM python:3.9.6-slim as base
+FROM python:3.9.12-slim as base
 
 ENV PYTHONFAULTHANDLER=1 \
   PYTHONUNBUFFERED=1 \
@@ -31,5 +31,10 @@ RUN  rm -rf /var/lib/apt/lists/* \
 # ==> Add user code layer
 COPY ./ /
 
-# built with GitHub Action "Master Validation and Release" ../.github/workflows/build-and-publish-master.yaml
+# builds with GitHub Action "Main Validation and Release" ../.github/workflows/build-and-publish-main.yaml
 # tag = us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:${{steps.get-artifact-slug.outputs.slug}}
+#
+# For Dev
+# to build and run locally
+# docker build -t us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:<new_version> .
+# docker run --rm -it us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:<new_version>

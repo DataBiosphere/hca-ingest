@@ -6,7 +6,7 @@ name: Validate Python
 on:
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   python-validation:
@@ -23,7 +23,7 @@ jobs:
     - name: Set up Python 3.9
       uses: actions/setup-python@v2
       with:
-        python-version: 3.9.6
+        python-version: 3.9.12
     - name: Install Poetry
       uses: snok/install-poetry@v1.2
       with:
