@@ -15,7 +15,7 @@ jobs:
           service_account_key: ${{ secrets.Base64ServiceAccountKey }}
           export_default_credentials: true
       - name: Setup GCR auth
-        run: gcloud auth configure-docker --quiet us.gcr.io
+        run: gcloud auth configure-docker --quiet us.gcr.io, us-east4-docker.pkg.dev
       - name: Get artifact slug
         id: get-artifact-slug
         run: 'echo ::set-output name=slug::$(git rev-parse --short "$GITHUB_SHA")'
