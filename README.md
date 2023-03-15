@@ -6,7 +6,7 @@ system design information.
 
 * Choose whether you will develop in a local virtual environment, like venv, or use the [Docker Compose dev env provided here](docker-compose.yaml).
 * Clone this repository to a local directory and create a new dev branch, ideally named after your Jira ticket.
-  * If you are running in a local virtual environment go ahead and set that up. Note that this project uses Python 3.9.12
+  * If you are running in a local virtual environment go ahead and set that up. Note that this project uses Python 3.9.16
     * Also install the [gcloud cloud command-line tool](https://cloud.google.com/sdk/docs/install) if you've not already done so.
   * If you are using the provided Docker Compose dev env use the follow command to invoke it: `docker compose run -w /hca-ingest app bash`
     * _Note that if you are not already logged in to gcloud, you will need to do so before running \
