@@ -54,10 +54,11 @@ jobs:
         # https://github.com/github/super-linter/blob/main/README.md
         env:
           VALIDATE_ALL_CODEBASE: false
-          VALIDATE_PYTHON_MYPY: false
           VALIDATE_DOCKERFILE_HADOLINT: false
-          VALIDATE_MARKDOWN: false
-          VALIDATE_PYTHON_BLACK: false
           VALIDATE_GITHUB_ACTIONS: false
+          VALIDATE_MARKDOWN: false
+          VALIDATE_NATURAL_LANGUAGE: false
+          VALIDATE_PYTHON_BLACK: false
+          VALIDATE_PYTHON_MYPY: false
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
