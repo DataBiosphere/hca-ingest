@@ -28,15 +28,18 @@ python-dateutil = "^2.8.1"
 pyyaml = "^5.3"
 rfc3339-validator = "^0.1.4"
 typing-extensions = "^3.7.4"
+#werkzeug = "2.2.3"
+# will have to update dagit which means updating broad-dagster-utils - DI-235
 
 [tool.poetry.dev-dependencies]
+# NB this notation is not preferred after poetry 1.2.0 https://python-poetry.org/docs/master/managing-dependencies/
 autopep8 = "^1.5.5"
 dagit = "0.12.14"
 flake8 = "^3.8.4"
 mypy = "^0.812"
 pdbpp = "^0.10.2"
 pre-commit = "^2.11.0"
-pytest = "^6.2.1"
+pytest = "^7.2.0"
 pytest-dotenv = "^0.5.2"
 isort = "^5.10.1"
 

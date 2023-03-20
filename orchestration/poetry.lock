@@ -47,7 +47,7 @@ SQLAlchemy = ">=1.3.0"
 name = "aniso8601"
 version = "7.0.0"
 description = "A library for parsing ISO 8601 strings."
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -66,14 +66,6 @@ description = "Timeout context manager for asyncio programs"
 category = "main"
 optional = false
 python-versions = ">=3.6"
-
-[[package]]
-name = "atomicwrites"
-version = "1.4.1"
-description = "Atomic file writes."
-category = "dev"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "attrs"
@@ -122,7 +114,7 @@ lxml = ["lxml"]
 name = "bleach"
 version = "6.0.0"
 description = "An easy safelist-based HTML-sanitizing tool."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -178,7 +170,7 @@ python-versions = ">=3.6"
 name = "cffi"
 version = "1.15.1"
 description = "Foreign Function Interface for Python calling C code."
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -246,7 +238,7 @@ python-dateutil = "*"
 name = "dagit"
 version = "0.12.14"
 description = "Web UI for dagster."
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -330,7 +322,7 @@ pyarrow = ["pyarrow"]
 name = "dagster-graphql"
 version = "0.12.14"
 description = "The GraphQL frontend to python dagster."
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -393,7 +385,7 @@ slack-sdk = "*"
 
 [[package]]
 name = "data-repo-client"
-version = "1.458.0"
+version = "1.460.0"
 description = "Data Repository API"
 category = "main"
 optional = false
@@ -409,7 +401,7 @@ urllib3 = ">=1.15"
 name = "defusedxml"
 version = "0.7.1"
 description = "XML bomb protection for Python stdlib modules"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
@@ -433,9 +425,20 @@ python-versions = ">=3.6,<4.0"
 name = "entrypoints"
 version = "0.4"
 description = "Discover and load entry points from installed packages."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
+
+[[package]]
+name = "exceptiongroup"
+version = "1.1.1"
+description = "Backport of PEP 654 (exception groups)"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[package.extras]
+test = ["pytest (>=6)"]
 
 [[package]]
 name = "fancycompleter"
@@ -453,7 +456,7 @@ pyrepl = ">=0.8.2"
 name = "fastjsonschema"
 version = "2.16.3"
 description = "Fastest Python implementation of JSON schema"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -462,7 +465,7 @@ devel = ["colorama", "jsonschema", "json-spec", "pylint", "pytest", "pytest-benc
 
 [[package]]
 name = "filelock"
-version = "3.9.1"
+version = "3.10.0"
 description = "A platform independent file lock."
 category = "dev"
 optional = false
@@ -489,7 +492,7 @@ pyflakes = ">=2.3.0,<2.4.0"
 name = "flask"
 version = "1.1.4"
 description = "A simple framework for building complex web applications."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
@@ -508,7 +511,7 @@ dotenv = ["python-dotenv"]
 name = "flask-cors"
 version = "3.0.10"
 description = "A Flask extension adding a decorator for CORS support"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -520,7 +523,7 @@ Six = "*"
 name = "flask-graphql"
 version = "2.0.1"
 description = "Adds GraphQL support to your Flask application"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -533,7 +536,7 @@ graphql-server-core = ">=1.1,<2"
 name = "flask-sockets"
 version = "0.2.1"
 description = "Elegant WebSockets for your Flask apps."
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -554,7 +557,7 @@ python-versions = ">=3.7"
 name = "gevent"
 version = "22.10.2"
 description = "Coroutine-based network library"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5"
 
@@ -575,7 +578,7 @@ test = ["requests", "objgraph", "cffi (>=1.12.2)", "dnspython (>=1.16.0,<2.0)", 
 name = "gevent-websocket"
 version = "0.10.1"
 description = "Websocket handler for the gevent pywsgi server, a Python network library"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -769,7 +772,7 @@ grpc = ["grpcio (>=1.44.0,<2.0.0dev)"]
 name = "gql"
 version = "2.0.0"
 description = "GraphQL client for Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -787,7 +790,7 @@ test = ["pytest (==5.4.2)", "pytest-asyncio (==0.11.0)", "pytest-cov (==2.8.1)",
 name = "graphene"
 version = "2.1.9"
 description = "GraphQL Framework for Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -823,7 +826,7 @@ test = ["six (==1.14.0)", "pyannotate (==1.2.0)", "pytest (==4.6.10)", "pytest-d
 name = "graphql-relay"
 version = "2.0.1"
 description = "Relay implementation for Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -836,7 +839,7 @@ six = ">=1.12"
 name = "graphql-server-core"
 version = "1.2.0"
 description = "GraphQL Server tools for powering your server"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -947,7 +950,7 @@ pyreadline3 = {version = "*", markers = "sys_platform == \"win32\" and python_ve
 
 [[package]]
 name = "identify"
-version = "2.5.20"
+version = "2.5.21"
 description = "File identification library for Python"
 category = "dev"
 optional = false
@@ -990,7 +993,7 @@ plugins = ["setuptools"]
 name = "itsdangerous"
 version = "1.1.0"
 description = "Various helpers to pass data to untrusted environments and back."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
@@ -1026,15 +1029,15 @@ format-nongpl = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-
 
 [[package]]
 name = "jupyter-core"
-version = "5.2.0"
+version = "5.3.0"
 description = "Jupyter core package. A base package on which Jupyter projects rely."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.8"
 
 [package.dependencies]
 platformdirs = ">=2.5"
-pywin32 = {version = ">=1.0", markers = "sys_platform == \"win32\" and platform_python_implementation != \"PyPy\""}
+pywin32 = {version = ">=300", markers = "sys_platform == \"win32\" and platform_python_implementation != \"PyPy\""}
 traitlets = ">=5.3"
 
 [package.extras]
@@ -1099,7 +1102,7 @@ python-versions = "*"
 name = "mistune"
 version = "0.8.4"
 description = "The fastest markdown parser in pure Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -1147,7 +1150,7 @@ python-versions = ">=2.7"
 name = "nbconvert"
 version = "5.6.1"
 description = "Converting Jupyter Notebooks"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
@@ -1175,7 +1178,7 @@ test = ["pytest", "pytest-cov", "ipykernel", "jupyter-client (>=5.3.1)", "ipywid
 name = "nbformat"
 version = "5.7.3"
 description = "The Jupyter Notebook format"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -1261,7 +1264,7 @@ test = ["hypothesis (>=5.5.3)", "pytest (>=6.0)", "pytest-xdist (>=1.31)"]
 name = "pandocfilters"
 version = "1.5.0"
 description = "Utilities for writing pandoc filters in python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
@@ -1298,7 +1301,7 @@ pytzdata = ">=2020.1"
 name = "platformdirs"
 version = "3.1.1"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -1389,14 +1392,6 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
-name = "py"
-version = "1.11.0"
-description = "library with cross-python path, ini-parsing, io, code, log facilities"
-category = "dev"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
-
-[[package]]
 name = "pyasn1"
 version = "0.4.8"
 description = "ASN.1 types and codecs"
@@ -1427,7 +1422,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 name = "pycparser"
 version = "2.21"
 description = "C parser in Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
@@ -1443,7 +1438,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 name = "pygments"
 version = "2.14.0"
 description = "Pygments is a syntax highlighting package written in Python."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 
@@ -1495,24 +1490,23 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "pytest"
-version = "6.2.5"
+version = "7.2.2"
 description = "pytest: simple powerful testing with Python"
 category = "dev"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
-atomicwrites = {version = ">=1.0", markers = "sys_platform == \"win32\""}
 attrs = ">=19.2.0"
 colorama = {version = "*", markers = "sys_platform == \"win32\""}
+exceptiongroup = {version = ">=1.0.0rc8", markers = "python_version < \"3.11\""}
 iniconfig = "*"
 packaging = "*"
 pluggy = ">=0.12,<2.0"
-py = ">=1.8.2"
-toml = "*"
+tomli = {version = ">=1.0.0", markers = "python_version < \"3.11\""}
 
 [package.extras]
-testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "requests", "xmlschema"]
+testing = ["argcomplete", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "xmlschema"]
 
 [[package]]
 name = "pytest-dotenv"
@@ -1748,7 +1742,7 @@ widechars = ["wcwidth"]
 name = "testpath"
 version = "0.6.0"
 description = "Test utilities for code working with files and commands"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">= 3.5"
 
@@ -1762,6 +1756,14 @@ description = "Python Library for Tom's Obvious, Minimal Language"
 category = "dev"
 optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
+
+[[package]]
+name = "tomli"
+version = "2.0.1"
+description = "A lil' TOML parser"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
 
 [[package]]
 name = "toposort"
@@ -1792,7 +1794,7 @@ telegram = ["requests"]
 name = "traitlets"
 version = "5.9.0"
 description = "Traitlets Python configuration system"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 
@@ -1877,7 +1879,7 @@ watchmedo = ["PyYAML (>=3.10)"]
 name = "webencodings"
 version = "0.5.1"
 description = "Character encoding aliases for legacy web content"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -1898,7 +1900,7 @@ test = ["websockets"]
 name = "werkzeug"
 version = "1.0.1"
 description = "The comprehensive WSGI web application library."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
@@ -1930,7 +1932,7 @@ multidict = ">=4.0"
 name = "zope.event"
 version = "4.6"
 description = "Very basic event publishing system"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -1940,11 +1942,11 @@ test = ["zope.testrunner"]
 
 [[package]]
 name = "zope.interface"
-version = "5.5.2"
+version = "6.0"
 description = "Interfaces for Python"
-category = "dev"
+category = "main"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+python-versions = ">=3.7"
 
 [package.extras]
 docs = ["sphinx", "repoze.sphinx.autointerface"]
@@ -1954,7 +1956,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "3.9.16"
-content-hash = "fa946775fa64181259c01a854eee053ff47dad506da56c0af9dd7817db05bc12"
+content-hash = "1c2592a6d071dd94f685d9993ed1613d3e3193972390cb8cab89824c2c32eaf8"
 
 [metadata.files]
 aiohttp = []
@@ -1963,7 +1965,6 @@ alembic = []
 aniso8601 = []
 argo-workflows = []
 async-timeout = []
-atomicwrites = []
 attrs = []
 autopep8 = []
 beautifulsoup4 = []
@@ -1992,6 +1993,7 @@ defusedxml = []
 distlib = []
 docstring-parser = []
 entrypoints = []
+exceptiongroup = []
 fancycompleter = []
 fastjsonschema = []
 filelock = []
@@ -2063,7 +2065,6 @@ proto-plus = []
 protobuf = []
 psutil = []
 psycopg2-binary = []
-py = []
 pyasn1 = []
 pyasn1-modules = []
 pycodestyle = []
@@ -2098,6 +2099,7 @@ strict-rfc3339 = []
 tabulate = []
 testpath = []
 toml = []
+tomli = []
 toposort = []
 tqdm = []
 traitlets = []
