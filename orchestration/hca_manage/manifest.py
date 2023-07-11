@@ -171,6 +171,14 @@ def load(args: argparse.Namespace) -> None:
         project_id_only=True,
         include_release_tag=True
     )
+    parse_and_load_manifest(
+        args.env,
+        args.csv_path,
+        args.release_tag,
+        "make_snapshot_public_interim",
+        project_id_only=True,
+        include_release_tag=True
+    )
     _reload_repository(_get_dagster_client())
 
 

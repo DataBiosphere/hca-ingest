@@ -36,7 +36,9 @@ deployment info.
 ## Web UI access
 We are using port forwarding for access to the Dagster web UI for now. 
 To run:`dagster/forward_ports.sh <env>`
-* For example, to access the dev environment: `dagster/forward_ports.sh dev`
+* For example, to access the dev environment: `dagster/forward_ports.sh dev` \
+*if you get an error about 8080 already being in use, you may need to kill the process that is using it.* \
+*`lsof -i :8080` will show you the process id, then you can kill it with `kill -9 <pid>`*
 
 <details>
   <summary>Possible future dev work for accessing the web UI via Docker</summary> 

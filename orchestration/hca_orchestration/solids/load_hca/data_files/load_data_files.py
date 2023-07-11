@@ -2,6 +2,8 @@ from typing import Iterator
 
 from dagster import composite_solid, solid
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
+# TODO:
+# dagster.experimental has been removed. DynamicOutput and DynamicOutputDefinition are now in dagster top level
 from dagster.experimental import DynamicOutput, DynamicOutputDefinition
 from data_repo_client import JobModel
 from google.cloud import bigquery
