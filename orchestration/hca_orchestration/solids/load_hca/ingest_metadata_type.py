@@ -2,6 +2,9 @@ from typing import Iterator
 
 from dagster import Any, Field, String, solid
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
+# TODO:
+# dagster.experimental has been removed. DymaicOutput and DynamicOutputDefinition are now in dagster top level
+# Can probably remove ExperimentalWarning configs as well
 from dagster.experimental import DynamicOutput, DynamicOutputDefinition
 
 from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataTypeFanoutResult

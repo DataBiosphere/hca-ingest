@@ -71,6 +71,31 @@ def get_completed_snapshot_info(context: AbstractComputeExecutionContext, job_id
     )
     yield Output(snapshot_info_dict['id'])
 
+@solid(
+    config_schema=Field(Permissive({"validate_snapshot_name": Field(bool, default_value=True, is_required=False)})),
+    required_resource_keys={'data_repo_client', 'snapshot_config'},
+)
+# use project_id to get snapshot_id from TDR see datasets.py? for how to do that
+# enumerateSnapshots filter on project_id
+# looks like actually we get the dataset_name from the job context so... we can just search for that as it is the same as the snapshot_name
+ ## "hca_{env}_{project_id}__{datetime.today().date()}_dcp2_{release_tag}"
+# if returns 0 fail - look for examples
+# if returns > 1 fail ->> might need to start tagging snapshots with release_tag
+# get the snapshot_name too - and verify that ends in release_tag
+def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> str:
+    dataset_name = context.resources.snapshot_config.dataset_name
+    # snapshot_name = context.resources.snapshot_config.snapshot_name
+    snapshot = self.query_snapshot(dataset_name)
+    if not snapshot:
+        raise Failure(f"Snapshot not found for dataset name [dataset_name={dataset_name}]")
+    if snapshot:
+        if not snapshot.name end in release_tag?
+            raise Failure(f"Snapshot name does not end in release tag [snapshot_name={snapshot_name}]")
+        if snapshot.name ends in release_tag:
+            return snapshot.id
+    else:
+        return None
+
 
 @solid(
     required_resource_keys={'sam_client'},

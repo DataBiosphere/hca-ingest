@@ -10,6 +10,7 @@ python = "3.9.16"
 argo-workflows = "^5.0.0"
 broad-dagster-utils = "0.6.7"
 cached-property = "^1.5.2"
+# TODO: we'll probably want to use just the dagster version here and not the API versions as well - https://github.com/dagster-io/dagster/blob/master/MIGRATION.md#migrating-to-10
 dagster = "0.12.14"
 dagster-gcp = "^0.12.14"
 dagster-k8s = "0.12.14"

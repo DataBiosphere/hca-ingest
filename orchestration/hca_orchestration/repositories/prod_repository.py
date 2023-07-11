@@ -173,6 +173,8 @@ def all_jobs() -> list[PipelineDefinition]:
                                               run_config_for_real_prod_migration_dcp1)
     jobs += configure_partitions_for_pipeline("dcp2_real_prod_migration",
                                               run_config_for_real_prod_migration_dcp2)
+    jobs += configure_partitions_for_pipeline("make_snapshot_public_interim",
+                                              run_config_per_project_snapshot_job)
     jobs += configure_partitions_for_pipeline("cut_project_snapshot_job_real_prod",
                                               run_config_per_project_snapshot_job)
     jobs += configure_partitions_for_pipeline("load_hca", run_config_for_dcp_release_partition)
