@@ -358,8 +358,8 @@ class SnapshotManager:
             sys.exit(1)
         return job_id
 
-    def query_snapshot(self, snapshot_name: Optional[str] = None) -> EnumerateSnapshotModel:
-        return self.data_repo_client.enumerate_snapshots(filter=snapshot_name, limit=1000)
+    def query_snapshot(self, snapshot_name: Optional[str] = None, result_limit: Optional[int] = 1000) -> EnumerateSnapshotModel:
+        return self.data_repo_client.enumerate_snapshots(filter=snapshot_name, limit=result_limit)
 
     def add_policy_member(self, policy_member: str, policy_name: str, snapshot_id: str) -> PolicyResponse:
         payload = PolicyMemberRequest(email=policy_member)
