@@ -32,6 +32,7 @@ from hca_orchestration.pipelines.cut_snapshot import (
     legacy_cut_snapshot_job,
 )
 from hca_orchestration.pipelines.load_hca import load_hca
+from hca_orchestration.pipelines.set_snapshot_public import make_snapshot_public_job
 from hca_orchestration.pipelines.validate_ingress import (
     run_config_for_validation_ingress_partition,
     staging_area_validator,
@@ -163,6 +164,8 @@ def all_jobs() -> list[PipelineDefinition]:
         per_project_load_hca(),
         dcp1_real_prod_migration(),
         dcp2_real_prod_migration(),
+        # make_snapshot_public_job("prod", "prod"), # I'm not sure this is needed
+        make_snapshot_public_job("prod", "real_prod"),
         cut_project_snapshot_job("prod", "prod", "monster@firecloud.org"),
         cut_project_snapshot_job("prod", "real_prod", "monster@firecloud.org"),
         legacy_cut_snapshot_job("prod", "monster@firecloud.org"),
@@ -176,7 +179,7 @@ def all_jobs() -> list[PipelineDefinition]:
                                               run_config_for_real_prod_migration_dcp1)
     jobs += configure_partitions_for_pipeline("dcp2_real_prod_migration",
                                               run_config_for_real_prod_migration_dcp2)
-    jobs += configure_partitions_for_pipeline("make_snapshot_public_interim",
+    jobs += configure_partitions_for_pipeline("make_snapshot_public_job_real_prod",
                                               run_config_per_project_snapshot_job)
     jobs += configure_partitions_for_pipeline("cut_project_snapshot_job_real_prod",
                                               run_config_per_project_snapshot_job)

@@ -1,8 +1,11 @@
 import warnings
 
 from dagster import (
+    ExperimentalWarning,
     graph,
     HookContext,
+    in_process_executor,
+    PipelineDefinition,
     success_hook,
 )
 
@@ -12,6 +15,38 @@ from hca_orchestration.solids.create_snapshot import (
 )
 
 warnings.filterwarnings("ignore", category=ExperimentalWarning)
+
+
+def make_snapshot_public_job(hca_env: str, jade_env: str) -> PipelineDefinition:
+    return set_snapshot_public.to_job(
+        description="Given a source project ID, this pipeline will determine the corresponding "
+                    "snapshot_id and use Sam to set the snapshot to public.",
+        name=f"make_snapshot_public_job_{jade_env}",
+        resource_defs={
+            "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, jade_env),
+            "data_repo_service": data_repo_service,
+            "gcs": google_storage_client,
+            "hca_manage_config": preconfigure_resource_for_mode(hca_manage_config, hca_env),
+            "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, hca_env),
+            "sam_client": preconfigure_resource_for_mode(sam_client, hca_env),
+            "slack": preconfigure_resource_for_mode(live_slack_client, hca_env),
+            "snapshot_config": project_snapshot_creation_config,
+            "dagit_config": preconfigure_resource_for_mode(dagit_config, hca_env),
+        },
+        config={
+            "resources": {
+                "snapshot_config": {
+                    "config": {
+                        "managed_access": False,
+                        "source_hca_project_id": "",
+                        "qualifier": None,
+                        "atlas": "hca"
+                    }
+                }
+            },
+        },
+        executor_def=in_process_executor
+    )
 
 @success_hook(
     required_resource_keys={'slack', 'snapshot_config', 'dagit_config', 'hca_manage_config'}
