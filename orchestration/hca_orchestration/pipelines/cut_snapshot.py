@@ -184,4 +184,3 @@ def cut_snapshot() -> None:
         get_completed_snapshot_info(
             hooked_wait_for_job_completion(
                 hooked_submit_snapshot_job())))
-    )
