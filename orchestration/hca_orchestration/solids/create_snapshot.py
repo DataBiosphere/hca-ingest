@@ -6,7 +6,7 @@ from dagster.core.execution.context.compute import AbstractComputeExecutionConte
 from data_repo_client import RepositoryApi, PolicyMemberRequest, PolicyResponse
 
 from hca_manage.common import JobId
-from hca_manage.snapshot import SnapshotManager, query_snapshot
+from hca_manage.snapshot import SnapshotManager
 from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
 
 
@@ -71,20 +71,22 @@ def get_completed_snapshot_info(context: AbstractComputeExecutionContext, job_id
     )
     yield Output(snapshot_info_dict['id'])
 
+
 @solid(
     config_schema=Field(Permissive({"validate_snapshot_name": Field(bool, default_value=True, is_required=False)})),
     required_resource_keys={'data_repo_client', 'snapshot_config'},
 )
 # use project_id to get snapshot_id from TDR see datasets.py? for how to do that
 # enumerateSnapshots filter on project_id
-# looks like actually we get the dataset_name from the job context so... we can just search for that as it is the same as the snapshot_name
- ## "hca_{env}_{project_id}__{datetime.today().date()}_dcp2_{release_tag}"
+# looks like actually we get the dataset_name from the job context so...
+# we can just search for that as it is the same as the snapshot_name
+# ## "hca_{env}_{project_id}__{datetime.today().date()}_dcp2_{release_tag}"
 # if returns 0 fail - look for examples
 # if returns > 1 fail ->> might need to start tagging snapshots with release_tag
 # get the snapshot_name too - and verify that ends in release_tag
 def get_snapshot_from_project(context: AbstractComputeExecutionContext, init_context: InitResourceContext) -> str:
     dataset_name = context.resources.snapshot_config.dataset_name
-    snapshot = query_snapshot(filter=dataset_name, limit=1)
+    snapshot = SnapshotManager.query_snapshot(dataset_name, 1)
     name = snapshot.name
     # are context & init_context the same??
     release_tag = init_context.resource_config['qualifier']
@@ -96,6 +98,7 @@ def get_snapshot_from_project(context: AbstractComputeExecutionContext, init_con
             raise Failure(f"Snapshot name does not end in release tag [snapshot_name={name}]")
         else:
             return snapshot.id
+
 
 @solid(
     required_resource_keys={'sam_client'},
