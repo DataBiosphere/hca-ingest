@@ -1,12 +1,12 @@
 from typing import Iterator
 
 from dagster import AssetMaterialization, EventMetadataEntry, Output, OutputDefinition, solid, Failure, Optional, \
-    Noneable, Field, Permissive
+    Noneable, Field, Permissive, InitResourceContext
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 from data_repo_client import RepositoryApi, PolicyMemberRequest, PolicyResponse
 
 from hca_manage.common import JobId
-from hca_manage.snapshot import SnapshotManager
+from hca_manage.snapshot import SnapshotManager, query_snapshot
 from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
 
 
@@ -82,20 +82,20 @@ def get_completed_snapshot_info(context: AbstractComputeExecutionContext, job_id
 # if returns 0 fail - look for examples
 # if returns > 1 fail ->> might need to start tagging snapshots with release_tag
 # get the snapshot_name too - and verify that ends in release_tag
-def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> str:
+def get_snapshot_from_project(context: AbstractComputeExecutionContext, init_context: InitResourceContext) -> str:
     dataset_name = context.resources.snapshot_config.dataset_name
-    # snapshot_name = context.resources.snapshot_config.snapshot_name
-    snapshot = self.query_snapshot(dataset_name)
+    snapshot = query_snapshot(filter=dataset_name, limit=1)
+    name = snapshot.name
+    # are context & init_context the same??
+    release_tag = init_context.resource_config['qualifier']
+
     if not snapshot:
         raise Failure(f"Snapshot not found for dataset name [dataset_name={dataset_name}]")
     if snapshot:
-        if not snapshot.name end in release_tag?
-            raise Failure(f"Snapshot name does not end in release tag [snapshot_name={snapshot_name}]")
-        if snapshot.name ends in release_tag:
+        if not name.endswith(release_tag):
+            raise Failure(f"Snapshot name does not end in release tag [snapshot_name={name}]")
+        else:
             return snapshot.id
-    else:
-        return None
-
 
 @solid(
     required_resource_keys={'sam_client'},
