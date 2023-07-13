@@ -31,6 +31,7 @@ Once you have your environment set up verify that you can load our repository of
 * *copy_project*: Copies a single HCA project from one dataset to another
 * *validate_ingress*: Validates an HCA staging area
 * *cut_snapshot*: Submits an HCA snapshot creation job to TDR and polls to completion
+* *set_snapshot_public*: Submits an HCA make_snapshot_public job to Sam and notifies Slack when complete
 
 All pipelines are runnable in local development configurations.
 
