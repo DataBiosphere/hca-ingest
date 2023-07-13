@@ -10,7 +10,7 @@ your token to the Docker image.
   <summary>Here are the relevant steps:</summary>
 
 To set up GitHub token: \
-* In your GitHub account go to Settings> Developer Settings> Personal Access Tokens
+* In your GitHub account go to Settings> Developer Settings> Personal Access Tokens > Tokens (classic)
 * Generate a new token “For Vault” (or something like that) and give it “read:org” permissions - Save
 * Copy the token
 * Create a new file in your home dir “.github-token” - past the copied token there.
