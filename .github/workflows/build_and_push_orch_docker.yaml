@@ -1,4 +1,4 @@
-name: Main Validation and Release
+name: build-and-push-orch-docker
 on:
   push:
 jobs:
