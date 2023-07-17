@@ -14,6 +14,8 @@ from dagster_utils.resources.google_storage import google_storage_client
 from dagster_utils.resources.sam import sam_client
 from dagster_utils.resources.slack import live_slack_client
 
+# isort: split
+
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.data_repo import (
