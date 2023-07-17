@@ -8,7 +8,21 @@ from dagster import (
     PipelineDefinition,
     success_hook,
 )
+from dagster_gcp.gcs import gcs_pickle_io_manager
+from dagster_utils.resources.data_repo.jade_data_repo import (
+    jade_data_repo_client,
+)
+from dagster_utils.resources.google_storage import google_storage_client
+from dagster_utils.resources.sam import sam_client
+from dagster_utils.resources.slack import live_slack_client
 
+from hca_orchestration.config import preconfigure_resource_for_mode
+from hca_orchestration.resources.config.dagit import dagit_config
+from hca_orchestration.resources.config.data_repo import (
+    hca_manage_config,
+    project_snapshot_creation_config,
+)
+from hca_orchestration.resources.data_repo_service import data_repo_service
 from hca_orchestration.solids.create_snapshot import (
     get_snapshot_from_project,
     make_snapshot_public,
@@ -47,6 +61,7 @@ def make_snapshot_public_job(hca_env: str, jade_env: str) -> PipelineDefinition:
         },
         executor_def=in_process_executor
     )
+
 
 @success_hook(
     required_resource_keys={'slack', 'snapshot_config', 'dagit_config', 'hca_manage_config'}
