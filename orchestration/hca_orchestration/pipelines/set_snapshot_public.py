@@ -2,16 +2,14 @@ import warnings
 
 from dagster import (
     ExperimentalWarning,
-    graph,
     HookContext,
-    in_process_executor,
     PipelineDefinition,
+    graph,
+    in_process_executor,
     success_hook,
 )
 from dagster_gcp.gcs import gcs_pickle_io_manager
-from dagster_utils.resources.data_repo.jade_data_repo import (
-    jade_data_repo_client,
-)
+from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client
 from dagster_utils.resources.google_storage import google_storage_client
 from dagster_utils.resources.sam import sam_client
 from dagster_utils.resources.slack import live_slack_client
@@ -101,6 +99,7 @@ def message_for_snapshot_public(context: HookContext) -> None:
              )
     slack_msg_text = "\n".join(lines)
     context.resources.slack.send_message(text=slack_msg_text)
+
 
 @graph
 def set_snapshot_public() -> None:
