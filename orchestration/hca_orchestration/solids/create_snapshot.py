@@ -98,19 +98,28 @@ def get_completed_snapshot_info(context: AbstractComputeExecutionContext, job_id
 # if returns > 1 fail ->> might need to start tagging snapshots with release_tag
 # get the snapshot_name too - and verify that ends in release_tag
 def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> str:
+    data_repo_service: DataRepoService = context.resources.data_repo_service
     dataset_name = context.resources.snapshot_config.dataset_name
-    snapshot = SnapshotManager.query_snapshot(dataset_name, 1)
-    name = snapshot.name
-    # are context & init_context the same??
+    snapshot_name = context.resources.snapshot_config.snapshot_name
+    # snapshot = SnapshotManager.query_snapshot(filter=dataset_name, limit=1) # this is the wrong call
     release_tag = context.resources.snapshot_config.qualifier
+    dataset = data_repo_service.find_dataset(dataset_name)
 
-    if not snapshot:
+    if not dataset:
         raise Failure(f"Snapshot not found for dataset name [dataset_name={dataset_name}]")
-    if snapshot:
-        if not name.endswith(release_tag):
-            raise Failure(f"Snapshot name does not end in release tag [snapshot_name={name}]")
+    if snapshot_name:
+        if not snapshot_name.endswith(release_tag):
+            raise Failure(f"Snapshot name does not end in release tag [snapshot_name={snapshot_name}]")
         else:
-            return snapshot.id
+            return SnapshotManager(
+                environment=context.resources.hca_manage_config.gcp_env,
+                dataset=context.resources.snapshot_config.dataset_name,
+                data_repo_client=context.resources.data_repo_client,
+                data_repo_profile_id=dataset.billing_profile_id
+            ).query_snapshot(
+                snapshot_name,
+                1
+            )
 
 
 @solid(
