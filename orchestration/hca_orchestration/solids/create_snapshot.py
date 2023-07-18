@@ -84,12 +84,12 @@ def get_completed_snapshot_info(context: AbstractComputeExecutionContext, job_id
 # if returns 0 fail - look for examples
 # if returns > 1 fail ->> might need to start tagging snapshots with release_tag
 # get the snapshot_name too - and verify that ends in release_tag
-def get_snapshot_from_project(context: AbstractComputeExecutionContext, init_context: InitResourceContext) -> str:
+def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> str:
     dataset_name = context.resources.snapshot_config.dataset_name
     snapshot = SnapshotManager.query_snapshot(dataset_name, 1)
     name = snapshot.name
     # are context & init_context the same??
-    release_tag = init_context.resource_config['qualifier']
+    release_tag = context.resources.snapshot_config.qualifier
 
     if not snapshot:
         raise Failure(f"Snapshot not found for dataset name [dataset_name={dataset_name}]")
