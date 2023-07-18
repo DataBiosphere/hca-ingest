@@ -1,17 +1,18 @@
 from typing import Iterator
 
-from dagster import (AssetMaterialization,
-                     EventMetadataEntry,
-                     Failure,
-                     Field,
-                     InitResourceContext,
-                     Noneable,
-                     Optional,
-                     Output,
-                     OutputDefinition,
-                     Permissive,
-                     solid,
-                     )
+from dagster import (
+    AssetMaterialization,
+    EventMetadataEntry,
+    Failure,
+    Field,
+    InitResourceContext,
+    Noneable,
+    Optional,
+    Output,
+    OutputDefinition,
+    Permissive,
+    solid,
+    )
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
 # isort: split
