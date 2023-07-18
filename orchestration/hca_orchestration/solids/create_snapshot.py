@@ -12,7 +12,7 @@ from dagster import (
     OutputDefinition,
     Permissive,
     solid,
-    )
+)
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
 
 # isort: split
