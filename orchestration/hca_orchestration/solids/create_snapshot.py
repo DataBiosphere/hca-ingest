@@ -87,7 +87,7 @@ def get_completed_snapshot_info(context: AbstractComputeExecutionContext, job_id
 
 @solid(
     config_schema=Field(Permissive({"validate_snapshot_name": Field(bool, default_value=True, is_required=False)})),
-    required_resource_keys={'data_repo_client', 'snapshot_config'},
+    required_resource_keys={'data_repo_client', 'snapshot_config', 'data_repo_service'},
 )
 # use project_id to get snapshot_id from TDR see datasets.py? for how to do that
 # enumerateSnapshots filter on project_id
