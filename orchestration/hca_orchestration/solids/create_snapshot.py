@@ -1,9 +1,24 @@
 from typing import Iterator
 
-from dagster import AssetMaterialization, EventMetadataEntry, Output, OutputDefinition, solid, Failure, Optional, \
-    Noneable, Field, Permissive, InitResourceContext
+from dagster import (AssetMaterialization,
+                     EventMetadataEntry,
+                     Failure,
+                     Field,
+                     InitResourceContext,
+                     Noneable,
+                     Optional,
+                     Output,
+                     OutputDefinition,
+                     Permissive,
+                     solid,
+                     )
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
-from data_repo_client import RepositoryApi, PolicyMemberRequest, PolicyResponse
+
+# isort: split
+
+from data_repo_client import PolicyMemberRequest, PolicyResponse, RepositoryApi
+
+# isort: split
 
 from hca_manage.common import JobId
 from hca_manage.snapshot import SnapshotManager
