@@ -118,8 +118,10 @@ def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> str:
             [release_tag={release_tag}].")
         else:
             response = context.resources.data_repo_client.enumerate_snapshots(filter=snapshot_name)
+            print(f"create_snapshot get_snapshot_from_project response = {response}")
             try:
                 snapshot_id = response.items[0].id
+                print("snapshot_id = ", snapshot_id)
                 return snapshot_id
             except IndexError:
                 raise ValueError("The provided snapshot name returned no results.")
