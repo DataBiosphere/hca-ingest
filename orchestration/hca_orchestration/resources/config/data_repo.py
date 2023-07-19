@@ -4,10 +4,8 @@ from datetime import datetime
 
 from dagster import Bool, Noneable, String, resource
 from dagster.core.execution.context.init import InitResourceContext
-
-from hca_orchestration.contrib.data_repo.data_repo_service import (
-    DataRepoService,
-)
+# isort: split
+from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
 from hca_orchestration.support.dates import dataset_snapshot_formatted_date
 
 
@@ -42,6 +40,7 @@ def snapshot_creation_config(init_context: InitResourceContext) -> SnapshotCreat
     return SnapshotCreationConfig(
         dataset_name=init_context.resource_config["dataset_name"],
         snapshot_name=snapshot_name,
+        qualifier=qualifier,
         managed_access=init_context.resource_config["managed_access"]
     )
 
