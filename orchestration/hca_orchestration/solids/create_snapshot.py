@@ -105,6 +105,12 @@ def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> str:
     release_tag = context.resources.snapshot_config.qualifier
     dataset = data_repo_service.find_dataset(dataset_name)
 
+    # TODO debugging
+    print(f"create_snapshot get_snapshot_from_project dataset_name = {dataset_name}")
+    print(f"create_snapshot get_snapshot_from_project snapshot_name = {snapshot_name}")
+    print(f"create_snapshot get_snapshot_from_project release_tag = {release_tag}")
+    print(f"create_snapshot get_snapshot_from_project dataset = {dataset}")
+
     # we need the data set to get the billing profile id, which is needed to query the snapshot
     if not dataset:
         raise Failure(f"Snapshot not found for dataset name [dataset_name={dataset_name}]")
