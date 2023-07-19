@@ -117,15 +117,24 @@ def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> str:
             raise Failure(f"Snapshot name does not end in current release tag [snapshot_name={snapshot_name}], \
             [release_tag={release_tag}].")
         else:
-            return SnapshotManager(
-                environment=context.resources.hca_manage_config.gcp_env,
-                dataset=context.resources.snapshot_config.dataset_name,
-                data_repo_client=context.resources.data_repo_client,
-                data_repo_profile_id=dataset.billing_profile_id
-            ).query_snapshot(
-                snapshot_name,
-                1
-            )
+            response = context.resources.data_repo_client.enumerate_snapshots(filter=snapshot_name)
+            try:
+                snapshot_id = response.items[0].id
+                return snapshot_id
+            except IndexError:
+                raise ValueError("The provided snapshot name returned no results.")
+
+            # this returns the json payload... not the id
+            # could maybe user response.items[0].id here?
+            # return SnapshotManager(
+            #     environment=context.resources.hca_manage_config.gcp_env,
+            #     dataset=context.resources.snapshot_config.dataset_name,
+            #     data_repo_client=context.resources.data_repo_client,
+            #     data_repo_profile_id=dataset.billing_profile_id
+            # ).query_snapshot(
+            #     snapshot_name,
+            #     1
+            # )
 
 
 @solid(
