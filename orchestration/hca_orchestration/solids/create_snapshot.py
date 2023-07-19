@@ -103,6 +103,7 @@ def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> str:
     snapshot_name = context.resources.snapshot_config.snapshot_name
     # snapshot = SnapshotManager.query_snapshot(filter=dataset_name, limit=1) # this is the wrong call
     release_tag = context.resources.snapshot_config.qualifier
+    print(f" DEBUGGING get_snapshot_from_project - release_tag: {release_tag}")
     dataset = data_repo_service.find_dataset(dataset_name)
 
     if not dataset:
