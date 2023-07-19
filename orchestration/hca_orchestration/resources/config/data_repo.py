@@ -15,6 +15,7 @@ from hca_orchestration.support.dates import dataset_snapshot_formatted_date
 class SnapshotCreationConfig:
     dataset_name: str
     snapshot_name: str
+    qualifier: str
     managed_access: bool
 
 
@@ -85,7 +86,11 @@ def project_snapshot_creation_config(init_context: InitResourceContext) -> Snaps
     if snapshot_qualifier:
         snapshot_name = f"{snapshot_name}_{snapshot_qualifier}"
 
-    return SnapshotCreationConfig(result.dataset_name, snapshot_name, init_context.resource_config["managed_access"])
+    return SnapshotCreationConfig(
+        result.dataset_name,
+        snapshot_name,
+        snapshot_qualifier,
+        init_context.resource_config["managed_access"])
 
 
 @dataclass
