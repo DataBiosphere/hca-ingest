@@ -71,6 +71,11 @@ def run(arguments: Optional[list[str]] = None) -> None:
     snapshot_delete.add_argument("-i", "--snapshot_id", help="ID of snapshot to delete.")
     snapshot_delete.set_defaults(func=_remove_snapshot)
 
+    # get id
+    snapshot_get_id = subparsers.add_parser("get_id")
+    snapshot_get_id.add_argument("-n", "--snapshot_name", help="Name of snapshot to get id for.")
+    snapshot_get_id.set_defaults(func=_get_snapshot_id)
+
     snapshot_query = subparsers.add_parser("query")
     snapshot_query.add_argument("-n", "--snapshot_name", help="Name of snapshot to filter for")
     snapshot_query.set_defaults(func=_query_snapshot)
@@ -225,6 +230,12 @@ def _remove_snapshot(args: argparse.Namespace) -> None:
     hca = SnapshotManager(environment=args.env, data_repo_client=get_api_client(host=host))
     hca.delete_snapshot(snapshot_name=args.snapshot_name, snapshot_id=args.snapshot_id)
 
+@tdr_operation
+def _get_snapshot_id(args:argparse.Namespace) -> None:
+    host = data_repo_host[args.env]
+    hca = SnapshotManager(environment=args.env, data_repo_client=get_api_client(host=host))
+    hca.get_snapshot_id(snapshot_name=args.snapshot_name)
+
 
 @tdr_operation
 def _query_snapshot(args: argparse.Namespace) -> None:
@@ -357,6 +368,14 @@ class SnapshotManager:
             logging.error(job_result)
             sys.exit(1)
         return job_id
+
+    def get_snapshot_id(self, snapshot_name: str) -> str:
+        response = self.data_repo_client.enumerate_snapshots(filter=snapshot_name)
+        try:
+            snapshot_id = response.items[0].id
+        except IndexError:
+            raise ValueError("The provided snapshot name returned no results.")
+        return snapshot_id
 
     def query_snapshot(self, snapshot_name: Optional[str] = None, result_limit: Optional[int] = 1000) -> EnumerateSnapshotModel:
         return self.data_repo_client.enumerate_snapshots(filter=snapshot_name, limit=result_limit)
