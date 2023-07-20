@@ -103,17 +103,17 @@ def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> str:
     snapshot_name = context.resources.snapshot_config.snapshot_name
     # snapshot = SnapshotManager.query_snapshot(filter=dataset_name, limit=1) # this is the wrong call
     release_tag = context.resources.snapshot_config.qualifier
-    dataset = data_repo_service.find_dataset(dataset_name)
+    # dataset = data_repo_service.find_dataset(dataset_name)
 
     # TODO debugging
     print(f"create_snapshot get_snapshot_from_project dataset_name = {dataset_name}")
     print(f"create_snapshot get_snapshot_from_project snapshot_name = {snapshot_name}")
     print(f"create_snapshot get_snapshot_from_project release_tag = {release_tag}")
-    print(f"create_snapshot get_snapshot_from_project dataset = {dataset}")
+    # print(f"create_snapshot get_snapshot_from_project dataset = {dataset}")
 
     # we need the data set to get the billing profile id, which is needed to query the snapshot
-    if not dataset:
-        raise Failure(f"Snapshot not found for dataset name [dataset_name={dataset_name}]")
+    # if not dataset:
+    #    raise Failure(f"Snapshot not found for dataset name [dataset_name={dataset_name}]")
     if not snapshot_name:
         raise Failure(f"Snapshot name not found for snapshot name [snapshot_name={snapshot_name}]")
     else:
@@ -123,14 +123,14 @@ def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> str:
             raise Failure(f"Snapshot name does not end in current release tag [snapshot_name={snapshot_name}], \
             [release_tag={release_tag}].")
         else:
-            response = context.resources.data_repo_client.enumerate_snapshots(filter=snapshot_name)
+            response = context.resources.data_repo_client.enumerate_snapshots(filter=dataset_name)
             print(f"create_snapshot get_snapshot_from_project response = {response}")
             try:
                 snapshot_id = response.items[0].id
                 print("snapshot_id = ", snapshot_id)
                 return snapshot_id
             except IndexError:
-                raise ValueError("The provided snapshot name returned no results.")
+                raise ValueError("The provided dataset name returned no results.")
 
             # this returns the json payload... not the id
             # could maybe user response.items[0].id here?
