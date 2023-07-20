@@ -20,7 +20,7 @@ def test_submit_snapshot_job_calls_submit_snapshot_job_in_hca_manage():
                     "data_repo_service": ResourceDefinition.hardcoded_resource(Mock(spec=DataRepoService)),
                     "sam_client": ResourceDefinition.hardcoded_resource(Mock(spec=Sam)),
                     "snapshot_config": ResourceDefinition.hardcoded_resource(
-                        SnapshotCreationConfig("fake", "fake", False)),
+                        SnapshotCreationConfig("fake", "fake", "fake", False)),
                     "hca_manage_config": ResourceDefinition.hardcoded_resource(HcaManageConfig("dev", "fake"))
                 }
             ),
