@@ -98,12 +98,12 @@ def get_completed_snapshot_info(context: AbstractComputeExecutionContext, job_id
 # if returns > 1 fail ->> might need to start tagging snapshots with release_tag
 # get the snapshot_name too - and verify that ends in release_tag
 def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> str:
-    data_repo_service: DataRepoService = context.resources.data_repo_service
+    # data_repo_service: DataRepoService = context.resources.data_repo_service # not used
     dataset_name = context.resources.snapshot_config.dataset_name
     snapshot_name = context.resources.snapshot_config.snapshot_name
     # snapshot = SnapshotManager.query_snapshot(filter=dataset_name, limit=1) # this is the wrong call
     release_tag = context.resources.snapshot_config.qualifier
-    # dataset = data_repo_service.find_dataset(dataset_name)
+    # dataset = data_repo_service.find_dataset(dataset_name) # not used
 
     # TODO debugging
     print(f"create_snapshot get_snapshot_from_project dataset_name = {dataset_name}")
