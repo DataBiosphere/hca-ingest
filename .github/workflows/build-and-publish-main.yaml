@@ -1,8 +1,8 @@
 name: Main Validation and Release
 on:
   push:
-     branches:
-      - main
+#     branches:
+#      - main
 jobs:
   main-ci:
     runs-on: ubuntu-latest
