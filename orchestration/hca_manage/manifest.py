@@ -41,6 +41,10 @@ STAGING_AREA_BUCKETS = {
         "UCSC": "gs://broad-dsp-monster-hca-prod-ebi-storage/prod",
         "LANTERN": "gs://broad-dsp-monster-hca-prod-lantern",
         "LATTICE": "gs://broad-dsp-monster-hca-prod-lattice/staging"
+    },
+    "dev": {
+        "EBI": "gs://broad-dsp-monster-hca-dev-partition-testing/dev",
+        "UCSC": "gs://broad-dsp-monster-hca-dev-partition-testing/dev",
     }
 }
 REPOSITORY_LOCATION = "monster-hca-ingest"
