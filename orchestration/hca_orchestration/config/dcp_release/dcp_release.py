@@ -45,7 +45,7 @@ def run_config_for_dcp_release_per_project_partition(partition: Partition) -> Da
     # TODO this is kind of a hack; we're looking for a UUID in the source path and assuming it's a project ID
     project_id = find_project_id_in_str(partition.value)
     run_config["resources"]["hca_project_id"]["config"]["hca_project_id"] = project_id
-    #jscpd:ignore-end
+    # jscpd:ignore-end
 
     return run_config
 
