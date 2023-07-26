@@ -23,9 +23,30 @@ def run_config_for_dcp_release_partition(partition: Partition) -> DagsterObjectC
     return run_config
 
 
+# for production releases - uses prod config
 def run_config_for_dcp_release_per_project_partition(partition: Partition) -> DagsterObjectConfigSchema:
     path = file_relative_path(
         __file__, os.path.join(f"./run_config/prod", "per_project_dcp_release.yaml")
+    )
+
+    run_config: DagsterObjectConfigSchema = load_yaml_from_path(path)
+    run_config["solids"]["pre_process_metadata"]["config"]["input_prefix"] = partition.value
+    creation_date = datetime.now().strftime("%Y%m%d%H%M")
+
+    load_prefix = f"dcp_release_{creation_date}"
+    run_config["resources"]["scratch_config"]["config"]["scratch_dataset_prefix"] = "staging"
+    run_config["resources"]["load_tag"]["config"]["load_tag_prefix"] = load_prefix
+
+    # TODO this is kind of a hack; we're looking for a UUID in the source path and assuming it's a project ID
+    project_id = find_project_id_in_str(partition.value)
+    run_config["resources"]["hca_project_id"]["config"]["hca_project_id"] = project_id
+
+    return run_config
+
+# for dev releases - uses dev config
+def dev_run_config_for_dcp_release_per_project_partition(partition: Partition) -> DagsterObjectConfigSchema:
+    path = file_relative_path(
+        __file__, os.path.join(f"./run_config/prod", "per_project_dcp_release_dev.yaml")
     )
 
     run_config: DagsterObjectConfigSchema = load_yaml_from_path(path)
