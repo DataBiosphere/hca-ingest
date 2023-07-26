@@ -129,7 +129,8 @@ def all_jobs() -> list[PipelineDefinition]:
         make_snapshot_public_job("dev", "dev"),
         cut_project_snapshot_job("dev", "dev", "monster-dev@dev.test.firecloud.org"),
         legacy_cut_snapshot_job("dev", "monster-dev@dev.test.firecloud.org"),
-        load_hca_job(),
+        # load_hca_job(),
+        per_project_load_hca_dev(),
         validate_ingress_job()
     ]
     jobs += configure_partitions_for_pipeline("copy_project_to_new_dataset",
@@ -141,7 +142,11 @@ def all_jobs() -> list[PipelineDefinition]:
     # jobs += configure_partitions_for_pipeline("cut_snapshot", run_config_for_cut_snapshot_partition) # old?
     jobs += configure_partitions_for_pipeline("cut_project_snapshot_job_dev",
                                               run_config_per_project_snapshot_job)
-    jobs += configure_partitions_for_pipeline("load_hca", dev_run_config_for_dcp_release_per_project_partition)
+    # jobs += configure_partitions_for_pipeline("load_hca", dev_run_config_for_dcp_release_per_project_partition)
+    jobs += configure_partitions_for_pipeline(
+        "per_project_load_hca_dev",
+        dev_run_config_for_dcp_release_per_project_partition,
+    )
     jobs += configure_partitions_for_pipeline("validate_ingress", run_config_for_validation_ingress_partition)
 
     return jobs
