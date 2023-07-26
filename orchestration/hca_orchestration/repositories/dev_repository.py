@@ -24,8 +24,8 @@ from hca_orchestration.config.prod_migration.prod_migration import (
 )
 from hca_orchestration.contrib.dagster import configure_partitions_for_pipeline
 from hca_orchestration.pipelines.cut_snapshot import (
-    legacy_cut_snapshot_job,
     cut_project_snapshot_job,
+    legacy_cut_snapshot_job,
 )
 from hca_orchestration.pipelines.load_hca import load_hca
 from hca_orchestration.pipelines.set_snapshot_public import make_snapshot_public_job
@@ -38,8 +38,8 @@ from hca_orchestration.repositories.common import copy_project_to_new_dataset_jo
 from hca_orchestration.resources import bigquery_service, load_tag
 from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.datasets import (
-     find_or_create_project_dataset,
-     passthrough_hca_dataset,
+    find_or_create_project_dataset,
+    passthrough_hca_dataset,
 )
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.data_repo_service import data_repo_service
