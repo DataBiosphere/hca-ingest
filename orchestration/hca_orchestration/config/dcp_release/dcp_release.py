@@ -54,7 +54,7 @@ def run_config_for_dcp_release_per_project_partition(partition: Partition) -> Da
 # Definitely hacky and very not dry - but this is all going away, and it's how it was done before
 def dev_run_config_for_dcp_release_per_project_partition(partition: Partition) -> DagsterObjectConfigSchema:
     path = file_relative_path(
-        __file__, os.path.join("./run_config/prod", "per_project_dcp_release_dev.yaml")
+        __file__, os.path.join("./run_config/dev", "per_project_dcp_release_dev.yaml")
     )
     # jsdcp:ignore-start
     run_config: DagsterObjectConfigSchema = load_yaml_from_path(path)
