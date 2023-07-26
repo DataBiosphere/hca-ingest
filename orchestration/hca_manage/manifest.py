@@ -23,10 +23,15 @@ from dagster_graphql import (
     ShutdownRepositoryLocationStatus,
 )
 from google.cloud.storage import Blob, Bucket, Client
-from more_itertools import chunked
+
+# isort: split
 
 from hca_manage.common import query_yes_no, setup_cli_logging_format
 from hca_orchestration.support.matchers import find_project_id_in_str
+
+# isort: split
+
+from more_itertools import chunked
 
 warnings.filterwarnings("ignore", category=dagster.ExperimentalWarning)
 
@@ -117,7 +122,8 @@ def _parse_csv(csv_path: str, env: str, project_id_only: bool = False,
 
 
 def parse_and_load_manifest(env: str, csv_path: str, release_tag: str,
-                            pipeline_name: str, project_id_only: bool = False, include_release_tag: bool = False) -> None:
+                            pipeline_name: str, project_id_only: bool = False,
+                            include_release_tag: bool = False) -> None:
     chunked_paths = _parse_csv(csv_path, env, project_id_only, include_release_tag, release_tag)
     storage_client = Client()
     bucket: Bucket = storage_client.bucket(bucket_name=ETL_PARTITION_BUCKETS[env])
@@ -191,7 +197,7 @@ def enumerate_manifests(args: argparse.Namespace) -> None:
 
 
 def reload(args: argparse.Namespace) -> None:
-    logging.info(f"Reloading dagster user code env to reload partitions.")
+    logging.info("Reloading dagster user code env to reload partitions.")
 
     dagster_client: DagsterGraphQLClient = DagsterGraphQLClient("localhost", port_number=8080)
     _reload_repository(dagster_client)
