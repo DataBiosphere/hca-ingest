@@ -10,7 +10,7 @@ resources:
   target_hca_dataset:
     config:
       env: "dev"
-      policy_members: ["monster@firecloud.org"]
+      policy_members: ["monster-dev@dev.test.firecloud.org"]
       billing_profile_id: 390e7a85-d47f-4531-b612-165fc977d3bd
       region: US
       qualifier: dcp2
