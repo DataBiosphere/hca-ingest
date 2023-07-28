@@ -5,16 +5,26 @@ import os
 import subprocess
 import sys
 from dataclasses import dataclass, field
-from typing import Optional, Any
 from re import search
+from typing import Optional, Any
 
-from dagster_utils.contrib.data_repo.jobs import poll_job, JobPollException
+# isort: split
+
+from dagster_utils.contrib.data_repo.jobs import JobPollException, poll_job
 from dagster_utils.contrib.data_repo.typing import JobId
-from data_repo_client import RepositoryApi, EnumerateDatasetModel, DatasetModel
+from data_repo_client import DatasetModel, EnumerateDatasetModel, RepositoryApi
+
+# isort: split
 
 from hca_manage import __version__ as hca_manage_version
-from hca_manage.common import data_repo_host, DefaultHelpParser, get_api_client, query_yes_no, tdr_operation, \
-    setup_cli_logging_format
+from hca_manage.common import (
+    DefaultHelpParser,
+    data_repo_host,
+    get_api_client,
+    query_yes_no,
+    setup_cli_logging_format,
+    tdr_operation,
+)
 
 MAX_DATASET_OP_POLL_SECONDS = 300
 DATASET_OP_POLL_INTERVAL_SECONDS = 2
@@ -159,14 +169,17 @@ class DatasetManager:
 
     def __post_init__(self) -> None:
         self.stewards = {
-            "dev": {"monster-dev@dev.test.firecloud.org", "hca-dagster-runner@broad-dsp-monster-hca-dev.iam.gserviceaccount.com"},
+            "dev": {
+                "monster-dev@dev.test.firecloud.org",
+                "hca-dagster-runner@broad-dsp-monster-hca-dev.iam.gserviceaccount.com"
+            },
             "prod": {"monster@firecloud.org", "hca-dagster-runner@mystical-slate-284720.iam.gserviceaccount.com"},
             "real_prod": {"monster@firecloud.org", "hca-dagster-runner@mystical-slate-284720.iam.gserviceaccount.com"},
         }[self.environment]
 
     def generate_schema(self) -> dict[str, object]:
         cwd = os.path.join(os.path.dirname(__file__), "../")
-        schema_path = f"{cwd}/schema.json"
+        schema_path = f"{cwd}/schema.json"  # noqa: F541
         if not os.path.exists(schema_path):
             subprocess.run(
                 ["sbt", f'generateJadeSchema'],
