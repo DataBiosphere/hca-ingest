@@ -6,7 +6,7 @@ import subprocess
 import sys
 from dataclasses import dataclass, field
 from re import search
-from typing import Optional, Any
+from typing import Any, Optional
 
 # isort: split
 
@@ -182,7 +182,7 @@ class DatasetManager:
         schema_path = f"{cwd}/schema.json"  # noqa: F541
         if not os.path.exists(schema_path):
             subprocess.run(
-                ["sbt", f'generateJadeSchema'],
+                ["sbt", "generateJadeSchema"],
                 check=True,
                 cwd=cwd
             )
