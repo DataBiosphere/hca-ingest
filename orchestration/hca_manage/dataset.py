@@ -238,7 +238,7 @@ class DatasetManager:
             "schema": schema,
             "region": region,
             "cloudPlatform": "gcp",
-            "dedicatedIngestServiceAccount": false,
+            "dedicatedIngestServiceAccount": "false",
         }
 
         response = self.data_repo_client.create_dataset(
