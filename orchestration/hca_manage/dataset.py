@@ -221,6 +221,8 @@ class DatasetManager:
             description: Optional[str] = None) -> JobId:
         """
         Creates a dataset in the data repo.
+        Hardcodes the dedicatedIngestServiceAccount to false, as this is set to true by default in the data repo,
+        and we don't want dedicated SAs for this interim solution. (see FE-39)
         :param dataset_name:  Name of the dataset
         :param billing_profile_id: GCP billing profile ID
         :param schema: Dict containing the dataset's schema
@@ -235,7 +237,8 @@ class DatasetManager:
             "defaultProfileId": billing_profile_id,
             "schema": schema,
             "region": region,
-            "cloudPlatform": "gcp"
+            "cloudPlatform": "gcp",
+            "dedicatedIngestServiceAccount": false,
         }
 
         response = self.data_repo_client.create_dataset(
