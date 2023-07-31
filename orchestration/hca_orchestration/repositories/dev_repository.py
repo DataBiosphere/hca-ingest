@@ -137,7 +137,7 @@ def all_jobs() -> list[PipelineDefinition]:
                                               run_config_for_per_project_dataset_partition)
     # jobs += configure_partitions_for_pipeline("make_snapshot_public_job_dev",
     # run_config_for_cut_snapshot_partition) # old partition method?
-    jobs += configure_partitions_for_pipeline("make_snapshot_public_job_real_prod",
+    jobs += configure_partitions_for_pipeline("make_snapshot_public_job_dev",
                                               run_config_per_project_snapshot_job)
     # jobs += configure_partitions_for_pipeline("cut_snapshot", run_config_for_cut_snapshot_partition) # old?
     jobs += configure_partitions_for_pipeline("cut_project_snapshot_job_dev",
