@@ -177,7 +177,7 @@ def load(args: argparse.Namespace) -> None:
         args.env,
         args.csv_path,
         args.release_tag,
-        "cut_project_snapshot_job_real_prod",
+        "cut_project_snapshot_job_dev",
         project_id_only=True,
         include_release_tag=True
     )
@@ -185,7 +185,7 @@ def load(args: argparse.Namespace) -> None:
         args.env,
         args.csv_path,
         args.release_tag,
-        "make_snapshot_public_interim",
+        "make_snapshot_public_dev",
         project_id_only=True,
         include_release_tag=True
     )
