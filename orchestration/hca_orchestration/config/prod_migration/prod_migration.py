@@ -70,9 +70,8 @@ def run_config_per_project_snapshot_job_dev(partition: Partition) -> DagsterObje
 
 # for dev releases - uses dev config
 # Definitely hacky and very not dry - but this is all going away, and it's how it was done before
+# jsdcp:ignore-start
 def run_config_per_project_snapshot_job_dev(partition: Partition) -> DagsterObjectConfigSchema:
-    # jsdcp:ignore-start
-    # ignore that this is not DRY
     path = file_relative_path(
         __file__, os.path.join("./run_config", "per_project_snapshot_dev.yaml")
     )
@@ -82,6 +81,6 @@ def run_config_per_project_snapshot_job_dev(partition: Partition) -> DagsterObje
     project_id, release_tag = partition.value.split(',')
     run_config["resources"]["snapshot_config"]["config"]["source_hca_project_id"] = project_id
     run_config["resources"]["snapshot_config"]["config"]["qualifier"] = release_tag
-    # jscpd:ignore-end
 
     return run_config
+# jsdcp:ignore-end
