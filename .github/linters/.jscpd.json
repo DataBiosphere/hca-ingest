@@ -4,7 +4,8 @@
     "consoleFull"
   ],
   "ignore": [
-    "**/requirements.txt/**"
+    "**/requirements.txt/**",
+    "**/prod_migration.py/**"
   ],
   "absolute": true
 }
