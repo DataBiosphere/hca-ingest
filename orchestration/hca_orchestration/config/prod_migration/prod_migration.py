@@ -63,6 +63,6 @@ def run_config_per_project_snapshot_job_dev(partition: Partition) -> DagsterObje
     project_id, release_tag = partition.value.split(',')
     run_config["resources"]["snapshot_config"]["config"]["source_hca_project_id"] = project_id
     run_config["resources"]["snapshot_config"]["config"]["qualifier"] = release_tag
+    # jscpd:ignore-end
 
     return run_config
-    # jscpd:ignore-end
