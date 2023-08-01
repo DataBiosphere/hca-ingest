@@ -60,6 +60,7 @@ def snapshot(monkeypatch, hca_project_id, load_hca_run_config,
     creation_config = SnapshotCreationConfig(
         dataset_info.dataset_name,
         f"{dataset_info.dataset_name}_snapshot_test",
+        None,
         False
     )
     snapshot_job = cut_snapshot.to_job(
