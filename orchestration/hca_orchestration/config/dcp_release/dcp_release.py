@@ -32,6 +32,7 @@ def run_config_for_dcp_release_per_project_partition(partition: Partition) -> Da
         __file__, os.path.join("./run_config/prod", "per_project_dcp_release.yaml")
     )
     # jsdcp:ignore-start
+    # ignore that this is not DRY
     run_config: DagsterObjectConfigSchema = load_yaml_from_path(path)
     run_config["solids"]["pre_process_metadata"]["config"]["input_prefix"] = partition.value
     creation_date = datetime.now().strftime("%Y%m%d%H%M")
