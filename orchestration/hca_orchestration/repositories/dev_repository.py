@@ -20,7 +20,7 @@ from hca_orchestration.config.dev_refresh.dev_refresh import (
     run_config_for_per_project_dataset_partition,
 )
 from hca_orchestration.config.prod_migration.prod_migration import (
-    run_config_per_project_snapshot_job,
+    run_config_per_project_snapshot_job_dev,
 )
 from hca_orchestration.contrib.dagster import configure_partitions_for_pipeline
 from hca_orchestration.pipelines.cut_snapshot import (
@@ -138,10 +138,10 @@ def all_jobs() -> list[PipelineDefinition]:
     # jobs += configure_partitions_for_pipeline("make_snapshot_public_job_dev",
     # run_config_for_cut_snapshot_partition) # old partition method?
     jobs += configure_partitions_for_pipeline("make_snapshot_public_job_dev",
-                                              run_config_per_project_snapshot_job)
+                                              run_config_per_project_snapshot_job_dev)
     # jobs += configure_partitions_for_pipeline("cut_snapshot", run_config_for_cut_snapshot_partition) # old?
     jobs += configure_partitions_for_pipeline("cut_project_snapshot_job_dev",
-                                              run_config_per_project_snapshot_job)
+                                              run_config_per_project_snapshot_job_dev)
     # jobs += configure_partitions_for_pipeline("load_hca", dev_run_config_for_dcp_release_per_project_partition)
     jobs += configure_partitions_for_pipeline(
         "per_project_load_hca",
