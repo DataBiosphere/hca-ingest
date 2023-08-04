@@ -181,11 +181,12 @@ def load(args: argparse.Namespace) -> None:
         project_id_only=True,
         include_release_tag=True
     )
+    # also load the manifest for the make_snapshot_public_dev pipeline - FE-39 Interim Managed Access Solution
     parse_and_load_manifest(
         args.env,
         args.csv_path,
         args.release_tag,
-        "make_snapshot_public_dev",
+        "make_snapshot_public_job_dev",
         project_id_only=True,
         include_release_tag=True
     )

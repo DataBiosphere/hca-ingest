@@ -15,6 +15,7 @@ from dagster_utils.resources.slack import live_slack_client
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.config.dcp_release.dcp_release import (
     dev_run_config_for_dcp_release_per_project_partition,
+    run_config_for_dcp_release_partition,
 )
 from hca_orchestration.config.dev_refresh.dev_refresh import (
     run_config_for_per_project_dataset_partition,
@@ -99,6 +100,7 @@ def project_load_hca_job() -> PipelineDefinition:
     )
 
 
+# copied over from prod to match prod
 def per_project_load_hca() -> PipelineDefinition:
     return load_hca.to_job(
         name="per_project_load_hca",
@@ -129,20 +131,15 @@ def all_jobs() -> list[PipelineDefinition]:
         make_snapshot_public_job("dev", "dev"),
         cut_project_snapshot_job("dev", "dev", "monster-dev@dev.test.firecloud.org"),
         legacy_cut_snapshot_job("dev", "monster-dev@dev.test.firecloud.org"),
-        # load_hca_job(),
         per_project_load_hca(),
         validate_ingress_job()
     ]
     jobs += configure_partitions_for_pipeline("copy_project_to_new_dataset",
                                               run_config_for_per_project_dataset_partition)
-    # jobs += configure_partitions_for_pipeline("make_snapshot_public_job_dev",
-    # run_config_for_cut_snapshot_partition) # old partition method?
     jobs += configure_partitions_for_pipeline("make_snapshot_public_job_dev",
-                                              run_config_per_project_snapshot_job_dev)
-    # jobs += configure_partitions_for_pipeline("cut_snapshot", run_config_for_cut_snapshot_partition) # old?
+                                              run_config_per_project_public_snapshot_job)
     jobs += configure_partitions_for_pipeline("cut_project_snapshot_job_dev",
                                               run_config_per_project_snapshot_job_dev)
-    # jobs += configure_partitions_for_pipeline("load_hca", dev_run_config_for_dcp_release_per_project_partition)
     jobs += configure_partitions_for_pipeline(
         "per_project_load_hca",
         dev_run_config_for_dcp_release_per_project_partition,
