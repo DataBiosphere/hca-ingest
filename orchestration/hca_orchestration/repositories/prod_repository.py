@@ -18,6 +18,7 @@ from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.config.dcp_release.dcp_release import (
     run_config_for_dcp_release_partition,
     run_config_for_dcp_release_per_project_partition,
+    run_config_per_project_public_snapshot_job,
 )
 from hca_orchestration.config.prod_migration.prod_migration import (
     run_config_cut_project_snapshot_job_real_prod_dcp2,
@@ -164,7 +165,6 @@ def all_jobs() -> list[PipelineDefinition]:
         per_project_load_hca(),
         dcp1_real_prod_migration(),
         dcp2_real_prod_migration(),
-        # make_snapshot_public_job("prod", "prod"), # I'm not sure this is needed
         make_snapshot_public_job("prod", "real_prod"),
         cut_project_snapshot_job("prod", "prod", "monster@firecloud.org"),
         cut_project_snapshot_job("prod", "real_prod", "monster@firecloud.org"),
@@ -180,7 +180,7 @@ def all_jobs() -> list[PipelineDefinition]:
     jobs += configure_partitions_for_pipeline("dcp2_real_prod_migration",
                                               run_config_for_real_prod_migration_dcp2)
     jobs += configure_partitions_for_pipeline("make_snapshot_public_job_real_prod",
-                                              run_config_per_project_snapshot_job)
+                                              run_config_per_project_public_snapshot_job)
     jobs += configure_partitions_for_pipeline("cut_project_snapshot_job_real_prod",
                                               run_config_per_project_snapshot_job)
     jobs += configure_partitions_for_pipeline("load_hca", run_config_for_dcp_release_partition)

@@ -1,0 +1,7 @@
+resources:
+  snapshot_config:
+    config:
+      managed_access: false
+      source_hca_project_id:
+      qualifier:
+      atlas: hca
