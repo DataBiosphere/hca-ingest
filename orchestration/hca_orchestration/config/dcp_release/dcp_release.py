@@ -56,7 +56,7 @@ def dev_run_config_for_dcp_release_per_project_partition(partition: Partition) -
     path = file_relative_path(
         __file__, os.path.join("./run_config/dev", "per_project_dcp_release_dev.yaml")
     )
-    # jsdcp:ignore-start
+    # jscpd:ignore-start
     # ignore that this is not DRY
     run_config: DagsterObjectConfigSchema = load_yaml_from_path(path)
     run_config["solids"]["pre_process_metadata"]["config"]["input_prefix"] = partition.value
@@ -79,7 +79,7 @@ def run_config_per_project_public_snapshot_job(partition: Partition) -> DagsterO
     path = file_relative_path(
         __file__, os.path.join("./run_config/prod", "per_project_public_snapshot.yaml")
     )
-    # jsdcp:ignore-start
+    # jscpd:ignore-start
     run_config: DagsterObjectConfigSchema = load_yaml_from_path(path)
     # we bake the release tag into the uploaded partitions csv (i.e, <uuid>,<release tag>)
     project_id, release_tag = partition.value.split(',')
