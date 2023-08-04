@@ -17,6 +17,7 @@ class HcaValidator:
         """
         Run the validation pre-checks on the staging area
         :param path: Google Cloud Storage path for staging area
+        :param total_retries: pass along none so that the default is used
         """
         adapter = StagingAreaValidator(
             staging_area=path,
