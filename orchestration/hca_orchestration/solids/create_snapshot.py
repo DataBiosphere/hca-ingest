@@ -89,31 +89,22 @@ def get_completed_snapshot_info(context: AbstractComputeExecutionContext, job_id
     config_schema=Field(Permissive({"validate_snapshot_name": Field(bool, default_value=True, is_required=False)})),
     required_resource_keys={'data_repo_client', 'snapshot_config', 'hca_manage_config', 'data_repo_service'},
 )
-# use project_id to get snapshot_id from TDR see datasets.py? for how to do that
-# enumerateSnapshots filter on project_id
-# looks like actually we get the dataset_name from the job context so...
-# we can just search for that as it is the same as the snapshot_name
-# ## "hca_{env}_{project_id}__{datetime.today().date()}_dcp2_{release_tag}"
-# if returns 0 fail - look for examples
-# if returns > 1 fail ->> might need to start tagging snapshots with release_tag
-# get the snapshot_name too - and verify that ends in release_tag
 def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> str:
-    # data_repo_service: DataRepoService = context.resources.data_repo_service # not used
+    """
+    Use the snapshot_name to get the associated snapshot_id from TDR,
+    for the snapshot created in the previous pipeline step - cut_snapshot.
+    If there is no matching snapshot or dataset - fail
+    If the snapshot_name does not end in the release_tag fail - so that we know we are using the correct snapshot
+    """
+    data_repo_service: DataRepoService = context.resources.data_repo_service
     dataset_name = context.resources.snapshot_config.dataset_name
     snapshot_name = context.resources.snapshot_config.snapshot_name
-    # snapshot = SnapshotManager.query_snapshot(filter=dataset_name, limit=1) # this is the wrong call
     release_tag = context.resources.snapshot_config.qualifier
-    # dataset = data_repo_service.find_dataset(dataset_name) # not used
+    dataset = data_repo_service.find_dataset(dataset_name)
 
-    # TODO debugging
-    print(f"create_snapshot get_snapshot_from_project dataset_name = {dataset_name}")
-    print(f"create_snapshot get_snapshot_from_project snapshot_name = {snapshot_name}")
-    print(f"create_snapshot get_snapshot_from_project release_tag = {release_tag}")
-    # print(f"create_snapshot get_snapshot_from_project dataset = {dataset}")
-
-    # we need the data set to get the billing profile id, which is needed to query the snapshot
-    # if not dataset:
-    #    raise Failure(f"Snapshot not found for dataset name [dataset_name={dataset_name}]")
+    # we need the dataset to get the billing profile id, which is needed to query (enumerate) the snapshot
+    if not dataset:
+        raise Failure(f"Snapshot not found for dataset name [dataset_name={dataset_name}]")
     if not snapshot_name:
         raise Failure(f"Snapshot name not found for snapshot name [snapshot_name={snapshot_name}]")
     else:
@@ -131,18 +122,6 @@ def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> str:
                 return snapshot_id
             except IndexError:
                 raise ValueError("The provided dataset name returned no results.")
-
-            # this returns the json payload... not the id
-            # could maybe user response.items[0].id here?
-            # return SnapshotManager(
-            #     environment=context.resources.hca_manage_config.gcp_env,
-            #     dataset=context.resources.snapshot_config.dataset_name,
-            #     data_repo_client=context.resources.data_repo_client,
-            #     data_repo_profile_id=dataset.billing_profile_id
-            # ).query_snapshot(
-            #     snapshot_name,
-            #     1
-            # )
 
 
 @solid(
