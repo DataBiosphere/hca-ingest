@@ -16,6 +16,7 @@ from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.config.dcp_release.dcp_release import (
     dev_run_config_for_dcp_release_per_project_partition,
     run_config_for_dcp_release_partition,
+    run_config_per_project_public_snapshot_job,
 )
 from hca_orchestration.config.dev_refresh.dev_refresh import (
     run_config_for_per_project_dataset_partition,
