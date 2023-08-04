@@ -194,6 +194,7 @@ def import_data_files(scratch_dataset_name: HcaScratchDatasetName) -> list[JobId
     Composite solid responsible for ingesting data files and related descriptors to TDR
     :param scratch_dataset_name: Scratch dataset that will hold temporary ingest data
     """
+    # pylint: disable-next=no-value-for-parameter
     generated_file_loads = diff_file_loads(scratch_dataset_name)
     # map is a Dagster utility function
     # pylint: disable-next=no-member
