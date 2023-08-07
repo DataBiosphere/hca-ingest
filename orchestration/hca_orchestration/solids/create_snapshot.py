@@ -89,7 +89,7 @@ def get_completed_snapshot_info(context: AbstractComputeExecutionContext, job_id
     config_schema=Field(Permissive({"validate_snapshot_name": Field(bool, default_value=True, is_required=False)})),
     required_resource_keys={'data_repo_client', 'snapshot_config', 'hca_manage_config', 'data_repo_service'},
 )
-def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> str:
+def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> Any:
     """
     Use the snapshot_name to get the associated snapshot_id from TDR,
     for the snapshot created in the previous pipeline step - cut_snapshot.
