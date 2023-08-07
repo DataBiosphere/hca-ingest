@@ -19,7 +19,7 @@ from data_repo_client import (
     SnapshotRequestModel,
 )
 
-# isort: skip
+# isort: split
 
 from hca_manage import __version__ as hca_manage_version
 from hca_manage.common import (
@@ -404,7 +404,7 @@ class SnapshotManager:
             return
 
         logging.info(
-            f"Adding {policy_member} as a {policy_name} to {len(snapshots.items)}"\
+            f"Adding {policy_member} as a {policy_name} to {len(snapshots.items)}"
             f"snapshots matching filter {snapshot_name_filter}"
         )
         for snapshot in snapshots.items:
