@@ -32,8 +32,8 @@ from hca_orchestration.resources.config.data_repo import (
 from hca_orchestration.resources.data_repo_service import data_repo_service
 from hca_orchestration.tests.e2e.conftest import DatasetInfo
 from hca_orchestration.tests.support.bigquery import (
-    assert_metadata_loaded,
     assert_data_loaded,
+    assert_metadata_loaded,
     exec_query,
     query_metadata_table,
 )
@@ -77,7 +77,7 @@ def snapshot(monkeypatch, hca_project_id, load_hca_run_config,
     creation_config = SnapshotCreationConfig(
         dataset_info.dataset_name,
         f"{dataset_info.dataset_name}_snapshot_test",
-        None,
+        "",
         False
     )
     snapshot_job = cut_snapshot.to_job(
