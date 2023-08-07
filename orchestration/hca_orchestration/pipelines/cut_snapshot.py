@@ -10,12 +10,12 @@ from dagster import (
     success_hook,
 )
 from dagster_gcp.gcs import gcs_pickle_io_manager
-from dagster_utils.resources.data_repo.jade_data_repo import (
-    jade_data_repo_client,
-)
+from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client
 from dagster_utils.resources.google_storage import google_storage_client
 from dagster_utils.resources.sam import sam_client
 from dagster_utils.resources.slack import live_slack_client
+
+# isort: split
 
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.resources.config.dagit import dagit_config
@@ -181,6 +181,8 @@ def cut_snapshot() -> None:
     hooked_add_steward = add_steward.with_hooks({message_for_snapshot_done})
 
     hooked_add_steward(
+        # the job_id is a dynamic value that is only available after the job has been submitted
+        # pylint: disable-next=no-value-for-parameter
         get_completed_snapshot_info(
             hooked_wait_for_job_completion(
                 hooked_submit_snapshot_job())))

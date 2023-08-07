@@ -1,7 +1,12 @@
 import logging
 
 import pytest
-from dagster import execute_pipeline, in_process_executor, PipelineExecutionResult, ResourceDefinition
+from dagster import (
+    execute_pipeline,
+    in_process_executor,
+    PipelineExecutionResult,
+    ResourceDefinition,
+)
 from dagster_gcp.gcs import gcs_pickle_io_manager
 from dagster_utils.contrib.data_repo.jobs import poll_job
 from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client
@@ -11,15 +16,24 @@ from dagster_utils.resources.slack import console_slack_client
 from data_repo_client import RepositoryApi
 from google.cloud.bigquery import Client
 
+# isort: split
+
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.pipelines.cut_snapshot import cut_snapshot
 from hca_orchestration.repositories.local_repository import load_hca_job, copy_project_to_new_dataset_job
 from hca_orchestration.resources.config.dagit import dagit_config
-from hca_orchestration.resources.config.data_repo import hca_manage_config, SnapshotCreationConfig
+from hca_orchestration.resources.config.data_repo import (
+    hca_manage_config,
+    SnapshotCreationConfig,
+)
 from hca_orchestration.resources.data_repo_service import data_repo_service
 from hca_orchestration.tests.e2e.conftest import DatasetInfo
-from hca_orchestration.tests.support.bigquery import assert_metadata_loaded, assert_data_loaded, exec_query, \
-    query_metadata_table
+from hca_orchestration.tests.support.bigquery import (
+    assert_metadata_loaded,
+    assert_data_loaded,
+    exec_query,
+    query_metadata_table,
+)
 
 
 @pytest.fixture
@@ -165,4 +179,5 @@ def assert_single_project_loaded(project_id: str, dataset_name: str, bq_project:
     links_rows = query_metadata_table("links", dataset_name, bq_project, client)
     for row in links_rows:
         assert row["project_id"] == project_id, \
-            f"Should only have rows for project_id {project_id} in links table, found row for project_id {row['project_id']}"
+            f"Should only have rows for project_id {project_id} in links table,"\
+            f"found row for project_id {row['project_id']}"

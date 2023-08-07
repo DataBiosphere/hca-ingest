@@ -1,12 +1,20 @@
-from dagster import execute_solid, ModeDefinition, ResourceDefinition
+from unittest.mock import Mock, patch
+from dagster import ModeDefinition, ResourceDefinition, execute_solid
 from dagster_utils.resources.sam import Sam
-from unittest.mock import patch, Mock
 from data_repo_client import RepositoryApi
 
-from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
+# isort: split
+
 from hca_manage.common import JobId
-from hca_orchestration.resources.config.data_repo import SnapshotCreationConfig, HcaManageConfig
-from hca_orchestration.solids.create_snapshot import make_snapshot_public, submit_snapshot_job
+from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
+from hca_orchestration.resources.config.data_repo import (
+    HcaManageConfig,
+    SnapshotCreationConfig,
+)
+from hca_orchestration.solids.create_snapshot import (
+    make_snapshot_public,
+    submit_snapshot_job,
+)
 
 
 def test_submit_snapshot_job_calls_submit_snapshot_job_in_hca_manage():
