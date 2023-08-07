@@ -1,4 +1,4 @@
-from typing import Iterator
+from typing import Any, Iterator
 
 from dagster import (
     AssetMaterialization,
