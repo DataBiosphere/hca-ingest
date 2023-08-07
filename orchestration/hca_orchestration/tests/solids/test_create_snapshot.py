@@ -1,4 +1,7 @@
 from unittest.mock import Mock, patch
+
+# isort: split
+
 from dagster import ModeDefinition, ResourceDefinition, execute_solid
 from dagster_utils.resources.sam import Sam
 from data_repo_client import RepositoryApi

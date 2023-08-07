@@ -2,10 +2,10 @@ import logging
 
 import pytest
 from dagster import (
-    execute_pipeline,
-    in_process_executor,
     PipelineExecutionResult,
     ResourceDefinition,
+    execute_pipeline,
+    in_process_executor,
 )
 from dagster_gcp.gcs import gcs_pickle_io_manager
 from dagster_utils.contrib.data_repo.jobs import poll_job
@@ -20,11 +20,14 @@ from google.cloud.bigquery import Client
 
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.pipelines.cut_snapshot import cut_snapshot
-from hca_orchestration.repositories.local_repository import load_hca_job, copy_project_to_new_dataset_job
+from hca_orchestration.repositories.local_repository import (
+    copy_project_to_new_dataset_job,
+    load_hca_job,
+)
 from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.data_repo import (
-    hca_manage_config,
     SnapshotCreationConfig,
+    hca_manage_config,
 )
 from hca_orchestration.resources.data_repo_service import data_repo_service
 from hca_orchestration.tests.e2e.conftest import DatasetInfo

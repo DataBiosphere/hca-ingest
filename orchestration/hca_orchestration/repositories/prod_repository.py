@@ -115,7 +115,7 @@ def per_project_load_hca() -> PipelineDefinition:
 def dcp1_real_prod_migration() -> PipelineDefinition:
     return copy_project.to_job(
         name=f"dcp1_real_prod_migration",  # noqa: F541
-        description=f"Copies a DCP1 project from prod to real_prod", # noqa: F541
+        description=f"Copies a DCP1 project from prod to real_prod",  # noqa: F541
         resource_defs={
             "bigquery_client": bigquery_client,
             "bigquery_service": bigquery_service,
