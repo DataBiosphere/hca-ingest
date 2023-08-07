@@ -19,6 +19,8 @@ from data_repo_client import (
     SnapshotRequestModel,
 )
 
+# isort: skip
+
 from hca_manage import __version__ as hca_manage_version
 from hca_manage.common import (
     DefaultHelpParser,
@@ -33,8 +35,8 @@ from hca_manage.common import (
 
 MAX_SNAPSHOT_DELETE_POLL_SECONDS = 120
 SNAPSHOT_DELETE_POLL_INTERVAL_SECONDS = 2
-LEGACY_SNAPSHOT_NAME_REGEX = r"^(hca|lungmap)_(dev|prod|staging)_(\d{4})(\d{2})(\d{2})(_[a-zA-Z][a-zA-Z0-9]{0,13})?_([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})?__(\d{4})(\d{2})(\d{2})(?:_([a-zA-Z][a-zA-Z0-9]{0,13}))?$"
-UPDATED_SNAPSHOT_NAME_REGEX = r"^(hca|lungmap)_(dev|prod|staging)_([0-9a-f]{32})?__(\d{4})(\d{2})(\d{2})(?:_([a-zA-Z][a-zA-Z0-9]{0,15}))?_(\d{4})(\d{2})(\d{2})(?:_([a-zA-Z][a-zA-Z0-9]{0,15}))?$"
+LEGACY_SNAPSHOT_NAME_REGEX = r"^(hca|lungmap)_(dev|prod|staging)_(\d{4})(\d{2})(\d{2})(_[a-zA-Z][a-zA-Z0-9]{0,13})?_([0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})?__(\d{4})(\d{2})(\d{2})(?:_([a-zA-Z][a-zA-Z0-9]{0,13}))?$"  # noqa: E501
+UPDATED_SNAPSHOT_NAME_REGEX = r"^(hca|lungmap)_(dev|prod|staging)_([0-9a-f]{32})?__(\d{4})(\d{2})(\d{2})(?:_([a-zA-Z][a-zA-Z0-9]{0,15}))?_(\d{4})(\d{2})(\d{2})(?:_([a-zA-Z][a-zA-Z0-9]{0,15}))?$"  # noqa: E501
 
 
 class InvalidSnapshotNameException(ValueError):
@@ -230,6 +232,7 @@ def _remove_snapshot(args: argparse.Namespace) -> None:
     hca = SnapshotManager(environment=args.env, data_repo_client=get_api_client(host=host))
     hca.delete_snapshot(snapshot_name=args.snapshot_name, snapshot_id=args.snapshot_id)
 
+
 @tdr_operation
 def _get_snapshot_id(args:argparse.Namespace) -> None:
     host = data_repo_host[args.env]
@@ -377,7 +380,11 @@ class SnapshotManager:
             raise ValueError("The provided snapshot name returned no results.")
         return snapshot_id
 
-    def query_snapshot(self, snapshot_name: Optional[str] = None, result_limit: Optional[int] = 1000) -> EnumerateSnapshotModel:
+    def query_snapshot(
+            self,
+            snapshot_name: Optional[str] = None,
+            result_limit: Optional[int] = 1000
+    ) -> EnumerateSnapshotModel:
         return self.data_repo_client.enumerate_snapshots(filter=snapshot_name, limit=result_limit)
 
     def add_policy_member(self, policy_member: str, policy_name: str, snapshot_id: str) -> PolicyResponse:
@@ -397,7 +404,8 @@ class SnapshotManager:
             return
 
         logging.info(
-            f"Adding {policy_member} as a {policy_name} to {len(snapshots.items)} snapshots matching filter {snapshot_name_filter}"
+            f"Adding {policy_member} as a {policy_name} to {len(snapshots.items)}"\
+            f"snapshots matching filter {snapshot_name_filter}"
         )
         for snapshot in snapshots.items:
             payload = PolicyMemberRequest(email=policy_member)
