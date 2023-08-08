@@ -107,18 +107,22 @@ def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> Any:
         raise Failure(f"Snapshot not found for dataset name [dataset_name={dataset_name}]")
     if not snapshot_name:
         raise Failure(f"Snapshot name not found for snapshot name [snapshot_name={snapshot_name}]")
+    # TODO: This is redundant
     else:
         if not release_tag:
             raise Failure(f"Release tag not found for release tag [release_tag={release_tag}]. This is required.")
         if not snapshot_name.endswith(release_tag):
             raise Failure(f"Snapshot name does not end in current release tag [snapshot_name={snapshot_name}], \
             [release_tag={release_tag}].")
+        # TODO also redundant
         else:
             response = context.resources.data_repo_client.enumerate_snapshots(filter=dataset_name)
+            # TODO this was for debugging remove before PR
             print(f"create_snapshot get_snapshot_from_project response = {response}")
             try:
                 snapshot_id = response.items[0].id
-                print("snapshot_id = ", snapshot_id)
+                # TODO: This is for debugging remove before PR
+                # print("snapshot_id = ", snapshot_id)
                 return snapshot_id
             except IndexError:
                 raise ValueError("The provided dataset name returned no results.")
