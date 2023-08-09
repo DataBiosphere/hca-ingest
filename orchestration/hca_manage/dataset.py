@@ -6,7 +6,7 @@ import subprocess
 import sys
 from dataclasses import dataclass, field
 from re import search
-from typing import Optional, Any
+from typing import Any, Optional
 
 # isort: split
 
