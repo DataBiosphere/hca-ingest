@@ -10,9 +10,11 @@ from typing import Any, Optional
 
 # isort: split
 
-from dagster_utils.contrib.data_repo.jobs import poll_job, JobPollException
+from dagster_utils.contrib.data_repo.jobs import JobPollException, poll_job
 from dagster_utils.contrib.data_repo.typing import JobId
-from data_repo_client import RepositoryApi, EnumerateDatasetModel, DatasetModel
+from data_repo_client import DatasetModel, EnumerateDatasetModel, RepositoryApi
+
+# isort: split
 
 from hca_manage import __version__ as hca_manage_version
 from hca_manage.common import (
