@@ -29,7 +29,6 @@ from hca_orchestration.pipelines.cut_snapshot import (
     legacy_cut_snapshot_job,
 )
 from hca_orchestration.pipelines.load_hca import load_hca
-from hca_orchestration.pipelines.set_snapshot_public import make_snapshot_public_job
 from hca_orchestration.pipelines.validate_ingress import (
     run_config_for_validation_ingress_partition,
     staging_area_validator,
