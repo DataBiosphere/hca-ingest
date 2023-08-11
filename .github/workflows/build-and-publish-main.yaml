@@ -1,9 +1,8 @@
 name: Main Validation and Release
 on:
   push:
-# for dev run on all pushes
-#     branches:
-#      - main
+     branches:
+      - main
 jobs:
   main-ci:
     runs-on: ubuntu-latest
@@ -71,7 +70,7 @@ jobs:
         with:
           context: ./orchestration
           push: true
-          tags: us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:${{steps.get-artifact-slug.outputs.slug}}, us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:tdrsa-di268-test
+          tags: us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:${{steps.get-artifact-slug.outputs.slug}}, us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:latest, us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:di268
 # leaving off for now as it is not needed for this update for the new TDR dedicatedIngestServiceAccount settings (DI-268)
 #      - name: Push Compose Dev Env Docker image
 #        uses: docker/build-push-action@v2
