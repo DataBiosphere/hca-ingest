@@ -65,7 +65,7 @@ class SoftDeleteManager:
         self.bucket_project = {"prod": "mystical-slate-284720",
                                "real_prod": "mystical-slate-284720",
                                "dev": "broad-dsp-monster-hca-dev"}[self.environment]
-        self.bucket = f"broad-dsp-monster-hca-prod-staging-storage"
+        self.bucket = f"broad-dsp-monster-hca-prod-staging-storage-us"
 
     @property
     def gcp_creds(self) -> google.auth.credentials.Credentials:
