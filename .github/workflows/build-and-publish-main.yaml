@@ -1,7 +1,7 @@
 name: Main Validation and Release
 on:
-  push:
-     branches:
+  pull_request:
+    branches:
       - main
 jobs:
   main-ci:
@@ -70,8 +70,8 @@ jobs:
         with:
           context: ./orchestration
           push: true
-          tags: us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:${{steps.get-artifact-slug.outputs.slug}}, us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:latest, us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:di268
-# leaving off for now as it is not needed for this update for the new TDR dedicatedIngestServiceAccount settings (DI-268)
+          tags: us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:${{steps.get-artifact-slug.outputs.slug}}, us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:latest, us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:di273
+# leaving off for now as it is not needed for this update for DI-273 - new scratch bucket in US multi-region
 #      - name: Push Compose Dev Env Docker image
 #        uses: docker/build-push-action@v2
 #        with:
