@@ -95,6 +95,8 @@ def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> Any:
     for the snapshot created in the previous pipeline step - cut_snapshot.
     If there is no matching snapshot or dataset - fail
     If the snapshot_name does not end in the release_tag fail - so that we know we are using the correct snapshot
+    *hint* snapshot_name comes from the SnapshotCreationConfig class and ultimately is a concatenation
+    of the dataset name and the datetime and the release tag
     """
     data_repo_service: DataRepoService = context.resources.data_repo_service
     dataset_name = context.resources.snapshot_config.dataset_name
@@ -104,28 +106,17 @@ def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> Any:
 
     # we need the dataset to get the billing profile id, which is needed to query (enumerate) the snapshot
     if not dataset:
-        raise Failure(f"Snapshot not found for dataset name [dataset_name={dataset_name}]")
-    if not snapshot_name:
-        raise Failure(f"Snapshot name not found for snapshot name [snapshot_name={snapshot_name}]")
-    # TODO: This is redundant
-    else:
-        if not release_tag:
-            raise Failure(f"Release tag not found for release tag [release_tag={release_tag}]. This is required.")
-        if not snapshot_name.endswith(release_tag):
-            raise Failure(f"Snapshot name does not end in current release tag [snapshot_name={snapshot_name}], \
+        raise Failure(f"Dataset not found for dataset name [dataset_name={dataset_name}]")
+    if not release_tag:
+        raise Failure(f"Release tag not found. This is required.")
+    if not snapshot_name.endswith(release_tag):
+        raise Failure(f"Snapshot name does not end in current release tag [snapshot_name={snapshot_name}], \
             [release_tag={release_tag}].")
-        # TODO also redundant
-        else:
-            response = context.resources.data_repo_client.enumerate_snapshots(filter=dataset_name)
-            # TODO this was for debugging remove before PR
-            print(f"create_snapshot get_snapshot_from_project response = {response}")
-            try:
-                snapshot_id = response.items[0].id
-                # TODO: This is for debugging remove before PR
-                # print("snapshot_id = ", snapshot_id)
-                return snapshot_id
-            except IndexError:
-                raise ValueError("The provided dataset name returned no results.")
+    response = context.resources.data_repo_client.enumerate_snapshots(filter=dataset_name)
+    if len(response.items) != 1:
+        raise Failure(f"There is more than one snapshot matching this dataset_name")
+    snapshot_id = response.items[0].id
+    return snapshot_id
 
 
 @solid(
