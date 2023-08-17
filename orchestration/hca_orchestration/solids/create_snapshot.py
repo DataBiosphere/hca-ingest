@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Iterator
 
 from dagster import (
@@ -103,22 +104,18 @@ def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> Any:
     snapshot_name = context.resources.snapshot_config.snapshot_name
     release_tag = context.resources.snapshot_config.qualifier
     dataset = data_repo_service.find_dataset(dataset_name)
-    # TODO debugging
-    print(f"dataset_name: {dataset_name}")
-    print(f"snapshot_name: {snapshot_name}")
+    logging.info(f"snapshot_name: {snapshot_name}")
+    logging.info(f"release_tag: {release_tag}")
 
     # we need the dataset to get the billing profile id, which is needed to query (enumerate) the snapshot
     if not dataset:
-        raise Failure(f"Dataset not found for dataset name [dataset_name={dataset_name}]")
+        raise Failure(f"Dataset not found for dataset name [dataset_name={dataset_name}]")  # noqa: F541
     if not release_tag:
         raise Failure(f"Release tag not found. This is required.")
     if not snapshot_name.endswith(release_tag):
         raise Failure(f"Snapshot name does not end in current release tag [snapshot_name={snapshot_name}], \
             [release_tag={release_tag}].")
     response = context.resources.data_repo_client.enumerate_snapshots(filter=dataset_name)
-    # TODO debugging
-    print(f"response: {response}")
-    print(f"response.items: {response.items}")
     if len(response.items) != 1:
         raise Failure("There is more than one snapshot matching this dataset_name")
     snapshot_id = response.items[0].id
