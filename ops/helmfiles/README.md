@@ -32,6 +32,8 @@ _Note that this should be done locally, not in the Docker container, if you are 
   * For example, to deploy `main`: `apply.sh dev main`
 * This will deploy a new helm release to the relevant K8S cluster and send a Slack notification with relevant
 deployment info.
+* _Note that if you have recently merged to main you will need to pull the latest changes into your local main branch \
+in order to get the latest commit SHA1._ 
 
 ## Web UI access
 We are using port forwarding for access to the Dagster web UI for now. 
