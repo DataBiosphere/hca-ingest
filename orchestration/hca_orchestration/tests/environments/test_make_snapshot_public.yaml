@@ -3,6 +3,7 @@ resources:
     config:
       dataset_name: 'hca_dev_20230815_dcp2'
       managed_access: false
+      qualifier: 'test'
 solids:
   get_snapshot_from_project:
     config:
