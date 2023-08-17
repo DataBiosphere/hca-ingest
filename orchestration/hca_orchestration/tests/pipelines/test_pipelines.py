@@ -158,8 +158,17 @@ def test_cut_snapshot(*mocks):
 
 def test_set_snapshot_public(*mocks):
     data_repo = MagicMock(spec=RepositoryApi)
-    enumerate_snapshot_result = EnumerateSnapshotModel(
-        items=[SnapshotSummaryModel("dataset_id_1", "hca_dev_12345")]
+    data_repo.enumerate_snapshots = MagicMock(
+        return_value={
+            "total": 1,
+            "filteredTotal": 1,
+            "items": [
+                {
+                    "id": "fake_object_id",
+                    "name": "fake_object_name"
+                }
+            ]
+        }
     )
     # jscpd:ignore-start
     job = set_snapshot_public.to_job(
