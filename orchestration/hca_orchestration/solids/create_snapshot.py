@@ -103,6 +103,9 @@ def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> Any:
     snapshot_name = context.resources.snapshot_config.snapshot_name
     release_tag = context.resources.snapshot_config.qualifier
     dataset = data_repo_service.find_dataset(dataset_name)
+    # TODO debugging
+    print(f"dataset_name: {dataset_name}")
+    print(f"snapshot_name: {snapshot_name}")
 
     # we need the dataset to get the billing profile id, which is needed to query (enumerate) the snapshot
     if not dataset:
@@ -113,6 +116,9 @@ def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> Any:
         raise Failure(f"Snapshot name does not end in current release tag [snapshot_name={snapshot_name}], \
             [release_tag={release_tag}].")
     response = context.resources.data_repo_client.enumerate_snapshots(filter=dataset_name)
+    # TODO debugging
+    print(f"response: {response}")
+    print(f"response.items: {response.items}")
     if len(response.items) != 1:
         raise Failure("There is more than one snapshot matching this dataset_name")
     snapshot_id = response.items[0].id
