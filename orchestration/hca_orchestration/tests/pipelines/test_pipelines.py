@@ -9,7 +9,7 @@ from dagster.utils import load_yaml_from_globs
 from dagster.utils.merger import deep_merge_dicts
 from dagster_utils.resources.sam import Sam
 from dagster_utils.resources.slack import console_slack_client
-from data_repo_client import RepositoryApi, SnapshotModel
+from data_repo_client import EnumerateSnapshotModel, RepositoryApi, SnapshotModel, SnapshotSummaryModel
 
 from google.cloud.storage import Client
 
@@ -20,7 +20,10 @@ from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.pipelines import cut_snapshot, load_hca, set_snapshot_public, validate_ingress_graph
 from hca_orchestration.resources import load_tag
 from hca_orchestration.resources.config.dagit import dagit_config
-from hca_orchestration.resources.config.data_repo import hca_manage_config, snapshot_creation_config
+from hca_orchestration.resources.config.data_repo import (
+    hca_manage_config,
+    snapshot_creation_config
+)
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.config.datasets import passthrough_hca_dataset
 from hca_manage.validation import HcaValidator
@@ -149,18 +152,10 @@ def test_cut_snapshot(*mocks):
 
 def test_set_snapshot_public(*mocks):
     data_repo = MagicMock(spec=RepositoryApi)
-    data_repo.enumerate_snapshots = MagicMock(
-        return_value={
-            "total": 1,
-            "filteredTotal": 1,
-            "items": [
-                {
-                    "id": "fake_object_id",
-                    "name": "fake_object_name"
-                }
-            ]
-        }
+    enumerate_snapshot_result = EnumerateSnapshotModel(
+        items=[SnapshotSummaryModel("dataset_id_1", "hca_dev_12345")]
     )
+    data_repo.enumerate_snapshots = MagicMock(return_value=enumerate_snapshot_result)
     job = set_snapshot_public.to_job(
         resource_defs={
             "data_repo_client": ResourceDefinition.hardcoded_resource(data_repo),
