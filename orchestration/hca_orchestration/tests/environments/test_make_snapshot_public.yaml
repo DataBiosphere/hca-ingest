@@ -1,0 +1,9 @@
+resources:
+  snapshot_config:
+    config:
+      dataset_name: 'hca_dev_20230815_dcp2'
+      managed_access: false
+solids:
+  get_snapshot_from_project:
+    config:
+      billing_profile_id: fake_billing_profile_id
