@@ -26,12 +26,15 @@ from hca_orchestration.pipelines import (
     cut_snapshot,
     load_hca,
     set_snapshot_public,
-    validate_ingress_graph
+    validate_ingress_graph,
 )
-from hca_orchestration.resources.config.datasets import passthrough_hca_dataset
 from hca_orchestration.resources import load_tag
 from hca_orchestration.resources.config.dagit import dagit_config
-from hca_orchestration.resources.config.data_repo import hca_manage_config, snapshot_creation_config
+from hca_orchestration.resources.config.data_repo import (
+    hca_manage_config,
+    snapshot_creation_config,
+)
+from hca_orchestration.resources.config.datasets import passthrough_hca_dataset
 from hca_orchestration.resources.config.scratch import scratch_config
 
 
