@@ -1,32 +1,38 @@
 import os
 from typing import Any
-from unittest.mock import patch, MagicMock, Mock
+from unittest.mock import MagicMock, Mock, patch
 
+import hca_orchestration.resources.data_repo_service
 import pytest
-from dagster import file_relative_path, ResourceDefinition, Failure, JobDefinition
+from dagster import Failure, JobDefinition, ResourceDefinition, file_relative_path
 from dagster.core.execution.execution_results import InProcessGraphResult
 from dagster.utils import load_yaml_from_globs
 from dagster.utils.merger import deep_merge_dicts
 from dagster_utils.resources.sam import Sam
 from dagster_utils.resources.slack import console_slack_client
-from data_repo_client import EnumerateSnapshotModel, RepositoryApi, SnapshotModel, SnapshotSummaryModel
+from data_repo_client import RepositoryApi, SnapshotModel
+
+# isort: split
 
 from google.cloud.storage import Client
 
-import hca_orchestration.resources.data_repo_service
-from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
+# isort: split
+
+from hca_manage.validation import HcaValidator
 from hca_orchestration.config import preconfigure_resource_for_mode
+from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
 from hca_orchestration.models.hca_dataset import TdrDataset
-from hca_orchestration.pipelines import cut_snapshot, load_hca, set_snapshot_public, validate_ingress_graph
+from hca_orchestration.pipelines import (
+    cut_snapshot,
+    load_hca,
+    set_snapshot_public,
+    validate_ingress_graph
+)
+from hca_orchestration.resources.config.datasets import passthrough_hca_dataset
 from hca_orchestration.resources import load_tag
 from hca_orchestration.resources.config.dagit import dagit_config
-from hca_orchestration.resources.config.data_repo import (
-    hca_manage_config,
-    snapshot_creation_config
-)
+from hca_orchestration.resources.config.data_repo import hca_manage_config, snapshot_creation_config
 from hca_orchestration.resources.config.scratch import scratch_config
-from hca_orchestration.resources.config.datasets import passthrough_hca_dataset
-from hca_manage.validation import HcaValidator
 
 
 def config_path(relative_path: str) -> str:
@@ -155,7 +161,7 @@ def test_set_snapshot_public(*mocks):
     enumerate_snapshot_result = EnumerateSnapshotModel(
         items=[SnapshotSummaryModel("dataset_id_1", "hca_dev_12345")]
     )
-    data_repo.enumerate_snapshots = MagicMock(return_value=enumerate_snapshot_result)
+    # jscpd:ignore-start
     job = set_snapshot_public.to_job(
         resource_defs={
             "data_repo_client": ResourceDefinition.hardcoded_resource(data_repo),
@@ -170,3 +176,4 @@ def test_set_snapshot_public(*mocks):
     )
     result = run_pipeline(job, config_name="test_make_snapshot_public.yaml")
     assert result.success
+    # jscpd:ignore-end
