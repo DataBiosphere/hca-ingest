@@ -111,7 +111,7 @@ def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> Any:
     if not dataset:
         raise Failure(f"Dataset not found for dataset name [dataset_name={dataset_name}]")  # noqa: F541
     if not release_tag:
-        raise Failure(f"Release tag not found. This is required.")
+        raise Failure("Release tag not found. This is required.")
     if not snapshot_name.endswith(release_tag):
         raise Failure(f"Snapshot name does not end in current release tag [snapshot_name={snapshot_name}], \
             [release_tag={release_tag}].")
