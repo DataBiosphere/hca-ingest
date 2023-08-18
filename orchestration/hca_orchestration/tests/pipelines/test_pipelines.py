@@ -14,7 +14,7 @@ from data_repo_client import (
     EnumerateSnapshotModel,
     RepositoryApi,
     SnapshotModel,
-    SnapshotSummaryModel
+    SnapshotSummaryModel,
 )
 
 # isort: split
