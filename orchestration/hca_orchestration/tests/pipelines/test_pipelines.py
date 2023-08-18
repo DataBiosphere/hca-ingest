@@ -10,7 +10,12 @@ from dagster.utils import load_yaml_from_globs
 from dagster.utils.merger import deep_merge_dicts
 from dagster_utils.resources.sam import Sam
 from dagster_utils.resources.slack import console_slack_client
-from data_repo_client import RepositoryApi, SnapshotModel
+from data_repo_client import (
+    EnumerateSnapshotModel,
+    RepositoryApi,
+    SnapshotModel,
+    SnapshotSummaryModel
+)
 
 # isort: split
 
@@ -162,7 +167,7 @@ def test_cut_snapshot(*mocks):
 def test_set_snapshot_public(*mocks):
     data_repo = MagicMock(spec=RepositoryApi)
     enumerate_snapshot_result = EnumerateSnapshotModel(
-        items=[SnapshotSummaryModel("dataset_id_1", "hca_dev_12345")]
+        items=[SnapshotSummaryModel("snapshot_id_1", "hca_dev_12345")]
     )
     data_repo.enumerate_snapshots = MagicMock(return_value=enumerate_snapshot_result)
     # jscpd:ignore-start
