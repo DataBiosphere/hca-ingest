@@ -52,6 +52,10 @@ STAGING_AREA_BUCKETS = {
         "UCSC": "gs://broad-dsp-monster-hca-dev-ebi-staging/dev",
     }
 }
+ENV_PIPELINE_ENDINGS = {
+    "prod": "real_prod",
+    "dev": "dev",
+}
 REPOSITORY_LOCATION = "monster-hca-ingest"
 MAX_STAGING_AREAS_PER_PARTITION_SET = 20
 RUN_STATUS_QUERY = """
@@ -177,16 +181,16 @@ def load(args: argparse.Namespace) -> None:
         args.env,
         args.csv_path,
         args.release_tag,
-        "cut_project_snapshot_job_dev",
+        f"cut_project_snapshot_{ENV_PIPELINE_ENDINGS[args.env]}",
         project_id_only=True,
         include_release_tag=True
     )
-    # also load the manifest for the make_snapshot_public_dev pipeline - FE-39 Interim Managed Access Solution
+    # also load the manifest for the make_snapshot_public pipeline - FE-39 Interim Managed Access Solution
     parse_and_load_manifest(
         args.env,
         args.csv_path,
         args.release_tag,
-        "make_snapshot_public_job_dev",
+        f"make_snapshot_public_job_{ENV_PIPELINE_ENDINGS[args.env]}",
         project_id_only=True,
         include_release_tag=True
     )
