@@ -15,6 +15,7 @@ from dagster_utils.resources.slack import live_slack_client
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.config.dcp_release.dcp_release import (
     dev_run_config_for_dcp_release_per_project_partition,
+    run_config_per_project_public_snapshot_job,
 )
 from hca_orchestration.config.dev_refresh.dev_refresh import (
     run_config_for_per_project_dataset_partition,
@@ -28,6 +29,7 @@ from hca_orchestration.pipelines.cut_snapshot import (
     legacy_cut_snapshot_job,
 )
 from hca_orchestration.pipelines.load_hca import load_hca
+from hca_orchestration.pipelines.set_snapshot_public import make_snapshot_public_job
 from hca_orchestration.pipelines.validate_ingress import (
     run_config_for_validation_ingress_partition,
     staging_area_validator,
@@ -126,6 +128,7 @@ def per_project_load_hca() -> PipelineDefinition:
 def all_jobs() -> list[PipelineDefinition]:
     jobs = [
         copy_project_to_new_dataset_job("prod", "dev"),
+        make_snapshot_public_job("dev", "dev"),
         cut_project_snapshot_job("dev", "dev", "monster-dev@dev.test.firecloud.org"),
         legacy_cut_snapshot_job("dev", "monster-dev@dev.test.firecloud.org"),
         per_project_load_hca(),
@@ -133,6 +136,8 @@ def all_jobs() -> list[PipelineDefinition]:
     ]
     jobs += configure_partitions_for_pipeline("copy_project_to_new_dataset",
                                               run_config_for_per_project_dataset_partition)
+    jobs += configure_partitions_for_pipeline("make_snapshot_public_job_dev",
+                                              run_config_per_project_public_snapshot_job)
     jobs += configure_partitions_for_pipeline("cut_project_snapshot_job_dev",
                                               run_config_per_project_snapshot_job_dev)
     jobs += configure_partitions_for_pipeline(

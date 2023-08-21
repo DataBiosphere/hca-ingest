@@ -23,10 +23,15 @@ from dagster_graphql import (
     ShutdownRepositoryLocationStatus,
 )
 from google.cloud.storage import Blob, Bucket, Client
-from more_itertools import chunked
+
+# isort: split
 
 from hca_manage.common import query_yes_no, setup_cli_logging_format
 from hca_orchestration.support.matchers import find_project_id_in_str
+
+# isort: split
+
+from more_itertools import chunked
 
 warnings.filterwarnings("ignore", category=dagster.ExperimentalWarning)
 
@@ -41,6 +46,10 @@ STAGING_AREA_BUCKETS = {
         "UCSC": "gs://broad-dsp-monster-hca-prod-ebi-storage/prod",
         "LANTERN": "gs://broad-dsp-monster-hca-prod-lantern",
         "LATTICE": "gs://broad-dsp-monster-hca-prod-lattice/staging"
+    },
+    "dev": {
+        "EBI": "gs://broad-dsp-monster-hca-dev-ebi-staging/dev",
+        "UCSC": "gs://broad-dsp-monster-hca-dev-ebi-staging/dev",
     }
 }
 REPOSITORY_LOCATION = "monster-hca-ingest"
@@ -113,7 +122,8 @@ def _parse_csv(csv_path: str, env: str, project_id_only: bool = False,
 
 
 def parse_and_load_manifest(env: str, csv_path: str, release_tag: str,
-                            pipeline_name: str, project_id_only: bool = False, include_release_tag: bool = False) -> None:
+                            pipeline_name: str, project_id_only: bool = False,
+                            include_release_tag: bool = False) -> None:
     chunked_paths = _parse_csv(csv_path, env, project_id_only, include_release_tag, release_tag)
     storage_client = Client()
     bucket: Bucket = storage_client.bucket(bucket_name=ETL_PARTITION_BUCKETS[env])
@@ -167,7 +177,16 @@ def load(args: argparse.Namespace) -> None:
         args.env,
         args.csv_path,
         args.release_tag,
-        "cut_project_snapshot_job_real_prod",
+        "cut_project_snapshot_job_dev",
+        project_id_only=True,
+        include_release_tag=True
+    )
+    # also load the manifest for the make_snapshot_public_dev pipeline - FE-39 Interim Managed Access Solution
+    parse_and_load_manifest(
+        args.env,
+        args.csv_path,
+        args.release_tag,
+        "make_snapshot_public_job_dev",
         project_id_only=True,
         include_release_tag=True
     )
@@ -179,7 +198,7 @@ def enumerate_manifests(args: argparse.Namespace) -> None:
 
 
 def reload(args: argparse.Namespace) -> None:
-    logging.info(f"Reloading dagster user code env to reload partitions.")
+    logging.info("Reloading dagster user code env to reload partitions.")
 
     dagster_client: DagsterGraphQLClient = DagsterGraphQLClient("localhost", port_number=8080)
     _reload_repository(dagster_client)

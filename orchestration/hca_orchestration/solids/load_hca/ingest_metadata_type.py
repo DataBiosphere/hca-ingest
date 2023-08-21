@@ -1,11 +1,19 @@
 from typing import Iterator
 
-from dagster import Any, Field, String, solid
+from dagster import Any, Field, solid
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
+
+# FYI - if you have to update dagster
+# dagster.experimental has been removed. DynamicOutput and DynamicOutputDefinition are now in dagster top level
 from dagster.experimental import DynamicOutput, DynamicOutputDefinition
 
-from hca_orchestration.support.typing import HcaScratchDatasetName, MetadataTypeFanoutResult
+# isort: split
+
 from hca_manage.common import JobId
+from hca_orchestration.support.typing import (
+    HcaScratchDatasetName,
+    MetadataTypeFanoutResult,
+)
 
 
 @solid(

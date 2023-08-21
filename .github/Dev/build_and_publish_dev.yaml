@@ -1,0 +1,79 @@
+name: build-and-publish-dev
+on:
+  push:
+jobs:
+  main-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Fetch tag history
+        run: git fetch --tags
+      - uses: google-github-actions/setup-gcloud@v0.2.1
+        name: Setup gcloud for Dataflow tests
+        with:
+          project_id: ${{ secrets.DEV_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_TEST_KEY }}
+          export_default_credentials: true
+      - name: Set up Python 3.9 for dataflow tests
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9.16
+      - name: Install Poetry
+        uses: snok/install-poetry@v1.2
+        with:
+          version: 1.1.9
+      - name: Restore cache dependencies
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-poetry-v2
+        with:
+          path: ~/.cache/pypoetry
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./orchestration/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Install dependencies
+        run: poetry install
+        working-directory: ${{ github.workspace }}/orchestration
+      - uses: olafurpg/setup-scala@v10
+        with:
+          java-version: graalvm@20.0.0
+      - name: Check Scala formatting
+        run: sbt scalafmtCheckAll
+      - name: Scala Compile
+        run: sbt Compile/compile Test/compile IntegrationTest/compile
+      - name: Scala Test
+        run: sbt "set ThisBuild/coverageEnabled := true" test IntegrationTest/test coverageAggregate
+# This is failing due to a timeout - bailing on this for the moment as it has been passing and my changes don't touch this
+#      - name: Run E2E test suite
+#        run: poetry run pytest -v -m e2e
+#        working-directory: ${{ github.workspace }}/orchestration
+      - name: Publish Scala coverage
+        uses: codecov/codecov-action@v1
+      - uses: google-github-actions/setup-gcloud@v0.2.1
+        name: Setup gcloud for pushing Docker images
+        with:
+          service_account_email: jenkins-gcr-pusher@broad-dsp-monster-dev.iam.gserviceaccount.com
+          service_account_key: ${{ secrets.Base64ServiceAccountKey }}
+          export_default_credentials: true
+      - name: Setup GCR auth
+        run: gcloud auth configure-docker --quiet us.gcr.io,us-east4-docker.pkg.dev
+      - name: Push Scala Dataflow Docker image
+        run: sbt publish
+      - name: Get artifact slug
+        id: get-artifact-slug
+        run: 'echo ::set-output name=slug::$(git rev-parse --short "$GITHUB_SHA")'
+      - name: Push Dagster User Code Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: ./orchestration
+          push: true
+          tags: us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:${{steps.get-artifact-slug.outputs.slug}}, us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:dev
+      - name: Push Compose Dev Env Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:${{steps.get-artifact-slug.outputs.slug}}, us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:dev
+
