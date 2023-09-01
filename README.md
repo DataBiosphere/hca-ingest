@@ -5,7 +5,7 @@ system design information.
 # Getting Started
 
 * Choose whether you will develop in a local virtual environment, like venv, or use the [Docker Compose dev env provided here](docker-compose.yaml).
-* Clone this repository to a local directory and create a new dev branch, ideally named after your Jira ticket.
+* Clone this repository to a local directory and create a new dev branch, ideally named after your Jira ticket. (Note that a Jira ticket is required in order to make changes to production.)
   * [Setup Git Secrets](https://dsp-security.broadinstitute.org/platform-security-categories/git/setup-git-secrets)
   * If you are running in a local virtual environment go ahead and set that up. Note that this project uses Python 3.9.16
     * Also install the [gcloud cloud command-line tool](https://cloud.google.com/sdk/docs/install) if you've not already done so.
