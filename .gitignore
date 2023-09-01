@@ -15,3 +15,5 @@ __pycache__
 .pytest_cache
 dagster_home/
 venv/
+# Build files
+build/
