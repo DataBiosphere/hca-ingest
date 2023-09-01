@@ -5,7 +5,7 @@ on:
     branches: [master, main]
 
 jobs:
-  test:
+  generate-requirements-file:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
