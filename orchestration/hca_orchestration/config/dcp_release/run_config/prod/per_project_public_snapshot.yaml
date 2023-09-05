@@ -2,6 +2,7 @@ resources:
   snapshot_config:
     config:
       managed_access: false
+      dataset_qualifier: dcp2
       source_hca_project_id:
       qualifier:
       atlas: hca
