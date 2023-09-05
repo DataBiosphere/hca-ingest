@@ -117,7 +117,7 @@ def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> Any:
             [release_tag={release_tag}].")
     response = context.resources.data_repo_client.enumerate_snapshots(filter=dataset_name)
     if len(response.items) != 1:
-        raise Failure("There is more than one snapshot matching this dataset_name")
+        logging.warning("There is more than one snapshot matching this dataset_name")
     snapshot_id = response.items[0].id
     return snapshot_id
 
