@@ -181,7 +181,7 @@ def load(args: argparse.Namespace) -> None:
         args.env,
         args.csv_path,
         args.release_tag,
-        f"cut_project_snapshot_{ENV_PIPELINE_ENDINGS[args.env]}",
+        f"cut_project_snapshot_job_{ENV_PIPELINE_ENDINGS[args.env]}",
         project_id_only=True,
         include_release_tag=True
     )
