@@ -38,7 +38,7 @@ jobs:
           git config --local user.email "dsp-fieldeng@broadinstitute.org"
           git config --local user.name "dsp-fieldeng-bot"
           git add orchestration/requirements.txt
-          git commit -m "Update requirements.txt"
+          git commit -m "Update requirements.txt" --allow-empty
 
       - name: Get branch name
         id: branch-name
