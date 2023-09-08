@@ -1,0 +1,52 @@
+name: Generate requirements file
+
+on:
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  generate-requirements-file:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - name: Set up python
+        id: setup-python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9.16
+      - name: Install Poetry
+        uses: snok/install-poetry@v1.2
+        with:
+          version: 1.1.9
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      #This is important since a lock file is required for the next step
+      - name: Generate a lock file
+        run: poetry lock --no-interaction
+        working-directory: ${{ github.workspace }}/orchestration
+
+
+      - name: Generate requirements.txt
+        run: poetry export -f requirements.txt --without-hashes --no-interaction --output requirements.txt
+        working-directory: ${{ github.workspace }}/orchestration
+
+      - name: Commit requirements.txt
+        run: |
+          git config --local user.email "dsp-fieldeng@broadinstitute.org"
+          git config --local user.name "dsp-fieldeng-bot"
+          git add orchestration/requirements.txt
+          git commit -m "Update requirements.txt" --allow-empty
+
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v7
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.branch-name.outputs.current_branch }} # Pushes to the branch the action is run on
+          force: true
