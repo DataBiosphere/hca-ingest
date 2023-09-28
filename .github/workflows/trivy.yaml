@@ -11,4 +11,4 @@ jobs:
       - uses: broadinstitute/dsp-appsec-trivy-action@v1
         with:
              context: ./orchestration
-             dockerfile: orchestration/Dockerfile
+             dockerfile: Dockerfile
