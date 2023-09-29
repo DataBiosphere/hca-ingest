@@ -4,9 +4,9 @@ Usage:
     > python3 deduplicate_staging_areas.py -s STAGING_AREA_PATH [--print_files] [--skip_deletion]"""
 
 # Imports
+import argparse
 import os
 import re
-import argparse
 import sys
 from google.cloud import storage
 import pandas as pd
