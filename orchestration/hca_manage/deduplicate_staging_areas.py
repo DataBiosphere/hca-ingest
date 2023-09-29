@@ -9,8 +9,9 @@ import os
 import re
 import sys
 
-from google.cloud import storage
 import pandas as pd
+from google.cloud import storage
+
 
 STAGING_AREA_BUCKETS = {
     "prod": {
