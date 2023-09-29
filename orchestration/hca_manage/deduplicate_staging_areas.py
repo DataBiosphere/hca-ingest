@@ -12,7 +12,6 @@ import sys
 import pandas as pd
 from google.cloud import storage
 
-
 STAGING_AREA_BUCKETS = {
     "prod": {
         "EBI": "gs://broad-dsp-monster-hca-prod-ebi-storage/prod",
