@@ -8,6 +8,7 @@ import argparse
 import os
 import re
 import sys
+
 from google.cloud import storage
 import pandas as pd
 
@@ -51,7 +52,7 @@ def get_staging_area_objects(bucket_name, prefix, delimiter=None):
 # Function to identify outdated entity files
 def identify_outdated_files(record_list):
     delete_list = []
-    if record_list:  
+    if record_list:
         # Load records into dataframe, group by path and entity, and order by version descending
         df = pd.DataFrame(record_list, columns=["blob", "path", "entity", "version"])
         df["rn"] = df.groupby(["path", "entity"])["version"].rank(method="first", ascending=False)
