@@ -1,4 +1,4 @@
-"""Outputs contents of up to two GCS paths, comparing if multiple paths are specified. 
+"""Outputs contents of up to two GCS paths, comparing if multiple paths are specified.
 
 Usage:
     > python3 deduplicate_staging_areas.py -s STAGING_AREA_PATH [--print_files] [--skip_deletion]"""
@@ -24,6 +24,7 @@ STAGING_AREA_BUCKETS = {
     }
 }
 
+
 # Function to return the objects in a staging area bucket
 def get_staging_area_objects(bucket_name, prefix, delimiter=None):
     record_list = []
@@ -46,12 +47,13 @@ def get_staging_area_objects(bucket_name, prefix, delimiter=None):
         print(f"Error retrieving objects from staging area: {str(e)}")
         return record_list
 
+
 # Function to identify outdated entity files
 def identify_outdated_files(record_list):
     delete_list = []
     if record_list:  
         # Load records into dataframe, group by path and entity, and order by version descending
-        df = pd.DataFrame(record_list, columns = ["blob", "path", "entity", "version"])
+        df = pd.DataFrame(record_list, columns=["blob", "path", "entity", "version"])
         df["rn"] = df.groupby(["path", "entity"])["version"].rank(method="first", ascending=False)
 
         # Identify outdated records and return as a list
@@ -59,6 +61,7 @@ def identify_outdated_files(record_list):
         for index, row in df_outdated.iterrows():
             delete_list.append(row["blob"])
     return delete_list
+
 
 # Function to batch delete files
 def batch_delete_files(delete_list, bucket_name, prefix, delimiter=None):
@@ -88,6 +91,8 @@ def batch_delete_files(delete_list, bucket_name, prefix, delimiter=None):
         except Exception as e:
             print(f"Error deleting objects: {str(e)}")
 
+
+# Creates the staging area json
 def create_staging_area_json(bucket_name, staging_area_json_prefix):
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
@@ -95,6 +100,7 @@ def create_staging_area_json(bucket_name, staging_area_json_prefix):
     print(f"Creating {os.path.join('gs://', bucket_name, staging_area_json_prefix)}")
     with blob.open("w") as f:
         f.write('{"is_delta": false}')
+
 
 # Get staging area
 def get_staging_area(staging_area, institution, environment, uuid):
@@ -107,30 +113,36 @@ def get_staging_area(staging_area, institution, environment, uuid):
         return os.path.join(STAGING_AREA_BUCKETS[environment][institution], uuid)
     return staging_area
 
+
 def check_staging_area_json_exists(bucket, prefix):
     storage_client = storage.Client()
     gcs_bucket = storage_client.bucket(bucket)
     return gcs_bucket.get_blob(prefix)
 
+
 #  Main function
 if __name__ == "__main__":
 
     # Set up argument parser
-    parser = argparse.ArgumentParser(description="Remove outdated entity files from HCA staging area and check if staging_area.json exists.")
+    parser = argparse.ArgumentParser(
+        description="Remove outdated entity files from HCA staging area and check if staging_area.json exists.")
     path_parser = parser.add_mutually_exclusive_group(required=True)
     path_parser.add_argument("-s", "--staging_area", type=str, help="Full GCS path to the staging area of interest.")
-    path_parser.add_argument("-i", "--institution", choices=['EBI', 'LATTICE', 'UCSC'], type=str, help="Must provide uuid if using institution")
+    path_parser.add_argument("-i", "--institution", choices=['EBI', 'LATTICE', 'UCSC'], type=str,
+                             help="Must provide uuid if using institution")
     parser.add_argument('-e', '--env', choices=['prod', 'dev'], default='prod')
     parser.add_argument("-u", "--uuid", help="Only used if using --institution instead of --staging_area")
-    parser.add_argument("-p", "--print_files", required=False, action="store_true", help="Add argument to print files to be removed.", default=False)
-    parser.add_argument("-n", "--skip_deletion", required=False, action="store_true", help="Add argument to skip file deltion.", default=False)
+    parser.add_argument("-p", "--print_files", required=False, action="store_true",
+                        help="Add argument to print files to be removed.", default=False)
+    parser.add_argument("-n", "--skip_deletion", required=False, action="store_true",
+                        help="Add argument to skip file deletion.", default=False)
     args = parser.parse_args()
 
     staging_area = get_staging_area(args.staging_area, args.institution, args.env, args.uuid)
 
     # Initialize variables
-    bucket_name = re.match("gs:\/\/([a-z0-9\-_]+)\/", staging_area).group(1)
-    prefix = re.match("gs:\/\/[a-z0-9\-_]+\/([A-Za-z0-9\-_\/\.]+)", staging_area).group(1)
+    bucket_name = re.match(r"gs:\/\/([a-z0-9\-_]+)\/", staging_area).group(1)
+    prefix = re.match(r"gs:\/\/[a-z0-9\-_]+\/([A-Za-z0-9\-_\/\.]+)", staging_area).group(1)
     if prefix[-1] != "/":
         prefix += "/"
 
