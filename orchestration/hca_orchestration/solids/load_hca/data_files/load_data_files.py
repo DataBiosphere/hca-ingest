@@ -2,17 +2,24 @@ from typing import Iterator
 
 from dagster import composite_solid, solid
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
+
+# FYI, if you have to update:
+# dagster.experimental has been removed. DynamicOutput and DynamicOutputDefinition are now in dagster top level
 from dagster.experimental import DynamicOutput, DynamicOutputDefinition
 from data_repo_client import JobModel
 from google.cloud import bigquery
 from google.cloud.bigquery.client import RowIterator
+
+# isort: split
 
 from hca_manage.common import JobId
 from hca_orchestration.contrib.bigquery import BigQueryService
 from hca_orchestration.models.hca_dataset import TdrDataset
 from hca_orchestration.models.scratch import ScratchConfig
 from hca_orchestration.solids.data_repo import wait_for_job_completion
-from hca_orchestration.solids.load_hca.poll_ingest_job import check_data_ingest_job_result
+from hca_orchestration.solids.load_hca.poll_ingest_job import (
+    check_data_ingest_job_result,
+)
 from hca_orchestration.support.typing import HcaScratchDatasetName
 
 FILE_LOAD_TABLE_BQ_SCHEMA = [
@@ -87,7 +94,9 @@ def _determine_files_to_load(
     fq_dataset_id = target_hca_dataset.fully_qualified_jade_dataset_name()
     query = f"""
     WITH J AS (
-        SELECT target_path FROM `{target_hca_dataset.project_id}.{fq_dataset_id}.datarepo_load_history` WHERE state = 'succeeded'
+        SELECT target_path
+        FROM `{target_hca_dataset.project_id}.{fq_dataset_id}.datarepo_load_history`
+        WHERE state = 'succeeded'
     )
     SELECT S.source_path AS sourcePath, S.target_path as targetPath
     FROM {file_load_table_name} S LEFT JOIN J USING (target_path)
@@ -167,6 +176,8 @@ def bulk_ingest(control_file_path: str) -> JobId:
     to completion.
     :param control_file_path: GS path to the ingest control file
     """
+    # control_file_path is a dynamic output from diff_file_loads
+    # pylint: disable-next=no-value-for-parameter
     job_id: JobId = run_bulk_file_ingest(control_file_path)
     wait_for_job_completion(job_id)
     check_data_ingest_job_result(job_id)
@@ -176,11 +187,16 @@ def bulk_ingest(control_file_path: str) -> JobId:
 @composite_solid(
     output_defs=[DynamicOutputDefinition(name="result", dagster_type=JobId)]
 )
+# scratch_dataset_name is a dynamic output from diff_file_loads
+# pylint: disable-next=no-value-for-parameter
 def import_data_files(scratch_dataset_name: HcaScratchDatasetName) -> list[JobId]:
     """
     Composite solid responsible for ingesting data files and related descriptors to TDR
     :param scratch_dataset_name: Scratch dataset that will hold temporary ingest data
     """
+    # pylint: disable-next=no-value-for-parameter
     generated_file_loads = diff_file_loads(scratch_dataset_name)
+    # map is a Dagster utility function
+    # pylint: disable-next=no-member
     bulk_ingest_jobs: list[JobId] = generated_file_loads.map(bulk_ingest)
     return bulk_ingest_jobs

@@ -13,10 +13,12 @@ ENV LANG='en_US.UTF-8' \
 RUN apt-get update  \
     && DEBIAN_FRONTEND=noninteractive \
     && apt-get install -yqq --no-install-recommends \
+    apt-transport-https \
     ca-certificates \
     curl \
     fontconfig \
     git \
+    gnupg \
     locales \
     sudo \
     tzdata \
@@ -82,8 +84,8 @@ ENV CLOUDSDK_PYTHON=/usr/local/bin/python
 
 # Install gcloud CLI
 # from https://cloud.google.com/sdk/docs/install#deb
-RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list \
-    && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | tee /usr/share/keyrings/cloud.google.gpg \
+RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list \
+    && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add - \
     && apt-get update -y \
     && apt-get install google-cloud-sdk -y \
     && apt-get install google-cloud-sdk-gke-gcloud-auth-plugin -y \

@@ -5,7 +5,7 @@ system design information.
 # Getting Started
 
 * Choose whether you will develop in a local virtual environment, like venv, or use the [Docker Compose dev env provided here](docker-compose.yaml).
-* Clone this repository to a local directory and create a new dev branch, ideally named after your Jira ticket.
+* Clone this repository to a local directory and create a new dev branch, ideally named after your Jira ticket. (Note that a Jira ticket is required in order to make changes to production.)
   * [Setup Git Secrets](https://dsp-security.broadinstitute.org/platform-security-categories/git/setup-git-secrets)
   * If you are running in a local virtual environment go ahead and set that up. Note that this project uses Python 3.9.16
     * Also install the [gcloud cloud command-line tool](https://cloud.google.com/sdk/docs/install) if you've not already done so.
@@ -35,11 +35,11 @@ system design information.
 All code should first be developed on a branch off of the `main` branch. Once ready for review, \
 submit a PR against `main` and tag the `broad-data-ingest-admin` team for review, and ensure all checks are passing.
 
-If you've updated the Docker image at the top of the repository here, you will need to build & push it to Artifact Registry, \
+The Docker image at the top of the repository here should be updated when you are done developing. To do so, you will need to build & push it to Artifact Registry, \
 using `update_docker_image.sh`. First update the version field, then run the script. \
 This will build the image, tag it with the version, and push the image to Artifact Registry. \
 Note that this may take a bit to establish the connection to Artifact Registry, so be patient. \
-_It may be that you are on the split VPN and/or trying to push over IPv6. Either turn off the VPN or turn of IPV6 \
+_It may be that you are on the split VPN and/or trying to push over IPv6. Either turn off the VPN or turn off IPV6 \
 on your router to speed this up._
 
 Once approved and merged, the end-to-end test suite will be run. Once this passes, the dataflow \

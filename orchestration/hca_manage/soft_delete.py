@@ -11,6 +11,8 @@ from dagster_utils.contrib.data_repo.typing import JobId
 from data_repo_client import DataDeletionRequest, RepositoryApi
 from google.cloud import storage
 
+# isort: split
+
 from hca_manage import __version__ as hca_manage_version
 from hca_manage.common import (
     DefaultHelpParser,
@@ -65,7 +67,7 @@ class SoftDeleteManager:
         self.bucket_project = {"prod": "mystical-slate-284720",
                                "real_prod": "mystical-slate-284720",
                                "dev": "broad-dsp-monster-hca-dev"}[self.environment]
-        self.bucket = f"broad-dsp-monster-hca-prod-staging-storage"
+        self.bucket = "broad-dsp-monster-hca-prod-staging-storage-us"
 
     @property
     def gcp_creds(self) -> google.auth.credentials.Credentials:

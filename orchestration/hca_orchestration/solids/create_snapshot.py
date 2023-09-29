@@ -1,9 +1,23 @@
-from typing import Iterator
+import logging
+from typing import Any, Iterator
 
-from dagster import AssetMaterialization, EventMetadataEntry, Output, OutputDefinition, solid, Failure, Optional, \
-    Noneable, Field, Permissive
+from dagster import (
+    AssetMaterialization,
+    EventMetadataEntry,
+    Failure,
+    Field,
+    Output,
+    OutputDefinition,
+    Permissive,
+    solid,
+)
 from dagster.core.execution.context.compute import AbstractComputeExecutionContext
-from data_repo_client import RepositoryApi, PolicyMemberRequest, PolicyResponse
+
+# isort: split
+
+from data_repo_client import PolicyMemberRequest, PolicyResponse, RepositoryApi
+
+# isort: split
 
 from hca_manage.common import JobId
 from hca_manage.snapshot import SnapshotManager
@@ -70,6 +84,42 @@ def get_completed_snapshot_info(context: AbstractComputeExecutionContext, job_id
         }
     )
     yield Output(snapshot_info_dict['id'])
+
+
+@solid(
+    config_schema=Field(Permissive({"validate_snapshot_name": Field(bool, default_value=True, is_required=False)})),
+    required_resource_keys={'data_repo_client', 'snapshot_config', 'hca_manage_config', 'data_repo_service'},
+)
+def get_snapshot_from_project(context: AbstractComputeExecutionContext) -> Any:
+    """
+    Use the snapshot_name to get the associated snapshot_id from TDR,
+    for the snapshot created in the previous pipeline step - cut_snapshot.
+    If there is no matching snapshot or dataset - fail
+    If the snapshot_name does not end in the release_tag fail - so that we know we are using the correct snapshot
+    *hint* snapshot_name comes from the SnapshotCreationConfig class and ultimately is a concatenation
+    of the dataset name and the datetime and the release tag
+    """
+    data_repo_service: DataRepoService = context.resources.data_repo_service
+    dataset_name = context.resources.snapshot_config.dataset_name
+    snapshot_name = context.resources.snapshot_config.snapshot_name
+    release_tag = context.resources.snapshot_config.qualifier
+    dataset = data_repo_service.find_dataset(dataset_name)
+    logging.info(f"snapshot_name: {snapshot_name}")
+    logging.info(f"release_tag: {release_tag}")
+
+    # we need the dataset to get the billing profile id, which is needed to query (enumerate) the snapshot
+    if not dataset:
+        raise Failure(f"Dataset not found for dataset name [dataset_name={dataset_name}]")  # noqa: F541
+    if not release_tag:
+        raise Failure("Release tag not found. This is required.")
+    if not snapshot_name.endswith(release_tag):
+        raise Failure(f"Snapshot name does not end in current release tag [snapshot_name={snapshot_name}], \
+            [release_tag={release_tag}].")
+    response = context.resources.data_repo_client.enumerate_snapshots(filter=dataset_name)
+    if len(response.items) != 1:
+        logging.warning("There is more than one snapshot matching this dataset_name")
+    snapshot_id = response.items[0].id
+    return snapshot_id
 
 
 @solid(

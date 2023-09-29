@@ -1,12 +1,23 @@
-from dagster import execute_solid, ModeDefinition, ResourceDefinition
+from unittest.mock import Mock, patch
+
+# isort: split
+
+from dagster import ModeDefinition, ResourceDefinition, execute_solid
 from dagster_utils.resources.sam import Sam
-from unittest.mock import patch, Mock
 from data_repo_client import RepositoryApi
 
-from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
+# isort: split
+
 from hca_manage.common import JobId
-from hca_orchestration.resources.config.data_repo import SnapshotCreationConfig, HcaManageConfig
-from hca_orchestration.solids.create_snapshot import make_snapshot_public, submit_snapshot_job
+from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
+from hca_orchestration.resources.config.data_repo import (
+    HcaManageConfig,
+    SnapshotCreationConfig,
+)
+from hca_orchestration.solids.create_snapshot import (
+    make_snapshot_public,
+    submit_snapshot_job,
+)
 
 
 def test_submit_snapshot_job_calls_submit_snapshot_job_in_hca_manage():
@@ -20,7 +31,7 @@ def test_submit_snapshot_job_calls_submit_snapshot_job_in_hca_manage():
                     "data_repo_service": ResourceDefinition.hardcoded_resource(Mock(spec=DataRepoService)),
                     "sam_client": ResourceDefinition.hardcoded_resource(Mock(spec=Sam)),
                     "snapshot_config": ResourceDefinition.hardcoded_resource(
-                        SnapshotCreationConfig("fake", "fake", False)),
+                        SnapshotCreationConfig("fake", "fake", "fake", False)),
                     "hca_manage_config": ResourceDefinition.hardcoded_resource(HcaManageConfig("dev", "fake"))
                 }
             ),

@@ -8,6 +8,7 @@ This module contains orchestration code necessary for importing data to TDR from
 * From the `orchestration` dir, run `poetry install` to install all dependencies.
 * Run `poetry run pre-commit install` to install a hook that will automatically lint your code whenever you create a commit.
 	* If the hook blocks you from creating a commit, you can just run `git commit` again, unless it reports any linting errors it wasn't able to fix.
+    * Note that there is also a linter that runs via GitHub Actions on every push, so you will be notified of any linting errors there as well.
 
 ## Running
 Once you have your environment set up verify that you can load our repository of pipelines in the web console:
@@ -30,6 +31,7 @@ Once you have your environment set up verify that you can load our repository of
 * *copy_project*: Copies a single HCA project from one dataset to another
 * *validate_ingress*: Validates an HCA staging area
 * *cut_snapshot*: Submits an HCA snapshot creation job to TDR and polls to completion
+* *make_snapshot_public*: Submits an HCA make_snapshot_public job to Sam and notifies Slack when complete
 
 All pipelines are runnable in local development configurations.
 
