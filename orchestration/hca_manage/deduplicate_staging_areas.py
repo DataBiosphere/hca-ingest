@@ -24,8 +24,6 @@ STAGING_AREA_BUCKETS = {
     }
 }
 
-#broad-dsp-monster-hca-dev-ebi-staging/dev/003d5674-9bf6-4e51-ab1b-8fed80c308b9
-
 # Function to return the objects in a staging area bucket
 def get_staging_area_objects(bucket_name, prefix, delimiter=None):
     record_list = []
