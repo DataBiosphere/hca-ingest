@@ -11,6 +11,7 @@ import sys
 
 import pandas as pd
 from google.cloud import storage
+from typing import Optional
 
 STAGING_AREA_BUCKETS = {
     "prod": {
@@ -27,7 +28,7 @@ STAGING_AREA_BUCKETS = {
 
 
 # Function to return the objects in a staging area bucket
-def get_staging_area_objects(bucket_name, prefix, delimiter=None):
+def get_staging_area_objects(bucket_name: str, prefix: str, delimiter: Optional[str] = None) -> list[list]:
     record_list = []
     try:
         # List blobs in specified bucket/prefix
@@ -50,7 +51,7 @@ def get_staging_area_objects(bucket_name, prefix, delimiter=None):
 
 
 # Function to identify outdated entity files
-def identify_outdated_files(record_list):
+def identify_outdated_files(record_list: Optional[list[list]]) -> list[storage.blob]:
     delete_list = []
     if record_list:
         # Load records into dataframe, group by path and entity, and order by version descending
@@ -65,7 +66,12 @@ def identify_outdated_files(record_list):
 
 
 # Function to batch delete files
-def batch_delete_files(delete_list, bucket_name, prefix, delimiter=None):
+def batch_delete_files(
+        delete_list: list[storage.blob],
+        bucket_name: str,
+        prefix: str,
+        delimiter: Optional[str] = None
+) -> None:
     if delete_list:
         try:
             # Loop through and submit batch deletion requests (max 1000)
@@ -94,7 +100,7 @@ def batch_delete_files(delete_list, bucket_name, prefix, delimiter=None):
 
 
 # Creates the staging area json
-def create_staging_area_json(bucket_name, staging_area_json_prefix):
+def create_staging_area_json(bucket_name: str, staging_area_json_prefix: str) -> None:
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     blob = bucket.blob(staging_area_json_prefix)
@@ -104,7 +110,7 @@ def create_staging_area_json(bucket_name, staging_area_json_prefix):
 
 
 # Get staging area
-def get_staging_area(staging_area, institution, environment, uuid):
+def get_staging_area(staging_area: Optional[str], institution: Optional[str], environment: str, uuid : Optional[str]) -> str:
     # If institution is provided then infer staging area fom that and uuid
     if institution:
         # Confirm uuid is passed in if --institution is used
@@ -115,7 +121,7 @@ def get_staging_area(staging_area, institution, environment, uuid):
     return staging_area
 
 
-def check_staging_area_json_exists(bucket, prefix):
+def check_staging_area_json_exists(bucket: str, prefix: str) -> bool:
     storage_client = storage.Client()
     gcs_bucket = storage_client.bucket(bucket)
     return gcs_bucket.get_blob(prefix)
