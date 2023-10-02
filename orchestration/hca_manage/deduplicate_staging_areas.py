@@ -10,9 +10,9 @@ import re
 import sys
 from typing import Optional
 
-import pandas as pd
-from google.cloud import storage
-
+# Library stubs not installed so ignoring linting failures
+import pandas as pd  # type: ignore[import]
+from google.cloud import storage  # type: ignore[import]
 
 STAGING_AREA_BUCKETS = {
     "prod": {
@@ -117,6 +117,7 @@ def get_staging_area(
         environment: str, uuid:
         Optional[str]
 ) -> str:
+    # Staging area and institution are mutually exclusive so the return will never be optional
     # If institution is provided then infer staging area fom that and uuid
     if institution:
         # Confirm uuid is passed in if --institution is used
@@ -125,7 +126,7 @@ def get_staging_area(
             sys.exit(1)
         return os.path.join(STAGING_AREA_BUCKETS[environment][institution], uuid)
     else:
-        return staging_area
+        return staging_area  # type: ignore[return-value]
 
 
 def check_staging_area_json_exists(bucket: str, prefix: str) -> bool:
@@ -157,8 +158,9 @@ if __name__ == "__main__":
     staging_area = get_staging_area(args.staging_area, args.institution, args.env, args.uuid)
 
     # Initialize variables
-    bucket_name = re.match(r"gs:\/\/([a-z0-9\-_]+)\/", staging_area).group(1)
-    prefix = re.match(r"gs:\/\/[a-z0-9\-_]+\/([A-Za-z0-9\-_\/\.]+)", staging_area).group(1)
+    bucket_name = re.match(r"gs:\/\/([a-z0-9\-_]+)\/", staging_area).group(1)  # type: ignore[union-attr]
+    prefix = re.match(r"gs:\/\/[a-z0-9\-_]+\/([A-Za-z0-9\-_\/\.]+)", staging_area).group(1)  # type: ignore[union-attr]
+    # staging area is never optional but the function that returns it, get_staging_area, is confused
     if prefix[-1] != "/":
         prefix += "/"
 
