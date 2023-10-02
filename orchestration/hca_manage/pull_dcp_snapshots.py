@@ -5,14 +5,15 @@ Usage:
 
 # Imports
 import argparse
-import data_repo_client
-import pandas as pd
-import google.auth
-import google.auth.transport.requests
-import requests
+import data_repo_client  # type: ignore[import]
+import pandas as pd  # type: ignore[import]
+import google.auth  # type: ignore[import]
+import google.auth.transport.requests  # type: ignore[import]
+import requests  # type: ignore[import]
+
 
 # Function to return the objects in a staging area bucket
-def get_snapshots(release):
+def get_snapshots(release: str) -> pd.DataFrame:
     try:
         # Establish TDR API client
         creds, project = google.auth.default()
@@ -45,6 +46,7 @@ def get_snapshots(release):
         print(f"Error retrieving snapshots: {str(e)}")
         df_sorted = pd.DataFrame()
     return df_sorted
+
 
 #  Main function
 if __name__ == "__main__":
