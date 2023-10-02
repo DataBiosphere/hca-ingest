@@ -34,14 +34,32 @@ def get_snapshots(release: str) -> pd.DataFrame:
         for snapshot_entry in snapshots_list.items:
             public_flag = "N"
             public_response = requests.get(
-                url=f"https://sam.dsde-prod.broadinstitute.org/api/resources/v2/datasnapshot/{snapshot_entry.id}/policies/reader/public",
+                url="https://sam.dsde-prod.broadinstitute.org/api/resources/v2/datasnapshot/" +
+                    f"{snapshot_entry.id}/policies/reader/public",
                 headers={"Authorization": f"Bearer {creds.token}"},
             )
             if public_response.text == "true":
                 public_flag = "Y"
-            record = [snapshot_entry.id, snapshot_entry.name, snapshot_entry.data_project, snapshot_entry.created_date[0:10], snapshot_entry.created_date, public_flag]
+            record = [
+                snapshot_entry.id,
+                snapshot_entry.name,
+                snapshot_entry.data_project,
+                snapshot_entry.created_date[0:10],
+                snapshot_entry.created_date,
+                public_flag
+            ]
             records_list.append(record)
-        df = pd.DataFrame(records_list, columns =["TDR Snapshot ID", "TDR Snapshot Name", "TDR Snapshot Google Project", "Created Date", "Created Datetime", "Public Flag"])
+        df = pd.DataFrame(
+            records_list,
+            columns=[
+                "TDR Snapshot ID",
+                "TDR Snapshot Name",
+                "TDR Snapshot Google Project",
+                "Created Date",
+                "Created Datetime",
+                "Public Flag"
+            ]
+        )
         df_sorted = df.sort_values(by=["TDR Snapshot Name"], ignore_index=True)
     except Exception as e:
         print(f"Error retrieving snapshots: {str(e)}")
