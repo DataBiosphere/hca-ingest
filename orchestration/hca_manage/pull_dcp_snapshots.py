@@ -5,10 +5,11 @@ Usage:
 
 # Imports
 import argparse
+
 import data_repo_client  # type: ignore[import]
-import pandas as pd  # type: ignore[import]
 import google.auth  # type: ignore[import]
 import google.auth.transport.requests  # type: ignore[import]
+import pandas as pd  # type: ignore[import]
 import requests  # type: ignore[import]
 
 
