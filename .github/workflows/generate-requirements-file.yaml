@@ -1,8 +1,11 @@
+# generates a requirements.txt file from poetry.lock and commits it to the branch that triggered the workflow,
+# for SourceClear to use to scan for vulnerabilities.
 name: Generate requirements file
 
 on:
   pull_request:
-    branches: [master, main]
+    branches:
+      - main
 
 jobs:
   generate-requirements-file:
@@ -22,12 +25,6 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
-
-      #This is important since a lock file is required for the next step
-      - name: Generate a lock file
-        run: poetry lock --no-interaction
-        working-directory: ${{ github.workspace }}/orchestration
-
 
       - name: Generate requirements.txt
         run: poetry export -f requirements.txt --without-hashes --no-interaction --output requirements.txt
