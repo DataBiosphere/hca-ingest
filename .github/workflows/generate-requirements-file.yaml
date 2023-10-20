@@ -24,9 +24,9 @@ jobs:
           installer-parallel: true
 
       #This is important since a lock file is required for the next step
-      - name: Generate a lock file
-        run: poetry lock --no-interaction
-        working-directory: ${{ github.workspace }}/orchestration
+#      - name: Generate a lock file
+#        run: poetry lock --no-interaction --no-update
+#        working-directory: ${{ github.workspace }}/orchestration
 
 
       - name: Generate requirements.txt
