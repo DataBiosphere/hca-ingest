@@ -2,7 +2,8 @@ name: Generate requirements file
 
 on:
   pull_request:
-    branches: [master, main]
+    branches:
+      - main
 
 jobs:
   generate-requirements-file:
