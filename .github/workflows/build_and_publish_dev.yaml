@@ -1,6 +1,8 @@
 name: build-and-publish-dev
 on:
   push:
+    branches:
+      - '!main'
 jobs:
   main-ci:
     runs-on: ubuntu-latest
@@ -45,7 +47,7 @@ jobs:
         run: sbt Compile/compile Test/compile IntegrationTest/compile
       - name: Scala Test
         run: sbt "set ThisBuild/coverageEnabled := true" test IntegrationTest/test coverageAggregate
-      - name: Run E2E test suite
+      - name: Run pytest E2E test suite
         run: poetry run pytest -v -m e2e
         working-directory: ${{ github.workspace }}/orchestration
       - name: Publish Scala coverage
