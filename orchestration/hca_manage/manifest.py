@@ -40,12 +40,16 @@ ETL_PARTITION_BUCKETS = {
     "dev": "broad-dsp-monster-hca-dev-etl-partitions",
     "prod": "broad-dsp-monster-hca-prod-etl-partitions"
 }
+# Test contains a single staging area for testing purposes
+# The staging area is not used for any production pipelines
+# Be sure to delete any snapshots and datasets created using this test staging area
 STAGING_AREA_BUCKETS = {
     "prod": {
         "EBI": "gs://broad-dsp-monster-hca-prod-ebi-storage/prod",
         "UCSC": "gs://broad-dsp-monster-hca-prod-ebi-storage/prod",
         "LANTERN": "gs://broad-dsp-monster-hca-prod-lantern",
-        "LATTICE": "gs://broad-dsp-monster-hca-prod-lattice/staging"
+        "LATTICE": "gs://broad-dsp-monster-hca-prod-lattice/staging",
+        "TEST": "gs://broad-dsp-monster-hca-prod-ebi-storage/broad_test_dataset"
     },
     "dev": {
         "EBI": "gs://broad-dsp-monster-hca-dev-ebi-staging/dev",

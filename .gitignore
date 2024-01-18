@@ -17,3 +17,5 @@ dagster_home/
 venv/
 # Build files
 build/
+# Test files
+*_manifest.csv
