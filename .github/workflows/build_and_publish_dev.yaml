@@ -17,7 +17,7 @@ jobs:
           export_default_credentials: true
       - name: Setup GCR auth
         run: gcloud auth configure-docker --quiet us.gcr.io,us-east4-docker.pkg.dev
-       - uses: olafurpg/setup-scala@v10
+      - uses: olafurpg/setup-scala@v10
         with:
           java-version: graalvm@20.0.0
       - name: Push Scala Dataflow Docker image
