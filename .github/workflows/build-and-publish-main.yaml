@@ -4,39 +4,38 @@ on:
       types:
         - closed
 jobs:
-  if_merged:
+  main-ci:
     if: github.event.pull_request.merged == true
-      main-ci:
-        runs-on: ubuntu-latest
-        steps:
-          - uses: actions/checkout@v2
-          - name: Fetch tag history
-            run: git fetch --tags
-          - uses: olafurpg/setup-scala@v10
-            with:
-              java-version: graalvm@20.0.0
-          - uses: google-github-actions/setup-gcloud@v0.2.1
-            name: Setup gcloud for pushing Docker images
-            with:
-              service_account_email: jenkins-gcr-pusher@broad-dsp-monster-dev.iam.gserviceaccount.com
-              service_account_key: ${{ secrets.Base64ServiceAccountKey }}
-              export_default_credentials: true
-          - name: Setup GCR auth
-            run: gcloud auth configure-docker --quiet us.gcr.io,us-east4-docker.pkg.dev
-          - name: Push Scala Dataflow Docker image
-            run: sbt publish
-          - name: Get artifact slug
-            id: get-artifact-slug
-            run: 'echo ::set-output name=slug::$(git rev-parse --short "$GITHUB_SHA")'
-          - name: Push Dagster User Code Docker image
-            uses: docker/build-push-action@v2
-            with:
-              context: ./orchestration
-              push: true
-              tags: us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:${{steps.get-artifact-slug.outputs.slug}}, us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:latest
-          - name: Push Compose Dev Env Docker image
-            uses: docker/build-push-action@v2
-            with:
-              context: .
-              push: true
-              tags: us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:${{steps.get-artifact-slug.outputs.slug}}, us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:latest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Fetch tag history
+        run: git fetch --tags
+      - uses: olafurpg/setup-scala@v10
+        with:
+          java-version: graalvm@20.0.0
+      - uses: google-github-actions/setup-gcloud@v0.2.1
+        name: Setup gcloud for pushing Docker images
+        with:
+          service_account_email: jenkins-gcr-pusher@broad-dsp-monster-dev.iam.gserviceaccount.com
+          service_account_key: ${{ secrets.Base64ServiceAccountKey }}
+          export_default_credentials: true
+      - name: Setup GCR auth
+        run: gcloud auth configure-docker --quiet us.gcr.io,us-east4-docker.pkg.dev
+      - name: Push Scala Dataflow Docker image
+        run: sbt publish
+      - name: Get artifact slug
+        id: get-artifact-slug
+        run: 'echo ::set-output name=slug::$(git rev-parse --short "$GITHUB_SHA")'
+      - name: Push Dagster User Code Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: ./orchestration
+          push: true
+          tags: us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:${{steps.get-artifact-slug.outputs.slug}}, us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:latest
+      - name: Push Compose Dev Env Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:${{steps.get-artifact-slug.outputs.slug}}, us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:latest
