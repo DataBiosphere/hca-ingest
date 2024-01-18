@@ -1,8 +1,7 @@
-name: build-and-publish-dev
+name: Build and Publish Dev Images
 on:
   push:
-    branches:
-      - '!main'
+    branches-ignore: [master, main]
 jobs:
   main-ci:
     runs-on: ubuntu-latest
