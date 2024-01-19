@@ -1,3 +1,5 @@
+import sentry_sdk
+
 from dagster import (
     HookContext,
     InitResourceContext,
@@ -13,6 +15,12 @@ from hca_orchestration.solids.validate_ingress import (
     pre_flight_validate,
 )
 
+SENTRY_DSN = os.getenv(
+    "SENTRY_DSN",
+    "",
+)
+if SENTRY_DSN:
+    sentry_sdk.init(dsn=SENTRY_DSN, traces_sample_rate=1.0)
 
 def run_config_for_validation_ingress_partition(
     partition: Partition,
