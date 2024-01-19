@@ -598,7 +598,7 @@ beautifulsoup4 = "*"
 
 [[package]]
 name = "google-api-core"
-version = "2.12.0"
+version = "2.15.0"
 description = "Google API client core library"
 category = "main"
 optional = false
@@ -1691,6 +1691,48 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "sentry-sdk"
+version = "1.39.2"
+description = "Python client for Sentry (https://sentry.io)"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+certifi = "*"
+urllib3 = {version = ">=1.26.11", markers = "python_version >= \"3.6\""}
+
+[package.extras]
+aiohttp = ["aiohttp (>=3.5)"]
+arq = ["arq (>=0.23)"]
+asyncpg = ["asyncpg (>=0.23)"]
+beam = ["apache-beam (>=2.12)"]
+bottle = ["bottle (>=0.12.13)"]
+celery = ["celery (>=3)"]
+chalice = ["chalice (>=1.16.0)"]
+clickhouse-driver = ["clickhouse-driver (>=0.2.0)"]
+django = ["django (>=1.8)"]
+falcon = ["falcon (>=1.4)"]
+fastapi = ["fastapi (>=0.79.0)"]
+flask = ["flask (>=0.11)", "blinker (>=1.1)", "markupsafe"]
+grpcio = ["grpcio (>=1.21.1)"]
+httpx = ["httpx (>=0.16.0)"]
+huey = ["huey (>=2)"]
+loguru = ["loguru (>=0.5)"]
+opentelemetry = ["opentelemetry-distro (>=0.35b0)"]
+opentelemetry-experimental = ["opentelemetry-distro (>=0.40b0,<1.0.0)", "opentelemetry-instrumentation-aiohttp-client (>=0.40b0,<1.0.0)", "opentelemetry-instrumentation-django (>=0.40b0,<1.0.0)", "opentelemetry-instrumentation-fastapi (>=0.40b0,<1.0.0)", "opentelemetry-instrumentation-flask (>=0.40b0,<1.0.0)", "opentelemetry-instrumentation-requests (>=0.40b0,<1.0.0)", "opentelemetry-instrumentation-sqlite3 (>=0.40b0,<1.0.0)", "opentelemetry-instrumentation-urllib (>=0.40b0,<1.0.0)"]
+pure-eval = ["pure-eval", "executing", "asttokens"]
+pymongo = ["pymongo (>=3.1)"]
+pyspark = ["pyspark (>=2.4.4)"]
+quart = ["quart (>=0.16.1)", "blinker (>=1.1)"]
+rq = ["rq (>=0.6)"]
+sanic = ["sanic (>=0.8)"]
+sqlalchemy = ["sqlalchemy (>=1.2)"]
+starlette = ["starlette (>=0.19.1)"]
+starlite = ["starlite (>=1.48)"]
+tornado = ["tornado (>=5)"]
+
+[[package]]
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
@@ -2015,7 +2057,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "3.9.16"
-content-hash = "e7ea34813d7c2a0f82d60fd8c11cc9ca4051dc65b48c14ef5a29ff400e5d21a4"
+content-hash = "a0d8b79f839c59a1bdec6916e67491f2a7f1a709ac88f28220c1a927c328a376"
 
 [metadata.files]
 aiohttp = []
@@ -2151,6 +2193,7 @@ rfc3339-validator = []
 rpds-py = []
 rsa = []
 rx = []
+sentry-sdk = []
 six = []
 slack-sdk = []
 slackclient = []
