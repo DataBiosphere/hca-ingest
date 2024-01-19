@@ -14,6 +14,7 @@ jobs:
           project_id: ${{ secrets.DEV_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_TEST_KEY }}
           export_default_credentials: true
+          fetch-depth: 0
       - name: Set up Python 3.9 for dataflow tests
         uses: actions/setup-python@v2
         with:
