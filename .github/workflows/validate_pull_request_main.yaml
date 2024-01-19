@@ -1,10 +1,11 @@
-name: PR Validation
+name: PR Validation for Main
 on:
   pull_request:
     branches:
       - main
 jobs:
   pr-validation:
+    name: PR Validation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
