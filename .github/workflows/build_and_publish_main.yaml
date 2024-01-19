@@ -1,7 +1,6 @@
 name: Main Validation and Release Workflow
 on:
   pull_request_target:
-<<<<<<< HEAD
     types:
       - closed
     branches:
