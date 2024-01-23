@@ -1,6 +1,6 @@
 import os
-import sentry_sdk
 
+import sentry_sdk
 from dagster import (
     HookContext,
     InitResourceContext,
