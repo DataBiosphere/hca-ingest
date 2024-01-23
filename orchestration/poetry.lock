@@ -598,7 +598,7 @@ beautifulsoup4 = "*"
 
 [[package]]
 name = "google-api-core"
-version = "2.12.0"
+version = "2.15.0"
 description = "Google API client core library"
 category = "main"
 optional = false
@@ -2015,7 +2015,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "3.9.16"
-content-hash = "e7ea34813d7c2a0f82d60fd8c11cc9ca4051dc65b48c14ef5a29ff400e5d21a4"
+content-hash = "3d17addebc60970c92aa2eac0d713c79024eaf6d69590615b540a4046a6326c7"
 
 [metadata.files]
 aiohttp = []
