@@ -1,5 +1,7 @@
+import os
 import warnings
 
+import sentry_sdk
 from dagster import (
     ExperimentalWarning,
     HookContext,
