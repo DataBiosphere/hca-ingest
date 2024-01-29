@@ -15,6 +15,9 @@ jobs:
       ENV: test
     steps:
     - uses: actions/checkout@v2
+      # Needed by sonar to get the git history for the branch the PR will be merged into.
+      with:
+        fetch-depth: 0
     - uses: google-github-actions/setup-gcloud@v0.2.1
       with:
         project_id: ${{ secrets.DEV_PROJECT_ID }}

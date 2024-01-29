@@ -7,6 +7,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        # Needed by sonar to get the git history for the branch the PR will be merged into.
+        with:
+          fetch-depth: 0
       - name: Fetch tag history
         run: git fetch --tags
       - uses: google-github-actions/setup-gcloud@v0.2.1
