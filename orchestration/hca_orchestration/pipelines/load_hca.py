@@ -16,6 +16,14 @@ from hca_orchestration.solids.load_hca.utilities import send_start_notification,
 warnings.filterwarnings("ignore", category=ExperimentalWarning)
 
 
+SENTRY_DSN = os.getenv(
+    "SENTRY_DSN",
+    "",
+)
+if SENTRY_DSN:
+    sentry_sdk.init(dsn=SENTRY_DSN, traces_sample_rate=1.0)
+    
+
 @graph
 def load_hca() -> None:
     staging_dataset = create_scratch_dataset(

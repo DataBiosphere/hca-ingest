@@ -30,6 +30,13 @@ from hca_orchestration.solids.create_snapshot import (
 
 warnings.filterwarnings("ignore", category=ExperimentalWarning)
 
+SENTRY_DSN = os.getenv(
+    "SENTRY_DSN",
+    "",
+)
+if SENTRY_DSN:
+    sentry_sdk.init(dsn=SENTRY_DSN, traces_sample_rate=1.0)
+
 
 def make_snapshot_public_job(hca_env: str, jade_env: str) -> PipelineDefinition:
     return set_snapshot_public.to_job(
