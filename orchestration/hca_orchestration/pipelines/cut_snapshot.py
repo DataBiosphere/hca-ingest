@@ -1,5 +1,7 @@
+import os
 import warnings
 
+import sentry_sdk
 from dagster import (
     ExperimentalWarning,
     HookContext,
@@ -34,6 +36,14 @@ from hca_orchestration.solids.create_snapshot import (
 from hca_orchestration.solids.data_repo import wait_for_job_completion
 
 warnings.filterwarnings("ignore", category=ExperimentalWarning)
+
+
+SENTRY_DSN = os.getenv(
+    "SENTRY_DSN",
+    "",
+)
+if SENTRY_DSN:
+    sentry_sdk.init(dsn=SENTRY_DSN, traces_sample_rate=1.0)
 
 
 def cut_project_snapshot_job(hca_env: str, jade_env: str, steward: str) -> PipelineDefinition:
