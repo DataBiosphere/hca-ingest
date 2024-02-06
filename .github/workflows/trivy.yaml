@@ -16,7 +16,7 @@ jobs:
       - uses: broadinstitute/dsp-appsec-trivy-action@v1
         with:
              context: ./orchestration
-             dockerfile: Dockerfile
+             dockerfile: ./Dockerfile
       - name: Notify in Slack
         if: failure()
         uses: broadinstitute/action-slack@v3.15.0
