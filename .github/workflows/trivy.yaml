@@ -1,6 +1,7 @@
 name: dsp-appsec-trivy
 on: [pull_request]
-
+  schedule:
+    - cron: '0 0 * * 0'
 jobs:
   appsec-trivy:
     # Parse Dockerfile and build, scan image if a "blessed" base image is not used
@@ -15,3 +16,13 @@ jobs:
         with:
              context: ./orchestration
              dockerfile: Dockerfile
+    name: Alert on failures
+    if: ${{failure()}}
+    id: slack
+    uses: slackapi/slack-github-action@v1.24.0
+    with:
+      channel-id: '${{ secrets.CHANNEL_ID }}'
+      # For posting a simple plain text message
+      slack-message: "Trivy weekly job failed! <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click here> to see the run. "
+    env:
+      SLACK_BOT_TOKEN: ${{ secrets.SLACK_KEY }}
