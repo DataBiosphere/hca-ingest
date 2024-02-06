@@ -15,7 +15,7 @@ jobs:
           fetch-depth: 0
       - uses: broadinstitute/dsp-appsec-trivy-action@v1
         with:
-            #  context: ./orchestration
+             context: ./orchestration
              dockerfile: Dockerfile
       - name: Notify in Slack
         if: failure()
