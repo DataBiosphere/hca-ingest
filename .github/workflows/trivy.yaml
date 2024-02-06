@@ -1,5 +1,6 @@
 name: dsp-appsec-trivy
-on: [pull_request]
+on: 
+  pull_request
   schedule:
     - cron: '0 0 * * 0'
 jobs:
@@ -16,13 +17,14 @@ jobs:
         with:
              context: ./orchestration
              dockerfile: Dockerfile
-    name: Alert on failures
-    if: ${{failure()}}
-    id: slack
-    uses: slackapi/slack-github-action@v1.24.0
-    with:
-      channel-id: '${{ secrets.CHANNEL_ID }}'
-      # For posting a simple plain text message
-      slack-message: "Trivy weekly job failed! <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click here> to see the run. "
-    env:
-      SLACK_BOT_TOKEN: ${{ secrets.SLACK_KEY }}
+      - name: Notify in Slack
+        if: failure()
+        uses: broadinstitute/action-slack@v3.15.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          status: ${{ job.status }}
+          channel: "trivy-weekly-scans-notblessedimages"
+          username: "HCA-Ingest Trivy scan"
+          icon_emoji: ':alert_red_light:'
+          text: 'HCA-Ingest Trivy scan failure. <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Click here> to see the run.'
