@@ -1,22 +1,21 @@
 [[package]]
 name = "aiohttp"
-version = "3.8.6"
+version = "3.9.2"
 description = "Async http client/server framework (asyncio)"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.8"
 
 [package.dependencies]
 aiosignal = ">=1.1.2"
-async-timeout = ">=4.0.0a3,<5.0"
+async-timeout = {version = ">=4.0,<5.0", markers = "python_version < \"3.11\""}
 attrs = ">=17.3.0"
-charset-normalizer = ">=2.0,<4.0"
 frozenlist = ">=1.1.1"
 multidict = ">=4.5,<7.0"
 yarl = ">=1.0,<2.0"
 
 [package.extras]
-speedups = ["aiodns", "brotli", "cchardet"]
+speedups = ["brotlicffi", "brotli", "aiodns"]
 
 [[package]]
 name = "aiosignal"
@@ -598,7 +597,7 @@ beautifulsoup4 = "*"
 
 [[package]]
 name = "google-api-core"
-version = "2.15.0"
+version = "2.17.1"
 description = "Google API client core library"
 category = "main"
 optional = false
@@ -2057,7 +2056,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "3.9.16"
-content-hash = "3d17addebc60970c92aa2eac0d713c79024eaf6d69590615b540a4046a6326c7"
+content-hash = "3843b5b4da4115630ff2d7fa35ec0a3b1c2ca2c3d9fa0860b81359eff735853b"
 
 [metadata.files]
 aiohttp = []
