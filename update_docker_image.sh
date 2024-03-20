@@ -2,7 +2,9 @@
 set -e
 
 # DEVELOPER: update this field anytime you make a new docker image
-VERSION="0.4"
+# Note that this image will be auto built each time you push to dev or merge to main
+# see ./github/workflows/build_and_publish_dev.yaml and ./github/workflows/build_and_publish_main.yaml
+VERSION="0.5"
 BUILD_TAG="us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:${VERSION}"
 
 echo "using build tag: ${BUILD_TAG}"
