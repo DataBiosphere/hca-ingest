@@ -35,8 +35,10 @@ system design information.
 All code should first be developed on a branch off of the `main` branch. Once ready for review, \
 submit a PR against `main` and tag the `broad-data-ingest-admin` team for review, and ensure all checks are passing.
 
-The Docker image at the top of the repository here should be updated when you are done developing. To do so, you will need to build & push it to Artifact Registry, \
-using `update_docker_image.sh`. First update the version field, then run the script. \
+The Docker image at the top of the repository will be auto built & pushed to Artifact Registry \
+each time you push to dev or merge to main. \
+See ./github/workflows/build_and_publish_dev.yaml and ./github/workflows/build_and_publish_main.yaml
+To build manually, use `update_docker_image.sh`. First update the version field, then run the script. \
 This will build the image, tag it with the version, and push the image to Artifact Registry. \
 Note that this may take a bit to establish the connection to Artifact Registry, so be patient. \
 _It may be that you are on the split VPN and/or trying to push over IPv6. Either turn off the VPN or turn off IPV6 \

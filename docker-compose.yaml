@@ -2,6 +2,7 @@ services:
   app:
     # for dev
     # build: .
+    # or specify your dev sha or local image
     image: us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:latest
     container_name: hca_dev_env
     command: bin/bash -p 8080:80 --reload
