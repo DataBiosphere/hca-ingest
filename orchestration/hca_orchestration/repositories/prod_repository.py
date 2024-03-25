@@ -24,7 +24,6 @@ from hca_orchestration.config.prod_migration.prod_migration import (
     run_config_per_project_snapshot_job,
 )
 from hca_orchestration.contrib.dagster import configure_partitions_for_pipeline
-from hca_orchestration.pipelines import copy_project
 from hca_orchestration.pipelines.cut_snapshot import (
     cut_project_snapshot_job,
     legacy_cut_snapshot_job,

@@ -93,44 +93,6 @@ def dataset_info(dataset_name, delete_dataset_on_exit, existing_dataset_id, data
 
 
 @pytest.fixture
-def copy_project_config():
-    return {
-        "resources": {
-            "load_tag": {
-                "config": {
-                    "append_run_id": True,
-                    "load_tag_prefix": "cp_"
-                }
-            },
-            "scratch_config": {
-                "config": {
-                    "scratch_bucket_name": "broad-dsp-monster-hca-dev-temp-storage",
-                    "scratch_bq_project": "broad-dsp-monster-hca-dev",
-                    "scratch_dataset_prefix": f"cp_e2e_test",
-                    "scratch_table_expiration_ms": 86400000
-                }
-            },
-            "target_hca_dataset": {
-                "config": {
-                    "billing_profile_id": data_repo_profile_ids["dev"],
-                    "env": "dev",
-                    "policy_members": ["monster-dev@dev.test.firecloud.org"],
-                    "region": "US",
-                    "atlas": "hca"
-                }
-            }
-        },
-        "solids": {
-            "ingest_data_files": {
-                "config": {
-                    "direct_copy_from_tdr": False
-                }
-            }
-        }
-    }
-
-
-@pytest.fixture
 def load_hca_run_config(dataset_name: str, dataset_info: DatasetInfo):
     return {
         "loggers": {
