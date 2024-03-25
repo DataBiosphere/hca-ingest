@@ -17,9 +17,6 @@ from hca_orchestration.config.dcp_release.dcp_release import (
     dev_run_config_for_dcp_release_per_project_partition,
     run_config_per_project_public_snapshot_job,
 )
-from hca_orchestration.config.dev_refresh.dev_refresh import (
-    run_config_for_per_project_dataset_partition,
-)
 from hca_orchestration.config.prod_migration.prod_migration import (
     run_config_per_project_snapshot_job_dev,
 )
@@ -35,7 +32,6 @@ from hca_orchestration.pipelines.validate_ingress import (
     staging_area_validator,
     validate_ingress_graph,
 )
-from hca_orchestration.repositories.common import copy_project_to_new_dataset_job
 from hca_orchestration.resources import bigquery_service, load_tag
 from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.datasets import (
@@ -127,15 +123,12 @@ def per_project_load_hca() -> PipelineDefinition:
 @repository
 def all_jobs() -> list[PipelineDefinition]:
     jobs = [
-        copy_project_to_new_dataset_job("prod", "dev"),
         make_snapshot_public_job("dev", "dev"),
         cut_project_snapshot_job("dev", "dev", "monster-dev@dev.test.firecloud.org"),
         legacy_cut_snapshot_job("dev", "monster-dev@dev.test.firecloud.org"),
         per_project_load_hca(),
         validate_ingress_job()
     ]
-    jobs += configure_partitions_for_pipeline("copy_project_to_new_dataset",
-                                              run_config_for_per_project_dataset_partition)
     jobs += configure_partitions_for_pipeline("make_snapshot_public_job_dev",
                                               run_config_per_project_public_snapshot_job)
     jobs += configure_partitions_for_pipeline("cut_project_snapshot_job_dev",

@@ -80,11 +80,7 @@ releases:
               queuedRunCoordinator:
                 maxConcurrentRuns: 10
                 tagConcurrencyLimits:
-                  - key: dev_refresh_snapshot_backfill
-                    limit: 1
                   - key: dcp_release
                     limit: 5
-                  - key: dcp2_prod_migration
-                    limit: 3
           envSecrets:
             - name: monster-dagster-secrets
