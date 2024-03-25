@@ -11,8 +11,7 @@ from dagster_utils.resources.google_storage import google_storage_client
 from dagster_utils.resources.slack import console_slack_client
 
 from hca_orchestration.config.dcp_release.dcp_release import run_config_for_dcp_release_partition
-from hca_orchestration.config.dev_refresh.dev_refresh import run_config_for_per_project_dataset_partition, \
-    run_config_for_cut_snapshot_partition
+from hca_orchestration.config.dev_refresh.dev_refresh import run_config_for_cut_snapshot_partition
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.contrib.dagster import configure_partitions_for_pipeline
 from hca_orchestration.pipelines.cut_snapshot import cut_project_snapshot_job, legacy_cut_snapshot_job
@@ -24,8 +23,6 @@ from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.config.datasets import passthrough_hca_dataset
 from hca_orchestration.resources.data_repo_service import data_repo_service
-from hca_orchestration.repositories.common import copy_project_to_new_dataset_job
-
 
 def validate_ingress_job() -> PipelineDefinition:
     return validate_ingress_graph.to_job(
@@ -61,14 +58,11 @@ def load_hca_job() -> PipelineDefinition:
 @repository
 def all_jobs() -> list[PipelineDefinition]:
     jobs = [
-        copy_project_to_new_dataset_job("dev", "dev"),
         cut_project_snapshot_job("dev", "dev", "monster-dev@dev.test.firecloud.org"),
         legacy_cut_snapshot_job("dev", "monster-dev@dev.test.firecloud.org"),
         load_hca_job(),
         validate_ingress_job()
     ]
-    jobs += configure_partitions_for_pipeline("copy_project_to_new_dataset",
-                                              run_config_for_per_project_dataset_partition)
     jobs += configure_partitions_for_pipeline("cut_snapshot", run_config_for_cut_snapshot_partition)
     jobs += configure_partitions_for_pipeline("load_hca", run_config_for_dcp_release_partition)
     jobs += configure_partitions_for_pipeline("validate_ingress", run_config_for_validation_ingress_partition)
