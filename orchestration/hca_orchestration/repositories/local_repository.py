@@ -24,6 +24,7 @@ from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.config.datasets import passthrough_hca_dataset
 from hca_orchestration.resources.data_repo_service import data_repo_service
 
+
 def validate_ingress_job() -> PipelineDefinition:
     return validate_ingress_graph.to_job(
         name="validate_ingress",
