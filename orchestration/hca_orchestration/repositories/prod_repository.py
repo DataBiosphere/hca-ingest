@@ -44,10 +44,7 @@ from hca_orchestration.resources.config.datasets import (
 )
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.data_repo_service import data_repo_service
-from hca_orchestration.resources.hca_project_config import (
-    hca_project_copying_config,
-    hca_project_id,
-)
+from hca_orchestration.resources.hca_project_config import hca_project_id
 from hca_orchestration.resources.utils import run_start_time
 
 
