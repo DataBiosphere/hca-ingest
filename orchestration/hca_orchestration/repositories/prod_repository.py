@@ -111,7 +111,6 @@ def per_project_load_hca() -> PipelineDefinition:
 def all_jobs() -> list[PipelineDefinition]:
     jobs = [
         per_project_load_hca(),
-        dcp2_real_prod_migration(),
         make_snapshot_public_job("prod", "real_prod"),
         cut_project_snapshot_job("prod", "prod", "monster@firecloud.org"),
         cut_project_snapshot_job("prod", "real_prod", "monster@firecloud.org"),
