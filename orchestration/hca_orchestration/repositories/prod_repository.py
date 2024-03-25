@@ -18,13 +18,8 @@ from hca_orchestration.config.dcp_release.dcp_release import (
     run_config_for_dcp_release_per_project_partition,
     run_config_per_project_public_snapshot_job,
 )
-from hca_orchestration.config.prod_migration.prod_migration import (
-    run_config_for_real_prod_migration_dcp1,
-    run_config_for_real_prod_migration_dcp2,
-    run_config_per_project_snapshot_job,
-)
+from hca_orchestration.config.prod_migration.prod_migration import run_config_per_project_snapshot_job
 from hca_orchestration.contrib.dagster import configure_partitions_for_pipeline
-from hca_orchestration.pipelines import copy_project
 from hca_orchestration.pipelines.cut_snapshot import (
     cut_project_snapshot_job,
     legacy_cut_snapshot_job,
@@ -49,10 +44,7 @@ from hca_orchestration.resources.config.datasets import (
 )
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.data_repo_service import data_repo_service
-from hca_orchestration.resources.hca_project_config import (
-    hca_project_copying_config,
-    hca_project_id,
-)
+from hca_orchestration.resources.hca_project_config import hca_project_id
 from hca_orchestration.resources.utils import run_start_time
 
 
@@ -112,56 +104,10 @@ def per_project_load_hca() -> PipelineDefinition:
     )
 
 
-def dcp1_real_prod_migration() -> PipelineDefinition:
-    return copy_project.to_job(
-        name=f"dcp1_real_prod_migration",  # noqa: F541
-        description=f"Copies a DCP1 project from prod to real_prod",  # noqa: F541
-        resource_defs={
-            "bigquery_client": bigquery_client,
-            "bigquery_service": bigquery_service,
-            "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "real_prod"),
-            "data_repo_service": data_repo_service,
-            "gcs": google_storage_client,
-            "hca_project_id": hca_project_id,
-            "hca_project_copying_config": hca_project_copying_config,
-            "load_tag": load_tag,
-            "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "prod"),
-            "run_start_time": run_start_time,
-            "target_hca_dataset": find_or_create_project_dataset,
-            "scratch_config": scratch_config,
-        },
-        executor_def=in_process_executor
-    )
-
-
-def dcp2_real_prod_migration() -> PipelineDefinition:
-    return copy_project.to_job(
-        name=f"dcp2_real_prod_migration",  # noqa: F541
-        description=f"Copies a DCP2 project from prod to real_prod",  # noqa: F541
-        resource_defs={
-            "bigquery_client": bigquery_client,
-            "bigquery_service": bigquery_service,
-            "data_repo_client": preconfigure_resource_for_mode(jade_data_repo_client, "real_prod"),
-            "data_repo_service": data_repo_service,
-            "gcs": google_storage_client,
-            "hca_project_copying_config": hca_project_copying_config,
-            "hca_project_id": hca_project_id,
-            "io_manager": preconfigure_resource_for_mode(gcs_pickle_io_manager, "prod"),
-            "target_hca_dataset": find_or_create_project_dataset,
-            "load_tag": load_tag,
-            "run_start_time": run_start_time,
-            "scratch_config": scratch_config,
-        },
-        executor_def=in_process_executor
-    )
-
-
 @repository
 def all_jobs() -> list[PipelineDefinition]:
     jobs = [
         per_project_load_hca(),
-        dcp1_real_prod_migration(),
-        dcp2_real_prod_migration(),
         make_snapshot_public_job("prod", "real_prod"),
         cut_project_snapshot_job("prod", "prod", "monster@firecloud.org"),
         cut_project_snapshot_job("prod", "real_prod", "monster@firecloud.org"),
@@ -172,10 +118,6 @@ def all_jobs() -> list[PipelineDefinition]:
         slack_on_pipeline_success,
         build_pipeline_failure_sensor()
     ]
-    jobs += configure_partitions_for_pipeline("dcp1_real_prod_migration",
-                                              run_config_for_real_prod_migration_dcp1)
-    jobs += configure_partitions_for_pipeline("dcp2_real_prod_migration",
-                                              run_config_for_real_prod_migration_dcp2)
     jobs += configure_partitions_for_pipeline("make_snapshot_public_job_real_prod",
                                               run_config_per_project_public_snapshot_job)
     jobs += configure_partitions_for_pipeline("cut_project_snapshot_job_real_prod",
