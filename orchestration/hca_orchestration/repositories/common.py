@@ -2,8 +2,14 @@ import logging
 import os
 from typing import Any, Optional
 
-from dagster import run_status_sensor, PipelineRunStatus, \
-    RunStatusSensorContext, pipeline_failure_sensor, PipelineRun, file_relative_path
+from dagster import (
+    PipelineRun,
+    PipelineRunStatus,
+    RunStatusSensorContext,
+    file_relative_path,
+    pipeline_failure_sensor,
+    run_status_sensor,
+)
 from dagster.utils import load_yaml_from_globs
 from dagster_slack import make_slack_on_pipeline_failure_sensor
 from slack_sdk import WebClient

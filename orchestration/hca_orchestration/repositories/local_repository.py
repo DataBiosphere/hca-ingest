@@ -2,23 +2,32 @@
 Pipelines here are intended to be run in a local context on a developer's box
 """
 
-from dagster import repository, PipelineDefinition, in_process_executor
+from dagster import PipelineDefinition, in_process_executor, repository
 from dagster_gcp.gcs import gcs_pickle_io_manager
 from dagster_utils.resources.beam.local_beam_runner import local_beam_runner
 from dagster_utils.resources.bigquery import bigquery_client
 from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client
 from dagster_utils.resources.google_storage import google_storage_client
 from dagster_utils.resources.slack import console_slack_client
-
-from hca_orchestration.config.dcp_release.dcp_release import run_config_for_dcp_release_partition
-from hca_orchestration.config.dev_refresh.dev_refresh import run_config_for_cut_snapshot_partition
+from hca_orchestration.config.dcp_release.dcp_release import (
+    run_config_for_dcp_release_partition,
+)
+from hca_orchestration.config.dev_refresh.dev_refresh import (
+    run_config_for_cut_snapshot_partition,
+)
 from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.contrib.dagster import configure_partitions_for_pipeline
-from hca_orchestration.pipelines.cut_snapshot import cut_project_snapshot_job, legacy_cut_snapshot_job
+from hca_orchestration.pipelines.cut_snapshot import (
+    cut_project_snapshot_job,
+    legacy_cut_snapshot_job,
+)
 from hca_orchestration.pipelines.load_hca import load_hca
-from hca_orchestration.pipelines.validate_ingress import run_config_for_validation_ingress_partition, \
-    validate_ingress_graph, staging_area_validator
-from hca_orchestration.resources import load_tag, bigquery_service
+from hca_orchestration.pipelines.validate_ingress import (
+     run_config_for_validation_ingress_partition,
+     staging_area_validator,
+     validate_ingress_graph,
+)
+from hca_orchestration.resources import bigquery_service, load_tag
 from hca_orchestration.resources.config.dagit import dagit_config
 from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.config.datasets import passthrough_hca_dataset
