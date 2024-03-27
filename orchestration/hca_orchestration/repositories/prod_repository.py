@@ -18,7 +18,9 @@ from hca_orchestration.config.dcp_release.dcp_release import (
     run_config_for_dcp_release_per_project_partition,
     run_config_per_project_public_snapshot_job,
 )
-from hca_orchestration.config.prod_migration.prod_migration import run_config_per_project_snapshot_job
+from hca_orchestration.config.prod_migration.prod_migration import (
+    run_config_per_project_snapshot_job,
+)
 from hca_orchestration.contrib.dagster import configure_partitions_for_pipeline
 from hca_orchestration.pipelines.cut_snapshot import (
     cut_project_snapshot_job,

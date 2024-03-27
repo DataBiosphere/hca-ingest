@@ -5,12 +5,7 @@ from typing import Iterable
 
 import pytest
 from google.cloud.bigquery.client import Client
-
-from hca_manage.common import (
-    data_repo_host,
-    data_repo_profile_ids,
-    get_api_client,
-)
+from hca_manage.common import data_repo_host, data_repo_profile_ids, get_api_client
 from hca_manage.dataset import DatasetManager
 
 MONSTER_TEST_DATASET_SENTINEL = "MONSTER_TEST_DELETEME"
