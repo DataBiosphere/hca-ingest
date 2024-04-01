@@ -9,13 +9,13 @@ from dagster_utils.resources.bigquery import bigquery_client
 from dagster_utils.resources.data_repo.jade_data_repo import jade_data_repo_client
 from dagster_utils.resources.google_storage import google_storage_client
 from dagster_utils.resources.slack import console_slack_client
+from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.config.dcp_release.dcp_release import (
     run_config_for_dcp_release_partition,
 )
 from hca_orchestration.config.dev_refresh.dev_refresh import (
     run_config_for_cut_snapshot_partition,
 )
-from hca_orchestration.config import preconfigure_resource_for_mode
 from hca_orchestration.contrib.dagster import configure_partitions_for_pipeline
 from hca_orchestration.pipelines.cut_snapshot import (
     cut_project_snapshot_job,
@@ -29,8 +29,8 @@ from hca_orchestration.pipelines.validate_ingress import (
 )
 from hca_orchestration.resources import bigquery_service, load_tag
 from hca_orchestration.resources.config.dagit import dagit_config
-from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.config.datasets import passthrough_hca_dataset
+from hca_orchestration.resources.config.scratch import scratch_config
 from hca_orchestration.resources.data_repo_service import data_repo_service
 
 
