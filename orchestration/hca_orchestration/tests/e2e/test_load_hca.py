@@ -1,4 +1,5 @@
 import pytest
+import time
 from dagster import execute_pipeline
 
 from hca_orchestration.repositories.local_repository import load_hca_job
@@ -12,6 +13,8 @@ def test_load_hca(load_hca_run_config, dataset_name, tdr_bigquery_client, datase
         job,
         run_config=load_hca_run_config
     )
+
+    time.sleep(600)  # pausing execution to allow for permissions to propagate
 
     bq_project = dataset_info.dataset_data_project_id
     assert_metadata_loaded("analysis_file", dataset_name, bq_project, tdr_bigquery_client)
