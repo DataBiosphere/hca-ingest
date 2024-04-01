@@ -23,9 +23,9 @@ from hca_orchestration.pipelines.cut_snapshot import (
 )
 from hca_orchestration.pipelines.load_hca import load_hca
 from hca_orchestration.pipelines.validate_ingress import (
-     run_config_for_validation_ingress_partition,
-     staging_area_validator,
-     validate_ingress_graph,
+    run_config_for_validation_ingress_partition,
+    staging_area_validator,
+    validate_ingress_graph,
 )
 from hca_orchestration.resources import bigquery_service, load_tag
 from hca_orchestration.resources.config.dagit import dagit_config

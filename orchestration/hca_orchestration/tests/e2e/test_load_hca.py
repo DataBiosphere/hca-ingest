@@ -1,9 +1,12 @@
-import pytest
 import time
+import pytest
 from dagster import execute_pipeline
 
 from hca_orchestration.repositories.local_repository import load_hca_job
-from hca_orchestration.tests.support.bigquery import assert_metadata_loaded, assert_data_loaded
+from hca_orchestration.tests.support.bigquery import (
+    assert_data_loaded,
+    assert_metadata_loaded,
+)
 
 
 @pytest.mark.e2e
