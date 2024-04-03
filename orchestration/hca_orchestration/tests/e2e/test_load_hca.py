@@ -1,4 +1,5 @@
 import time
+import logging
 import pytest
 from dagster import execute_pipeline
 
@@ -9,6 +10,7 @@ from hca_orchestration.tests.support.bigquery import (
 )
 
 
+@pytest.mark.skip(reason="This test is failing against TDR/BQ dev env - FE-203")
 @pytest.mark.e2e
 def test_load_hca(load_hca_run_config, dataset_name, tdr_bigquery_client, dataset_info):
     job = load_hca_job()
@@ -17,6 +19,7 @@ def test_load_hca(load_hca_run_config, dataset_name, tdr_bigquery_client, datase
         run_config=load_hca_run_config
     )
 
+    logging.info("Waiting for metadata to propagate")
     time.sleep(600)  # pausing execution to allow for permissions to propagate
 
     bq_project = dataset_info.dataset_data_project_id
