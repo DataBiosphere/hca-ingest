@@ -9,7 +9,6 @@ from hca_orchestration.tests.support.bigquery import (
     assert_metadata_loaded,
 )
 
-
 logging.info("Skipping test_load_hca.py - FE-203")
 
 
