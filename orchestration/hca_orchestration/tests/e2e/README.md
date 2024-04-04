@@ -5,6 +5,8 @@ They run against a real dataset, using a local beam runner and staged fixture da
 GCS. They are excluded from the default unit test suite given how long they take to run,
 but are run as part of CI (and are completely runnable locally).
 
+Note that test_load_hca.py is currently being skipped - see FE-203 for more details.
+
 ### To run locally:
 
 `pytest -s -v test_load_hca.py`
