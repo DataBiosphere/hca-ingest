@@ -5,7 +5,10 @@ They run against a real dataset, using a local beam runner and staged fixture da
 GCS. They are excluded from the default unit test suite given how long they take to run,
 but are run as part of CI (and are completely runnable locally).
 
-Note that test_load_hca.py is currently being skipped - see FE-203 for more details.
+Note that these currently being skipped and will be re-enabled when either there is\
+time to refactor to use TDR prod or we've migrated (and will use TDR prod) - see FE-203 & FE-204 for more details.
+
+(rename conftest_orig.py to conftest.py to run these tests)
 
 ### To run locally:
 
