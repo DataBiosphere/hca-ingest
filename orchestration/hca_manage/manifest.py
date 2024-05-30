@@ -109,7 +109,7 @@ def _parse_csv(csv_path: str, env: str, project_id_only: bool = False,
                 project_id = row[1]
                 key = project_id
             else:
-
+                # TODO check for all caps - change to all caps if not, then match
                 if institution not in STAGING_AREA_BUCKETS[env]:
                     raise Exception(f"Unknown institution {institution} found")
 
