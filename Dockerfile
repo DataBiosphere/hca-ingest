@@ -114,8 +114,6 @@ RUN mv /hca_manage /orchestration/. \
     && cd /hca-ingest/
 # NB sbt test and pytest require that you gcloud auth credentials, so they must be run in the container.
 
-CMD poetry install --no-interaction --no-ansi --no-dev | tee /logs/poetry_install.log
-
 CMD ["bin/bash"]
 
 # builds with GitHub Action "Main Validation and Release" ../.github/workflows/build-and-publish-main.yaml
