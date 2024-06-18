@@ -168,7 +168,7 @@ python-versions = ">=3.6"
 name = "cffi"
 version = "1.16.0"
 description = "Foreign Function Interface for Python calling C code."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.8"
 
@@ -597,7 +597,7 @@ beautifulsoup4 = "*"
 
 [[package]]
 name = "google-api-core"
-version = "2.17.1"
+version = "2.19.0"
 description = "Google API client core library"
 category = "main"
 optional = false
@@ -608,6 +608,7 @@ google-auth = ">=2.14.1,<3.0.dev0"
 googleapis-common-protos = ">=1.56.2,<2.0.dev0"
 grpcio = {version = ">=1.33.2,<2.0dev", optional = true, markers = "extra == \"grpc\""}
 grpcio-status = {version = ">=1.33.2,<2.0.dev0", optional = true, markers = "extra == \"grpc\""}
+proto-plus = ">=1.22.3,<2.0.0dev"
 protobuf = ">=3.19.5,<3.20.0 || >3.20.0,<3.20.1 || >3.20.1,<4.21.0 || >4.21.0,<4.21.1 || >4.21.1,<4.21.2 || >4.21.2,<4.21.3 || >4.21.3,<4.21.4 || >4.21.4,<4.21.5 || >4.21.5,<5.0.0.dev0"
 requests = ">=2.18.0,<3.0.0.dev0"
 
@@ -1455,7 +1456,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 name = "pycparser"
 version = "2.21"
 description = "C parser in Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
@@ -2056,7 +2057,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "3.9.16"
-content-hash = "3843b5b4da4115630ff2d7fa35ec0a3b1c2ca2c3d9fa0860b81359eff735853b"
+content-hash = "188d2c1e4fa7c8d434aa39e0854b49e1ff4a606096161d60ac1ecc9b43b04e95"
 
 [metadata.files]
 aiohttp = []
