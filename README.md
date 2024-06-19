@@ -14,6 +14,7 @@ system design information.
       the docker compose command, as this will pull the latest image from Artifact Registry._
 * Authenticate with gcloud using your Broad credentials `gcloud auth login`
 * Then set up your billing project `gcloud config set project PROJECT_ID`
+  * For prod this is `mystical-slate-284720`
 * Then set up your default login for applications `gcloud auth application-default login`
 * Build and run the dataflow tests
   * From the repository/image root: `sbt test` 
