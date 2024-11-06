@@ -28,6 +28,7 @@ jobs:
       - name: Setup GCR auth
         run: gcloud auth configure-docker --quiet us.gcr.io,us-east4-docker.pkg.dev
       - name: Push Scala Dataflow Docker image
+        # us.gcr.io/broad-dsp-gcr-public/hca-transformation-pipeline
         run: sbt publish
       - name: Get artifact slug
         id: get-artifact-slug

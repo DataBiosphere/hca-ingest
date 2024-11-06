@@ -24,6 +24,7 @@ jobs:
         with:
           java-version: graalvm@20.0.0
       - name: Push Scala Dataflow Docker image
+        # us.gcr.io/broad-dsp-gcr-public/hca-transformation-pipeline
         run: sbt publish
       - name: Get artifact slug
         id: get-artifact-slug
