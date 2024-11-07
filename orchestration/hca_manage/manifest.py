@@ -54,6 +54,7 @@ STAGING_AREA_BUCKETS = {
     "dev": {
         "EBI": "gs://broad-dsp-monster-hca-dev-ebi-staging/dev",
         "UCSC": "gs://broad-dsp-monster-hca-dev-ebi-staging/dev",
+        "TEST": "gs://broad-dsp-monster-hca-prod-ebi-storage/broad_test_dataset"
     }
 }
 ENV_PIPELINE_ENDINGS = {
