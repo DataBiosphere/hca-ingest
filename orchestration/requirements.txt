@@ -56,7 +56,7 @@ multidict==6.0.4; python_version >= "3.9" and python_version < "3.10" and python
 numpy==1.26.1; python_version >= "3.9" and python_version < "3.11"
 oauth2client==4.1.3
 oauthlib==3.2.2; python_version >= "3.6"
-packaging==24.1; python_version >= "3.8"
+packaging==24.1; python_version >= "3.9" and python_version < "3.10"
 pandas==2.1.2; python_version >= "3.9"
 pendulum==2.1.2; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0")
 promise==2.3
