@@ -11,7 +11,7 @@ jobs:
     name: PR Validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: google-github-actions/setup-gcloud@v0.2.1
         with:
           project_id: ${{ secrets.DEV_PROJECT_ID }}
@@ -27,9 +27,9 @@ jobs:
         with:
           version: 1.1.9
       - name: Restore cache dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         env:
-          cache-name: cache-poetry-v2
+          cache-name: cache-poetry-v4
         with:
           path: ~/.cache/pypoetry
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./orchestration/pyproject.toml') }}

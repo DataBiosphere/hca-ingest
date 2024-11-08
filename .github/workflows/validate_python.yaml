@@ -14,7 +14,7 @@ jobs:
     env:
       ENV: test
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       # Needed by sonar to get the git history for the branch the PR will be merged into.
       with:
         fetch-depth: 0
@@ -32,9 +32,9 @@ jobs:
       with:
         version: 1.1.9
     - name: Cache dependencies
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       env:
-        cache-name: cache-poetry-v2
+        cache-name: cache-poetry-v4
       with:
         path: ~/.cache/pypoetry
         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./orchestration/pyproject.toml') }}
