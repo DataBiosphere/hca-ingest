@@ -40,6 +40,7 @@ typing-extensions = "^3.7.4"
 aiohttp = "3.9.4"
 # >> Installed to fix https://github.com/pypa/setuptools/issues/4483
 packaging = "^24.0"
+setuptools = "^70.0.0"
 
 [tool.poetry.dev-dependencies]
 # NB this notation is not preferred after poetry 1.2.0 https://python-poetry.org/docs/master/managing-dependencies/
