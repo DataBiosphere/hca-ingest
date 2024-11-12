@@ -11,25 +11,25 @@ jobs:
     name: PR Validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: google-github-actions/setup-gcloud@v0.2.1
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.DEV_PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_TEST_KEY }}
           export_default_credentials: true
           fetch-depth: 0
       - name: Set up Python 3.9 for dataflow tests
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9.16
       - name: Install Poetry
-        uses: snok/install-poetry@v1.2
+        uses: snok/install-poetry@v1
         with:
           version: 1.1.9
       - name: Restore cache dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         env:
-          cache-name: cache-poetry-v2
+          cache-name: cache-poetry-v4
         with:
           path: ~/.cache/pypoetry
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./orchestration/pyproject.toml') }}

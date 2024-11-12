@@ -32,8 +32,12 @@ _Note that this should be done locally, not in the Docker container, if you are 
   * For example, to deploy `main`: `apply.sh dev main`
 * This will deploy a new helm release to the relevant K8S cluster and send a Slack notification with relevant
 deployment info.
-* _Note that if you have recently merged to main you will need to pull the latest changes into your local main branch \
+### Notes 
+* _if you have recently merged to main you will need to pull the latest changes into your local main branch \
 in order to get the latest commit SHA1._ 
+* _Binary Authorization was enabled in October 2024 for both the dev & prod Google projects, \
+  limiting deployment to only those images that are stored in our protected Artifact Registries. \
+  If you need to change the allowed repositories, see the [Dev Playbook](https://docs.google.com/document/d/1b03-YphH6Uac5huBopLYTYjzgDAlwS6qf-orMqaph64/edit?tab=t.0#heading=h.pcynuhuatt2b)_
 
 ## Web UI access
 We are using port forwarding for access to the Dagster web UI for now. 
