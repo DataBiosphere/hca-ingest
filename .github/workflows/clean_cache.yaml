@@ -15,3 +15,4 @@ jobs:
       - name: Clear Poetry Artifacts
         run: |
           rm -rf ~/.cache/pypoetry/artifacts
+          ls -la ~/.cache/pypoetry
