@@ -25,7 +25,7 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
-          version: 1.1.9
+          version: 1.8
       - name: Restore cache dependencies
         uses: actions/cache@v2
         env:
@@ -38,12 +38,12 @@ jobs:
 #            ${{ runner.os }}-build-${{ env.cache-name }}-
 #            ${{ runner.os }}-build-
 #            ${{ runner.os }}-
-      - name: Clear Poetry Artifacts (if necessary)
-        run: |
-          if [ -d ~/.cache/pypoetry/artifacts ]; then
-            echo "Clearing Poetry artifacts..."
-            rm -rf ~/.cache/pypoetry/artifacts
-          fi
+#      - name: Clear Poetry Artifacts (if necessary)
+#        run: |
+#          if [ -d ~/.cache/pypoetry/artifacts ]; then
+#            echo "Clearing Poetry artifacts..."
+#            rm -rf ~/.cache/pypoetry/artifacts
+#          fi
       - name: Install dependencies
         run: poetry install
         working-directory: ${{ github.workspace }}/orchestration
