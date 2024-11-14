@@ -23,20 +23,24 @@ jobs:
         with:
           python-version: 3.9.16
       - name: Install Poetry
-        uses: snok/install-poetry@v1.2
+        uses: snok/install-poetry@v1
         with:
           version: 1.1.9
+      - name: Clear Poetry Cache
+        run: poetry cache clear --all
+        # run: rm -rf ~/.cache/pypoetry
       - name: Restore cache dependencies
         uses: actions/cache@v2
         env:
           cache-name: cache-poetry-v2
         with:
           path: ~/.cache/pypoetry
+          # key uses pyproject.toml hash, so it's unique to each version of pyproject.toml
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./orchestration/pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
+#          restore-keys: |
+#            ${{ runner.os }}-build-${{ env.cache-name }}-
+#            ${{ runner.os }}-build-
+#            ${{ runner.os }}-
       - name: Install dependencies
         run: poetry install
         working-directory: ${{ github.workspace }}/orchestration
