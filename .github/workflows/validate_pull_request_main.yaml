@@ -27,8 +27,7 @@ jobs:
         with:
           version: 1.1.9
       - name: Clear Poetry Cache
-        run: poetry cache clear pypi:dagster_gcp:0.12.14
-        # run: rm -rf ~/.cache/pypoetry
+        run: rm -rf ~/.cache/pypoetry/*
       - name: Restore cache dependencies
         uses: actions/cache@v2
         env:
