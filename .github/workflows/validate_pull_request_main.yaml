@@ -34,16 +34,10 @@ jobs:
           path: ~/.cache/pypoetry
           # key uses pyproject.toml hash, so it's unique to each version of pyproject.toml
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('./orchestration/pyproject.toml') }}
-#          restore-keys: |
-#            ${{ runner.os }}-build-${{ env.cache-name }}-
-#            ${{ runner.os }}-build-
-#            ${{ runner.os }}-
-#      - name: Clear Poetry Artifacts (if necessary)
-#        run: |
-#          if [ -d ~/.cache/pypoetry/artifacts ]; then
-#            echo "Clearing Poetry artifacts..."
-#            rm -rf ~/.cache/pypoetry/artifacts
-#          fi
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
       - name: Install dependencies
         run: poetry install
         working-directory: ${{ github.workspace }}/orchestration
