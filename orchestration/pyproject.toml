@@ -14,7 +14,7 @@ cffi = "1.16.0"
 # TODO: we'll probably want to use just the dagster version here and not the API versions as well
 # https://github.com/dagster-io/dagster/blob/master/MIGRATION.md#migrating-to-10
 dagster = "0.12.14"
-dagster-gcp = "^0.12.14"
+dagster-gcp = "0.12.14"
 dagster-k8s = "0.12.14"
 dagster-postgres = "0.12.14"
 dagster-slack = "0.12.14"
@@ -58,7 +58,7 @@ soft_delete = "hca_manage.soft_delete:run"
 job = "hca_manage.job:fetch_job_info"
 
 [build-system]
-requires = ["poetry-core=^1.1.8"]
+requires = ["poetry-core<=1.1.9"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.autopep8]

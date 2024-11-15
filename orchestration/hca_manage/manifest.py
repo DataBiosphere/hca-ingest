@@ -54,6 +54,7 @@ STAGING_AREA_BUCKETS = {
     "dev": {
         "EBI": "gs://broad-dsp-monster-hca-dev-ebi-staging/dev",
         "UCSC": "gs://broad-dsp-monster-hca-dev-ebi-staging/dev",
+        "TEST": "gs://broad-dsp-monster-hca-prod-ebi-storage/broad_test_dataset"
     }
 }
 ENV_PIPELINE_ENDINGS = {
@@ -101,7 +102,8 @@ def _parse_csv(csv_path: str, env: str, project_id_only: bool = False,
                 continue
 
             assert len(row) == 2
-            institution = row[0]
+            row = [x.strip() for x in row]
+            institution = row[0].upper()
             project_id = find_project_id_in_str(row[1])
 
             key = None
@@ -109,7 +111,6 @@ def _parse_csv(csv_path: str, env: str, project_id_only: bool = False,
                 project_id = row[1]
                 key = project_id
             else:
-                # TODO check for all caps - change to all caps if not, then match
                 if institution not in STAGING_AREA_BUCKETS[env]:
                     raise Exception(f"Unknown institution {institution} found")
 
@@ -178,7 +179,6 @@ def _enumerate_manifests(env: str) -> None:
 
 
 def load(args: argparse.Namespace) -> None:
-    parse_and_load_manifest(args.env, args.csv_path, args.release_tag, "load_hca")
     parse_and_load_manifest(args.env, args.csv_path, args.release_tag, "per_project_load_hca")
     parse_and_load_manifest(args.env, args.csv_path, args.release_tag, "validate_ingress")
     parse_and_load_manifest(
