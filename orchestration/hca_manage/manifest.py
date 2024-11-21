@@ -141,7 +141,6 @@ def parse_and_load_manifest(env: str, csv_path: str, release_tag: str,
                             include_release_tag: bool = False, no_ma: bool = False) -> None:
     chunked_paths = _parse_csv(csv_path, env, project_id_only, include_release_tag, release_tag)
     paths_to_use = chunked_paths[1] if no_ma else chunked_paths[0]
-    print(f"paths_to_use: {paths_to_use}")
     storage_client = Client()
     bucket: Bucket = storage_client.bucket(bucket_name=ETL_PARTITION_BUCKETS[env])
 
@@ -154,9 +153,8 @@ def parse_and_load_manifest(env: str, csv_path: str, release_tag: str,
             if not query_yes_no(f"Manifest {blob.name} already exists for pipeline {pipeline_name}, overwrite?"):
                 return
 
-        # TODO turn back on
-        # logging.info(f"Uploading manifest [bucket={bucket.name}, name={blob_name}]")
-        # blob.upload_from_string(data="\n".join(chunk))
+        logging.info(f"Uploading manifest [bucket={bucket.name}, name={blob_name}]")
+        blob.upload_from_string(data="\n".join(chunk))
 
 
 def _get_dagster_client() -> DagsterGraphQLClient:
@@ -208,8 +206,7 @@ def load(args: argparse.Namespace) -> None:
         include_release_tag=True,
         no_ma=True
     )
-   # TODO turn back on
-   # _reload_repository(_get_dagster_client())
+    _reload_repository(_get_dagster_client())
 
 
 def enumerate_manifests(args: argparse.Namespace) -> None:
