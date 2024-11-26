@@ -54,7 +54,6 @@ STAGING_AREA_BUCKETS = {
     "dev": {
         "EBI": "gs://broad-dsp-monster-hca-dev-ebi-staging/dev",
         "UCSC": "gs://broad-dsp-monster-hca-dev-ebi-staging/dev",
-        "TEST": "gs://broad-dsp-monster-hca-prod-ebi-storage/broad_test_dataset"
     }
 }
 ENV_PIPELINE_ENDINGS = {
@@ -128,6 +127,8 @@ def _parse_csv(csv_path: str, env: str, project_id_only: bool = False,
             keys.add(key)
 
             # make a separate set of public projects
+            # The question is "Does this project contain managed access data?"
+            # so no = public, yes = managed access (ma)
             if public == "no":
                 public_projects.add(key)
 
