@@ -10,6 +10,7 @@ ENV LANG='en_US.UTF-8' \
     SBT_VERSION=1.7.1
 
 # Install some helpful tools not included in the base image, as well as set up for JDK install
+# python-is-python3 makes python3 the default, to avoid issues with poetry
 RUN apt-get update  \
     && DEBIAN_FRONTEND=noninteractive \
     && apt-get install -yqq --no-install-recommends \
@@ -20,6 +21,7 @@ RUN apt-get update  \
     git \
     gnupg \
     locales \
+    python-is-python3 \
     sudo \
     tzdata \
     unzip \
