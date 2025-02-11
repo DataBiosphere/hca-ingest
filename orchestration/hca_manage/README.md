@@ -17,12 +17,19 @@ Checks the integrity of an HCA dataset or snapshot, looking for null file refere
 links -> project references.
 
 Example run:
-`poetry run check -e dev -d hca_dev_20201203`
+`poetry run check -e dev -i 8cb49ef6-63db-4f56-b9a8-d33278d93z0f`
 
 To actually remove things, add the remove `-r` flag after:
-`poetry run check -e dev -d hca_dev_20201203 -r`
+`poetry run check -e dev -i 8cb49ef6-63db-4f56-b9a8-d33278d93z0f -r`
 
 Be very sure and careful when adding the remove flag.
+
+_Notes_: 
+- You may need to first add your user to the dataset as a steward - 
+being in monster@firecloud may not propagate your permissions.
+- If you run with -r you may get an error from TDR about your bucket permissions -
+follow the error message and add the indicated accounts to the bucket (likely your user, the ingest account, 
+and your proxy group). **Be sure to remove these users from the bucket and the dataset after you are done.**
 
 ### Snapshot
 
