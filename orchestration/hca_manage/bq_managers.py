@@ -61,6 +61,7 @@ class BQRowManager(_BQRowDataclass, ABC):
             rids_to_process = get_rids(table_name)
             if len(rids_to_process) > 0:
                 logging.info(f"{table_name} has {len(rids_to_process)} failing rows due to {issue}")
+                logging.info(f"Rows: {rids_to_process}")
                 if soft_delete:
                     local_filename = f"{os.getcwd()}/{table_name}.csv"
                     try:
