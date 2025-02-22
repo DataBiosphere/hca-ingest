@@ -1,14 +1,31 @@
-from dagster import job, op
+from dagster import job
 
-from orchestra.resources.gcp import GCPStorageResource
-from orchestra.resources.slack import SlackResource
+from orchestra.ops.validation import (
+    pre_flight_validation,
+    check_validation_status,
+    notify_validation_success,
+    notify_validation_failure,
+    validate_ingress,
+)
 
 
-@op(required_resource_keys={"slack", "gcp_storage"})
-def validate_ingress():
-    pass
+@job
+def pre_flight_validation_job():
+    validation_result = pre_flight_validation()
+    validation_status = check_validation_status()
+
+    if validation_status:
+        notify_validation_success()
+    else:
+        notify_validation_failure()
 
 
-@job(resource_defs={"slack": SlackResource(), "gcp_storage": GCPStorageResource()})
+@job
 def validate_ingress_job():
-    validate_ingress()
+    validation_result = validate_ingress()
+    validation_status = check_validation_status()
+
+    if validation_status:
+        notify_validation_success()
+    else:
+        notify_validation_failure()

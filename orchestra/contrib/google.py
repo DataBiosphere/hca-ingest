@@ -4,7 +4,12 @@ import google.auth
 from google.auth.transport.requests import AuthorizedSession, Request
 from google.oauth2.credentials import Credentials
 
-DEFAULT_SCOPES = ['openid', 'email', 'profile', 'https://www.googleapis.com/auth/cloud-platform']
+DEFAULT_SCOPES = [
+    "openid",
+    "email",
+    "profile",
+    "https://www.googleapis.com/auth/cloud-platform",
+]
 
 
 def google_default() -> tuple[Credentials, str]:

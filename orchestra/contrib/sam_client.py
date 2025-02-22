@@ -15,7 +15,9 @@ class Sam:
         # we are explicitly set content-type in this PUT as the requests lib only sets it when
         # using the json= kwarg, and SAM will 415 otherwise
         response = self._session.put(
-            self._api_url(f'api/resources/v1/datasnapshot/{snapshot_id}/policies/reader/public'),
+            self._api_url(
+                f"api/resources/v1/datasnapshot/{snapshot_id}/policies/reader/public"
+            ),
             headers={"Content-type": "application/json"},
             data=f"{str(status).lower()}",  # telling the endpoint to set the flag to true/false
         )
@@ -38,11 +40,9 @@ class NoopSamClient:
         pass
 
 
-@resource({
-    "api_url": Field(StringSource)
-})
+@resource({"api_url": Field(StringSource)})
 def sam_client(init_context: InitResourceContext) -> Sam:
-    return Sam(base_url=init_context.resource_config['api_url'])
+    return Sam(base_url=init_context.resource_config["api_url"])
 
 
 @resource

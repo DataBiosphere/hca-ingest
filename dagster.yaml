@@ -1,2 +1,91 @@
+# Disable telemetry
 telemetry:
   enabled: false
+
+# Configure local artifact storage
+local_artifact_storage:
+  module: dagster._core.storage.root
+  class: LocalArtifactStorage
+  config:
+    base_dir: /dagster/storage
+
+# Configure run storage (PostgreSQL)
+run_storage:
+  module: dagster_postgres.run_storage
+  class: PostgresRunStorage
+  config:
+    postgres_db:
+      username: dagster
+      password: dagster
+      hostname: postgres
+      db_name: dagster
+      port: 5432
+
+# Configure event log storage (PostgreSQL)
+event_log_storage:
+  module: dagster_postgres.event_log_storage
+  class: PostgresEventLogStorage
+  config:
+    postgres_db:
+      username: dagster
+      password: dagster
+      hostname: postgres
+      db_name: dagster
+      port: 5432
+
+# Configure sensor storage (PostgreSQL)
+sensors:
+  num_workers: 2
+  use_threads: true
+
+# Configure run coordinator
+run_coordinator:
+  module: dagster._core.run_coordinator.queued_run_coordinator
+  class: QueuedRunCoordinator
+  config:
+    max_concurrent_runs: 5
+
+# Configure run launcher
+run_launcher:
+  module: dagster._core.launcher.default_run_launcher
+  class: DefaultRunLauncher
+
+# Configure run monitoring
+run_monitoring:
+  enabled: true
+  start_timeout_seconds: 60
+  cancel_timeout_seconds: 120
+
+# Configure retries for failed jobs
+run_retries:
+  enabled: true
+  max_retries: 3
+
+# Configure compute logs
+compute_logs:
+  module: dagster._core.storage.local_compute_log_manager
+  class: LocalComputeLogManager
+  config:
+    base_dir: /dagster/logs
+
+# Configure Python logging
+python_logs:
+  managed_python_loggers:
+    - dagster
+  python_log_level: DEBUG
+
+# Configure auto materialization
+auto_materialize:
+  enabled: true
+  minimum_interval_seconds: 60
+
+# Configure retention policies
+retention:
+  auto_materialize:
+    purge_after_days: 7
+  schedule:
+    purge_after_days: 7
+
+# Configure concurrency limits
+concurrency:
+  default_op_concurrency_limit: 1000

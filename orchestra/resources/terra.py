@@ -1,6 +1,9 @@
 from typing import ClassVar
 from dagster import ConfigurableResource
-from orchestra.contrib.terra.data_repo.client import terra_data_repo_client, local_terra_data_repo_client
+from orchestra.contrib.terra.data_repo.client import (
+    terra_data_repo_client,
+    local_terra_data_repo_client,
+)
 from data_repo_client import RepositoryApi
 
 

@@ -1,4 +1,3 @@
-
 import data_repo_client
 from google.auth.transport.requests import Request
 from google.auth.credentials import Credentials

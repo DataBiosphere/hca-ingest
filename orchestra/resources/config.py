@@ -1,7 +1,13 @@
 import os
 
-from orchestra.resources.gcp import GCPStorageResource, BeamRunnerResource, LocalGCPStorageResource, BigQueryResource, \
-    LocalBigQueryResource, LocalBeamRunnerResource
+from orchestra.resources.gcp import (
+    GCPStorageResource,
+    BeamRunnerResource,
+    LocalGCPStorageResource,
+    BigQueryResource,
+    LocalBigQueryResource,
+    LocalBeamRunnerResource,
+)
 from orchestra.resources.slack import SlackResource, LocalSlackResource
 from orchestra.resources.terra import TerraDataRepoResource, LocalTerraDataRepoResource
 
