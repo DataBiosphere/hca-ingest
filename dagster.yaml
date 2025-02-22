@@ -9,27 +9,12 @@ local_artifact_storage:
   config:
     base_dir: /dagster/storage
 
-# Configure run storage (PostgreSQL)
-run_storage:
-  module: dagster_postgres.run_storage
-  class: PostgresRunStorage
-  config:
+storage:
+  postgres:
     postgres_db:
+      hostname: postgres
       username: dagster
       password: dagster
-      hostname: postgres
-      db_name: dagster
-      port: 5432
-
-# Configure event log storage (PostgreSQL)
-event_log_storage:
-  module: dagster_postgres.event_log_storage
-  class: PostgresEventLogStorage
-  config:
-    postgres_db:
-      username: dagster
-      password: dagster
-      hostname: postgres
       db_name: dagster
       port: 5432
 

@@ -1,0 +1,8 @@
+.logs_queue
+.nux
+data
+history
+logs
+schedules
+storage
+venv
