@@ -1,5 +1,6 @@
 dagster==1.10.2
 dagster-webserver==1.10.2
+psycopg2-binary==2.9.10
 pandas==2.2.3
 data-repo-client==2.234.0
 argo-workflows==6.6.2
@@ -8,4 +9,3 @@ google-cloud-bigquery==3.29.0
 google-cloud-storage==3.0.0
 protobuf~=5.29.3
 dagster-postgres == 0.26.2
-more_itertools-10.6.0

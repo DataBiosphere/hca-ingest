@@ -24,6 +24,12 @@ source .venv/bin/activate
 pip install -r requirements/base.txt
 ```
 
+#### If you have issues with **psycopg2-binary** and try and retry install
+
+```shell
+brew install postgresql
+```
+
 ### 4. Set Environment to Local
 
 ```sh
@@ -43,7 +49,6 @@ dagster dev -w workspace.yaml
 ```shell
 127.0.0.1:3000
 ```
-
 
 ## Running with Docker Compose
 
