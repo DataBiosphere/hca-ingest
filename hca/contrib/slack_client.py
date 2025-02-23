@@ -1,19 +1,11 @@
 from dataclasses import dataclass
 from typing import Callable, Optional
 
-from dagster import (
-    DagsterLogManager,
-    HookContext,
-    resource,
-    String,
-    StringSource,
-    InitResourceContext,
-)
+from dagster import ConfigurableResource, InitResourceContext, DagsterLogManager
 from slack_sdk import WebClient
 
-DagsterHookFunction = Callable[[HookContext], None]
-
-SlackMessageGenerator = Callable[[HookContext], str]
+DagsterHookFunction = Callable[[InitResourceContext], None]
+SlackMessageGenerator = Callable[[InitResourceContext], str]
 
 
 @dataclass
@@ -41,19 +33,3 @@ class SlackClient:
         self.client.chat_postMessage(channel=self.channel, text=text, blocks=blocks)
 
 
-@resource
-def local_slack_client(init_context: InitResourceContext) -> LocalSlackClient:
-    return LocalSlackClient(init_context.log)
-
-
-@resource(
-    {
-        "channel": String,
-        "token": StringSource,
-    }
-)
-def slack_client(init_context: InitResourceContext) -> SlackClient:
-    return SlackClient(
-        WebClient(init_context.resource_config["token"]),
-        init_context.resource_config["channel"],
-    )

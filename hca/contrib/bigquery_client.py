@@ -3,7 +3,7 @@ from unittest.mock import Mock
 from dagster import resource, InitResourceContext
 from google.cloud.bigquery import Client
 
-from orchestra.contrib.google import authorized_session
+from hca.contrib.google import authorized_session
 
 
 @resource

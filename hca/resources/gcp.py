@@ -3,8 +3,8 @@ from typing import ClassVar
 from dagster import ConfigurableResource
 from google.cloud import storage, bigquery
 
-from orchestra.contrib.bigquery_client import bigquery_client, local_bigquery_client
-from orchestra.contrib.storage_client import (
+from hca.contrib.bigquery_client import bigquery_client, local_bigquery_client
+from hca.contrib.storage_client import (
     google_storage_client,
     local_google_storage_client,
 )

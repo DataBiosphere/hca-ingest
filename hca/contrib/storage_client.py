@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from typing import Iterator
-from urllib.parse import urlparse
+from urllib import parse
 
 from dagster import resource, InitResourceContext
 from google.cloud import storage
 from google.cloud.storage import Client
 
-from orchestra.contrib.google import authorized_session, google_default
+from hca.contrib.google import authorized_session, google_default
 
 
 def gs_path_from_bucket_prefix(bucket: str, prefix: str) -> str:
@@ -19,20 +19,15 @@ def path_has_any_data(bucket: str, prefix: str, gcs: Client) -> bool:
     return any([blob.size > 0 for blob in blobs])
 
 
-@dataclass
-class GsBucketWithPrefix:
-    bucket: str
-    prefix: str
+def parse_gs_path(gs_path: str):
+    split_url = parse.urlsplit(gs_path)
+    if split_url.scheme != "gs" or not split_url.netloc:
+        raise ValueError("Invalid GCS URL format. Expected format: gs://<bucket>/<path>")
 
-    def to_gs_path(self) -> str:
-        return f"gs://{self.bucket}/{self.prefix}"
+    bucket = split_url.netloc
+    prefix = split_url.path.lstrip("/") + "/"
 
-
-def parse_gs_path(raw_gs_path: str) -> GsBucketWithPrefix:
-    if not raw_gs_path.startswith("gs://"):
-        raise ValueError("GS path must being with gs:// scheme")
-    url_result = urlparse(raw_gs_path)
-    return GsBucketWithPrefix(url_result.netloc, url_result.path[1:])
+    return type("GcsPath", (object,), {"bucket": bucket, "prefix": prefix})()
 
 
 @resource

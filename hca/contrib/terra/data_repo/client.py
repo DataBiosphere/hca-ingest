@@ -10,8 +10,8 @@ from data_repo_client import (
     SnapshotModel,
 )
 
-from orchestra.contrib.google import get_credentials
-from orchestra.contrib.terra.data_repo.api_configuration import (
+from hca.contrib.google import get_credentials
+from hca.contrib.terra.data_repo.api_configuration import (
     RefreshingAccessTokenConfig,
 )
 
@@ -51,7 +51,7 @@ class LocalDataRepoClient:
         return LocalDataRepoClient.FakeJobResponse(True, "abcdef", "succeeded")
 
     def bulk_file_load(
-        self, dataset_id: str, bulk_file_load: dict[str, str]
+            self, dataset_id: str, bulk_file_load: dict[str, str]
     ) -> FakeJobResponse:
         return LocalDataRepoClient.FakeJobResponse(True, "abcdef", "succeeded")
 
@@ -59,7 +59,7 @@ class LocalDataRepoClient:
         return {"id": "fake_object_id", "name": "fake_object_name", "failedFiles": 0}
 
     def apply_dataset_data_deletion(
-        self, id: str, data_deletion_request: dict[str, object]
+            self, id: str, data_deletion_request: dict[str, object]
     ) -> FakeJobResponse:
         return LocalDataRepoClient.FakeJobResponse(True, "abcdef", "succeeded")
 
@@ -67,7 +67,7 @@ class LocalDataRepoClient:
         return LocalDataRepoClient.FakeJobResponse(True, "abcdef", "succeeded")
 
     def add_snapshot_policy_member(
-        self, id: str, policy_name: str, policy_member: PolicyMemberRequest
+            self, id: str, policy_name: str, policy_member: PolicyMemberRequest
     ) -> PolicyResponse:
         return PolicyResponse(
             policies=[PolicyModel(name=policy_name, members=[policy_member])]
@@ -79,6 +79,6 @@ class LocalDataRepoClient:
 
 @resource
 def local_terra_data_repo_client(
-    init_context: InitResourceContext,
+        init_context: InitResourceContext,
 ) -> LocalDataRepoClient:
     return LocalDataRepoClient()

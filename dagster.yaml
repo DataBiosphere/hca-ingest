@@ -7,16 +7,18 @@ local_artifact_storage:
   module: dagster._core.storage.root
   class: LocalArtifactStorage
   config:
-    base_dir: /dagster/storage
+    base_dir: ./data/artifacts
 
 storage:
-  postgres:
-    postgres_db:
-      hostname: postgres
-      username: dagster
-      password: dagster
-      db_name: dagster
-      port: 5432
+  sqlite:
+    base_dir: ./data
+#  postgres:
+#    postgres_db:
+#      hostname: postgres
+#      username: dagster
+#      password: dagster
+#      db_name: dagster
+#      port: 5432
 
 # Configure sensor storage (PostgreSQL)
 sensors:
@@ -51,7 +53,7 @@ compute_logs:
   module: dagster._core.storage.local_compute_log_manager
   class: LocalComputeLogManager
   config:
-    base_dir: /dagster/logs
+    base_dir: ./data/logs
 
 # Configure Python logging
 python_logs:

@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 from dagster import Field, resource, StringSource, InitResourceContext
 from google.auth.transport.requests import AuthorizedSession
 
-from orchestra.contrib.google import authorized_session
+from hca.contrib.google import authorized_session
 
 
 @dataclass

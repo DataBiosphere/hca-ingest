@@ -2,7 +2,7 @@ import time
 
 from dagster import job, op, In, Out, Output
 
-from orchestra.ops.ingestion import (
+from hca.ops.ingestion import (
     clear_staging_directory,
     preprocess_metadata,
     create_staging_dataset,
@@ -10,8 +10,8 @@ from orchestra.ops.ingestion import (
     fanout_file_metadata,
     fanout_non_file_metadata,
 )
-from orchestra.ops.notifications import slack_notification
-from orchestra.ops.validation import check_validation_status
+from hca.ops.notifications import slack_notification
+from hca.ops.validation import check_validation_status
 
 
 @op(ins={"validation_status": In(bool)}, out={"message": Out(str)})

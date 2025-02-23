@@ -1,6 +1,6 @@
 from dagster import job
 
-from orchestra.ops.snapshot import (
+from hca.ops.snapshot import (
     notify_snapshot_start,
     submit_snapshot,
     wait_for_snapshot_completion,

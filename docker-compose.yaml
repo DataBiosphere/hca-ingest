@@ -26,7 +26,7 @@ services:
     working_dir: /code
     ports:
       - "3000:3000"
-    entrypoint: ["dagster", "dev", "-w", "-h", "0.0.0.0", "-p", "3000", "/code/workspace.yaml"]
+    entrypoint: ["dagster", "dev", "-h", "0.0.0.0", "-p", "3000", "-w", "/code/workspace.yaml"]
     depends_on:
       postgres:
         condition: service_healthy
