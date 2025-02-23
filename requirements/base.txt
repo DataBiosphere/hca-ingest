@@ -9,3 +9,4 @@ google-cloud-bigquery==3.29.0
 google-cloud-storage==3.0.0
 protobuf~=5.29.3
 dagster-postgres == 0.26.2
+jsonschema==4.23.0
