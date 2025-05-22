@@ -19,7 +19,7 @@ jobs:
         with:
           # TODO create a new service account for this
           service_account_email: jenkins-gcr-pusher@broad-dsp-monster-dev.iam.gserviceaccount.com
-          service_account_key: ${{ secrets.BASE64SERVICEACCOUNTKEY_1F8F }}
+          service_account_key: ${{ secrets.BASE64SERVICEACCOUNTKEY }}
           export_default_credentials: true
       - name: Setup GCR auth
         run: gcloud auth configure-docker --quiet us.gcr.io,us-east4-docker.pkg.dev
@@ -42,7 +42,7 @@ jobs:
           buildArgs: SENTRY_DSN=${{ secrets.HCA_DAGSTER_SENTRY_DSN }}
           context: ./orchestration
           push: true
-          tags: us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:${{steps.get-artifact-slug.outputs.slug}}, us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:dev-2-appsec310-dagster014
+          tags: us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:${{steps.get-artifact-slug.outputs.slug}}, us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:dev-appsec310-dagster014
 # TODO reinstate the compose dev env when we have a stable orchestration image
 #      - name: Push Compose Dev Env Docker image
 #        uses: docker/build-push-action@v6

@@ -40,9 +40,9 @@ jobs:
           context: ./orchestration
           push: true
           tags: us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:${{steps.get-artifact-slug.outputs.slug}}, us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:latest
-      - name: Push Compose Dev Env Docker image
-        uses: docker/build-push-action@v6.4
-        with:
-          context: .
-          push: true
-          tags: us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:${{steps.get-artifact-slug.outputs.slug}}, us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:latest
+      # - name: Push Compose Dev Env Docker image
+      #   uses: docker/build-push-action@v6.4
+      #   with:
+      #     context: .
+      #     push: true
+      #     tags: us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:${{steps.get-artifact-slug.outputs.slug}}, us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:latest
