@@ -1,13 +1,10 @@
-version: v0.138.4
+version: v0.170.0
 dependencies:
 - name: create-secret-manager-secret
   repository: https://broadinstitute.github.io/datarepo-helm
-  version: 0.0.6
+  version: 0.0.8
 - name: dagster
   repository: https://dagster-io.github.io/helm
-  version: 0.12.14
-- name: serviceaccount-psp
-  repository: https://broadinstitute.github.io/datarepo-helm
-  version: 0.0.3
-digest: sha256:6dc0757e0756dd8ee048d36fa25c18e502e6aa4b9e7e6373fba057fbf1758689
-generated: "2021-04-29T09:13:01.415603-04:00"
+  version: 0.14.0
+digest: sha256:a6b641eb96c70bb287ffaffd61aad0956d0f2952fef0914042ae8d66fd072e0d
+generated: "2025-03-04T13:53:21.538141-05:00"

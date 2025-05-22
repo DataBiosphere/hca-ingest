@@ -6,38 +6,47 @@ jobs:
   main-ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      # TODO upgrade checkout for all actions
+      - uses: actions/checkout@v4
         # Needed by sonar to get the git history for the branch the PR will be merged into.
         with:
           fetch-depth: 0
       - name: Fetch tag history
         run: git fetch --tags
+      # TODO upgrade setup-gcloud
       - uses: google-github-actions/setup-gcloud@v0.2.1
         name: Setup gcloud for pushing Docker images
         with:
+          # TODO create a new service account for this
           service_account_email: jenkins-gcr-pusher@broad-dsp-monster-dev.iam.gserviceaccount.com
-          service_account_key: ${{ secrets.Base64ServiceAccountKey }}
+          service_account_key: ${{ secrets.BASE64SERVICEACCOUNTKEY_1F8F }}
           export_default_credentials: true
       - name: Setup GCR auth
         run: gcloud auth configure-docker --quiet us.gcr.io,us-east4-docker.pkg.dev
-      - uses: olafurpg/setup-scala@v10
+      - uses: sbt/setup-sbt@96cf3f09dc501acdad7807fffe97dba9fa0709be # v1
+      - uses: actions/setup-java@v4
         with:
-          java-version: graalvm@20.0.0
+          distribution: 'temurin'
+          java-version: '8'
+          cache: 'sbt'
       - name: Push Scala Dataflow Docker image
         run: sbt publish
         # us.gcr.io/broad-dsp-gcr-public/hca-transformation-pipeline
       - name: Get artifact slug
         id: get-artifact-slug
         run: 'echo ::set-output name=slug::$(git rev-parse --short "$GITHUB_SHA")'
+      # TODO why do I have to supply the poetry.lock? Why is this not built here?
       - name: Push Dagster User Code Docker image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v6
         with:
+          buildArgs: SENTRY_DSN=${{ secrets.HCA_DAGSTER_SENTRY_DSN }}
           context: ./orchestration
           push: true
-          tags: us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:${{steps.get-artifact-slug.outputs.slug}}, us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:dev
-      - name: Push Compose Dev Env Docker image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          push: true
-          tags: us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:${{steps.get-artifact-slug.outputs.slug}}, us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:dev
+          tags: us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:${{steps.get-artifact-slug.outputs.slug}}, us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:dev-2-appsec310-dagster014
+# TODO reinstate the compose dev env when we have a stable orchestration image
+#      - name: Push Compose Dev Env Docker image
+#        uses: docker/build-push-action@v6
+#        with:
+#          context: .
+#          push: true
+#          tags: us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:${{steps.get-artifact-slug.outputs.slug}}, us-east4-docker.pkg.dev/broad-dsp-monster-hca-dev/monster-dev-env/hca_ingest_compose_dev_env:dev-2-appsec39-dagster013

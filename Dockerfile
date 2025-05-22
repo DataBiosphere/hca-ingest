@@ -2,8 +2,9 @@
 
 # This is the Dagster user code deployment image
 # Dockerfile is located in orchestration/Dockerfile
-FROM us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:latest
+FROM us.gcr.io/broad-dsp-gcr-public/monster-hca-dagster:dev-2-appsec39-dagster013
 
+# TODO need to figure out how to upgrade Scala... or if we want to do that
 ENV LANG='en_US.UTF-8' \
     LANGUAGE='en_US:en' \
     LC_ALL='en_US.UTF-8' \
@@ -11,6 +12,7 @@ ENV LANG='en_US.UTF-8' \
 
 # Install some helpful tools not included in the base image, as well as set up for JDK install
 # python-is-python3 makes python3 the default, to avoid issues with poetry
+# TODO do I need to install python3-is-python3? if I can figure out the poetry install?
 RUN apt-get update  \
     && DEBIAN_FRONTEND=noninteractive \
     && apt-get install -yqq --no-install-recommends \
@@ -30,11 +32,14 @@ RUN apt-get update  \
     && locale-gen en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
 
+# TODO convert this to a multi-stage build
+# https://hub.docker.com/_/eclipse-temurin/
 # Install JDK
 # based on https://github.com/AdoptOpenJDK/openjdk-docker/blob/master/11/jdk/debian/Dockerfile.hotspot.releases.full
 ENV JAVA_VERSION jdk-11.0.11+9
 
-#support for multiple architectures
+#TODO update for new version - or not since in a multi-stage build we'll just pull in the jdk from the final image?
+#support for multiple architectures for java - since this will be your local dev env
 RUN set -eux; \
     ARCH="$(dpkg --print-architecture)"; \
     case "${ARCH}" in \
@@ -73,6 +78,7 @@ RUN set -eux; \
 ENV JAVA_HOME=/opt/java/openjdk \
     PATH="/opt/java/openjdk/bin:$PATH"
 
+# TODO - is this the right way to install sbt now? - should this be another stage?
 # Install sbt
 RUN curl -L -o sbt-$SBT_VERSION.zip https://github.com/sbt/sbt/releases/download/v$SBT_VERSION/sbt-$SBT_VERSION.zip \
     && unzip sbt-$SBT_VERSION.zip -d opt \
@@ -84,6 +90,7 @@ ENV PATH /usr/local/bin/sbt/bin:$PATH
 # Install gcloud CLI
 ENV CLOUDSDK_PYTHON=/usr/local/bin/python
 
+# TODO update for new version
 # Install gcloud CLI
 # from https://cloud.google.com/sdk/docs/install#deb
 RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list \
@@ -97,9 +104,10 @@ RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.
 # Then set up your billing project "gcloud config set project PROJECT_ID"
 # You should also run “gcloud auth application-default login” after installation
 # and authenticate with your Broad credentials to set a default login for applications
-#
+# TODO use SCP as an example of how to set this up automatically
 
 # Copy in the rest of the codebase & move contents of base image to orchestration
+# TODO I don't think this is it -I think I need to copy the contents of the base image to the orchestration directory
 COPY . /hca-ingest/.
 RUN mkdir /orchestration
 RUN mv /hca_manage /orchestration/. \
@@ -129,5 +137,5 @@ CMD ["bin/bash"]
 # make sure you are logged in to gcloud and that application default credentials are set (https://docs.google.com/document/d/1b03-YphH6Uac5huBopLYTYjzgDAlwS6qf-orMqaph64/edit?usp=sharing)
 # set the VERSION field in update_docker_image.sh in this directory and then run the script to build and push
 # NB - this can take a while, so be patient
-# It may be that you are on the split VPN and/or trying to push over IPv6. Either turn off the VPN or turn of IPV6
+# It may be that you are on the split VPN and/or trying to push over IPv6. Either turn off the VPN or turn off IPV6
   #on your router to speed this up.

@@ -4,6 +4,7 @@ on:
   schedule:
     - cron: '0 0 * * 0'
 jobs:
+  # TODO can I remove this now that I'm using a blessed image?
   appsec-trivy:
     # Parse Dockerfile and build, scan image if a "blessed" base image is not used
     name: DSP AppSec Trivy check

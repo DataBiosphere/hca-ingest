@@ -22,6 +22,7 @@ releases:
   - name: monster    # release name
     namespace: dagster   # target namespace
     chart: dagster/dagster   # chart name
+    version: 0.14.0   # chart version
     missingFileHandler: Warn
     values:
       - environment/{{ requiredEnv "ENV" }}.yaml

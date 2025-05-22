@@ -8,23 +8,16 @@ import logging
 from data_repo_client import SnapshotModel
 from google.cloud.bigquery import ArrayQueryParameter, Client
 from google.cloud.bigquery.table import RowIterator
-from more_itertools import chunked
-
-from hca_manage.common import (
-    data_repo_host,
-    get_api_client,
-    setup_cli_logging_format,
-)
+from hca_manage.common import data_repo_host, get_api_client, setup_cli_logging_format
 from hca_orchestration.contrib.bigquery import BigQueryService
-from hca_orchestration.contrib.data_repo.data_repo_service import (
-    DataRepoService,
-)
+from hca_orchestration.contrib.data_repo.data_repo_service import DataRepoService
 from hca_orchestration.models.entities import (
     MetadataEntity,
     build_subgraph_from_links_row,
 )
 from hca_orchestration.support.subgraphs import build_subgraph_nodes
 from hca_orchestration.support.typing import MetadataType
+from more_itertools import chunked
 
 
 class SubgraphValidationException(Exception):
@@ -92,12 +85,14 @@ def verify_single_project(bq_project: str, dataset: str, snapshot: bool,
         logging.debug(f"Verifying dataset contains data for single project only [project_id={project_id}]")
         for row in links_rows:
             assert row[
-                "project_id"] == project_id, f"Dataset should only contain links rows for single project [project_id={project_id}]"
+                "project_id"] == project_id, (f"Dataset should only contain links rows "
+                                              f"for single project [project_id={project_id}]")
 
-    verify_all_subgraphs_in_dataset(links_rows, bq_project, dataset, bigquery_service)
+    verify_all_subgraphs_in_dataset(links_rows, bq_project, dataset, bigquery_service)  # type: ignore
 
     logging.info(
-        f"✅ Subgraphs verified [project_id = {project_id}, dataset = {dataset}, bq_project = {bq_project}, num_links = {len(links_rows)}]")
+        f"✅ Subgraphs verified [project_id = {project_id}, dataset = {dataset}, "
+        f"bq_project = {bq_project}, num_links = {len(links_rows)}]")
 
 
 def verify_snapshot_for_project(source_hca_project_id: str, dataset_qualifier: str) -> SnapshotModel:
@@ -151,6 +146,7 @@ def verify_snapshots(project_list_path: str) -> None:
                 verify_snapshot_for_project(row[0], row[1])
             except SubgraphValidationException as e:
                 logging.error(f"Could not validate project_id {row[0]}")
+                logging.error(e)
 
 
 if __name__ == '__main__':

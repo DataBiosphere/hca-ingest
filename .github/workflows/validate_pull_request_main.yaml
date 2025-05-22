@@ -1,4 +1,4 @@
-name: PR Validation for Main
+name: PR Validation for Main Branch
 on:
   pull_request:
     branches:
@@ -11,23 +11,31 @@ jobs:
     name: PR Validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: google-github-actions/setup-gcloud@v0.2.1
+      - uses: actions/checkout@v4
         with:
-          project_id: ${{ secrets.DEV_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_TEST_KEY }}
-          export_default_credentials: true
           fetch-depth: 0
-      - name: Set up Python 3.9 for dataflow tests
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          # This is the service account key for the hca-test-runner 1d445
+          credentials_json: '${{ secrets.HCA_GCP_TEST_SA_KEY }}'
+#        env:
+#          GCP_TEST_KEY: '${{ secrets.HCA_GCP_TEST_SA_KEY }}'
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2.0.0'
+        with:
+          version: '>= 416.0.0'
+          project_id: '${{ secrets.DEV_PROJECT_ID }}'
+      - name: Set up Python 3.10 for dataflow tests
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9.16
+          python-version: "3.10"
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
-          version: 1.8.0
+          version: 2.0.1
       - name: Restore cache dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         env:
           cache-name: cache-poetry-v2
         with:
@@ -41,9 +49,14 @@ jobs:
       - name: Install dependencies
         run: poetry install
         working-directory: ${{ github.workspace }}/orchestration
-      - uses: olafurpg/setup-scala@v10
+      - uses: sbt/setup-sbt@v1
+      - uses: actions/setup-java@v4
         with:
-          java-version: graalvm@20.0.0
+          distribution: 'temurin'
+          java-version: '8'
+          check-latest: 'true'
+          # 'commit-${{ github.sha }}-job-${{ github.run_id }}-sbt-cache'
+          cache: 'sbt'
       - name: Check Scala formatting
         run: sbt scalafmtCheckAll
       - name: Scala Compile

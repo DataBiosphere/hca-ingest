@@ -6,6 +6,7 @@
 #      ./apply.sh dev main          # deploys the current head commit on main to dev
 #      ./apply.sh prod a81cc3f      # deploys the commit with the sha a81cc3f to prod
 #      ./apply.sh prod main diff  # diffs the local helmfile config with the state in prod using the main branch's image
+#      ./apply.sh dev a81cc3f deps # runs helmfile deps on the commit with the sha a81cc3f in dev
 # note that the specified commit will only affect the version of our python code that gets deployed to the cluster.
 # this command will always use the version of the helm chart you have saved locally.
 export TARGET_HEAD=${2:-HEAD}
@@ -63,4 +64,9 @@ else
 fi
 
 helmfile --interactive "$COMMAND"
+
+if [ "$COMMAND" == "apply" ]; then
 fire_slack_deployment_notification "${ENV}" "${GIT_SHORTHASH}"
+else
+echo "Not deploying, skipping slack notification"
+fi

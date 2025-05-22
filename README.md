@@ -7,11 +7,13 @@ system design information.
 * Choose whether you will develop in a local virtual environment, like venv, or use the [Docker Compose dev env provided here](docker-compose.yaml).
 * Clone this repository to a local directory and create a new dev branch, ideally named after your Jira ticket. (Note that a Jira ticket is required in order to make changes to production.)
   * [Setup Git Secrets](https://dsp-security.broadinstitute.org/platform-security-categories/git/setup-git-secrets)
-  * If you are running in a local virtual environment go ahead and set that up. Note that this project uses Python 3.9.16
+  * If you are running in a local virtual environment go ahead and set that up. Note that this project uses Python 3.10
     * Also install the [gcloud cloud command-line tool](https://cloud.google.com/sdk/docs/install) if you've not already done so.
   * If you are using the provided Docker Compose dev env use the follow command to invoke it: `docker compose run -w /hca-ingest app bash`
     * _Note that if you are not already logged in to gcloud, you will need to do so before running \
       the docker compose command, as this will pull the latest image from Artifact Registry._
+    * _If this is the first time you've pulled from this repo with docker you may need to run `gcloud auth configure-docker`_
+    * _you may also need to add "us-east4-docker.pkg.dev" to your docker config.json `~/.docker/config.json`_
 * Authenticate with gcloud using your Broad credentials `gcloud auth login`
 * Then set up your billing project `gcloud config set project PROJECT_ID`
   * For prod this is `mystical-slate-284720`
